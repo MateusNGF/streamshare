@@ -1,7 +1,21 @@
 import { Search, Filter, Download } from "lucide-react";
 import { PaymentRow } from "@/components/cobrancas/PaymentRow";
+import { getPaymentsData } from "@/actions/payments";
 
-export default function CobrancasPage() {
+export default async function CobrancasPage() {
+    const { assinaturas, stats } = await getPaymentsData();
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        }).format(value);
+    };
+
+    const formatDate = (date: Date) => {
+        return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
+    };
+
     return (
         <div className="p-8 pb-12">
             {/* Header */}
@@ -49,19 +63,19 @@ export default function CobrancasPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Total a Receber</p>
-                    <p className="text-3xl font-bold text-gray-900">R$ 1.247,80</p>
+                    <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalToReceive)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Recebido</p>
-                    <p className="text-3xl font-bold text-green-600">R$ 892,40</p>
+                    <p className="text-3xl font-bold text-green-600">{formatCurrency(stats.received)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Pendente</p>
-                    <p className="text-3xl font-bold text-amber-600">R$ 285,20</p>
+                    <p className="text-3xl font-bold text-amber-600">{formatCurrency(stats.pending)}</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Atrasado</p>
-                    <p className="text-3xl font-bold text-red-600">R$ 70,20</p>
+                    <p className="text-3xl font-bold text-red-600">{formatCurrency(stats.overdue)}</p>
                 </div>
             </div>
 
@@ -71,50 +85,25 @@ export default function CobrancasPage() {
                     <h2 className="text-xl font-bold text-gray-900">Cobranças do Mês</h2>
                 </div>
                 <div>
-                    <PaymentRow
-                        participant="Maria Silva"
-                        streaming="Netflix"
-                        value="13.97"
-                        dueDate="15/01/2026"
-                        status="pago"
-                    />
-                    <PaymentRow
-                        participant="João Santos"
-                        streaming="Spotify"
-                        value="8.72"
-                        dueDate="20/01/2026"
-                        status="pago"
-                    />
-                    <PaymentRow
-                        participant="Ana Costa"
-                        streaming="Disney+"
-                        value="11.30"
-                        dueDate="18/01/2026"
-                        status="atrasado"
-                    />
-                    <PaymentRow
-                        participant="Pedro Oliveira"
-                        streaming="HBO Max"
-                        value="9.98"
-                        dueDate="25/01/2026"
-                        status="pendente"
-                    />
-                    <PaymentRow
-                        participant="Lucas Ferreira"
-                        streaming="Amazon Prime"
-                        value="7.45"
-                        dueDate="30/01/2026"
-                        status="pendente"
-                    />
-                    <PaymentRow
-                        participant="Carla Mendes"
-                        streaming="YouTube Premium"
-                        value="8.97"
-                        dueDate="22/01/2026"
-                        status="pago"
-                    />
+                    {assinaturas.length > 0 ? (
+                        assinaturas.map((sub) => (
+                            <PaymentRow
+                                key={sub.id}
+                                participant={sub.participante.nome}
+                                streaming={sub.streaming.catalogo.nome}
+                                value={String(sub.valor)}
+                                dueDate={formatDate(sub.dataVencimento)}
+                                status={sub.diasAtraso > 0 ? "atrasado" : sub.status === "ativa" ? "pago" : "pendente"}
+                            />
+                        ))
+                    ) : (
+                        <div className="p-12 text-center">
+                            <p className="text-gray-400">Nenhuma cobrança encontrada.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+

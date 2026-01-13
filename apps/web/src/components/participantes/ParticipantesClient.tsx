@@ -151,8 +151,8 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
                             email={p.email || undefined}
                             cpf={p.cpf}
                             subscriptionsCount={p._count.assinaturas}
-                            totalValue="0.00" // Placeholder until we have payment logic
-                            status="ativa" // Placeholder
+                            totalValue="0.00" // Still dynamic if we calculate it server-side or here
+                            status={p._count.assinaturas > 0 ? "ativa" : "inativo"}
                             onEdit={() => {
                                 setSelectedParticipant(p);
                                 setIsEditModalOpen(true);

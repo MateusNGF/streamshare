@@ -10,8 +10,22 @@ import {
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StreamingCard } from "@/components/dashboard/StreamingCard";
 import { RecentSubscription } from "@/components/dashboard/RecentSubscription";
+import { getDashboardStats, getRecentSubscriptions, getDashboardStreamings } from "@/actions/dashboard";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    const [stats, recentSubscriptions, streamings] = await Promise.all([
+        getDashboardStats(),
+        getRecentSubscriptions(),
+        getDashboardStreamings(),
+    ]);
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        }).format(value);
+    };
+
     return (
         <div className="p-8 pb-12">
             {/* Header */}
@@ -36,29 +50,29 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 <KPICard
                     title="Receita Mensal"
-                    value="R$ 1.247,80"
-                    change="+12%"
+                    value={formatCurrency(stats.monthlyRevenue)}
+                    change="+0%" // Placeholder for now
                     trend="up"
                     icon={TrendingUp}
                 />
                 <KPICard
                     title="Participantes Ativos"
-                    value="47"
-                    change="+5"
+                    value={String(stats.activeParticipantsCount)}
+                    change="+0" // Placeholder for now
                     trend="up"
                     icon={Users2}
                 />
                 <KPICard
                     title="Taxa de Ocupação"
-                    value="87%"
-                    change="+3%"
+                    value={`${stats.occupationRate.toFixed(1)}%`}
+                    change="+0%" // Placeholder for now
                     trend="up"
                     icon={LineChart}
                 />
                 <KPICard
                     title="Inadimplência"
-                    value="4.2%"
-                    change="-1.5%"
+                    value={`${stats.defaultRate.toFixed(1)}%`}
+                    change="0%" // Placeholder for now
                     trend="down"
                     icon={AlertCircle}
                 />
@@ -74,27 +88,20 @@ export default function DashboardPage() {
                         </button>
                     </div>
                     <div className="space-y-2">
-                        <StreamingCard
-                            name="Netflix"
-                            initial="N"
-                            color="#E50914"
-                            slots={{ occupied: 4, total: 5 }}
-                            value="55.90"
-                        />
-                        <StreamingCard
-                            name="Spotify Family"
-                            initial="S"
-                            color="#1DB954"
-                            slots={{ occupied: 6, total: 6 }}
-                            value="34.90"
-                        />
-                        <StreamingCard
-                            name="Disney+"
-                            initial="D"
-                            color="#006E99"
-                            slots={{ occupied: 1, total: 4 }}
-                            value="33.90"
-                        />
+                        {streamings.length > 0 ? (
+                            streamings.map((s) => (
+                                <StreamingCard
+                                    key={s.id}
+                                    name={s.catalogo.nome}
+                                    initial={s.catalogo.nome.charAt(0).toUpperCase()}
+                                    color={s.catalogo.corPrimaria}
+                                    slots={{ occupied: s._count.assinaturas, total: s.limiteParticipantes }}
+                                    value={String(s.valorIntegral)}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-gray-400 text-center py-4 text-sm">Nenhum streaming cadastrado.</p>
+                        )}
                     </div>
                 </section>
 
@@ -107,27 +114,23 @@ export default function DashboardPage() {
                         </button>
                     </div>
                     <div className="space-y-2">
-                        <RecentSubscription
-                            name="Maria Silva"
-                            streaming="Netflix"
-                            value="13.97"
-                            status="Ativa"
-                        />
-                        <RecentSubscription
-                            name="João Santos"
-                            streaming="Spotify"
-                            value="8.72"
-                            status="Ativa"
-                        />
-                        <RecentSubscription
-                            name="Ana Costa"
-                            streaming="Disney+"
-                            value="11.30"
-                            status="Em atraso"
-                        />
+                        {recentSubscriptions.length > 0 ? (
+                            recentSubscriptions.map((sub) => (
+                                <RecentSubscription
+                                    key={sub.id}
+                                    name={sub.participante.nome}
+                                    streaming={sub.streaming.catalogo.nome}
+                                    value={String(sub.valor)}
+                                    status={sub.status === "ativa" ? "Ativa" : "Em atraso"}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-gray-400 text-center py-4 text-sm">Nenhuma assinatura recente.</p>
+                        )}
                     </div>
                 </section>
             </div>
         </div>
     );
 }
+
