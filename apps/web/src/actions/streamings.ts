@@ -110,15 +110,10 @@ export async function createStreaming(data: {
     catalogoId: number;
     valorIntegral: number;
     limiteParticipantes: number;
-    dataVencimento: string;
 }) {
     const { contaId } = await getContext();
 
     // Ensure dataVencimento is a valid date object or null if empty string
-    const dataVencimento = data.dataVencimento ? new Date(data.dataVencimento) : null;
-    if (dataVencimento && isNaN(dataVencimento.getTime())) {
-        throw new Error("Data de vencimento inválida");
-    }
 
     const streaming = await prisma.streaming.create({
         data: {
@@ -126,7 +121,6 @@ export async function createStreaming(data: {
             streamingCatalogoId: data.catalogoId,
             valorIntegral: data.valorIntegral,
             limiteParticipantes: data.limiteParticipantes,
-            dataVencimento,
             // frequenciasHabilitadas default is set by schema
         },
     });
@@ -141,7 +135,6 @@ export async function updateStreaming(
         catalogoId: number;
         valorIntegral: number;
         limiteParticipantes: number;
-        dataVencimento?: string;
     }
 ) {
     const { contaId } = await getContext();
@@ -152,7 +145,6 @@ export async function updateStreaming(
             streamingCatalogoId: data.catalogoId,
             valorIntegral: data.valorIntegral,
             limiteParticipantes: data.limiteParticipantes,
-            dataVencimento: data.dataVencimento ? new Date(data.dataVencimento) : null,
         },
     });
 

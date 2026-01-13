@@ -12,7 +12,6 @@ interface Streaming {
     streamingCatalogoId: number;
     valorIntegral: any;
     limiteParticipantes: number;
-    dataVencimento: Date | null;
     catalogo: {
         nome: string;
         corPrimaria: string;
@@ -50,7 +49,6 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 catalogoId: parseInt(data.catalogoId),
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
-                dataVencimento: data.dataVencimento,
             });
             setIsAddModalOpen(false);
         } catch (error) {
@@ -69,7 +67,6 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 catalogoId: parseInt(data.catalogoId),
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
-                dataVencimento: data.dataVencimento,
             });
             setIsEditModalOpen(false);
         } catch (error) {
@@ -144,7 +141,6 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                             iconeUrl={s.catalogo.iconeUrl}
                             slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
                             price={String(s.valorIntegral)}
-                            dueDate={formatDate(s.dataVencimento)}
                             frequency="Mensal"
                             onEdit={() => {
                                 setSelectedStreaming(s);
@@ -181,7 +177,6 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                             catalogoId: String(selectedStreaming.streamingCatalogoId),
                             valorIntegral: String(selectedStreaming.valorIntegral),
                             limiteParticipantes: String(selectedStreaming.limiteParticipantes),
-                            dataVencimento: selectedStreaming.dataVencimento ? new Date(selectedStreaming.dataVencimento).toISOString().split('T')[0] : "",
                         }
                         : undefined
                 }

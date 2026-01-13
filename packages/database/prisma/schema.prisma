@@ -128,7 +128,6 @@ model Streaming {
   streamingCatalogoId      Int
   valorIntegral            Decimal
   limiteParticipantes      Int
-  dataVencimento           DateTime?
   credenciaisLogin         String?
   credenciaisSenha         String?
   frequenciasHabilitadas   String               @default("mensal,trimestral,semestral,anual")

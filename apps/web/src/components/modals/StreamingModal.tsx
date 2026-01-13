@@ -20,7 +20,6 @@ export interface StreamingFormData {
     catalogoId: string;
     valorIntegral: string;
     limiteParticipantes: string;
-    dataVencimento: string;
 }
 
 export function StreamingModal({
@@ -37,7 +36,6 @@ export function StreamingModal({
             catalogoId: "",
             valorIntegral: "",
             limiteParticipantes: "",
-            dataVencimento: "",
         }
     );
     const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
@@ -54,10 +52,6 @@ export function StreamingModal({
         const limite = parseInt(formData.limiteParticipantes);
         if (isNaN(limite) || limite <= 0) {
             newErrors.limiteParticipantes = "Limite deve ser maior que zero";
-        }
-
-        if (!formData.dataVencimento) {
-            newErrors.dataVencimento = "Data de vencimento é obrigatória";
         }
 
         setErrors(newErrors);
@@ -92,7 +86,6 @@ export function StreamingModal({
                 ...prev,
                 valorIntegral: "",
                 limiteParticipantes: "",
-                dataVencimento: "",
             }));
         }
     }, [streaming, isOpen]);
@@ -227,14 +220,6 @@ export function StreamingModal({
                                 required
                             />
                         </div>
-                        <Input
-                            label="Próximo Vencimento Master"
-                            type="date"
-                            value={formData.dataVencimento}
-                            onChange={(e) => handleChange("dataVencimento", e.target.value)}
-                            error={errors.dataVencimento}
-                            required
-                        />
                         <p className="text-xs text-gray-400 mt-2">
                             * Configure o valor total que você paga pelo serviço e o limite de vagas disponíveis.
                         </p>

@@ -8,7 +8,6 @@ interface StreamingDetailCardProps {
     iconeUrl?: string | null;
     slots: { occupied: number; total: number };
     price: string;
-    dueDate: string;
     frequency: string;
     onEdit: () => void;
     onDelete: () => void;
@@ -21,7 +20,6 @@ export function StreamingDetailCard({
     iconeUrl,
     slots,
     price,
-    dueDate,
     frequency,
     onEdit,
     onDelete,
@@ -95,10 +93,6 @@ export function StreamingDetailCard({
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <DollarSign size={16} className="text-primary" />
                         <span>R$ {price}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Calendar size={16} className="text-primary" />
-                        <span>Venc: {dueDate}</span>
                     </div>
                 </div>
             </div>
