@@ -55,7 +55,7 @@ model Conta {
   participantes  Participante[]
   streamings     Streaming[]
 
-  @@name("conta")
+  @@map("conta")
 }
 
 model Usuario {
@@ -72,7 +72,7 @@ model Usuario {
   contas       ContaUsuario[]
   participante Participante?
 
-   @@name("usuario")
+   @@map("usuario")
 }
 
 model ContaUsuario {
@@ -87,7 +87,7 @@ model ContaUsuario {
 
   @@unique([contaId, usuarioId])
 
-  @@name("conta_usuario")
+  @@map("conta_usuario")
 }
 
 model Grupo {
@@ -105,7 +105,7 @@ model Grupo {
   conta                      Conta              @relation(fields: [contaId], references: [id])
   streamings                 GrupoStreaming[]
 
-  @@name("grupo")
+  @@map("grupo")
 }
 
 model StreamingCatalogo {
@@ -119,7 +119,7 @@ model StreamingCatalogo {
 
   streamings   Streaming[]
 
-  @@name("grupo")
+  @@map("streaming_catalogo")
 }
 
 model Streaming {
@@ -141,7 +141,7 @@ model Streaming {
   grupos                    GrupoStreaming[]
   assinaturas               Assinatura[]
 
-  @@name("streaming")
+  @@map("streaming")
 }
 
 model GrupoStreaming {
@@ -155,7 +155,7 @@ model GrupoStreaming {
 
   @@unique([streamingId, grupoId])
 
-  @@name("grupo_streaming")
+  @@map("grupo_streaming")
 }
 
 model Participante {
@@ -174,7 +174,7 @@ model Participante {
   usuario         Usuario?      @relation(fields: [userId], references: [id])
   assinaturas     Assinatura[]
 
-  @@name("participante")
+  @@map("participante")
 }
 
 model Assinatura {
@@ -197,5 +197,5 @@ model Assinatura {
 
   @@unique([participanteId, streamingId])
 
-  @@name("assinatura")
+  @@map("assinatura")
 }
