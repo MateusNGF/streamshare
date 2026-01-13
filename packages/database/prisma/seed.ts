@@ -10,7 +10,7 @@ const catalogos = [
     },
     {
         nome: "Disney+",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/disneyplus.svg",
+        iconeUrl: "https://upload.wikimedia.org/wikipedia/commons/6/64/Disney%2B_2024.svg",
         corPrimaria: "#113CCF",
     },
     {
@@ -20,7 +20,7 @@ const catalogos = [
     },
     {
         nome: "HBO Max",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/hbomax.svg",
+        iconeUrl: "https://simpleicons.org/icons/hbomax.svg",
         corPrimaria: "#7B2CBF",
     },
     {
@@ -35,12 +35,12 @@ const catalogos = [
     },
     {
         nome: "Globoplay",
-        iconeUrl: "https://upload.wikimedia.org/wikipedia/commons/7/7f/Globoplay_logo.svg",
-        corPrimaria: "#0099CC",
+        iconeUrl: "https://upload.wikimedia.org/wikipedia/commons/5/58/Globoplay_2018.svg",
+        corPrimaria: "#FE1908",
     },
     {
         nome: "Paramount+",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/paramountplus.svg",
+        iconeUrl: "https://simpleicons.org/icons/paramountplus.svg",
         corPrimaria: "#0067E0",
     },
     {
