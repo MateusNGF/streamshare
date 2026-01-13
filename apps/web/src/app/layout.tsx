@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StreamShare | Dashboard",
+  title: "StreamShare | Gestão de Streamings",
   description: "Gestão de Streamings Compartilhados",
 };
 
@@ -18,12 +18,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} antialiased flex bg-gray-50/50`}>
-        <Sidebar />
-        <main className="flex-1 h-screen overflow-y-auto">
-          {children}
-        </main>
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   );
 }
-

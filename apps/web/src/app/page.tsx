@@ -1,133 +1,102 @@
-import {
-  Plus,
-  Bell,
-  ChevronRight,
-  TrendingUp,
-  Users2,
-  LineChart,
-  AlertCircle
-} from "lucide-react";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { StreamingCard } from "@/components/dashboard/StreamingCard";
-import { RecentSubscription } from "@/components/dashboard/RecentSubscription";
+import Link from "next/link";
+import { Play, Users, TrendingUp, Shield, ArrowRight } from "lucide-react";
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="p-8 pb-12">
-      {/* Header */}
-      <header className="flex items-center justify-between mb-10">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 font-medium">Bem-vindo de volta, Carlos!</p>
+    <div className="min-h-screen bg-gradient-to-br from-primary via-accent to-purple-600">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden opacity-10">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-white rounded-full blur-3xl" />
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-white rounded-full blur-3xl" />
+      </div>
+
+      {/* Navbar */}
+      <nav className="relative z-10 container mx-auto px-6 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-white p-2 rounded-xl">
+            <Play className="text-primary fill-primary" size={28} />
+          </div>
+          <span className="text-2xl font-bold text-white">StreamShare</span>
         </div>
         <div className="flex items-center gap-4">
-          <button className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:text-gray-900 shadow-sm relative">
-            <Bell size={20} />
-            <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-          </button>
-          <button className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all">
-            <Plus size={20} />
-            Novo Streaming
-          </button>
+          <Link
+            href="/login"
+            className="px-6 py-3 text-white font-bold hover:bg-white/10 rounded-xl transition-all"
+          >
+            Entrar
+          </Link>
+          <Link
+            href="/cadastro"
+            className="px-6 py-3 bg-white text-primary font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+          >
+            Criar conta
+          </Link>
         </div>
-      </header>
+      </nav>
 
-      {/* KPI Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <KPICard
-          title="Receita Mensal"
-          value="R$ 1.247,80"
-          change="+12%"
-          trend="up"
-          icon={TrendingUp}
-        />
-        <KPICard
-          title="Participantes Ativos"
-          value="47"
-          change="+5"
-          trend="up"
-          icon={Users2}
-        />
-        <KPICard
-          title="Taxa de Ocupação"
-          value="87%"
-          change="+3%"
-          trend="up"
-          icon={LineChart}
-        />
-        <KPICard
-          title="Inadimplência"
-          value="4.2%"
-          change="-1.5%"
-          trend="down"
-          icon={AlertCircle}
-        />
-      </div>
+      {/* Hero Section */}
+      <main className="relative z-10 container mx-auto px-6 py-20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            Gerencie suas{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200">
+              assinaturas compartilhadas
+            </span>{" "}
+            com facilidade
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-2xl mx-auto">
+            Organize grupos, controle participantes e automatize cobranças de Netflix, Spotify e
+            muito mais.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/cadastro"
+              className="flex items-center gap-2 px-8 py-4 bg-white text-primary font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all"
+            >
+              Começar agora
+              <ArrowRight size={20} />
+            </Link>
+            <Link
+              href="/login"
+              className="px-8 py-4 border-2 border-white text-white font-bold rounded-2xl hover:bg-white/10 transition-all"
+            >
+              Já tenho conta
+            </Link>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* My Streamings */}
-        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Meus Streamings</h2>
-            <button className="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
-              Ver Todos <ChevronRight size={16} />
-            </button>
+        {/* Features */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24">
+          <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl border border-white/20">
+            <div className="bg-white/20 p-4 rounded-2xl w-fit mb-4">
+              <Users className="text-white" size={32} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">Grupos Organizados</h3>
+            <p className="text-white/80">
+              Crie e gerencie grupos de assinatura compartilhada de forma simples e eficiente.
+            </p>
           </div>
-          <div className="space-y-2">
-            <StreamingCard
-              name="Netflix"
-              initial="N"
-              color="#E50914"
-              slots={{ occupied: 4, total: 5 }}
-              value="55.90"
-            />
-            <StreamingCard
-              name="Spotify Family"
-              initial="S"
-              color="#1DB954"
-              slots={{ occupied: 6, total: 6 }}
-              value="34.90"
-            />
-            <StreamingCard
-              name="Disney+"
-              initial="D"
-              color="#006E99"
-              slots={{ occupied: 1, total: 4 }}
-              value="33.90"
-            />
+          <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl border border-white/20">
+            <div className="bg-white/20 p-4 rounded-2xl w-fit mb-4">
+              <TrendingUp className="text-white" size={32} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">Controle Financeiro</h3>
+            <p className="text-white/80">
+              Acompanhe pagamentos, inadimplência e receitas em tempo real com dashboards
+              intuitivos.
+            </p>
           </div>
-        </section>
-
-        {/* Recent Subscriptions */}
-        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Assinaturas Recentes</h2>
-            <button className="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
-              Ver Todas <ChevronRight size={16} />
-            </button>
+          <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl border border-white/20">
+            <div className="bg-white/20 p-4 rounded-2xl w-fit mb-4">
+              <Shield className="text-white" size={32} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">Totalmente Seguro</h3>
+            <p className="text-white/80">
+              Seus dados e informações de pagamento protegidos com criptografia de ponta.
+            </p>
           </div>
-          <div className="space-y-2">
-            <RecentSubscription
-              name="Maria Silva"
-              streaming="Netflix"
-              value="13.97"
-              status="Ativa"
-            />
-            <RecentSubscription
-              name="João Santos"
-              streaming="Spotify"
-              value="8.72"
-              status="Ativa"
-            />
-            <RecentSubscription
-              name="Ana Costa"
-              streaming="Disney+"
-              value="11.30"
-              status="Em atraso"
-            />
-          </div>
-        </section>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
