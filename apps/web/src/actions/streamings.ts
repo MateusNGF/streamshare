@@ -10,12 +10,12 @@ async function getContext() {
 
     const userAccount = await prisma.contaUsuario.findFirst({
         where: { usuarioId: session.userId, isAtivo: true },
-        select: { contaId: true },
+        select: { contaId: true, nivelAcesso: true },
     });
 
     if (!userAccount) throw new Error("Conta não encontrada");
 
-    return { userId: session.userId, contaId: userAccount.contaId };
+    return { userId: session.userId, contaId: userAccount.contaId, nivelAcesso: userAccount.nivelAcesso };
 }
 
 export async function getCatalogos() {
@@ -23,6 +23,72 @@ export async function getCatalogos() {
         where: { isAtivo: true },
         orderBy: { nome: "asc" },
     });
+}
+
+export async function createCatalogoItem(data: {
+    nome: string;
+    iconeUrl?: string;
+    corPrimaria?: string;
+}) {
+    const { nivelAcesso } = await getContext();
+    if (nivelAcesso !== "admin" && nivelAcesso !== "owner") {
+        throw new Error("Acesso negado");
+    }
+
+    const item = await prisma.streamingCatalogo.create({
+        data: {
+            nome: data.nome,
+            iconeUrl: data.iconeUrl,
+            corPrimaria: data.corPrimaria || "#000000",
+            isAtivo: true,
+        },
+    });
+
+    revalidatePath("/admin/catalogo");
+    revalidatePath("/streamings");
+    return item;
+}
+
+export async function updateCatalogoItem(
+    id: number,
+    data: {
+        nome?: string;
+        iconeUrl?: string;
+        corPrimaria?: string;
+        isAtivo?: boolean;
+    }
+) {
+    const { nivelAcesso } = await getContext();
+    if (nivelAcesso !== "admin" && nivelAcesso !== "owner") {
+        throw new Error("Acesso negado");
+    }
+
+    const item = await prisma.streamingCatalogo.update({
+        where: { id },
+        data: {
+            ...data,
+        },
+    });
+
+    revalidatePath("/admin/catalogo");
+    revalidatePath("/streamings");
+    return item;
+}
+
+export async function deleteCatalogoItem(id: number) {
+    const { nivelAcesso } = await getContext();
+    if (nivelAcesso !== "admin" && nivelAcesso !== "owner") {
+        throw new Error("Acesso negado");
+    }
+
+    // Soft delete
+    await prisma.streamingCatalogo.update({
+        where: { id },
+        data: { isAtivo: false },
+    });
+
+    revalidatePath("/admin/catalogo");
+    revalidatePath("/streamings");
 }
 
 export async function getStreamings() {

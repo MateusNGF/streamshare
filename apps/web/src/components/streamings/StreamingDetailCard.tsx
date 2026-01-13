@@ -5,6 +5,7 @@ interface StreamingDetailCardProps {
     name: string;
     color: string;
     initial: string;
+    iconeUrl?: string | null;
     slots: { occupied: number; total: number };
     price: string;
     dueDate: string;
@@ -17,6 +18,7 @@ export function StreamingDetailCard({
     name,
     color,
     initial,
+    iconeUrl,
     slots,
     price,
     dueDate,
@@ -35,7 +37,11 @@ export function StreamingDetailCard({
                         className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg"
                         style={{ backgroundColor: color }}
                     >
-                        {initial}
+                        {iconeUrl ? (
+                            <img src={iconeUrl} alt={name} className="w-10 h-10 object-contain brightness-0 invert" />
+                        ) : (
+                            initial
+                        )}
                     </div>
                     <div>
                         <div className="flex items-center gap-2">

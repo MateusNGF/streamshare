@@ -6,9 +6,10 @@ interface StreamingCardProps {
     value: string;
     color: string;
     initial: string;
+    iconeUrl?: string | null;
 }
 
-export function StreamingCard({ name, slots, value, color, initial }: StreamingCardProps) {
+export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: StreamingCardProps) {
     const percentage = (slots.occupied / slots.total) * 100;
 
     return (
@@ -18,7 +19,11 @@ export function StreamingCard({ name, slots, value, color, initial }: StreamingC
                     className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg"
                     style={{ backgroundColor: color }}
                 >
-                    {initial}
+                    {iconeUrl ? (
+                        <img src={iconeUrl} alt={name} className="w-8 h-8 object-contain brightness-0 invert" />
+                    ) : (
+                        initial
+                    )}
                 </div>
                 <div>
                     <h4 className="font-semibold text-gray-900">{name}</h4>

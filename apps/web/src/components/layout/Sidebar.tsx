@@ -19,6 +19,7 @@ const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: Users, label: "Participantes", href: "/participantes" },
     { icon: Tv, label: "Streamings", href: "/streamings" },
+    { icon: Play, label: "Catálogo Global", href: "/admin/catalogo" },
     { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
     { icon: Settings, label: "Configurações", href: "/configuracoes" },
 ];

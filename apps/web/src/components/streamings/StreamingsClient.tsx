@@ -16,6 +16,7 @@ interface Streaming {
     catalogo: {
         nome: string;
         corPrimaria: string;
+        iconeUrl: string | null;
     };
     _count?: {
         assinaturas: number;
@@ -140,6 +141,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                             name={s.catalogo.nome}
                             color={s.catalogo.corPrimaria}
                             initial={s.catalogo.nome.charAt(0).toUpperCase()}
+                            iconeUrl={s.catalogo.iconeUrl}
                             slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
                             price={String(s.valorIntegral)}
                             dueDate={formatDate(s.dataVencimento)}
@@ -177,8 +179,8 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                     selectedStreaming
                         ? {
                             catalogoId: String(selectedStreaming.streamingCatalogoId),
-                            price: String(selectedStreaming.valorIntegral),
-                            slots: String(selectedStreaming.limiteParticipantes),
+                            valorIntegral: String(selectedStreaming.valorIntegral),
+                            limiteParticipantes: String(selectedStreaming.limiteParticipantes),
                             dataVencimento: selectedStreaming.dataVencimento ? new Date(selectedStreaming.dataVencimento).toISOString().split('T')[0] : "",
                         }
                         : undefined
