@@ -5,7 +5,12 @@
         "build": "turbo run build",
         "dev": "turbo run dev",
         "lint": "turbo run lint",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\""
+        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "db:generate": "pnpm --filter @streamshare/database run generate",
+        "db:push": "pnpm --filter @streamshare/database run push",
+        "db:migrate": "pnpm --filter @streamshare/database exec prisma migrate dev",
+        "db:seed": "pnpm --filter @streamshare/database exec prisma db seed",
+        "db:studio": "pnpm --filter @streamshare/database run studio"
     },
     "devDependencies": {
         "turbo": "latest",

@@ -8,12 +8,18 @@ interface ParticipantModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: ParticipantFormData) => void;
-    participant?: ParticipantFormData;
+    participant?: {
+        nome: string;
+        whatsappNumero: string;
+        cpf: string;
+        email?: string;
+    };
+    loading?: boolean;
 }
 
 export interface ParticipantFormData {
     nome: string;
-    whatsapp: string;
+    whatsappNumero: string;
     cpf: string;
     email?: string;
 }
@@ -23,11 +29,12 @@ export function ParticipantModal({
     onClose,
     onSave,
     participant,
+    loading,
 }: ParticipantModalProps) {
     const [formData, setFormData] = useState<ParticipantFormData>(
         participant || {
             nome: "",
-            whatsapp: "",
+            whatsappNumero: "",
             cpf: "",
             email: "",
         }
@@ -36,7 +43,6 @@ export function ParticipantModal({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(formData);
-        onClose();
     };
 
     const handleChange = (field: keyof ParticipantFormData, value: string) => {
@@ -58,9 +64,10 @@ export function ParticipantModal({
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all"
+                        disabled={loading}
+                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
                     >
-                        {participant ? "Salvar" : "Criar"}
+                        {loading ? "Processando..." : (participant ? "Salvar" : "Criar")}
                     </button>
                 </>
             }
@@ -77,8 +84,8 @@ export function ParticipantModal({
                 <Input
                     label="WhatsApp"
                     type="tel"
-                    value={formData.whatsapp}
-                    onChange={(e) => handleChange("whatsapp", e.target.value)}
+                    value={formData.whatsappNumero}
+                    onChange={(e) => handleChange("whatsappNumero", e.target.value)}
                     placeholder="(11) 98765-4321"
                     required
                 />

@@ -1,6 +1,7 @@
-import { Users, Calendar, DollarSign, MoreVertical } from "lucide-react";
+import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
 
 interface StreamingDetailCardProps {
+    id: number;
     name: string;
     color: string;
     initial: string;
@@ -8,6 +9,8 @@ interface StreamingDetailCardProps {
     price: string;
     dueDate: string;
     frequency: string;
+    onEdit: () => void;
+    onDelete: () => void;
 }
 
 export function StreamingDetailCard({
@@ -18,12 +21,14 @@ export function StreamingDetailCard({
     price,
     dueDate,
     frequency,
+    onEdit,
+    onDelete,
 }: StreamingDetailCardProps) {
     const percentage = (slots.occupied / slots.total) * 100;
     const isNearFull = percentage >= 80;
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all group">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
                     <div
@@ -33,13 +38,28 @@ export function StreamingDetailCard({
                         {initial}
                     </div>
                     <div>
-                        <h3 className="font-bold text-gray-900 text-lg">{name}</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-gray-900 text-lg">{name}</h3>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={onEdit}
+                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-primary transition-all"
+                                    title="Editar"
+                                >
+                                    <Edit size={16} />
+                                </button>
+                                <button
+                                    onClick={onDelete}
+                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-red-500 transition-all"
+                                    title="Excluir"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
                         <p className="text-sm text-gray-500">{frequency}</p>
                     </div>
                 </div>
-                <button className="p-2 text-gray-400 hover:text-gray-900 rounded-full hover:bg-gray-50 transition-all">
-                    <MoreVertical size={20} />
-                </button>
             </div>
 
             <div className="space-y-3">

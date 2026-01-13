@@ -53,6 +53,9 @@ model Conta {
   usuarios       ContaUsuario[]
   grupos         Grupo[]
   participantes  Participante[]
+  streamings     Streaming[]
+
+  @@name("conta")
 }
 
 model Usuario {
@@ -68,6 +71,8 @@ model Usuario {
 
   contas       ContaUsuario[]
   participante Participante?
+
+   @@name("usuario")
 }
 
 model ContaUsuario {
@@ -81,6 +86,8 @@ model ContaUsuario {
   usuario     Usuario     @relation(fields: [usuarioId], references: [id])
 
   @@unique([contaId, usuarioId])
+
+  @@name("conta_usuario")
 }
 
 model Grupo {
@@ -97,6 +104,8 @@ model Grupo {
 
   conta                      Conta              @relation(fields: [contaId], references: [id])
   streamings                 GrupoStreaming[]
+
+  @@name("grupo")
 }
 
 model StreamingCatalogo {
@@ -109,10 +118,13 @@ model StreamingCatalogo {
   updatedAt    DateTime    @updatedAt
 
   streamings   Streaming[]
+
+  @@name("grupo")
 }
 
 model Streaming {
   id                       Int                  @id @default(autoincrement())
+  contaId                  Int
   streamingCatalogoId      Int
   valorIntegral            Decimal
   limiteParticipantes      Int
@@ -124,9 +136,12 @@ model Streaming {
   createdAt                DateTime             @default(now())
   updatedAt                DateTime             @updatedAt
 
+  conta                    Conta                @relation(fields: [contaId], references: [id])
   catalogo                 StreamingCatalogo    @relation(fields: [streamingCatalogoId], references: [id])
   grupos                    GrupoStreaming[]
   assinaturas               Assinatura[]
+
+  @@name("streaming")
 }
 
 model GrupoStreaming {
@@ -139,6 +154,8 @@ model GrupoStreaming {
   grupo        Grupo      @relation(fields: [grupoId], references: [id])
 
   @@unique([streamingId, grupoId])
+
+  @@name("grupo_streaming")
 }
 
 model Participante {
@@ -156,6 +173,8 @@ model Participante {
   conta           Conta         @relation(fields: [contaId], references: [id])
   usuario         Usuario?      @relation(fields: [userId], references: [id])
   assinaturas     Assinatura[]
+
+  @@name("participante")
 }
 
 model Assinatura {
@@ -177,4 +196,6 @@ model Assinatura {
   streaming         Streaming           @relation(fields: [streamingId], references: [id])
 
   @@unique([participanteId, streamingId])
+
+  @@name("assinatura")
 }

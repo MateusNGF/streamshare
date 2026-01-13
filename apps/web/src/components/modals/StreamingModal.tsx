@@ -1,56 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { getCatalogos } from "@/actions/streamings";
 
 interface StreamingModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: StreamingFormData) => void;
     streaming?: StreamingFormData;
+    loading?: boolean;
 }
 
 export interface StreamingFormData {
-    catalogo: string;
+    catalogoId: string;
     valorIntegral: string;
     limiteParticipantes: string;
     dataVencimento: string;
-    credenciaisLogin?: string;
-    credenciaisSenha?: string;
 }
-
-const catalogOptions = [
-    { value: "netflix", label: "Netflix" },
-    { value: "spotify", label: "Spotify" },
-    { value: "disney", label: "Disney+" },
-    { value: "hbo", label: "HBO Max" },
-    { value: "amazon", label: "Amazon Prime" },
-    { value: "youtube", label: "YouTube Premium" },
-];
 
 export function StreamingModal({
     isOpen,
     onClose,
     onSave,
     streaming,
+    loading,
 }: StreamingModalProps) {
+    const [catalogos, setCatalogos] = useState<{ value: string; label: string }[]>([]);
     const [formData, setFormData] = useState<StreamingFormData>(
         streaming || {
-            catalogo: "netflix",
+            catalogoId: "",
             valorIntegral: "",
             limiteParticipantes: "",
             dataVencimento: "",
-            credenciaisLogin: "",
-            credenciaisSenha: "",
         }
     );
 
+    useEffect(() => {
+        async function fetchCatalogos() {
+            try {
+                const data = await getCatalogos();
+                setCatalogos(data.map(c => ({ value: String(c.id), label: c.nome })));
+                if (!streaming && data.length > 0 && !formData.catalogoId) {
+                    setFormData(prev => ({ ...prev, catalogoId: String(data[0].id) }));
+                }
+            } catch (error) {
+                console.error("Error fetching catalogos:", error);
+            }
+        }
+        if (isOpen) {
+            fetchCatalogos();
+        }
+    }, [isOpen, streaming]);
+
+    // Sync state when editing
+    useEffect(() => {
+        if (streaming) {
+            setFormData(streaming);
+        } else if (isOpen && !streaming) {
+            // Reset for new item, but keep catalog if already set by fetch
+            setFormData(prev => ({
+                ...prev,
+                valorIntegral: "",
+                limiteParticipantes: "",
+                dataVencimento: "",
+            }));
+        }
+    }, [streaming, isOpen]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.catalogoId) {
+            alert("Selecione um serviço do catálogo.");
+            return;
+        }
         onSave(formData);
-        onClose();
     };
 
     const handleChange = (field: keyof StreamingFormData, value: string) => {
@@ -66,30 +92,32 @@ export function StreamingModal({
                 <>
                     <button
                         onClick={onClose}
-                        className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                        className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all"
+                        disabled={loading || catalogos.length === 0}
+                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 text-sm sm:text-base"
                     >
-                        {streaming ? "Salvar" : "Criar"}
+                        {loading ? "Processando..." : streaming ? "Salvar" : "Criar"}
                     </button>
                 </>
             }
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 <Select
-                    label="Serviço"
-                    options={catalogOptions}
-                    value={formData.catalogo}
-                    onChange={(e) => handleChange("catalogo", e.target.value)}
+                    label="Serviço do Catálogo"
+                    options={catalogos}
+                    value={formData.catalogoId}
+                    onChange={(e) => handleChange("catalogoId", e.target.value)}
                     required
+                    disabled={!!streaming} // Optional: usually you won't change the catalog item itself once created
                 />
                 <div className="grid grid-cols-2 gap-4">
                     <Input
-                        label="Valor Integral"
+                        label="Valor Integral (Mensal)"
                         type="number"
                         step="0.01"
                         value={formData.valorIntegral}
@@ -98,7 +126,7 @@ export function StreamingModal({
                         required
                     />
                     <Input
-                        label="Limite de Participantes"
+                        label="Limite de Vagas"
                         type="number"
                         value={formData.limiteParticipantes}
                         onChange={(e) => handleChange("limiteParticipantes", e.target.value)}
@@ -107,26 +135,15 @@ export function StreamingModal({
                     />
                 </div>
                 <Input
-                    label="Data de Vencimento"
+                    label="Próximo Vencimento Master"
                     type="date"
                     value={formData.dataVencimento}
                     onChange={(e) => handleChange("dataVencimento", e.target.value)}
                     required
                 />
-                <Input
-                    label="Login (opcional)"
-                    type="text"
-                    value={formData.credenciaisLogin}
-                    onChange={(e) => handleChange("credenciaisLogin", e.target.value)}
-                    placeholder="usuario@email.com"
-                />
-                <Input
-                    label="Senha (opcional)"
-                    type="password"
-                    value={formData.credenciaisSenha}
-                    onChange={(e) => handleChange("credenciaisSenha", e.target.value)}
-                    placeholder="********"
-                />
+                <p className="text-xs text-gray-400 mt-2">
+                    * Configure o valor total que você paga pelo serviço e o limite de vagas disponíveis.
+                </p>
             </form>
         </Modal>
     );

@@ -9,6 +9,7 @@ interface DeleteModalProps {
     onConfirm: () => void;
     title: string;
     message: string;
+    loading?: boolean;
 }
 
 export function DeleteModal({
@@ -17,10 +18,10 @@ export function DeleteModal({
     onConfirm,
     title,
     message,
+    loading,
 }: DeleteModalProps) {
     const handleConfirm = () => {
         onConfirm();
-        onClose();
     };
 
     return (
@@ -38,9 +39,10 @@ export function DeleteModal({
                     </button>
                     <button
                         onClick={handleConfirm}
-                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25 transition-all"
+                        disabled={loading}
+                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25 transition-all disabled:opacity-50"
                     >
-                        Excluir
+                        {loading ? "Excluindo..." : "Excluir"}
                     </button>
                 </>
             }
