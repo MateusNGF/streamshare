@@ -2,6 +2,8 @@
 node_modules/
 .pnp
 .pnp.js
+packages/database/data/**/*
+data/**/*
 
 # Build outputs
 .next/
