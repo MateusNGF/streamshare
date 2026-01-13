@@ -5,11 +5,11 @@ import {
   TrendingUp,
   Shield,
   CheckCircle2,
-  Menu,
   Facebook,
   Twitter,
   Instagram,
   Linkedin,
+  ArrowRight,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -211,8 +211,8 @@ export default function LandingPage() {
               <div
                 key={idx}
                 className={`bg-white p-8 rounded-2xl ${plan.highlight
-                  ? "border-2 border-primary shadow-xl scale-105"
-                  : "border border-gray-100 shadow-sm"
+                    ? "border-2 border-primary shadow-xl scale-105"
+                    : "border border-gray-100 shadow-sm"
                   }`}
               >
                 {plan.highlight && (
@@ -238,8 +238,8 @@ export default function LandingPage() {
                 <Link
                   href="/login"
                   className={`block text-center px-6 py-3 rounded-xl font-bold transition-all ${plan.highlight
-                    ? "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25"
-                    : "border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                      ? "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25"
+                      : "border-2 border-primary text-primary hover:bg-primary hover:text-white"
                     }`}
                 >
                   Começar Agora

@@ -1,6 +1,29 @@
+"use client";
+
+import { useState } from "react";
 import { Building2, User, Bell, Shield, CreditCard, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LogoutModal } from "@/components/modals/LogoutModal";
 
 export default function ConfiguracoesPage() {
+    const router = useRouter();
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleLogout = async () => {
+        setLoading(true);
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            router.push("/login");
+            router.refresh();
+        } catch (error) {
+            console.error("Logout failed", error);
+        } finally {
+            setLoading(false);
+            setIsLogoutModalOpen(false);
+        }
+    };
+
     return (
         <div className="p-8 pb-12">
             {/* Header */}
@@ -153,12 +176,22 @@ export default function ConfiguracoesPage() {
                         </div>
                     </section>
 
-                    <button className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl font-bold transition-all">
+                    <button
+                        onClick={() => setIsLogoutModalOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl font-bold transition-all"
+                    >
                         <LogOut size={20} />
                         Sair da Conta
                     </button>
                 </div>
             </div>
+
+            <LogoutModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={handleLogout}
+                loading={loading}
+            />
         </div>
     );
 }

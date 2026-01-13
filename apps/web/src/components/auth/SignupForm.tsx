@@ -1,31 +1,67 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Chrome } from "lucide-react";
 
 export function SignupForm() {
+    const router = useRouter();
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [acceptTerms, setAcceptTerms] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
+
         if (password !== confirmPassword) {
-            alert("As senhas não coincidem!");
+            setError("As senhas não coincidem!");
             return;
         }
+
         if (!acceptTerms) {
-            alert("Você deve aceitar os termos e condições!");
+            setError("Você deve aceitar os termos e condições!");
             return;
         }
-        console.log("Signup:", { nome, email, password });
+
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, email, senha: password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Erro ao criar conta");
+            }
+
+            // Redirect to dashboard
+            router.push("/dashboard");
+            router.refresh();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
+                    {error}
+                </div>
+            )}
+
             <Input
                 label="Nome completo"
                 type="text"
@@ -74,9 +110,10 @@ export function SignupForm() {
 
             <button
                 type="submit"
-                className="w-full bg-primary hover:bg-accent text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all"
+                disabled={loading}
+                className="w-full bg-primary hover:bg-accent text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                Criar conta
+                {loading ? "Criando conta..." : "Criar conta"}
             </button>
 
             <div className="flex items-center gap-4 my-6">
