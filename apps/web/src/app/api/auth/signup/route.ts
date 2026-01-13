@@ -38,19 +38,38 @@ export async function POST(request: NextRequest) {
         // Hash password
         const hashedPassword = await hashPassword(senha);
 
-        // Create user
-        const user = await prisma.usuario.create({
-            data: {
-                nome,
-                email,
-                senhaHash: hashedPassword,
-            },
-            select: {
-                id: true,
-                nome: true,
-                email: true,
-                createdAt: true,
-            },
+        // Create user and account in a transaction
+        const user = await prisma.$transaction(async (tx) => {
+            const newUser = await tx.usuario.create({
+                data: {
+                    nome,
+                    email,
+                    senhaHash: hashedPassword,
+                },
+            });
+
+            const newConta = await tx.conta.create({
+                data: {
+                    nome: `Conta de ${nome}`,
+                    email: email, // Use user email for account email
+                    plano: "basico",
+                },
+            });
+
+            await tx.contaUsuario.create({
+                data: {
+                    contaId: newConta.id,
+                    usuarioId: newUser.id,
+                    nivelAcesso: "owner",
+                },
+            });
+
+            return {
+                id: newUser.id,
+                nome: newUser.nome,
+                email: newUser.email,
+                createdAt: newUser.createdAt,
+            };
         });
 
         // Generate JWT token

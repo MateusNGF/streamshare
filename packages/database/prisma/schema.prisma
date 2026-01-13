@@ -42,8 +42,8 @@ enum StatusAssinatura {
 
 model Conta {
   id             Int             @id @default(autoincrement())
-  nome           String
-  email          String          @unique
+  nome           String?
+  email          String?         @unique
   plano          PlanoConta
   limiteGrupos   Int             @default(5)
   isAtivo        Boolean         @default(true)
