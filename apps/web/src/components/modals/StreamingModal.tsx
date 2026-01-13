@@ -40,6 +40,29 @@ export function StreamingModal({
             dataVencimento: "",
         }
     );
+    const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
+
+    const validate = () => {
+        const newErrors: Partial<Record<keyof StreamingFormData, string>> = {};
+        if (!formData.catalogoId) newErrors.catalogoId = "Selecione um serviço";
+
+        const valor = parseFloat(formData.valorIntegral);
+        if (isNaN(valor) || valor <= 0) {
+            newErrors.valorIntegral = "Valor deve ser maior que zero";
+        }
+
+        const limite = parseInt(formData.limiteParticipantes);
+        if (isNaN(limite) || limite <= 0) {
+            newErrors.limiteParticipantes = "Limite deve ser maior que zero";
+        }
+
+        if (!formData.dataVencimento) {
+            newErrors.dataVencimento = "Data de vencimento é obrigatória";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     useEffect(() => {
         async function fetchCatalogos() {
@@ -78,15 +101,16 @@ export function StreamingModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.catalogoId) {
-            alert("Selecione um serviço do catálogo.");
-            return;
+        if (validate()) {
+            onSave(formData);
         }
-        onSave(formData);
     };
 
     const handleChange = (field: keyof StreamingFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+        if (errors[field]) {
+            setErrors((prev) => ({ ...prev, [field]: undefined }));
+        }
     };
 
     return (
@@ -190,6 +214,7 @@ export function StreamingModal({
                                 value={formData.valorIntegral}
                                 onChange={(e) => handleChange("valorIntegral", e.target.value)}
                                 placeholder="55.90"
+                                error={errors.valorIntegral}
                                 required
                             />
                             <Input
@@ -198,6 +223,7 @@ export function StreamingModal({
                                 value={formData.limiteParticipantes}
                                 onChange={(e) => handleChange("limiteParticipantes", e.target.value)}
                                 placeholder="5"
+                                error={errors.limiteParticipantes}
                                 required
                             />
                         </div>
@@ -206,6 +232,7 @@ export function StreamingModal({
                             type="date"
                             value={formData.dataVencimento}
                             onChange={(e) => handleChange("dataVencimento", e.target.value)}
+                            error={errors.dataVencimento}
                             required
                         />
                         <p className="text-xs text-gray-400 mt-2">

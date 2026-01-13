@@ -39,14 +39,33 @@ export function ParticipantModal({
             email: "",
         }
     );
+    const [errors, setErrors] = useState<Partial<Record<keyof ParticipantFormData, string>>>({});
+
+    const validate = () => {
+        const newErrors: Partial<Record<keyof ParticipantFormData, string>> = {};
+        if (!formData.nome.trim()) newErrors.nome = "Nome é obrigatório";
+        if (!formData.whatsappNumero.trim()) newErrors.whatsappNumero = "WhatsApp é obrigatório";
+        if (!formData.cpf.trim()) {
+            newErrors.cpf = "CPF é obrigatório";
+        } else if (formData.cpf.replace(/\D/g, "").length !== 11) {
+            newErrors.cpf = "CPF deve ter 11 dígitos";
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
+        if (validate()) {
+            onSave(formData);
+        }
     };
 
     const handleChange = (field: keyof ParticipantFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+        if (errors[field]) {
+            setErrors((prev) => ({ ...prev, [field]: undefined }));
+        }
     };
 
     return (
@@ -79,6 +98,7 @@ export function ParticipantModal({
                     value={formData.nome}
                     onChange={(e) => handleChange("nome", e.target.value)}
                     placeholder="Ex: Maria Silva"
+                    error={errors.nome}
                     required
                 />
                 <Input
@@ -87,6 +107,7 @@ export function ParticipantModal({
                     value={formData.whatsappNumero}
                     onChange={(e) => handleChange("whatsappNumero", e.target.value)}
                     placeholder="(11) 98765-4321"
+                    error={errors.whatsappNumero}
                     required
                 />
                 <Input
@@ -95,6 +116,7 @@ export function ParticipantModal({
                     value={formData.cpf}
                     onChange={(e) => handleChange("cpf", e.target.value)}
                     placeholder="123.456.789-00"
+                    error={errors.cpf}
                     required
                 />
                 <Input
@@ -103,6 +125,7 @@ export function ParticipantModal({
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                     placeholder="maria@email.com"
+                    error={errors.email}
                 />
             </form>
         </Modal>

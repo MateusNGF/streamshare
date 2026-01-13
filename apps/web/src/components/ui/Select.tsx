@@ -17,12 +17,13 @@ export function Select({ label, options, error, className = "", ...props }: Sele
             {label && (
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     {label}
+                    {props.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
             )}
             <select
                 className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all bg-white ${error
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                        : "border-gray-200 focus:border-primary"
+                    ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-gray-200 focus:border-primary"
                     } ${className}`}
                 {...props}
             >

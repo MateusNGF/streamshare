@@ -13,19 +13,19 @@ export function SignupForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [acceptTerms, setAcceptTerms] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [errors, setErrors] = useState<{ general?: string; confirmPassword?: string; acceptTerms?: string }>({});
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError("");
+        setErrors({});
 
         if (password !== confirmPassword) {
-            setError("As senhas não coincidem!");
+            setErrors({ confirmPassword: "As senhas não coincidem!" });
             return;
         }
 
         if (!acceptTerms) {
-            setError("Você deve aceitar os termos e condições!");
+            setErrors({ acceptTerms: "Você deve aceitar os termos e condições!" });
             return;
         }
 
@@ -48,7 +48,7 @@ export function SignupForm() {
             router.push("/dashboard");
             router.refresh();
         } catch (err: any) {
-            setError(err.message);
+            setErrors({ general: err.message });
         } finally {
             setLoading(false);
         }
@@ -56,9 +56,9 @@ export function SignupForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
-                    {error}
+            {errors.general && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
+                    {errors.general}
                 </div>
             )}
 
@@ -92,21 +92,27 @@ export function SignupForm() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
+                error={errors.confirmPassword}
                 required
             />
 
-            <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="w-4 h-4 text-primary rounded mt-1"
-                    required
-                />
-                <span className="text-sm text-gray-600">
-                    Eu aceito os termos e condições e a política de privacidade
-                </span>
-            </label>
+            <div className="space-y-2">
+                <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className={`w-4 h-4 text-primary rounded mt-1 ${errors.acceptTerms ? "border-red-500" : ""}`}
+                        required
+                    />
+                    <span className="text-sm text-gray-600">
+                        Eu aceito os termos e condições e a política de privacidade
+                    </span>
+                </label>
+                {errors.acceptTerms && (
+                    <p className="text-xs text-red-500 ml-6">{errors.acceptTerms}</p>
+                )}
+            </div>
 
             <button
                 type="submit"

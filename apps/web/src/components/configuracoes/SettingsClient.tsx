@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Building2, User, Bell, Shield, CreditCard, LogOut, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
+import { Input } from "@/components/ui/Input";
 import { updateProfile, updateAccount } from "@/actions/settings";
 
 interface SettingsClientProps {
@@ -101,30 +102,20 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                             <h2 className="text-xl font-bold text-gray-900">Informações da Conta</h2>
                         </div>
                         <form onSubmit={onUpdateAccount} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nome da Conta
-                                </label>
-                                <input
-                                    type="text"
-                                    value={accountData.nome}
-                                    onChange={(e) => setAccountData({ ...accountData, nome: e.target.value })}
-                                    placeholder="Ex: Minha Família"
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email de Contato
-                                </label>
-                                <input
-                                    type="email"
-                                    value={accountData.email}
-                                    onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
-                                    placeholder="Ex: financeiro@email.com"
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                />
-                            </div>
+                            <Input
+                                label="Nome da Conta"
+                                type="text"
+                                value={accountData.nome}
+                                onChange={(e) => setAccountData({ ...accountData, nome: e.target.value })}
+                                placeholder="Ex: Minha Família"
+                            />
+                            <Input
+                                label="Email de Contato"
+                                type="email"
+                                value={accountData.email}
+                                onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
+                                placeholder="Ex: financeiro@email.com"
+                            />
                             <div className="pt-4">
                                 <button
                                     type="submit"
@@ -144,31 +135,22 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                             <h2 className="text-xl font-bold text-gray-900">Perfil do Usuário</h2>
                         </div>
                         <form onSubmit={onUpdateProfile} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nome
-                                </label>
-                                <input
-                                    type="text"
-                                    value={profileData.nome}
-                                    onChange={(e) => setProfileData({ ...profileData, nome: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email de Login
-                                </label>
-                                <input
-                                    type="email"
-                                    value={profileData.email}
-                                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-gray-50 cursor-not-allowed"
-                                    disabled
-                                />
-                                <p className="text-[10px] text-gray-400 mt-1">* O email de login não pode ser alterado por segurança.</p>
-                            </div>
+                            <Input
+                                label="Nome"
+                                type="text"
+                                value={profileData.nome}
+                                onChange={(e) => setProfileData({ ...profileData, nome: e.target.value })}
+                                required
+                            />
+                            <Input
+                                label="Email de Login"
+                                type="email"
+                                value={profileData.email}
+                                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                disabled
+                                className="bg-gray-50 cursor-not-allowed"
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">* O email de login não pode ser alterado por segurança.</p>
                             <div className="pt-4">
                                 <button
                                     type="submit"
