@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanoConta {
+  basico
+  pro
+  premium
+}
+
+enum ProviderAuth {
+  local
+  google
+}
+
+enum NivelAcesso {
+  owner
+  admin
+}
+
+enum FrequenciaPagamento {
+  mensal
+  trimestral
+  semestral
+  anual
+}
+
+enum StatusAssinatura {
+  ativa
+  suspensa
+  cancelada
+}
+
+//////////////////////////////////////////////////
+// MODELS
+//////////////////////////////////////////////////
+
+model Conta {
+  id             Int             @id @default(autoincrement())
+  nome           String
+  email          String          @unique
+  plano          PlanoConta
+  limiteGrupos   Int             @default(5)
+  isAtivo        Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  usuarios       ContaUsuario[]
+  grupos         Grupo[]
+  participantes  Participante[]
+}
+
+model Usuario {
+  id           Int             @id @default(autoincrement())
+  email        String          @unique
+  nome         String
+  senhaHash   String?
+  provider     ProviderAuth    @default(local)
+  isAtivo      Boolean         @default(true)
+  ultimoLogin  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  contas       ContaUsuario[]
+  participante Participante?
+}
+
+model ContaUsuario {
+  id          Int         @id @default(autoincrement())
+  contaId     Int
+  usuarioId   Int
+  nivelAcesso NivelAcesso @default(admin)
+  isAtivo     Boolean     @default(true)
+
+  conta       Conta       @relation(fields: [contaId], references: [id])
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@unique([contaId, usuarioId])
+}
+
+model Grupo {
+  id                         Int                @id @default(autoincrement())
+  contaId                    Int
+  nome                       String
+  descricao                  String?
+  linkConvite                String             @unique
+  permitirEscolhaStreamings  Boolean            @default(true)
+  isPublico                  Boolean            @default(false)
+  isAtivo                    Boolean            @default(true)
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+
+  conta                      Conta              @relation(fields: [contaId], references: [id])
+  streamings                 GrupoStreaming[]
+}
+
+model StreamingCatalogo {
+  id           Int         @id @default(autoincrement())
+  nome         String
+  iconeUrl     String?
+  corPrimaria  String      @default("#000000")
+  isAtivo      Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  streamings   Streaming[]
+}
+
+model Streaming {
+  id                       Int                  @id @default(autoincrement())
+  streamingCatalogoId      Int
+  valorIntegral            Decimal
+  limiteParticipantes      Int
+  dataVencimento           DateTime?
+  credenciaisLogin         String?
+  credenciaisSenha         String?
+  frequenciasHabilitadas   String               @default("mensal,trimestral,semestral,anual")
+  isAtivo                  Boolean              @default(true)
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+
+  catalogo                 StreamingCatalogo    @relation(fields: [streamingCatalogoId], references: [id])
+  grupos                    GrupoStreaming[]
+  assinaturas               Assinatura[]
+}
+
+model GrupoStreaming {
+  id           Int        @id @default(autoincrement())
+  streamingId  Int
+  grupoId      Int
+  isAtivo      Boolean    @default(true)
+
+  streaming    Streaming  @relation(fields: [streamingId], references: [id])
+  grupo        Grupo      @relation(fields: [grupoId], references: [id])
+
+  @@unique([streamingId, grupoId])
+}
+
+model Participante {
+  id              Int           @id @default(autoincrement())
+  contaId         Int
+  nome            String
+  whatsappNumero  String        @unique
+  cpf             String        @unique
+  email           String?
+  userId          Int?          @unique
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  conta           Conta         @relation(fields: [contaId], references: [id])
+  usuario         Usuario?      @relation(fields: [userId], references: [id])
+  assinaturas     Assinatura[]
+}
+
+model Assinatura {
+  id                Int                 @id @default(autoincrement())
+  participanteId    Int
+  streamingId       Int
+  frequencia        FrequenciaPagamento
+  status            StatusAssinatura    @default(ativa)
+  dataInicio        DateTime
+  dataVencimento    DateTime
+  valor             Decimal
+  diasAtraso        Int                 @default(0)
+  dataSuspensao   DateTime?
+  motivoSuspensao String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  participante      Participante        @relation(fields: [participanteId], references: [id])
+  streaming         Streaming           @relation(fields: [streamingId], references: [id])
+
+  @@unique([participanteId, streamingId])
+}
