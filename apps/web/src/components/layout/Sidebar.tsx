@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard,
@@ -73,9 +74,13 @@ export function Sidebar() {
                 )}
             >
                 <div className="p-6 flex items-center gap-3">
-                    <div className="bg-primary p-2 rounded-lg">
-                        <Play className="text-white fill-white" size={24} />
-                    </div>
+                    <Image
+                        src="/assets/logo-branca.jpg"
+                        alt="StreamShare"
+                        width={40}
+                        height={40}
+                        className="rounded-lg"
+                    />
                     <span className="text-xl font-bold text-gray-900">StreamShare</span>
                 </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Spinner } from "@/components/ui/Spinner";
 import { CatalogoPicker } from "@/components/streamings/CatalogoPicker";
 import { getCatalogos } from "@/actions/streamings";
 import { cn } from "@/lib/utils";
@@ -139,8 +140,9 @@ export function StreamingModal({
                         <button
                             onClick={handleSubmit}
                             disabled={loading || catalogos.length === 0}
-                            className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 text-sm sm:text-base"
+                            className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center gap-2"
                         >
+                            {loading && <Spinner size="sm" color="white" />}
                             {loading ? "Processando..." : streaming ? "Salvar" : "Criar"}
                         </button>
                     )}

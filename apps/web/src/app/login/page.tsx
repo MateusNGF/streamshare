@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Play } from "lucide-react";
+import Image from "next/image";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 
@@ -15,9 +15,13 @@ export default function AuthPage() {
             <div className="bg-white rounded-[32px] shadow-2xl p-8 md:p-12 w-full max-w-md">
                 {/* Logo */}
                 <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="bg-primary p-3 rounded-2xl">
-                        <Play className="text-white fill-white" size={32} />
-                    </div>
+                    <Image
+                        src="/assets/logo-branca.jpg"
+                        alt="StreamShare Logo"
+                        width={64}
+                        height={64}
+                        className="rounded-2xl"
+                    />
                     <span className="text-3xl font-bold text-gray-900">StreamShare</span>
                 </div>
 
@@ -26,8 +30,8 @@ export default function AuthPage() {
                     <button
                         onClick={() => setActiveTab("login")}
                         className={`flex-1 py-3 px-6 rounded-lg font-bold transition-all duration-300 ${activeTab === "login"
-                                ? "bg-primary text-white shadow-md"
-                                : "text-gray-600 hover:text-gray-900"
+                            ? "bg-primary text-white shadow-md"
+                            : "text-gray-600 hover:text-gray-900"
                             }`}
                     >
                         Entrar
@@ -35,8 +39,8 @@ export default function AuthPage() {
                     <button
                         onClick={() => setActiveTab("signup")}
                         className={`flex-1 py-3 px-6 rounded-lg font-bold transition-all duration-300 ${activeTab === "signup"
-                                ? "bg-primary text-white shadow-md"
-                                : "text-gray-600 hover:text-gray-900"
+                            ? "bg-primary text-white shadow-md"
+                            : "text-gray-600 hover:text-gray-900"
                             }`}
                     >
                         Cadastrar
@@ -59,16 +63,16 @@ export default function AuthPage() {
                 <div className="relative overflow-hidden">
                     <div
                         className={`transition-all duration-500 ease-in-out ${activeTab === "login"
-                                ? "opacity-100 translate-x-0"
-                                : "opacity-0 -translate-x-full absolute inset-0"
+                            ? "opacity-100 translate-x-0"
+                            : "opacity-0 -translate-x-full absolute inset-0"
                             }`}
                     >
                         <LoginForm />
                     </div>
                     <div
                         className={`transition-all duration-500 ease-in-out ${activeTab === "signup"
-                                ? "opacity-100 translate-x-0"
-                                : "opacity-0 translate-x-full absolute inset-0"
+                            ? "opacity-100 translate-x-0"
+                            : "opacity-0 translate-x-full absolute inset-0"
                             }`}
                     >
                         <SignupForm />

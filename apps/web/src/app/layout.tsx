@@ -2,13 +2,44 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
-import { SkipLink } from "@/components/layout/SkipLink";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StreamShare | Gestão de Streamings",
-  description: "Gestão de Streamings Compartilhados",
+  title: "StreamShare",
+  description: "Plataforma para gestão colaborativa de assinaturas de streaming",
+  authors: [{ name: "StreamShare" }],
+  icons: {
+    icon: "/assets/favicon.ico",
+    shortcut: "/assets/favicon.ico",
+  },
+  openGraph: {
+    title: "StreamShare",
+    description: "Plataforma para gestão colaborativa de assinaturas de streaming",
+    url: "/",
+    siteName: "StreamShare",
+    images: [
+      {
+        url: "/assets/banner-dois.jpg",
+        width: 1200,
+        height: 630,
+        alt: "StreamShare - Gestão colaborativa de assinaturas de streaming",
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@streamshare_br",
+    title: "StreamShare",
+    description: "Plataforma para gestão colaborativa de assinaturas de streaming",
+    images: ["/assets/banner-tres.jpg"],
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1.0,
+  },
 };
 
 export default function RootLayout({
@@ -18,8 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} antialiased flex flex-col lg:flex-row bg-gray-50/50`}>
-        <SkipLink />
+      <body className={`${inter.className} antialiased flex bg-gray-50/50`}>
         <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>

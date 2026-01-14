@@ -6,8 +6,11 @@ Bem-vindo à documentação oficial do projeto StreamShare.
 
 - **[Guia de Instalação e Execução](./COMO_RODAR.md)**: Passo-a-passo para configurar o ambiente e rodar o projeto.
 - **[Design System](./DESIGN_SYSTEM.md)**: Guia completo de UI/UX, cores, tipografia, componentes e padrões de layout.
-- **[Orientação de Domínio](./orientação.txt)**: (Arquivo original) Resumo consolidado das regras de negócio e entitades.
-- **[Schema do Banco de Dados](./schema.prisma)**: (Arquivo original) Definição das tabelas e relacionamentos do Prisma.
+- **[Componentes Reutilizáveis](./REUSABLE_COMPONENTS.md)**: PageContainer, PageHeader e componentes de loading.
+- **[Loading States](./LOADING_STATES.md)**: Guia completo de estados de carregamento, Skeleton, Spinner e loading.tsx.
+- **[Responsividade e Acessibilidade](./RESPONSIVENESS_ACCESSIBILITY.md)**: Diretrizes de design responsivo e acessível.
+- **[Banco de Dados](./DATABASE.md)**: Documentação do schema e relacionamentos.
+- **[Orientação de Domínio](./orientação.txt)**: (Arquivo original) Resumo consolidado das regras de negócio e entidades.
 
 ## Visão Rápida
 

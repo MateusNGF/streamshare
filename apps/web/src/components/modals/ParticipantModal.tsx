@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface ParticipantModalProps {
     isOpen: boolean;
@@ -84,8 +85,9 @@ export function ParticipantModal({
                     <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
+                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
+                        {loading && <Spinner size="sm" color="white" />}
                         {loading ? "Processando..." : (participant ? "Salvar" : "Criar")}
                     </button>
                 </>

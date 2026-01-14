@@ -1,6 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Play,
   Users,
   TrendingUp,
   Shield,
@@ -19,9 +19,13 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-xl">
-              <Play className="text-white fill-white" size={24} />
-            </div>
+            <Image
+              src="/assets/logo-branca.jpg"
+              alt="StreamShare Logo"
+              width={48}
+              height={48}
+              className="rounded-xl"
+            />
             <span className="text-2xl font-bold text-gray-900">StreamShare</span>
           </div>
 
@@ -80,6 +84,22 @@ export default function LandingPage() {
                 Ver Demonstração
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Streaming Platforms Showcase */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto">
+            <Image
+              src="/assets/banner-dois.jpg"
+              alt="Economize até 80% em streaming - Netflix, Disney+, Prime Video, Spotify, HBO Max e mais"
+              width={1200}
+              height={630}
+              className="rounded-3xl shadow-2xl"
+              priority
+            />
           </div>
         </div>
       </section>
@@ -211,8 +231,8 @@ export default function LandingPage() {
               <div
                 key={idx}
                 className={`bg-white p-8 rounded-2xl ${plan.highlight
-                    ? "border-2 border-primary shadow-xl scale-105"
-                    : "border border-gray-100 shadow-sm"
+                  ? "border-2 border-primary shadow-xl scale-105"
+                  : "border border-gray-100 shadow-sm"
                   }`}
               >
                 {plan.highlight && (
@@ -238,8 +258,8 @@ export default function LandingPage() {
                 <Link
                   href="/login"
                   className={`block text-center px-6 py-3 rounded-xl font-bold transition-all ${plan.highlight
-                      ? "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25"
-                      : "border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                    ? "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25"
+                    : "border-2 border-primary text-primary hover:bg-primary hover:text-white"
                     }`}
                 >
                   Começar Agora
@@ -295,9 +315,13 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-primary p-2 rounded-xl">
-                  <Play className="text-white fill-white" size={20} />
-                </div>
+                <Image
+                  src="/assets/logo-branca.jpg"
+                  alt="StreamShare"
+                  width={40}
+                  height={40}
+                  className="rounded-xl"
+                />
                 <span className="text-xl font-bold">StreamShare</span>
               </div>
               <p className="text-gray-400">Gestão inteligente de assinaturas compartilhadas</p>
