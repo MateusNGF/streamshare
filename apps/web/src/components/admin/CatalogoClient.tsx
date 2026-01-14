@@ -1,10 +1,11 @@
 "use client";
-
 import { useState, useMemo } from "react";
 import { Plus, Search, Edit2, Trash2, ExternalLink } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { DeleteModal } from "@/components/modals/DeleteModal";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { createCatalogoItem, updateCatalogoItem, deleteCatalogoItem } from "@/actions/streamings";
 
 interface CatalogoItem {
@@ -78,39 +79,40 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
     };
 
     return (
-        <div className="p-8 pb-12">
-            <header className="flex items-center justify-between mb-10">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Catálogo Global</h1>
-                    <p className="text-gray-500 font-medium">Gerencie os serviços de streaming disponíveis no sistema</p>
-                </div>
-                <button
-                    onClick={() => {
-                        setSelectedItem(null);
-                        setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
-                        setIsModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all"
-                >
-                    <Plus size={20} />
-                    Novo Serviço
-                </button>
-            </header>
+        <PageContainer>
+            <PageHeader
+                title="Catálogo Global"
+                description="Gerencie os serviços de streaming disponíveis no sistema"
+                action={
+                    <button
+                        onClick={() => {
+                            setSelectedItem(null);
+                            setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
+                            setIsModalOpen(true);
+                        }}
+                        aria-label="Adicionar novo serviço ao catálogo"
+                        className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
+                    >
+                        <Plus size={20} />
+                        Novo Serviço
+                    </button>
+                }
+            />
 
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-8">
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
-                    <Search size={20} className="text-gray-400" />
+                    <Search size={20} className="text-gray-400 flex-shrink-0" />
                     <input
                         type="text"
                         placeholder="Buscar por serviço..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-400"
+                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500 min-w-0"
                     />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 {filteredData.map((item) => (
                     <div
                         key={item.id}
@@ -244,6 +246,6 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                 title="Remover do Catálogo"
                 message={`Tem certeza que deseja remover ${selectedItem?.nome}? Isso o tornará indisponível para novos streamings.`}
             />
-        </div>
+        </PageContainer>
     );
 }

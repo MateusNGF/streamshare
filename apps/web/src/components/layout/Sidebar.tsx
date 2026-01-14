@@ -68,7 +68,7 @@ export function Sidebar() {
             {/* Sidebar */}
             <div
                 className={cn(
-                    "fixed lg:static w-64 bg-white border-r h-screen flex flex-col z-40 transition-transform duration-300 lg:transform-none",
+                    "fixed lg:static w-64 bg-white border-r h-screen flex flex-col z-[42] transition-transform duration-300 lg:transform-none",
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
             >

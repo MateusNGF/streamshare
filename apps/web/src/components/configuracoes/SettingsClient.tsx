@@ -5,6 +5,8 @@ import { Building2, User, Bell, Shield, CreditCard, LogOut, Check } from "lucide
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
 import { Input } from "@/components/ui/Input";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { updateProfile, updateAccount } from "@/actions/settings";
 
 interface SettingsClientProps {
@@ -77,22 +79,21 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     };
 
     return (
-        <div className="p-8 pb-12">
-            {/* Header */}
-            <header className="mb-10 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
-                    <p className="text-gray-500 font-medium">Gerencie as configurações da sua conta</p>
-                </div>
-                {success && (
-                    <div className="bg-green-50 text-green-600 px-4 py-2 rounded-xl border border-green-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                        <Check size={18} />
-                        <span className="font-bold">{success}</span>
-                    </div>
-                )}
-            </header>
+        <PageContainer>
+            <PageHeader
+                title="Configurações"
+                description="Gerencie as configurações da sua conta"
+                action={
+                    success && (
+                        <div className="bg-green-50 text-green-600 px-4 py-2 rounded-xl border border-green-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                            <Check size={18} />
+                            <span className="font-bold text-sm md:text-base">{success}</span>
+                        </div>
+                    )
+                }
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* Main Settings */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Account Info */}
@@ -251,6 +252,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                 onConfirm={handleLogout}
                 loading={loading}
             />
-        </div>
+        </PageContainer>
     );
 }
