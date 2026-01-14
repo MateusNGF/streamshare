@@ -85,16 +85,17 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
     };
 
     return (
-        <div className="p-8 pb-12">
+        <div className="p-4 md:p-8 pb-8 md:pb-12">
             {/* Header */}
-            <header className="flex items-center justify-between mb-10">
+            <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 md:mb-10">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Participantes</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Participantes</h1>
                     <p className="text-gray-500 font-medium">Gerencie os participantes das assinaturas</p>
                 </div>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all"
+                    aria-label="Adicionar novo participante"
+                    className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
                 >
                     <Plus size={20} />
                     Novo Participante
@@ -120,55 +121,57 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
             </div>
 
             {/* Stats (Real time) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                <div className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Total de Participantes</p>
-                    <p className="text-3xl font-bold text-gray-900">{initialData.length}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900">{initialData.length}</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Com Assinaturas</p>
-                    <p className="text-3xl font-bold text-green-600">
+                    <p className="text-2xl md:text-3xl font-bold text-green-600">
                         {initialData.filter((p) => p._count.assinaturas > 0).length}
                     </p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm font-medium mb-1">Sem Assinaturas</p>
-                    <p className="text-3xl font-bold text-gray-400">
+                    <p className="text-2xl md:text-3xl font-bold text-gray-400">
                         {initialData.filter((p) => p._count.assinaturas === 0).length}
                     </p>
                 </div>
             </div>
 
             {/* Participants Grid */}
-            {filteredParticipants.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {filteredParticipants.map((p) => (
-                        <ParticipantCard
-                            key={p.id}
-                            id={p.id}
-                            name={p.nome}
-                            whatsapp={p.whatsappNumero}
-                            email={p.email || undefined}
-                            cpf={p.cpf}
-                            subscriptionsCount={p._count.assinaturas}
-                            totalValue="0.00" // Still dynamic if we calculate it server-side or here
-                            status={p._count.assinaturas > 0 ? "ativa" : "inativo"}
-                            onEdit={() => {
-                                setSelectedParticipant(p);
-                                setIsEditModalOpen(true);
-                            }}
-                            onDelete={() => {
-                                setSelectedParticipant(p);
-                                setIsDeleteModalOpen(true);
-                            }}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                    <p className="text-gray-400 text-lg">Nenhum participante encontrado.</p>
-                </div>
-            )}
+            <div aria-live="polite" aria-atomic="true">
+                {filteredParticipants.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                        {filteredParticipants.map((p) => (
+                            <ParticipantCard
+                                key={p.id}
+                                id={p.id}
+                                name={p.nome}
+                                whatsapp={p.whatsappNumero}
+                                email={p.email || undefined}
+                                cpf={p.cpf}
+                                subscriptionsCount={p._count.assinaturas}
+                                totalValue="0.00" // Still dynamic if we calculate it server-side or here
+                                status={p._count.assinaturas > 0 ? "ativa" : "inativo"}
+                                onEdit={() => {
+                                    setSelectedParticipant(p);
+                                    setIsEditModalOpen(true);
+                                }}
+                                onDelete={() => {
+                                    setSelectedParticipant(p);
+                                    setIsDeleteModalOpen(true);
+                                }}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                        <p className="text-gray-400 text-base md:text-lg">Nenhum participante encontrado.</p>
+                    </div>
+                )}
+            </div>
 
             {/* Modals */}
             <ParticipantModal

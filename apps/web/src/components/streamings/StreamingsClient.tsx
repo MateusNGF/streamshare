@@ -98,16 +98,17 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
     }
 
     return (
-        <div className="p-8 pb-12">
+        <div className="p-4 md:p-8 pb-8 md:pb-12">
             {/* Header */}
-            <header className="flex items-center justify-between mb-10">
+            <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 md:mb-10">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Meu Catálogo</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Meu Catálogo</h1>
                     <p className="text-gray-500 font-medium">Os serviços que você disponibiliza e suas vagas</p>
                 </div>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all"
+                    aria-label="Adicionar novo serviço de streaming"
+                    className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
                 >
                     <Plus size={20} />
                     Novo Serviço
@@ -130,7 +131,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
 
             {/* Grid */}
             {filteredStreamings.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {filteredStreamings.map((s) => (
                         <StreamingDetailCard
                             key={s.id}
@@ -154,8 +155,8 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                    <p className="text-gray-400 text-lg">Nenhum serviço de streaming cadastrado no seu catálogo.</p>
+                <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                    <p className="text-gray-400 text-base md:text-lg">Nenhum serviço de streaming cadastrado no seu catálogo.</p>
                 </div>
             )}
 

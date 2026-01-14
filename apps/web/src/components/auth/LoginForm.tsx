@@ -44,7 +44,7 @@ export function LoginForm() {
     return (
         <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
+                <div role="alert" className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
                     {error}
                 </div>
             )}
@@ -84,7 +84,8 @@ export function LoginForm() {
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary hover:bg-accent text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-busy={loading}
+                className="w-full bg-primary hover:bg-accent text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
                 {loading ? "Entrando..." : "Entrar"}
             </button>
@@ -97,7 +98,8 @@ export function LoginForm() {
 
             <button
                 type="button"
-                className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-primary text-gray-700 py-4 rounded-xl font-bold transition-all"
+                aria-label="Continuar com Google"
+                className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-primary text-gray-700 py-4 rounded-xl font-bold transition-all touch-manipulation"
             >
                 <Chrome size={20} />
                 Continuar com Google

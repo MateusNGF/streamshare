@@ -43,21 +43,21 @@ export function StreamingDetailCard({
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-gray-900 text-lg">{name}</h3>
+                            <h3 className="font-bold text-gray-900 text-base md:text-lg">{name}</h3>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={onEdit}
-                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-primary transition-all"
-                                    title="Editar"
+                                    aria-label={`Editar ${name}`}
+                                    className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-primary transition-all touch-manipulation"
                                 >
-                                    <Edit size={16} />
+                                    <Edit size={20} className="md:w-4 md:h-4" />
                                 </button>
                                 <button
                                     onClick={onDelete}
-                                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-red-500 transition-all"
-                                    title="Excluir"
+                                    aria-label={`Excluir ${name}`}
+                                    className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-red-500 transition-all touch-manipulation"
                                 >
-                                    <Trash2 size={16} />
+                                    <Trash2 size={20} className="md:w-4 md:h-4" />
                                 </button>
                             </div>
                         </div>
@@ -82,7 +82,14 @@ export function StreamingDetailCard({
                     </span>
                 </div>
 
-                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                    className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={percentage}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`${slots.occupied} de ${slots.total} vagas ocupadas`}
+                >
                     <div
                         className="h-full bg-primary transition-all"
                         style={{ width: `${percentage}%` }}
