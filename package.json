@@ -15,8 +15,11 @@
         "db:studio": "pnpm --filter @streamshare/database run studio"
     },
     "devDependencies": {
-        "turbo": "latest",
-        "prettier": "^3.2.5"
+        "prettier": "^3.2.5",
+        "turbo": "latest"
     },
-    "packageManager": "pnpm@10.19.0"
+    "packageManager": "pnpm@10.19.0",
+    "dependencies": {
+        "resend": "^6.7.0"
+    }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Chrome } from "lucide-react";
 
@@ -76,9 +77,9 @@ export function LoginForm() {
                     />
                     <span className="text-sm text-gray-600">Lembrar-me</span>
                 </label>
-                <a href="#" className="text-sm text-primary hover:text-accent font-medium">
+                <Link href="/esqueci-senha" className="text-sm text-primary hover:text-accent font-medium">
                     Esqueci minha senha
-                </a>
+                </Link>
             </div>
 
             <button

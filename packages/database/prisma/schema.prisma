@@ -59,18 +59,20 @@ model Conta {
 }
 
 model Usuario {
-  id           Int             @id @default(autoincrement())
-  email        String          @unique
-  nome         String
-  senhaHash   String?
-  provider     ProviderAuth    @default(local)
-  isAtivo      Boolean         @default(true)
-  ultimoLogin  DateTime?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  id                Int             @id @default(autoincrement())
+  email             String          @unique
+  nome              String
+  senhaHash         String?
+  provider          ProviderAuth    @default(local)
+  isAtivo           Boolean         @default(true)
+  ultimoLogin       DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  contas       ContaUsuario[]
-  participante Participante?
+  contas            ContaUsuario[]
+  participante      Participante?
 
    @@map("usuario")
 }

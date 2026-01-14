@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Building2, User, Bell, Shield, CreditCard, LogOut, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
+import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
 import { Input } from "@/components/ui/Input";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -19,6 +20,7 @@ interface SettingsClientProps {
 export function SettingsClient({ initialData }: SettingsClientProps) {
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState<string | null>(null);
 
@@ -227,7 +229,10 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                             <h2 className="text-xl font-bold text-gray-900">Segurança</h2>
                         </div>
                         <div className="space-y-3">
-                            <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
+                            <button
+                                onClick={() => setIsChangePasswordModalOpen(true)}
+                                className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                            >
                                 <p className="font-semibold text-gray-900">Alterar Senha</p>
                             </button>
                             <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all">
@@ -251,6 +256,12 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                 onClose={() => setIsLogoutModalOpen(false)}
                 onConfirm={handleLogout}
                 loading={loading}
+            />
+
+            <ChangePasswordModal
+                isOpen={isChangePasswordModalOpen}
+                onClose={() => setIsChangePasswordModalOpen(false)}
+                onSuccess={() => showSuccess("Senha alterada com sucesso!")}
             />
         </PageContainer>
     );
