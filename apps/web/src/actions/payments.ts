@@ -36,7 +36,7 @@ export async function getPaymentsData() {
                 },
             },
         },
-        orderBy: { dataVencimento: "asc" },
+        orderBy: { dataInicio: "asc" },
     });
 
     // Calculate billing stats

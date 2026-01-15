@@ -36,6 +36,13 @@ enum StatusAssinatura {
   cancelada
 }
 
+enum StatusCobranca {
+  pendente
+  pago
+  atrasado
+  cancelado
+}
+
 //////////////////////////////////////////////////
 // MODELS
 //////////////////////////////////////////////////
@@ -194,8 +201,26 @@ model Assinatura {
 
   participante      Participante        @relation(fields: [participanteId], references: [id])
   streaming         Streaming           @relation(fields: [streamingId], references: [id])
+  cobrancas         Cobranca[]
 
   @@unique([participanteId, streamingId])
 
   @@map("assinatura")
+}
+
+model Cobranca {
+  id             Int            @id @default(autoincrement())
+  assinaturaId   Int
+  valor          Decimal
+  periodoInicio  DateTime
+  periodoFim     DateTime
+  dataPagamento  DateTime?
+  status         StatusCobranca @default(pendente)
+  comprovanteUrl String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  assinatura     Assinatura     @relation(fields: [assinaturaId], references: [id])
+
+  @@map("cobranca")
 }

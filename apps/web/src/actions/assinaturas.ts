@@ -4,6 +4,7 @@ import { prisma } from "@streamshare/database";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
+import { criarCobrancaInicial } from "./cobrancas";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -76,9 +77,13 @@ export async function createAssinatura(data: {
         },
     });
 
+    // Auto-generate first charge
+    await criarCobrancaInicial(assinatura.id);
+
     revalidatePath("/assinaturas");
     revalidatePath("/participantes");
     revalidatePath("/streamings");
+    revalidatePath("/cobrancas");
 
     return assinatura;
 }
