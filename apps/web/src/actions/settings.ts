@@ -55,6 +55,26 @@ export async function updateProfile(data: { nome: string; email: string }) {
 export async function updateAccount(data: { nome: string; email: string }) {
     const { contaId } = await getContext();
 
+    // Validar email se fornecido
+    if (data.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            throw new Error("Formato de email inválido");
+        }
+
+        // Verificar duplicata
+        const existingAccount = await prisma.conta.findFirst({
+            where: {
+                email: data.email,
+                id: { not: contaId },
+            },
+        });
+
+        if (existingAccount) {
+            throw new Error("Este email já está em uso por outra conta");
+        }
+    }
+
     await prisma.conta.update({
         where: { id: contaId },
         data: {
@@ -65,3 +85,4 @@ export async function updateAccount(data: { nome: string; email: string }) {
 
     revalidatePath("/configuracoes");
 }
+
