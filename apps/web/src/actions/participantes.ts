@@ -3,6 +3,7 @@
 import { prisma } from "@streamshare/database";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { validateCPF, validatePhone, validateEmail } from "@/lib/validation";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -40,6 +41,23 @@ export async function createParticipante(data: {
 }) {
     const { contaId } = await getContext();
 
+    // Server-side validation
+    if (!data.nome || !data.nome.trim()) {
+        throw new Error("Nome é obrigatório");
+    }
+
+    if (!data.cpf || !validateCPF(data.cpf)) {
+        throw new Error("CPF inválido");
+    }
+
+    if (!data.whatsappNumero || !validatePhone(data.whatsappNumero)) {
+        throw new Error("Telefone inválido");
+    }
+
+    if (data.email && data.email.trim() !== "" && !validateEmail(data.email)) {
+        throw new Error("Email inválido");
+    }
+
     const participante = await prisma.participante.create({
         data: {
             ...data,
@@ -61,6 +79,23 @@ export async function updateParticipante(
     }
 ) {
     const { contaId } = await getContext();
+
+    // Server-side validation
+    if (!data.nome || !data.nome.trim()) {
+        throw new Error("Nome é obrigatório");
+    }
+
+    if (!data.cpf || !validateCPF(data.cpf)) {
+        throw new Error("CPF inválido");
+    }
+
+    if (!data.whatsappNumero || !validatePhone(data.whatsappNumero)) {
+        throw new Error("Telefone inválido");
+    }
+
+    if (data.email && data.email.trim() !== "" && !validateEmail(data.email)) {
+        throw new Error("Email inválido");
+    }
 
     const participante = await prisma.participante.update({
         where: { id, contaId },

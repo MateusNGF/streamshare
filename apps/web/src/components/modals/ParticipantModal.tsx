@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { MaskedInput } from "@/components/ui/MaskedInput";
 import { Spinner } from "@/components/ui/Spinner";
+import { validateCPF, validatePhone, validateEmail, ValidationMessages } from "@/lib/validation";
 
 interface ParticipantModalProps {
     isOpen: boolean;
@@ -42,15 +44,42 @@ export function ParticipantModal({
     );
     const [errors, setErrors] = useState<Partial<Record<keyof ParticipantFormData, string>>>({});
 
+    // Update form data when participant prop changes
+    useEffect(() => {
+        if (participant) {
+            setFormData(participant);
+        }
+    }, [participant]);
+
     const validate = () => {
         const newErrors: Partial<Record<keyof ParticipantFormData, string>> = {};
-        if (!formData.nome.trim()) newErrors.nome = "Nome é obrigatório";
-        if (!formData.whatsappNumero.trim()) newErrors.whatsappNumero = "WhatsApp é obrigatório";
-        if (!formData.cpf.trim()) {
-            newErrors.cpf = "CPF é obrigatório";
-        } else if (formData.cpf.replace(/\D/g, "").length !== 11) {
-            newErrors.cpf = "CPF deve ter 11 dígitos";
+
+        // Nome validation
+        if (!formData.nome.trim()) {
+            newErrors.nome = ValidationMessages.name.required;
         }
+
+        // CPF validation
+        if (!formData.cpf.trim()) {
+            newErrors.cpf = ValidationMessages.cpf.required;
+        } else if (!validateCPF(formData.cpf)) {
+            newErrors.cpf = ValidationMessages.cpf.invalid;
+        }
+
+        // WhatsApp validation
+        if (!formData.whatsappNumero.trim()) {
+            newErrors.whatsappNumero = ValidationMessages.phone.required;
+        } else if (!validatePhone(formData.whatsappNumero)) {
+            newErrors.whatsappNumero = ValidationMessages.phone.invalid;
+        }
+
+        // Email validation (optional field)
+        if (formData.email && formData.email.trim() !== "") {
+            if (!validateEmail(formData.email)) {
+                newErrors.email = ValidationMessages.email.invalid;
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -58,12 +87,14 @@ export function ParticipantModal({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
+            // Submit with clean values (numbers only for CPF and phone)
             onSave(formData);
         }
     };
 
     const handleChange = (field: keyof ParticipantFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+        // Clear error when user starts typing
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: undefined }));
         }
@@ -103,20 +134,22 @@ export function ParticipantModal({
                     error={errors.nome}
                     required
                 />
-                <Input
+                <MaskedInput
                     label="WhatsApp"
                     type="tel"
+                    maskType="phone"
                     value={formData.whatsappNumero}
-                    onChange={(e) => handleChange("whatsappNumero", e.target.value)}
+                    onValueChange={(value) => handleChange("whatsappNumero", value)}
                     placeholder="(11) 98765-4321"
                     error={errors.whatsappNumero}
                     required
                 />
-                <Input
+                <MaskedInput
                     label="CPF"
                     type="text"
+                    maskType="cpf"
                     value={formData.cpf}
-                    onChange={(e) => handleChange("cpf", e.target.value)}
+                    onValueChange={(value) => handleChange("cpf", value)}
                     placeholder="123.456.789-00"
                     error={errors.cpf}
                     required
