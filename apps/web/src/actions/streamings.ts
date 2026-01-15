@@ -106,6 +106,45 @@ export async function getStreamings() {
     });
 }
 
+/**
+ * Get the count of active subscriptions for a streaming
+ */
+export async function getActiveSubscriptionsCount(streamingId: number) {
+    const { contaId } = await getContext();
+
+    const count = await prisma.assinatura.count({
+        where: {
+            streamingId,
+            streaming: { contaId },
+            status: { in: ["ativa", "suspensa"] }
+        }
+    });
+
+    return count;
+}
+
+/**
+ * Update the value of all existing active subscriptions for a streaming
+ */
+export async function updateExistingSubscriptionValues(streamingId: number, newValue: number) {
+    const { contaId } = await getContext();
+
+    const updated = await prisma.assinatura.updateMany({
+        where: {
+            streamingId,
+            streaming: { contaId },
+            status: { in: ["ativa", "suspensa"] }
+        },
+        data: {
+            valor: newValue
+        }
+    });
+
+    revalidatePath("/assinaturas");
+    revalidatePath("/cobrancas");
+    return updated.count;
+}
+
 export async function createStreaming(data: {
     catalogoId: number;
     valorIntegral: number;
@@ -135,10 +174,41 @@ export async function updateStreaming(
         catalogoId: number;
         valorIntegral: number;
         limiteParticipantes: number;
+        updateExistingSubscriptions?: boolean; // Optional: update existing subscription values
     }
 ) {
     const { contaId } = await getContext();
 
+    // Get current streaming data
+    const currentStreaming = await prisma.streaming.findUnique({
+        where: { id, contaId },
+        include: {
+            _count: {
+                select: {
+                    assinaturas: {
+                        where: { status: { in: ["ativa", "suspensa"] } }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!currentStreaming) {
+        throw new Error("Streaming não encontrado");
+    }
+
+    const activeSubscriptionsCount = currentStreaming._count.assinaturas;
+
+    // VALIDATION: Prevent reducing participant limit below active subscriptions
+    if (data.limiteParticipantes < activeSubscriptionsCount) {
+        throw new Error(
+            `Não é possível reduzir o limite para ${data.limiteParticipantes}. ` +
+            `Existem ${activeSubscriptionsCount} assinatura(s) ativa(s). ` +
+            `Cancele ${activeSubscriptionsCount - data.limiteParticipantes} assinatura(s) antes de prosseguir.`
+        );
+    }
+
+    // Update the streaming
     const streaming = await prisma.streaming.update({
         where: { id, contaId },
         data: {
@@ -148,8 +218,18 @@ export async function updateStreaming(
         },
     });
 
+    // If value changed and flag is set, update existing subscriptions
+    const valueChanged = currentStreaming.valorIntegral.toString() !== data.valorIntegral.toString();
+    if (valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0) {
+        await updateExistingSubscriptionValues(id, data.valorIntegral);
+    }
+
     revalidatePath("/streamings");
-    return streaming;
+    revalidatePath("/assinaturas");
+    return {
+        streaming,
+        updatedSubscriptions: (valueChanged && data.updateExistingSubscriptions) ? activeSubscriptionsCount : 0
+    };
 }
 
 export async function deleteStreaming(id: number) {

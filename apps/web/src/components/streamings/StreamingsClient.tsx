@@ -61,19 +61,28 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
         }
     };
 
-    const handleEdit = async (data: StreamingFormData) => {
+    const handleEdit = async (data: StreamingFormData & { updateExistingSubscriptions?: boolean }) => {
         if (!selectedStreaming) return;
         setLoading(true);
         try {
-            await updateStreaming(selectedStreaming.id, {
+            const result = await updateStreaming(selectedStreaming.id, {
                 catalogoId: parseInt(data.catalogoId),
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
+                updateExistingSubscriptions: data.updateExistingSubscriptions,
             });
+
+            // Show success message with details
+            if (result.updatedSubscriptions && result.updatedSubscriptions > 0) {
+                alert(`Streaming atualizado com sucesso! ${result.updatedSubscriptions} assinatura(s) foram atualizadas com o novo valor.`);
+            }
+
             setIsEditModalOpen(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error updating streaming:", error);
-            alert("Erro ao atualizar streaming.");
+            // Show user-friendly error message
+            const errorMessage = error?.message || "Erro ao atualizar streaming.";
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -173,6 +182,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                             catalogoId: String(selectedStreaming.streamingCatalogoId),
                             valorIntegral: String(selectedStreaming.valorIntegral),
                             limiteParticipantes: String(selectedStreaming.limiteParticipantes),
+                            activeSubscriptions: selectedStreaming._count?.assinaturas || 0,
                         }
                         : undefined
                 }

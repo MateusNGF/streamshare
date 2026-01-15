@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils";
 interface StreamingModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: StreamingFormData) => void;
-    streaming?: StreamingFormData;
+    onSave: (data: StreamingFormData & { updateExistingSubscriptions?: boolean }) => void;
+    streaming?: StreamingFormData & { activeSubscriptions?: number };
     loading?: boolean;
 }
 
@@ -21,6 +21,7 @@ export interface StreamingFormData {
     catalogoId: string;
     valorIntegral: string;
     limiteParticipantes: string;
+    activeSubscriptions?: number;
 }
 
 export function StreamingModal({
@@ -39,6 +40,7 @@ export function StreamingModal({
             limiteParticipantes: "",
         }
     );
+    const [updateExistingSubscriptions, setUpdateExistingSubscriptions] = useState(false);
     const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
 
     const validate = () => {
@@ -96,7 +98,7 @@ export function StreamingModal({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
-            onSave(formData);
+            onSave({ ...formData, updateExistingSubscriptions });
         }
     };
 
@@ -222,6 +224,43 @@ export function StreamingModal({
                                 required
                             />
                         </div>
+
+                        {/* Active Subscriptions Warning */}
+                        {streaming && formData.activeSubscriptions !== undefined && formData.activeSubscriptions > 0 && (
+                            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span className="text-white text-xs font-bold">!</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-amber-900 mb-1">Atenção: Assinaturas Ativas</p>
+                                        <p className="text-xs text-amber-700 mb-2">
+                                            Este streaming possui <strong>{formData.activeSubscriptions} assinatura(s) ativa(s)</strong>.
+                                        </p>
+                                        <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
+                                            <li><strong>Limite de vagas:</strong> Não pode ser menor que {formData.activeSubscriptions}</li>
+                                            <li><strong>Valor:</strong> Mudanças afetarão apenas novas assinaturas (a menos que você marque a opção abaixo)</li>
+                                        </ul>
+
+                                        {/* Option to update existing subscriptions when value changes */}
+                                        {streaming.valorIntegral !== formData.valorIntegral && (
+                                            <label className="flex items-start gap-2 mt-3 cursor-pointer group">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={updateExistingSubscriptions}
+                                                    onChange={(e) => setUpdateExistingSubscriptions(e.target.checked)}
+                                                    className="mt-0.5 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                                />
+                                                <span className="text-xs text-amber-800 group-hover:text-amber-900">
+                                                    Atualizar o valor das <strong>{formData.activeSubscriptions} assinatura(s) existente(s)</strong> para R$ {formData.valorIntegral}
+                                                </span>
+                                            </label>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <p className="text-xs text-gray-400 mt-2">
                             * Configure o valor total que você paga pelo serviço e o limite de vagas disponíveis.
                         </p>
