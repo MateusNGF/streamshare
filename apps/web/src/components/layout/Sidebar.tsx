@@ -11,7 +11,8 @@ import {
     CreditCard,
     Settings,
     Play,
-    LogOut
+    LogOut,
+    FileSignature
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -21,6 +22,7 @@ const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: Users, label: "Participantes", href: "/participantes" },
     { icon: Tv, label: "Streamings", href: "/streamings" },
+    { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
     { icon: Play, label: "Catálogo Global", href: "/admin/catalogo" },
     { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
     { icon: Settings, label: "Configurações", href: "/configuracoes" },

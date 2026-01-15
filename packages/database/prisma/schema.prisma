@@ -185,7 +185,6 @@ model Assinatura {
   frequencia        FrequenciaPagamento
   status            StatusAssinatura    @default(ativa)
   dataInicio        DateTime
-  dataVencimento    DateTime
   valor             Decimal
   diasAtraso        Int                 @default(0)
   dataSuspensao   DateTime?
