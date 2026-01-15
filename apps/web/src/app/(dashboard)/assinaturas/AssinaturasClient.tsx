@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AssinaturaModal } from "@/components/modals/AssinaturaModal";
+import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
+import { createMultipleAssinaturas } from "@/actions/assinaturas";
 import { formatCurrency } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +14,43 @@ import { PageHeader } from "@/components/layout/PageHeader";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
+    participantes: any[];
+    streamings: any[];
 }
 
-export default function AssinaturasClient({ initialSubscriptions }: AssinaturasClientProps) {
+export default function AssinaturasClient({
+    initialSubscriptions,
+    participantes,
+    streamings
+}: AssinaturasClientProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleCreateMultiple = async (data: any) => {
+        setLoading(true);
+        try {
+            const result = await createMultipleAssinaturas(data);
+            alert(`✅ Sucesso! ${result.created} assinatura${result.created > 1 ? 's' : ''} criada${result.created > 1 ? 's' : ''} com sucesso!`);
+            setIsMultipleModalOpen(false);
+            window.location.reload(); // Refresh to show new subscriptions
+        } catch (error: any) {
+            alert(`❌ Erro: ${error.message || 'Falha ao criar assinaturas'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Prepare streamings data with ocupados count
+    const streamingsWithOcupados = streamings.map(s => ({
+        id: s.id,
+        nome: s.catalogo.nome,
+        valorIntegral: Number(s.valorIntegral),
+        limiteParticipantes: s.limiteParticipantes,
+        ocupados: s._count?.assinaturas || 0,
+        cor: s.catalogo.corPrimaria,
+        frequenciasHabilitadas: s.frequenciasHabilitadas || "mensal,trimestral,semestral,anual"
+    }));
 
     return (
         <PageContainer>
@@ -23,10 +58,24 @@ export default function AssinaturasClient({ initialSubscriptions }: AssinaturasC
                 title="Assinaturas"
                 description="Gerencie as assinaturas dos participantes."
                 action={
-                    <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nova Assinatura
-                    </Button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-2 border-2 border-primary text-primary px-4 py-2 rounded-xl font-bold hover:bg-primary/10 transition-all"
+                        >
+                            <Plus size={18} />
+                            <span className="hidden sm:inline">Nova Assinatura</span>
+                            <span className="sm:hidden">Nova</span>
+                        </button>
+                        <button
+                            onClick={() => setIsMultipleModalOpen(true)}
+                            className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all"
+                        >
+                            <Plus size={20} />
+                            <span className="hidden sm:inline">Criar Múltiplas</span>
+                            <span className="sm:hidden">Múltiplas</span>
+                        </button>
+                    </div>
                 }
             />
             <div className="space-y-6">
@@ -77,6 +126,15 @@ export default function AssinaturasClient({ initialSubscriptions }: AssinaturasC
                 <AssinaturaModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                />
+
+                <AssinaturaMultiplaModal
+                    isOpen={isMultipleModalOpen}
+                    onClose={() => setIsMultipleModalOpen(false)}
+                    onSave={handleCreateMultiple}
+                    participantes={participantes}
+                    streamings={streamingsWithOcupados}
+                    loading={loading}
                 />
             </div>
         </PageContainer>
