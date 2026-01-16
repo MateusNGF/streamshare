@@ -8,6 +8,7 @@ import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { createStreaming, updateStreaming, deleteStreaming } from "@/actions/streamings";
+import { useToast } from "@/hooks/useToast";
 
 interface Streaming {
     id: number;
@@ -29,6 +30,7 @@ interface StreamingsClientProps {
 }
 
 export function StreamingsClient({ initialData }: StreamingsClientProps) {
+    const toast = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -52,10 +54,10 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
+            toast.success("Streaming criado com sucesso!");
             setIsAddModalOpen(false);
         } catch (error) {
-            console.error("Error creating streaming:", error);
-            alert("Erro ao criar streaming.");
+            toast.error("Erro ao criar streaming");
         } finally {
             setLoading(false);
         }
@@ -74,15 +76,15 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
 
             // Show success message with details
             if (result.updatedSubscriptions && result.updatedSubscriptions > 0) {
-                alert(`Streaming atualizado com sucesso! ${result.updatedSubscriptions} assinatura(s) foram atualizadas com o novo valor.`);
+                toast.success(`Streaming atualizado! ${result.updatedSubscriptions} assinatura(s) atualizadas com o novo valor.`);
+            } else {
+                toast.success("Streaming atualizado com sucesso!");
             }
 
             setIsEditModalOpen(false);
         } catch (error: any) {
-            console.error("Error updating streaming:", error);
-            // Show user-friendly error message
-            const errorMessage = error?.message || "Erro ao atualizar streaming.";
-            alert(errorMessage);
+            const errorMessage = error?.message || "Erro ao atualizar streaming";
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -93,10 +95,10 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
         setLoading(true);
         try {
             await deleteStreaming(selectedStreaming.id);
+            toast.success("Streaming removido do catálogo");
             setIsDeleteModalOpen(false);
         } catch (error) {
-            console.error("Error deleting streaming:", error);
-            alert("Erro ao excluir streaming.");
+            toast.error("Erro ao excluir streaming");
         } finally {
             setLoading(false);
         }

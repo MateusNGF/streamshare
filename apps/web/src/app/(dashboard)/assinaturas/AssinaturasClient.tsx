@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useToast } from "@/hooks/useToast";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -23,6 +24,7 @@ export default function AssinaturasClient({
     participantes,
     streamings
 }: AssinaturasClientProps) {
+    const toast = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -31,11 +33,12 @@ export default function AssinaturasClient({
         setLoading(true);
         try {
             const result = await createMultipleAssinaturas(data);
-            alert(`✅ Sucesso! ${result.created} assinatura${result.created > 1 ? 's' : ''} criada${result.created > 1 ? 's' : ''} com sucesso!`);
+            const message = `${result.created} assinatura${result.created > 1 ? 's' : ''} criada${result.created > 1 ? 's' : ''} com sucesso!`;
+            toast.success(message);
             setIsMultipleModalOpen(false);
             window.location.reload(); // Refresh to show new subscriptions
         } catch (error: any) {
-            alert(`❌ Erro: ${error.message || 'Falha ao criar assinaturas'}`);
+            toast.error(error.message || 'Falha ao criar assinaturas');
         } finally {
             setLoading(false);
         }

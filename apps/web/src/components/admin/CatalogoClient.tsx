@@ -7,6 +7,7 @@ import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { createCatalogoItem, updateCatalogoItem, deleteCatalogoItem } from "@/actions/streamings";
+import { useToast } from "@/hooks/useToast";
 
 interface CatalogoItem {
     id: number;
@@ -21,6 +22,7 @@ interface CatalogoClientProps {
 }
 
 export function CatalogoClient({ initialData }: CatalogoClientProps) {
+    const toast = useToast();
     const [data, setData] = useState(initialData);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,16 +49,17 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
             if (selectedItem) {
                 const updated = await updateCatalogoItem(selectedItem.id, formData);
                 setData(prev => prev.map(item => item.id === updated.id ? updated : item));
+                toast.success("Serviço atualizado com sucesso!");
             } else {
                 const created = await createCatalogoItem(formData);
                 setData(prev => [...prev, created]);
+                toast.success("Serviço adicionado ao catálogo!");
             }
             setIsModalOpen(false);
             setSelectedItem(null);
             setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
         } catch (error) {
-            console.error("Error saving catalog item:", error);
-            alert("Erro ao salvar item do catálogo.");
+            toast.error("Erro ao salvar item do catálogo");
         } finally {
             setLoading(false);
         }
@@ -68,11 +71,11 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
         try {
             await deleteCatalogoItem(selectedItem.id);
             setData(prev => prev.filter(item => item.id !== selectedItem.id));
+            toast.success("Serviço removido do catálogo");
             setIsDeleteModalOpen(false);
             setSelectedItem(null);
         } catch (error) {
-            console.error("Error deleting catalog item:", error);
-            alert("Erro ao excluir item do catálogo.");
+            toast.error("Erro ao excluir item do catálogo");
         } finally {
             setLoading(false);
         }

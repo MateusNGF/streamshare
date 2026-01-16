@@ -8,6 +8,7 @@ import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { createParticipante, updateParticipante, deleteParticipante } from "@/actions/participantes";
+import { useToast } from "@/hooks/useToast";
 
 interface Participante {
     id: number;
@@ -25,6 +26,7 @@ interface ParticipantesClientProps {
 }
 
 export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
+    const toast = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -49,10 +51,10 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
         setLoading(true);
         try {
             await createParticipante(data);
+            toast.success("Participante criado com sucesso!");
             setIsAddModalOpen(false);
         } catch (error) {
-            console.error("Error creating participant:", error);
-            alert("Erro ao criar participante. Verifique se o CPF ou WhatsApp já estão em uso.");
+            toast.error("CPF ou WhatsApp já estão em uso");
         } finally {
             setLoading(false);
         }
@@ -63,10 +65,10 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
         setLoading(true);
         try {
             await updateParticipante(selectedParticipant.id, data);
+            toast.success("Participante atualizado com sucesso!");
             setIsEditModalOpen(false);
         } catch (error) {
-            console.error("Error updating participant:", error);
-            alert("Erro ao atualizar participante.");
+            toast.error("Erro ao atualizar participante");
         } finally {
             setLoading(false);
         }
@@ -77,10 +79,10 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
         setLoading(true);
         try {
             await deleteParticipante(selectedParticipant.id);
+            toast.success("Participante excluído com sucesso!");
             setIsDeleteModalOpen(false);
         } catch (error) {
-            console.error("Error deleting participant:", error);
-            alert("Erro ao excluir participante.");
+            toast.error("Erro ao excluir participante");
         } finally {
             setLoading(false);
         }

@@ -8,6 +8,7 @@ import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { confirmarPagamento, enviarNotificacaoCobranca } from "@/actions/cobrancas";
 import type { EnviarNotificacaoResult } from "@/types/whatsapp";
+import { useToast } from "@/hooks/useToast";
 
 interface CobrancasClientProps {
     kpis: {
@@ -21,6 +22,7 @@ interface CobrancasClientProps {
 }
 
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
+    const toast = useToast();
     const [cobrancas, setCobrancas] = useState(cobrancasIniciais);
     const [loading, setLoading] = useState(false);
     const [sendingWhatsApp, setSendingWhatsApp] = useState<number | null>(null);
@@ -39,15 +41,14 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
     }, []);
 
     const handleConfirmarPagamento = async (id: number) => {
-        if (!confirm("Confirmar pagamento desta cobrança?")) return;
-
         setLoading(true);
         try {
             await confirmarPagamento(id);
+            toast.success("Pagamento confirmado com sucesso!");
             // Refresh the page to update data
             window.location.reload();
         } catch (error) {
-            alert("Erro ao confirmar pagamento");
+            toast.error("Erro ao confirmar pagamento");
             setLoading(false);
         }
     };
@@ -60,12 +61,12 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
             // Se retornou link manual, abrir em nova aba
             if (result.manualLink) {
                 window.open(result.manualLink, '_blank');
-                alert("✅ Link do WhatsApp aberto! Envie a mensagem manualmente.");
+                toast.info("Link do WhatsApp aberto! Envie a mensagem manualmente.");
             } else {
-                alert("✅ Notificação WhatsApp enviada automaticamente!");
+                toast.success("Notificação WhatsApp enviada automaticamente!");
             }
         } catch (error: any) {
-            alert(`❌ Erro: ${error.message}`);
+            toast.error(error.message || "Erro ao enviar notificação");
         } finally {
             setSendingWhatsApp(null);
         }
