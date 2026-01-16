@@ -379,7 +379,7 @@ export async function enviarNotificacaoCobranca(
             addSuffix: true,
             locale: ptBR
         });
-        throw new Error(`⏰ Já foi enviada uma notificação WhatsApp ${tempoDecorrido}. Aguarde 24 horas para enviar novamente.`);
+        throw new Error(`Já foi enviada uma notificação WhatsApp ${tempoDecorrido}. Aguarde 24 horas para enviar novamente.`);
     }
 
     // **SE CONFIGURADO: Enviar via Twilio API**
