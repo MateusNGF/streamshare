@@ -109,8 +109,28 @@ export async function updateParticipante(
 export async function deleteParticipante(id: number) {
     const { contaId } = await getContext();
 
-    await prisma.participante.delete({
-        where: { id, contaId },
+    // Use transaction to validate and delete atomically
+    await prisma.$transaction(async (tx) => {
+        // Check for active/suspended subscriptions
+        const activeSubscriptions = await tx.assinatura.count({
+            where: {
+                participanteId: id,
+                status: { in: ["ativa", "suspensa"] }
+            }
+        });
+
+        if (activeSubscriptions > 0) {
+            throw new Error(
+                `Não é possível deletar este participante. ` +
+                `Existem ${activeSubscriptions} assinatura(s) ativa(s). ` +
+                `Cancele todas as assinaturas antes de prosseguir.`
+            );
+        }
+
+        // Delete the participant
+        await tx.participante.delete({
+            where: { id, contaId },
+        });
     });
 
     revalidatePath("/participantes");

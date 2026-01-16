@@ -202,8 +202,14 @@ export async function renovarCobrancas() {
         }
     });
 
-    let renovadas = 0;
+    const cobrancasParaCriar: Array<{
+        assinaturaId: number;
+        valor: number;
+        periodoInicio: Date;
+        periodoFim: Date;
+    }> = [];
 
+    // Prepare all charges to be created
     for (const assinatura of assinaturasAtivas) {
         const ultimaCobranca = assinatura.cobrancas[0];
 
@@ -219,18 +225,29 @@ export async function renovarCobrancas() {
             const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia);
             const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
 
-            await prisma.cobranca.create({
-                data: {
-                    assinaturaId: assinatura.id,
-                    valor,
-                    periodoInicio,
-                    periodoFim,
-                    status: StatusCobranca.pendente
-                }
+            cobrancasParaCriar.push({
+                assinaturaId: assinatura.id,
+                valor: Number(valor), // Convert Decimal to number for storage
+                periodoInicio,
+                periodoFim
             });
-
-            renovadas++;
         }
+    }
+
+    // Create all charges in a single transaction (all or nothing)
+    let renovadas = 0;
+    if (cobrancasParaCriar.length > 0) {
+        await prisma.$transaction(async (tx) => {
+            for (const cobrancaData of cobrancasParaCriar) {
+                await tx.cobranca.create({
+                    data: {
+                        ...cobrancaData,
+                        status: "pendente"
+                    }
+                });
+                renovadas++;
+            }
+        });
     }
 
     revalidatePath("/cobrancas");

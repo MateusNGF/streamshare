@@ -61,26 +61,31 @@ export async function updateAccount(data: { nome: string; email: string }) {
         if (!emailRegex.test(data.email)) {
             throw new Error("Formato de email inválido");
         }
-
-        // Verificar duplicata
-        const existingAccount = await prisma.conta.findFirst({
-            where: {
-                email: data.email,
-                id: { not: contaId },
-            },
-        });
-
-        if (existingAccount) {
-            throw new Error("Este email já está em uso por outra conta");
-        }
     }
 
-    await prisma.conta.update({
-        where: { id: contaId },
-        data: {
-            nome: data.nome,
-            email: data.email,
-        },
+    // Use transaction to check and update atomically (prevents race condition)
+    await prisma.$transaction(async (tx) => {
+        if (data.email) {
+            // Verificar duplicata
+            const existingAccount = await tx.conta.findFirst({
+                where: {
+                    email: data.email,
+                    id: { not: contaId },
+                },
+            });
+
+            if (existingAccount) {
+                throw new Error("Este email já está em uso por outra conta");
+            }
+        }
+
+        await tx.conta.update({
+            where: { id: contaId },
+            data: {
+                nome: data.nome,
+                email: data.email,
+            },
+        });
     });
 
     revalidatePath("/configuracoes");

@@ -208,35 +208,86 @@ export async function updateStreaming(
         );
     }
 
-    // Update the streaming
-    const streaming = await prisma.streaming.update({
-        where: { id, contaId },
-        data: {
-            streamingCatalogoId: data.catalogoId,
-            valorIntegral: data.valorIntegral,
-            limiteParticipantes: data.limiteParticipantes,
-        },
-    });
-
-    // If value changed and flag is set, update existing subscriptions
     const valueChanged = currentStreaming.valorIntegral.toString() !== data.valorIntegral.toString();
-    if (valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0) {
-        await updateExistingSubscriptionValues(id, data.valorIntegral);
+    const shouldUpdateSubscriptions = valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0;
+
+    // If not updating subscriptions, just update the streaming
+    if (!shouldUpdateSubscriptions) {
+        const streaming = await prisma.streaming.update({
+            where: { id, contaId },
+            data: {
+                streamingCatalogoId: data.catalogoId,
+                valorIntegral: data.valorIntegral,
+                limiteParticipantes: data.limiteParticipantes,
+            },
+        });
+
+        revalidatePath("/streamings");
+        revalidatePath("/assinaturas");
+        return {
+            streaming,
+            updatedSubscriptions: 0
+        };
     }
+
+    // Use transaction when updating both streaming and subscriptions atomically
+    const result = await prisma.$transaction(async (tx) => {
+        const streaming = await tx.streaming.update({
+            where: { id, contaId },
+            data: {
+                streamingCatalogoId: data.catalogoId,
+                valorIntegral: data.valorIntegral,
+                limiteParticipantes: data.limiteParticipantes,
+            },
+        });
+
+        const updated = await tx.assinatura.updateMany({
+            where: {
+                streamingId: id,
+                streaming: { contaId },
+                status: { in: ["ativa", "suspensa"] }
+            },
+            data: {
+                valor: data.valorIntegral
+            }
+        });
+
+        return { streaming, updatedCount: updated.count };
+    });
 
     revalidatePath("/streamings");
     revalidatePath("/assinaturas");
     return {
-        streaming,
-        updatedSubscriptions: (valueChanged && data.updateExistingSubscriptions) ? activeSubscriptionsCount : 0
+        streaming: result.streaming,
+        updatedSubscriptions: result.updatedCount
     };
 }
 
 export async function deleteStreaming(id: number) {
     const { contaId } = await getContext();
 
-    await prisma.streaming.delete({
-        where: { id, contaId },
+    // Use transaction to validate and delete atomically
+    await prisma.$transaction(async (tx) => {
+        // Check for active/suspended subscriptions
+        const activeSubscriptions = await tx.assinatura.count({
+            where: {
+                streamingId: id,
+                status: { in: ["ativa", "suspensa"] }
+            }
+        });
+
+        if (activeSubscriptions > 0) {
+            throw new Error(
+                `Não é possível deletar este streaming. ` +
+                `Existem ${activeSubscriptions} assinatura(s) ativa(s). ` +
+                `Cancele todas as assinaturas antes de prosseguir.`
+            );
+        }
+
+        // Delete the streaming
+        await tx.streaming.delete({
+            where: { id, contaId },
+        });
     });
 
     revalidatePath("/streamings");

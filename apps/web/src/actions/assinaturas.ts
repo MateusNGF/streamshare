@@ -5,6 +5,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura } from "@streamshare/database";
 import { criarCobrancaInicial } from "./cobrancas";
+import {
+    calcularProximoVencimento,
+    calcularValorPeriodo
+} from "@/lib/financeiro-utils";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -48,60 +52,80 @@ export async function createAssinatura(data: {
 }) {
     await getContext(); // Validate auth
 
-    // Validations
-    const existing = await prisma.assinatura.findFirst({
-        where: {
-            participanteId: data.participanteId,
-            streamingId: data.streamingId,
-            NOT: {
-                status: StatusAssinatura.cancelada
-            }
-        }
-    });
-
-    if (existing) {
-        throw new Error("Participante já possui uma assinatura ativa ou suspensa para este streaming.");
-    }
-
     const dataInicio = new Date(data.dataInicio);
 
-    const assinatura = await prisma.assinatura.create({
-        data: {
-            participanteId: data.participanteId,
-            streamingId: data.streamingId,
-            frequencia: data.frequencia,
-            valor: data.valor,
-            dataInicio: dataInicio,
-            status: StatusAssinatura.ativa,
-            diasAtraso: 0,
-        },
-    });
+    // Use transaction to ensure atomicity between subscription and initial charge creation
+    const result = await prisma.$transaction(async (tx) => {
+        // Validations
+        const existing = await tx.assinatura.findFirst({
+            where: {
+                participanteId: data.participanteId,
+                streamingId: data.streamingId,
+                NOT: {
+                    status: StatusAssinatura.cancelada
+                }
+            }
+        });
 
-    // Auto-generate first charge
-    await criarCobrancaInicial(assinatura.id);
+        if (existing) {
+            throw new Error("Participante já possui uma assinatura ativa ou suspensa para este streaming.");
+        }
 
-    // Send WhatsApp notification
-    try {
-        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
-        const participante = await prisma.participante.findUnique({
+        // Create subscription
+        const assinatura = await tx.assinatura.create({
+            data: {
+                participanteId: data.participanteId,
+                streamingId: data.streamingId,
+                frequencia: data.frequencia,
+                valor: data.valor,
+                dataInicio: dataInicio,
+                status: StatusAssinatura.ativa,
+                diasAtraso: 0,
+            },
+        });
+
+        // Auto-generate first charge within the same transaction
+        const periodoInicio = dataInicio;
+        const periodoFim = calcularProximoVencimento(periodoInicio, data.frequencia);
+        const valorCobranca = calcularValorPeriodo(new (await import("@streamshare/database")).Prisma.Decimal(data.valor), data.frequencia);
+
+        const cobranca = await tx.cobranca.create({
+            data: {
+                assinaturaId: assinatura.id,
+                valor: valorCobranca,
+                periodoInicio,
+                periodoFim,
+                status: "pendente"
+            }
+        });
+
+        // Fetch participant and streaming data for WhatsApp notification
+        const participante = await tx.participante.findUnique({
             where: { id: data.participanteId },
             select: { nome: true, contaId: true },
         });
-        const streaming = await prisma.streaming.findUnique({
+        const streaming = await tx.streaming.findUnique({
             where: { id: data.streamingId },
             include: { catalogo: true },
         });
 
-        if (participante && streaming) {
+        return { assinatura, cobranca, participante, streaming };
+    });
+
+    // Send WhatsApp notification (outside transaction - not critical)
+    try {
+        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+
+        if (result.participante && result.streaming) {
             const mensagem = whatsappTemplates.novaAssinatura(
-                participante.nome,
-                streaming.catalogo.nome,
+                result.participante.nome,
+                result.streaming.catalogo.nome,
                 `R$ ${data.valor.toFixed(2)}`,
-                new Date(data.dataInicio).toLocaleDateString("pt-BR")
+                dataInicio.toLocaleDateString("pt-BR")
             );
 
             await sendWhatsAppNotification(
-                participante.contaId,
+                result.participante.contaId,
                 "nova_assinatura",
                 data.participanteId,
                 mensagem
@@ -117,7 +141,7 @@ export async function createAssinatura(data: {
     revalidatePath("/streamings");
     revalidatePath("/cobrancas");
 
-    return assinatura;
+    return result.assinatura;
 }
 
 /**
