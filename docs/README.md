@@ -4,12 +4,28 @@ Bem-vindo à documentação oficial do projeto StreamShare.
 
 ## Índice de Documentos
 
+### Configuração e Setup
 - **[Guia de Instalação e Execução](./COMO_RODAR.md)**: Passo-a-passo para configurar o ambiente e rodar o projeto.
+- **[Banco de Dados](./DATABASE.md)**: Documentação do schema e relacionamentos.
+
+### Integrações
+- **[WhatsApp Integration](./WHATSAPP_INTEGRATION.md)**: Documentação completa da integração WhatsApp/Twilio com fluxos, diagramas e API reference.
+- **[Email Configuration](./EMAIL_CONFIGURATION.md)**: Configuração de envio de emails.
+- **[Email Setup](./EMAIL_SETUP.md)**: Setup detalhado de serviços de email.
+
+### Design e UI/UX
 - **[Design System](./DESIGN_SYSTEM.md)**: Guia completo de UI/UX, cores, tipografia, componentes e padrões de layout.
 - **[Componentes Reutilizáveis](./REUSABLE_COMPONENTS.md)**: PageContainer, PageHeader e componentes de loading.
 - **[Loading States](./LOADING_STATES.md)**: Guia completo de estados de carregamento, Skeleton, Spinner e loading.tsx.
 - **[Responsividade e Acessibilidade](./RESPONSIVENESS_ACCESSIBILITY.md)**: Diretrizes de design responsivo e acessível.
-- **[Banco de Dados](./DATABASE.md)**: Documentação do schema e relacionamentos.
+
+### Funcionalidades
+- **[Sistema de Autenticação](./AUTHENTICATION_SYSTEM.md)**: Documentação do sistema de autenticação.
+- **[Estrutura de Rotas](./ROUTE_STRUCTURE.md)**: Organização e estrutura de rotas do projeto.
+- **[Criação de Assinaturas](./SUBSCRIPTION_CREATION.md)**: Fluxo de criação de assinaturas.
+
+### Referência
+- **[Especificação do Projeto](./PROJECT_SPEC.md)**: Especificação completa do projeto.
 - **[Orientação de Domínio](./orientação.txt)**: (Arquivo original) Resumo consolidado das regras de negócio e entidades.
 
 ## Visão Rápida

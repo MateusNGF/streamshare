@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, User, Bell, Shield, CreditCard, LogOut } from "lucide-react";
+import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Toast, ToastVariant } from "@/components/ui/Toast";
 import { updateProfile, updateAccount } from "@/actions/settings";
+import WhatsAppConfigTab from "@/components/settings/WhatsAppConfigTab";
 
 interface SettingsClientProps {
     initialData: {
@@ -323,6 +324,12 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                     </div>
                 </div>
             ),
+        },
+        {
+            id: "whatsapp",
+            label: "WhatsApp",
+            icon: MessageSquare,
+            content: <WhatsAppConfigTab />,
         },
     ];
 

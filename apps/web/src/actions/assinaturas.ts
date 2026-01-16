@@ -80,6 +80,38 @@ export async function createAssinatura(data: {
     // Auto-generate first charge
     await criarCobrancaInicial(assinatura.id);
 
+    // Send WhatsApp notification
+    try {
+        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+        const participante = await prisma.participante.findUnique({
+            where: { id: data.participanteId },
+            select: { nome: true, contaId: true },
+        });
+        const streaming = await prisma.streaming.findUnique({
+            where: { id: data.streamingId },
+            include: { catalogo: true },
+        });
+
+        if (participante && streaming) {
+            const mensagem = whatsappTemplates.novaAssinatura(
+                participante.nome,
+                streaming.catalogo.nome,
+                `R$ ${data.valor.toFixed(2)}`,
+                new Date(data.dataInicio).toLocaleDateString("pt-BR")
+            );
+
+            await sendWhatsAppNotification(
+                participante.contaId,
+                "nova_assinatura",
+                data.participanteId,
+                mensagem
+            );
+        }
+    } catch (error) {
+        // Log but don't fail the operation
+        console.error("Erro ao enviar notificação WhatsApp:", error);
+    }
+
     revalidatePath("/assinaturas");
     revalidatePath("/participantes");
     revalidatePath("/streamings");

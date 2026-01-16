@@ -43,6 +43,15 @@ enum StatusCobranca {
   cancelado
 }
 
+enum TipoNotificacaoWhatsApp {
+  nova_assinatura
+  cobranca_gerada
+  cobranca_vencendo
+  cobranca_atrasada
+  assinatura_suspensa
+  pagamento_confirmado
+}
+
 //////////////////////////////////////////////////
 // MODELS
 //////////////////////////////////////////////////
@@ -61,6 +70,7 @@ model Conta {
   grupos         Grupo[]
   participantes  Participante[]
   streamings     Streaming[]
+  whatsappConfig WhatsAppConfig?
 
   @@map("conta")
 }
@@ -181,6 +191,7 @@ model Participante {
   conta           Conta         @relation(fields: [contaId], references: [id])
   usuario         Usuario?      @relation(fields: [userId], references: [id])
   assinaturas     Assinatura[]
+  whatsappLogs    WhatsAppLog[]
 
   @@map("participante")
 }
@@ -223,4 +234,54 @@ model Cobranca {
   assinatura     Assinatura     @relation(fields: [assinaturaId], references: [id])
 
   @@map("cobranca")
+}
+
+model WhatsAppConfig {
+  id                           Int      @id @default(autoincrement())
+  contaId                      Int      @unique
+  
+  provider                     String   @default("twilio")
+  apiKey                       String
+  apiSecret                    String?
+  phoneNumber                  String
+  
+  notificarNovaAssinatura      Boolean  @default(true)
+  notificarCobrancaGerada      Boolean  @default(true)
+  notificarCobrancaVencendo    Boolean  @default(true)
+  notificarCobrancaAtrasada    Boolean  @default(true)
+  notificarAssinaturaSuspensa  Boolean  @default(true)
+  notificarPagamentoConfirmado Boolean  @default(true)
+  
+  diasAvisoVencimento          Int      @default(3)
+  isAtivo                      Boolean  @default(true)
+  
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+  
+  conta                        Conta    @relation(fields: [contaId], references: [id])
+  logs                         WhatsAppLog[]
+  
+  @@map("whatsapp_config")
+}
+
+model WhatsAppLog {
+  id             Int                      @id @default(autoincrement())
+  configId       Int
+  participanteId Int?
+  
+  tipo           TipoNotificacaoWhatsApp
+  numeroDestino  String
+  mensagem       String                   @db.Text
+  
+  enviado        Boolean                  @default(false)
+  erro           String?                  @db.Text
+  providerId     String?
+  
+  createdAt      DateTime                 @default(now())
+  
+  config         WhatsAppConfig           @relation(fields: [configId], references: [id])
+  participante   Participante?            @relation(fields: [participanteId], references: [id])
+  
+  @@index([configId, createdAt])
+  @@map("whatsapp_log")
 }

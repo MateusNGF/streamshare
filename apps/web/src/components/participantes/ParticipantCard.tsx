@@ -7,7 +7,6 @@ interface ParticipantCardProps {
     email?: string;
     cpf: string;
     subscriptionsCount: number;
-    totalValue: string;
     status: "ativa" | "suspensa" | "inativo";
     onEdit: () => void;
     onDelete: () => void;
@@ -19,7 +18,6 @@ export function ParticipantCard({
     email,
     cpf,
     subscriptionsCount,
-    totalValue,
     status,
     onEdit,
     onDelete,
@@ -60,10 +58,6 @@ export function ParticipantCard({
                             {status === "ativa" ? "● Ativa" : status === "suspensa" ? "● Suspensa" : "● Inativo"}
                         </span>
                     </div>
-                </div>
-                <div className="text-right">
-                    <p className="text-sm text-gray-500">Valor Total</p>
-                    <p className="text-xl font-bold text-gray-900">R$ {totalValue}</p>
                 </div>
             </div>
 
