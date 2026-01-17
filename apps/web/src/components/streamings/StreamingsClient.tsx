@@ -1,73 +1,76 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { StreamingDetailCard } from "@/components/streamings/StreamingDetailCard";
 import { StreamingModal, StreamingFormData } from "@/components/modals/StreamingModal";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { createStreaming, updateStreaming, deleteStreaming } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
-
-interface Streaming {
-    id: number;
-    streamingCatalogoId: number;
-    valorIntegral: any;
-    limiteParticipantes: number;
-    catalogo: {
-        nome: string;
-        corPrimaria: string;
-        iconeUrl: string | null;
-    };
-    _count?: {
-        assinaturas: number;
-    };
-}
+import { useStreamingStore } from "@/stores";
 
 interface StreamingsClientProps {
-    initialData: Streaming[];
+    initialData?: any[]; // Optional for progressive enhancement
 }
 
 export function StreamingsClient({ initialData }: StreamingsClientProps) {
     const toast = useToast();
-    const [searchTerm, setSearchTerm] = useState("");
+
+    // Zustand store
+    const {
+        streamings,
+        loading,
+        error,
+        filters,
+        fetchStreamings,
+        createStreaming: createStreamingStore,
+        updateStreaming: updateStreamingStore,
+        deleteStreaming: deleteStreamingStore,
+        setFilters,
+        getFiltered,
+    } = useStreamingStore();
+
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [selectedStreaming, setSelectedStreaming] = useState<Streaming | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [selectedStreaming, setSelectedStreaming] = useState<any | null>(null);
 
-    // Filter logic
-    const filteredStreamings = useMemo(() => {
-        return initialData.filter((s) => {
-            return s.catalogo.nome.toLowerCase().includes(searchTerm.toLowerCase());
-        });
-    }, [initialData, searchTerm]);
+    // Initialize store with server data on mount
+    useEffect(() => {
+        fetchStreamings();
+    }, [fetchStreamings]);
 
-    // Actions
+    // Show error toast if any
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+        }
+    }, [error, toast]);
+
+    // Get filtered streamings
+    const filteredStreamings = getFiltered();
+
+    // Actions with Zustand store
     const handleAdd = async (data: StreamingFormData) => {
-        setLoading(true);
         try {
-            await createStreaming({
+            await createStreamingStore({
                 catalogoId: parseInt(data.catalogoId),
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
             toast.success("Streaming criado com sucesso!");
             setIsAddModalOpen(false);
-        } catch (error) {
-            toast.error("Erro ao criar streaming");
-        } finally {
-            setLoading(false);
+        } catch (error: any) {
+            toast.error(error?.message || "Erro ao criar streaming");
         }
     };
 
     const handleEdit = async (data: StreamingFormData & { updateExistingSubscriptions?: boolean }) => {
         if (!selectedStreaming) return;
-        setLoading(true);
+
         try {
-            const result = await updateStreaming(selectedStreaming.id, {
+            const result = await updateStreamingStore(selectedStreaming.id, {
                 catalogoId: parseInt(data.catalogoId),
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
@@ -82,25 +85,22 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             }
 
             setIsEditModalOpen(false);
+            setSelectedStreaming(null);
         } catch (error: any) {
-            const errorMessage = error?.message || "Erro ao atualizar streaming";
-            toast.error(errorMessage);
-        } finally {
-            setLoading(false);
+            toast.error(error?.message || "Erro ao atualizar streaming");
         }
     };
 
     const handleDelete = async () => {
         if (!selectedStreaming) return;
-        setLoading(true);
+
         try {
-            await deleteStreaming(selectedStreaming.id);
+            await deleteStreamingStore(selectedStreaming.id);
             toast.success("Streaming removido do catálogo");
             setIsDeleteModalOpen(false);
-        } catch (error) {
-            toast.error("Erro ao excluir streaming");
-        } finally {
-            setLoading(false);
+            setSelectedStreaming(null);
+        } catch (error: any) {
+            toast.error(error?.message || "Erro ao excluir streaming");
         }
     };
 
@@ -113,7 +113,8 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                     <button
                         onClick={() => setIsAddModalOpen(true)}
                         aria-label="Adicionar novo serviço de streaming"
-                        className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
+                        disabled={loading}
+                        className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Plus size={20} />
                         Novo Serviço
@@ -128,42 +129,56 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                     <input
                         type="text"
                         placeholder="Buscar por serviço..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        value={filters.searchTerm}
+                        onChange={(e) => setFilters({ searchTerm: e.target.value })}
                         className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500 min-w-0"
                     />
                 </div>
             </div>
 
-            {/* Grid */}
-            {filteredStreamings.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {filteredStreamings.map((s) => (
-                        <StreamingDetailCard
-                            key={s.id}
-                            id={s.id}
-                            name={s.catalogo.nome}
-                            color={s.catalogo.corPrimaria}
-                            initial={s.catalogo.nome.charAt(0).toUpperCase()}
-                            iconeUrl={s.catalogo.iconeUrl}
-                            slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
-                            price={String(s.valorIntegral)}
-                            frequency="Mensal"
-                            onEdit={() => {
-                                setSelectedStreaming(s);
-                                setIsEditModalOpen(true);
-                            }}
-                            onDelete={() => {
-                                setSelectedStreaming(s);
-                                setIsDeleteModalOpen(true);
-                            }}
-                        />
-                    ))}
+            {/* Loading State */}
+            {loading && streamings.length === 0 ? (
+                <div className="text-center py-12 md:py-20">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    <p className="text-gray-600 mt-4">Carregando streamings...</p>
                 </div>
             ) : (
-                <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                    <p className="text-gray-400 text-base md:text-lg">Nenhum serviço de streaming cadastrado no seu catálogo.</p>
-                </div>
+                <>
+                    {/* Grid */}
+                    {filteredStreamings.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                            {filteredStreamings.map((s) => (
+                                <StreamingDetailCard
+                                    key={s.id}
+                                    id={s.id}
+                                    name={s.catalogo.nome}
+                                    color={s.catalogo.corPrimaria}
+                                    initial={s.catalogo.nome.charAt(0).toUpperCase()}
+                                    iconeUrl={s.catalogo.iconeUrl}
+                                    slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
+                                    price={String(s.valorIntegral)}
+                                    frequency="Mensal"
+                                    onEdit={() => {
+                                        setSelectedStreaming(s);
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    onDelete={() => {
+                                        setSelectedStreaming(s);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                            <p className="text-gray-400 text-base md:text-lg">
+                                {filters.searchTerm
+                                    ? "Nenhum serviço encontrado com esse nome."
+                                    : "Nenhum serviço de streaming cadastrado no seu catálogo."}
+                            </p>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Modals */}
@@ -175,7 +190,10 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             />
             <StreamingModal
                 isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedStreaming(null);
+                }}
                 onSave={handleEdit}
                 loading={loading}
                 streaming={
@@ -191,7 +209,10 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             />
             <DeleteModal
                 isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setSelectedStreaming(null);
+                }}
                 onConfirm={handleDelete}
                 loading={loading}
                 title="Remover do Catálogo"

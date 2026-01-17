@@ -152,7 +152,44 @@ export async function createStreaming(data: {
 }) {
     const { contaId } = await getContext();
 
-    // Ensure dataVencimento is a valid date object or null if empty string
+    // Business validations
+    if (!Number.isFinite(data.valorIntegral) || data.valorIntegral <= 0) {
+        throw new Error("Valor integral deve ser maior que zero");
+    }
+
+    if (!Number.isInteger(data.limiteParticipantes) || data.limiteParticipantes < 1) {
+        throw new Error("Limite de participantes deve ser no mínimo 1");
+    }
+
+    if (data.limiteParticipantes > 100) {
+        throw new Error("Limite de participantes não pode exceder 100");
+    }
+
+    // Validate catalog exists and is active
+    const catalogo = await prisma.streamingCatalogo.findUnique({
+        where: { id: data.catalogoId }
+    });
+
+    if (!catalogo) {
+        throw new Error("Catálogo de streaming não encontrado");
+    }
+
+    if (!catalogo.isAtivo) {
+        throw new Error("Este catálogo de streaming não está mais disponível");
+    }
+
+    // Check for duplicate (same account + same catalog)
+    const existing = await prisma.streaming.findFirst({
+        where: {
+            contaId,
+            streamingCatalogoId: data.catalogoId,
+            isAtivo: true
+        }
+    });
+
+    if (existing) {
+        throw new Error(`Você já possui um ${catalogo.nome} cadastrado`);
+    }
 
     const streaming = await prisma.streaming.create({
         data: {
@@ -160,7 +197,6 @@ export async function createStreaming(data: {
             streamingCatalogoId: data.catalogoId,
             valorIntegral: data.valorIntegral,
             limiteParticipantes: data.limiteParticipantes,
-            // frequenciasHabilitadas default is set by schema
         },
     });
 
@@ -178,6 +214,19 @@ export async function updateStreaming(
     }
 ) {
     const { contaId } = await getContext();
+
+    // Business validations
+    if (!Number.isFinite(data.valorIntegral) || data.valorIntegral <= 0) {
+        throw new Error("Valor integral deve ser maior que zero");
+    }
+
+    if (!Number.isInteger(data.limiteParticipantes) || data.limiteParticipantes < 1) {
+        throw new Error("Limite de participantes deve ser no mínimo 1");
+    }
+
+    if (data.limiteParticipantes > 100) {
+        throw new Error("Limite de participantes não pode exceder 100");
+    }
 
     // Get current streaming data
     const currentStreaming = await prisma.streaming.findUnique({

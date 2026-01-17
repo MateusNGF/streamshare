@@ -52,7 +52,30 @@ export async function createAssinatura(data: {
 }) {
     await getContext(); // Validate auth
 
+    // Business validations
+    if (!Number.isFinite(data.valor) || data.valor <= 0) {
+        throw new Error("Valor da assinatura deve ser maior que zero");
+    }
+
+    // Validate date
     const dataInicio = new Date(data.dataInicio);
+    if (isNaN(dataInicio.getTime())) {
+        throw new Error("Data de início inválida");
+    }
+
+    // Validate that date is not too far in the past (> 1 year ago)
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    if (dataInicio < oneYearAgo) {
+        throw new Error("Data de início não pode ser superior a 1 ano no passado");
+    }
+
+    // Validate that date is not too far in the future (> 1 month)
+    const oneMonthAhead = new Date();
+    oneMonthAhead.setMonth(oneMonthAhead.getMonth() + 1);
+    if (dataInicio > oneMonthAhead) {
+        throw new Error("Data de início não pode ser superior a 1 mês no futuro");
+    }
 
     // Use transaction to ensure atomicity between subscription and initial charge creation
     const result = await prisma.$transaction(async (tx) => {
