@@ -73,10 +73,10 @@ export default function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             {/* Urgency Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6 animate-pulse">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6">
               <Zap className="text-yellow-300" size={20} />
               <span className="font-semibold text-white">
-                + de 10.000 usuários economizando juntos
+                Junte-se aos early adopters que já estão economizando
               </span>
             </div>
 
@@ -130,11 +130,11 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Award size={18} />
-                <span>Garantia de 7 dias</span>
+                <span>Plano Free disponível</span>
               </div>
               <div className="flex items-center gap-2">
                 <Star size={18} className="fill-yellow-300 text-yellow-300" />
-                <span>4.8/5 de satisfação</span>
+                <span>Bem avaliado por usuários</span>
               </div>
             </div>
           </div>
@@ -147,9 +147,9 @@ export default function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
-              { num: "10.000+", label: "Usuários Satisfeitos", icon: Users },
-              { num: "R$ 2M+", label: "Economizados em 2025", icon: DollarSign },
-              { num: "50.000+", label: "Assinaturas Gerenciadas", icon: TrendingUp },
+              { num: "5 min", label: "Para Começar a Usar", icon: Clock },
+              { num: "Até 80%", label: "De Economia Possível", icon: DollarSign },
+              { num: "100%", label: "Automatizado", icon: Zap },
             ].map((stat, idx) => (
               <div key={idx} className="text-center text-white">
                 <stat.icon className="mx-auto mb-3" size={40} />
@@ -361,7 +361,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {[
               {
                 name: "Free",
@@ -369,45 +369,31 @@ export default function LandingPage() {
                 period: "",
                 savings: "",
                 features: [
-                  "Até 3 streamings",
-                  "10 participantes no total",
-                  "Controle manual de pagamentos",
-                  "Suporte por email",
+                  "1 streaming",
+                  "Até 5 participantes no total",
+                  "Controle manual de cobranças",
                   "Dashboard básico",
-                ],
-              },
-              {
-                name: "Basic",
-                price: "R$ 9,90",
-                period: "/mês",
-                savings: "Economize R$ 118,80/ano no plano anual",
-                highlight: true,
-                badge: "🔥 Mais Popular",
-                features: [
-                  "Até 10 streamings",
-                  "Participantes ilimitados",
-                  "Automação de cobranças via WhatsApp",
-                  "Suporte prioritário",
-                  "Relatórios completos",
-                  "Lembretes automáticos",
-                  "Controle de inadimplência",
+                  "Visualização de relatórios",
+                  "Suporte por email",
                 ],
               },
               {
                 name: "Pro",
-                price: "R$ 19,90",
+                price: "R$ 9,90",
                 period: "/mês",
-                savings: "Economize R$ 238,80/ano no plano anual",
-                badge: "⭐ Melhor Custo-Benefício",
+                savings: "Economize R$ 118,80/ano no plano anual",
+                highlight: true,
+                badge: "🔥 Recomendado",
                 features: [
                   "Streamings ilimitados",
                   "Participantes ilimitados",
-                  "Automação completa com IA",
-                  "Relatórios avançados e exportação",
-                  "Suporte VIP 24/7 via WhatsApp",
-                  "API de integração",
-                  "Gestão multi-conta",
-                  "Prioridade em novas funcionalidades",
+                  "Automação de cobranças via WhatsApp",
+                  "Lembretes automáticos",
+                  "Dashboard completo e em tempo real",
+                  "Relatórios detalhados",
+                  "Controle de inadimplência",
+                  "Notificações inteligentes",
+                  "Suporte prioritário",
                 ],
               },
             ].map((plan, idx) => (
@@ -462,68 +448,65 @@ export default function LandingPage() {
           {/* Comparison note */}
           <div className="mt-12 text-center">
             <p className="text-gray-600 max-w-2xl mx-auto">
-              💡 <strong>Dica:</strong> Com o plano Basic você economiza em média <strong>R$ 47/mês</strong>
-              compartilhando apenas 2 streamings. O investimento se paga sozinho!
+              💡 <strong>Dica:</strong> Dividindo uma Netflix Premium (R$ 55,90) entre 4 pessoas, você paga apenas <strong>R$ 13,98/pessoa</strong>. O plano Pro se paga com apenas 1 streaming compartilhado!
             </p>
           </div>
         </div>
       </section>
 
-      {/* Testimonials - Social Proof */}
+      {/* How It Works Detail */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              O que nossos usuários dizem
+              Simples de Usar
             </h2>
             <p className="text-xl text-gray-600">
-              Junte-se a milhares de pessoas que já estão economizando
+              Configure uma vez e deixe o sistema trabalhar por você
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {[
-              {
-                name: "Maria Silva",
-                role: "Gerente de Marketing",
-                avatar: "👩‍💼",
-                rating: 5,
-                text: "Economizei mais de R$ 600 no último ano! O StreamShare facilitou muito minha vida. Antes eu gastava horas organizando pagamentos, agora é tudo automático.",
-              },
-              {
-                name: "João Pedro",
-                role: "Estudante",
-                avatar: "👨‍🎓",
-                rating: 5,
-                text: "Perfeito para dividir Netflix com meus amigos da faculdade. Os lembretes automáticos evitam aquelas conversas constrangedoras sobre dinheiro. Super recomendo!",
-              },
-              {
-                name: "Ana Costa",
-                role: "Empreendedora",
-                avatar: "👩‍💻",
-                rating: 5,
-                text: "Interface super intuitiva e suporte incrível. Gerencio 5 streamings diferentes e nunca mais tive dor de cabeça com cobranças. Vale cada centavo!",
-              },
-            ].map((testimonial, idx) => (
-              <div
-                key={idx}
-                className="bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-100"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="text-4xl">{testimonial.avatar}</div>
-                  <div>
-                    <div className="font-bold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-gray-600">{testimonial.role}</div>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="bg-primary/10 p-3 rounded-xl h-fit">
+                  <Users className="text-primary" size={24} />
                 </div>
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="fill-yellow-400 text-yellow-400" size={18} />
-                  ))}
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg mb-2">Cadastre Streamings</h3>
+                  <p className="text-gray-600">Adicione Netflix, Spotify, Disney+ ou qualquer outro serviço que você compartilha</p>
                 </div>
-                <p className="text-gray-600 italic">&ldquo;{testimonial.text}&rdquo;</p>
               </div>
-            ))}
+              <div className="flex gap-4">
+                <div className="bg-primary/10 p-3 rounded-xl h-fit">
+                  <Bell className="text-primary" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg mb-2">Adicione Participantes</h3>
+                  <p className="text-gray-600">Convide amigos e familiares, defina valores e datas de cobrança</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="bg-primary/10 p-3 rounded-xl h-fit">
+                  <Zap className="text-primary" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg mb-2">Deixe o Sistema Trabalhar</h3>
+                  <p className="text-gray-600">Lembretes automáticos via WhatsApp, controle de pagamentos e relatórios em tempo real</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="bg-primary/10 p-3 rounded-xl h-fit">
+                  <BarChart3 className="text-primary" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg mb-2">Acompanhe Tudo</h3>
+                  <p className="text-gray-600">Dashboard completo mostra quem pagou, quem está devendo e suas economias totais</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -541,7 +524,7 @@ export default function LandingPage() {
             {[
               {
                 q: "Como funciona o pagamento?",
-                a: "O StreamShare facilita a divisão de custos, mas não processa pagamentos diretamente. Você pode configurar cobranças e acompanhar quem já pagou.",
+                a: "O StreamShare organiza e rastreia as cobranças, mas não processa pagamentos diretamente. Os participantes pagam via PIX, transferência ou outro método combinado entre vocês.",
               },
               {
                 q: "Quanto eu posso economizar?",
@@ -549,11 +532,11 @@ export default function LandingPage() {
               },
               {
                 q: "Posso cancelar a qualquer momento?",
-                a: "Sim! Não há fidelidade. Você pode cancelar seu plano quando quiser sem custos adicionais. Se cancelar nos primeiros 7 dias, devolvemos 100% do valor.",
+                a: "Sim! Não há fidelidade. Você pode cancelar seu plano Pro quando quiser sem custos adicionais. O plano Free é sempre gratuito.",
               },
               {
-                q: "É seguro compartilhar credenciais?",
-                a: "Todas as credenciais são criptografadas com padrão bancário (AES-256) e apenas você tem acesso completo aos dados sensíveis. Nunca compartilhamos suas informações com terceiros.",
+                q: "Meus dados estão seguros?",
+                a: "Sim! Todas as informações são armazenadas de forma segura e criptografada. Nunca compartilhamos seus dados com terceiros. Você decide quais informações seus participantes podem ver.",
               },
               {
                 q: "Como funcionam os lembretes automáticos?",
@@ -587,19 +570,11 @@ export default function LandingPage() {
       <section className="py-24 bg-gradient-to-br from-primary via-purple-600 to-indigo-700 text-white">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6">
-              <Clock className="text-yellow-300" size={20} />
-              <span className="font-semibold">
-                Oferta especial: Primeiro mês com 50% de desconto
-              </span>
-            </div>
-
             <h2 className="text-4xl md:text-6xl font-bold mb-6">
               Pronto para economizar de verdade?
             </h2>
             <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
-              Junte-se a mais de 10.000 pessoas que já economizaram milhares de reais
-              compartilhando streaming de forma inteligente.
+              Comece gratuitamente agora e economize até 80% nos seus streamings favoritos.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
