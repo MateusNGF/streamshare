@@ -21,29 +21,8 @@ function normalizePhoneNumber(phone: string): string {
         return normalized;
     }
 
-    // Se tem 11 dígitos (celular BR: DDI + DDD + número)
-    // Exemplo: 11999999999 -> +5511999999999
-    if (normalized.length === 11 && !normalized.startsWith('55')) {
-        return `+55${normalized}`;
-    }
-
-    // Se tem 13 dígitos e começa com 55 (já tem DDI mas sem +)
-    if (normalized.length === 13 && normalized.startsWith('55')) {
-        return `+${normalized}`;
-    }
-
-    // Se tem 10 dígitos (fixo BR: DDD + número)
-    if (normalized.length === 10 && !normalized.startsWith('55')) {
-        return `+55${normalized}`;
-    }
-
-    // Se tem 12 dígitos e começa com 55
-    if (normalized.length === 12 && normalized.startsWith('55')) {
-        return `+${normalized}`;
-    }
-
-    // Caso contrário, assume que precisa adicionar +55
-    return `+55${normalized}`;
+    // Se não tem +, adiciona (assume que o número já vem com código do país)
+    return `+${normalized}`;
 }
 
 // Twilio Provider

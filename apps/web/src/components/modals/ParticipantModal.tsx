@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MaskedInput } from "@/components/ui/MaskedInput";
 import { Spinner } from "@/components/ui/Spinner";
 import { validateCPF, validatePhone, validateEmail, ValidationMessages } from "@/lib/validation";
@@ -134,13 +135,10 @@ export function ParticipantModal({
                     error={errors.nome}
                     required
                 />
-                <MaskedInput
+                <PhoneInput
                     label="WhatsApp"
-                    type="tel"
-                    maskType="phone"
                     value={formData.whatsappNumero}
-                    onValueChange={(value) => handleChange("whatsappNumero", value)}
-                    placeholder="(11) 98765-4321"
+                    onChange={(value) => handleChange("whatsappNumero", value)}
                     error={errors.whatsappNumero}
                     required
                 />

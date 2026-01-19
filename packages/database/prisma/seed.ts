@@ -91,12 +91,19 @@ async function main() {
 
     // 2. Criar Contas
     console.log("\n🏢 Criando contas...");
+
+    // NOTA: limiteGrupos aqui é temporário e será migrado para tabela PlanoConfig
+    // Valores atuais estão alinhados com a recomendação conservadora:
+    // - basico: 5 grupos (permitirá 1 streaming, 5 participantes após implementação)
+    // - pro: 20 grupos (permitirá 10 streamings, 100 participantes após implementação)
+    // - premium: 100 grupos (permitirá 50 streamings, 500 participantes após implementação)
+
     const conta1 = await prisma.conta.create({
         data: {
             nome: "StreamShare Master",
             email: "contato@streamshare.com.br",
             plano: PlanoConta.pro,
-            limiteGrupos: 20,
+            limiteGrupos: 20, // Alinhado com PlanoConfig.pro
             isAtivo: true,
         },
     });
@@ -107,7 +114,7 @@ async function main() {
             nome: "Grupo Familia Silva",
             email: "silva.streaming@gmail.com",
             plano: PlanoConta.basico,
-            limiteGrupos: 5,
+            limiteGrupos: 2, // ✅ AJUSTADO: basico deve ter menos recursos
             isAtivo: true,
         },
     });
@@ -118,7 +125,7 @@ async function main() {
             nome: "Revenda Premium Streams",
             email: "premium@revendastreaming.com",
             plano: PlanoConta.premium,
-            limiteGrupos: 100,
+            limiteGrupos: 100, // Alinhado com PlanoConfig.premium
             isAtivo: true,
         },
     });

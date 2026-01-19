@@ -53,15 +53,50 @@ export function validateCPF(cpf: string): boolean {
 }
 
 /**
+ * Validate phone number in E.164 international format
+ * @param phone - Phone string in E.164 format (+5511999999999)
+ * @returns true if phone is valid E.164 format, false otherwise
+ */
+export function validateE164Phone(phone: string): boolean {
+    if (!phone || typeof phone !== 'string') {
+        return false;
+    }
+
+    // Must start with +
+    if (!phone.startsWith('+')) {
+        return false;
+    }
+
+    // Remove + and check if rest are digits
+    const digits = phone.substring(1);
+    if (!/^\d+$/.test(digits)) {
+        return false;
+    }
+
+    // E.164 allows 1-15 digits total (including country code)
+    // Minimum realistic is country code (1-3 digits) + phone (7+ digits) = 8 digits
+    if (digits.length < 8 || digits.length > 15) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * Validate Brazilian phone number format
  * Accepts both landline (10 digits) and mobile (11 digits)
- * @param phone - Phone string with or without mask
+ * @param phone - Phone string with or without mask, can be in E.164 format
  * @returns true if phone is valid, false otherwise
  */
 export function validatePhone(phone: string): boolean {
+    // If it's in E.164 format, validate as E.164
+    if (phone.startsWith('+')) {
+        return validateE164Phone(phone);
+    }
+
     const cleaned = removeNonNumeric(phone);
 
-    // Check if has 10 or 11 digits
+    // Check if has 10 or 11 digits (Brazilian format)
     if (cleaned.length !== 10 && cleaned.length !== 11) {
         return false;
     }

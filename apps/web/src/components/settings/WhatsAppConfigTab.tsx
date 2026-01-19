@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { getWhatsAppConfig, saveWhatsAppConfig, testWhatsAppConnection } from "@/actions/whatsapp";
 
 export default function WhatsAppConfigTab() {
@@ -143,18 +144,14 @@ export default function WhatsAppConfigTab() {
             </div>
 
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                    Número WhatsApp (From)
-                </label>
-                <input
-                    type="tel"
+                <PhoneInput
+                    label="Número WhatsApp (From)"
                     value={config.phoneNumber || ""}
-                    onChange={(e) => setConfig({ ...config, phoneNumber: e.target.value })}
+                    onChange={(value) => setConfig({ ...config, phoneNumber: value })}
                     placeholder="+14155238886"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 />
                 <p className="text-xs text-gray-500">
-                    Número WhatsApp habilitado no Twilio (formato: +1234567890)
+                    Número WhatsApp habilitado no Twilio (formato E.164)
                 </p>
             </div>
 
@@ -216,18 +213,18 @@ export default function WhatsAppConfigTab() {
             {/* Test Section */}
             <div className="border-t pt-6">
                 <h3 className="font-semibold text-gray-900 mb-4">Testar Conexão</h3>
-                <div className="flex gap-3">
-                    <input
-                        type="tel"
-                        value={testNumber}
-                        onChange={(e) => setTestNumber(e.target.value)}
-                        placeholder="+5511999999999"
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    />
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1">
+                        <PhoneInput
+                            value={testNumber}
+                            onChange={setTestNumber}
+                            placeholder="+5511999999999"
+                        />
+                    </div>
                     <button
                         onClick={handleTest}
                         disabled={testing}
-                        className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap"
                     >
                         {testing ? "Enviando..." : "Enviar Teste"}
                     </button>

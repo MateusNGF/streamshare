@@ -26,10 +26,9 @@ export function generateWhatsAppLink(phoneNumber: string, message: string): stri
     // Remover todos os caracteres não numéricos exceto o +
     cleanNumber = cleanNumber.replace(/[^\d+]/g, '');
 
-    // Garantir que começa com + (formato E.164)
+    // Garantir que está no formato E.164 (começa com +)
     if (!cleanNumber.startsWith('+')) {
-        // Se não tem +, assume Brasil e adiciona +55
-        cleanNumber = `+55${cleanNumber}`;
+        throw new Error('Número de telefone deve estar no formato E.164 (+código_país + número)');
     }
 
     // Encode mensagem para URL
