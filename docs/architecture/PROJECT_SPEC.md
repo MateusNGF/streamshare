@@ -402,7 +402,7 @@ model Usuario {
   resetToken       String?
   resetTokenExpiry DateTime?
   
-  contas ContaUsuario[]
+  constas ContaUsuario[]
 }
 
 model Grupo {
@@ -472,7 +472,6 @@ model Assinatura {
 enum PlanoTipo {
   basico
   pro
-  premium
 }
 
 enum NivelAcesso {
