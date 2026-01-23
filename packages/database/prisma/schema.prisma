@@ -93,6 +93,7 @@ model Usuario {
 
   contas            ContaUsuario[]
   participante      Participante?
+  admin             UsuarioAdmin?
 
    @@map("usuario")
 }
@@ -243,11 +244,6 @@ model WhatsAppConfig {
   id                           Int      @id @default(autoincrement())
   contaId                      Int      @unique
   
-  provider                     String   @default("twilio")
-  apiKey                       String
-  apiSecret                    String?
-  phoneNumber                  String
-  
   notificarNovaAssinatura      Boolean  @default(true)
   notificarCobrancaGerada      Boolean  @default(true)
   notificarCobrancaVencendo    Boolean  @default(true)
@@ -288,3 +284,29 @@ model WhatsAppLog {
   @@index([configId, createdAt])
   @@map("whatsapp_log")
 }
+
+model UsuarioAdmin {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int      @unique
+  isAtivo   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@map("usuario_admin")
+}
+
+model Parametro {
+  id          Int      @id @default(autoincrement())
+  chave       String   @unique
+  valor       String   @db.Text
+  tipo        String   @default("string") // string, number, boolean, json
+  descricao   String?
+  isAtivo     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("parametro")
+}
+

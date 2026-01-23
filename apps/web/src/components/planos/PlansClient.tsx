@@ -53,9 +53,9 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
         setLoading(plan.id);
         try {
             const result = await createCheckoutSession(plan.id);
-            if (result && result.url) {
-                window.location.href = result.url;
-            } else if (result && result.success) {
+            if (result && 'url' in result) {
+                window.location.href = result.url as string;
+            } else if (result && 'success' in result && result.success) {
                 setToast({ message: "Plano alterado com sucesso!", variant: "success" });
                 router.refresh();
                 setLoading(null);

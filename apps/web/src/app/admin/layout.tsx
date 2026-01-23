@@ -1,10 +1,32 @@
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@streamshare/database";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({
+export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    // 1. Verificar autenticação
+    const session = await getCurrentUser();
+    if (!session) {
+        redirect("/login");
+    }
+
+    // 2. Verificar se o usuário é Administrador do Sistema
+    const adminUser = await prisma.usuarioAdmin.findFirst({
+        where: {
+            usuarioId: session.userId,
+            isAtivo: true
+        }
+    });
+
+    // 3. Verificar permissão
+    if (!adminUser) {
+        redirect("/dashboard?error=unauthorized");
+    }
+
     return (
         <div className="flex min-h-screen bg-gray-50">
             <main className="flex-1">

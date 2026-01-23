@@ -87,25 +87,23 @@ export async function getDashboardStats() {
 export async function getRecentSubscriptions() {
     const { contaId } = await getContext();
 
-    return prisma.assinatura.findMany({
+    const subscriptions = await prisma.assinatura.findMany({
         where: {
             streaming: { contaId },
         },
         include: {
-            participante: {
-                select: { nome: true },
-            },
+            participante: true,
             streaming: {
                 include: {
-                    catalogo: {
-                        select: { nome: true },
-                    },
+                    catalogo: true,
                 },
             },
         },
         orderBy: { createdAt: "desc" },
         take: 5,
     });
+
+    return subscriptions;
 }
 
 export async function getDashboardStreamings() {
@@ -114,9 +112,7 @@ export async function getDashboardStreamings() {
     return prisma.streaming.findMany({
         where: { contaId, isAtivo: true },
         include: {
-            catalogo: {
-                select: { nome: true, corPrimaria: true },
-            },
+            catalogo: true,
             _count: {
                 select: { assinaturas: true },
             },

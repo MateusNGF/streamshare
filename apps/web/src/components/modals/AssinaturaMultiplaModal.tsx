@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { FrequenciaPagamento } from "@prisma/client";
+import { FrequenciaPagamento } from "@streamshare/database";
 import { Check, ChevronRight, ChevronLeft, Search } from "lucide-react";
 
 interface StreamingOption {

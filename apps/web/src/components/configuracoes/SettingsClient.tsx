@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Toast, ToastVariant } from "@/components/ui/Toast";
 import { updateProfile, updateAccount } from "@/actions/settings";
-import WhatsAppConfigTab from "@/components/settings/WhatsAppConfigTab";
+import NotificationsTab from "@/components/settings/NotificationsTab";
 
 interface SettingsClientProps {
     initialData: {
@@ -263,31 +263,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                 </div>
                             </form>
                         </section>
-
-                        {/* Notificações */}
-                        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3 mb-6">
-                                <Bell className="text-primary" size={24} />
-                                <h2 className="text-xl font-bold text-gray-900">Notificações</h2>
-                            </div>
-                            <div className="space-y-4">
-                                <label className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-all opacity-50">
-                                    <div>
-                                        <p className="font-semibold text-gray-900">Pagamentos Recebidos</p>
-                                        <p className="text-sm text-gray-500">Notificar quando receber um pagamento</p>
-                                    </div>
-                                    <input type="checkbox" defaultChecked disabled className="w-5 h-5 text-primary" />
-                                </label>
-                                <label className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-all opacity-50">
-                                    <div>
-                                        <p className="font-semibold text-gray-900">Pagamentos Atrasados</p>
-                                        <p className="text-sm text-gray-500">Alertar sobre pagamentos em atraso</p>
-                                    </div>
-                                    <input type="checkbox" defaultChecked disabled className="w-5 h-5 text-primary" />
-                                </label>
-                                <p className="text-xs text-gray-400 italic">* Funcionalidade em desenvolvimento</p>
-                            </div>
-                        </section>
                     </div>
 
 
@@ -331,10 +306,10 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
             ),
         },
         {
-            id: "whatsapp",
-            label: "WhatsApp",
-            icon: MessageSquare,
-            content: <WhatsAppConfigTab />,
+            id: "notificacoes",
+            label: "Notificações",
+            icon: Bell,
+            content: <NotificationsTab />,
         },
     ];
 

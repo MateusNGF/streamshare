@@ -92,43 +92,64 @@ export async function sendWhatsAppNotification(
     participanteId: number,
     mensagem: string
 ) {
-    // Buscar configuração da conta
+    // 1. Buscar parâmetros globais do sistema
+    const parametros = await prisma.parametro.findMany({
+        where: {
+            chave: {
+                in: [
+                    "whatsapp.enabled",
+                    "whatsapp.account_sid",
+                    "whatsapp.auth_token",
+                    "whatsapp.phone_number"
+                ]
+            }
+        }
+    });
+
+    const getParam = (key: string) => parametros.find(p => p.chave === key)?.valor;
+
+    const globalEnabled = getParam("whatsapp.enabled") === "true";
+    const accountSid = getParam("whatsapp.account_sid");
+    const authToken = getParam("whatsapp.auth_token");
+    const fromNumber = getParam("whatsapp.phone_number");
+
+    // Se a integração global estiver desativada ou faltar credenciais, aborta
+    if (!globalEnabled || !accountSid || !authToken || !fromNumber) {
+        return { success: false, reason: "system_not_configured" };
+    }
+
+    // 2. Buscar configuração específica da conta (preferências)
     const config = await prisma.whatsAppConfig.findUnique({
         where: { contaId },
     });
 
-    // Se não tiver configuração ou estiver inativa, retorna silenciosamente
+    // Se a conta não tiver configuração ou estiver inativa, retorna silenciosamente
     if (!config || !config.isAtivo) {
-        return { success: false, reason: "not_configured" };
+        return { success: false, reason: "account_disabled" };
     }
 
-    // Verificar se notificação deste tipo está habilitada
+    // 3. Verificar se notificação deste tipo está habilitada para ESTA conta
     const tipoHabilitado = verificarTipoHabilitado(config, tipo);
     if (!tipoHabilitado) {
-        return { success: false, reason: "notification_disabled" };
+        return { success: false, reason: "notification_type_disabled" };
     }
 
-    // Buscar número do participante
+    // 4. Buscar número do participante
     const participante = await prisma.participante.findUnique({
         where: { id: participanteId },
         select: { whatsappNumero: true },
     });
 
-    if (!participante) {
-        return { success: false, reason: "participant_not_found" };
+    if (!participante || !participante.whatsappNumero) {
+        return { success: false, reason: "participant_invalid_number" };
     }
 
-    // **DESCRIPTOGRAFAR CREDENCIAIS**
-    const accountSid = decrypt(config.apiKey);
-    const authToken = decrypt(config.apiSecret || "");
-    const fromNumber = config.phoneNumber || "";
-
-    // Criar provider Twilio e enviar mensagem
+    // 5. Enviar mensagem usando as credenciais globais
     try {
         const provider = new TwilioProvider(
-            accountSid,    // Account SID descriptografado
-            authToken,     // Auth Token descriptografado
-            fromNumber     // From Number (já está em plain text)
+            accountSid,
+            authToken,
+            fromNumber
         );
         const result = await provider.sendMessage(participante.whatsappNumero, mensagem);
 

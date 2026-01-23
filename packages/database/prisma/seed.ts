@@ -71,9 +71,11 @@ async function main() {
     await prisma.streaming.deleteMany({});
     await prisma.grupo.deleteMany({});
     await prisma.contaUsuario.deleteMany({});
+    await prisma.usuarioAdmin.deleteMany({});
     await prisma.usuario.deleteMany({});
     await prisma.conta.deleteMany({});
     await prisma.streamingCatalogo.deleteMany({});
+    await prisma.parametro.deleteMany({});
 
     // 1. Criar Catálogo de Streamings
     console.log("\n📚 Criando catálogo de streamings...");
@@ -163,6 +165,16 @@ async function main() {
         },
     });
     console.log(`  ✅ ${usuario2.nome} → ${conta2.nome} (Owner)`);
+
+    // 4.1. Criar Administrador do Sistema
+    console.log("\n🔑 Criando administrador do sistema...");
+    await prisma.usuarioAdmin.create({
+        data: {
+            usuarioId: usuario1.id,
+            isAtivo: true
+        }
+    });
+    console.log(`  ✅ ${usuario1.nome} agora é Administrador do Sistema`);
 
     // 5. Criar Participantes
     console.log("\n👥 Criando participantes...");
@@ -396,10 +408,6 @@ async function main() {
     const whatsappConfig1 = await prisma.whatsAppConfig.create({
         data: {
             contaId: conta1.id,
-            provider: "twilio",
-            apiKey: "AC1234567890abcdef",
-            apiSecret: "auth_token_secret_123",
-            phoneNumber: "+5511999999999",
             notificarNovaAssinatura: true,
             notificarCobrancaGerada: true,
             notificarCobrancaVencendo: true,
@@ -412,13 +420,24 @@ async function main() {
     });
     console.log(`  ✅ WhatsApp Config - Conta 1`);
 
+    // 12. Criar Parâmetros Globais do Sistema
+    console.log("\n⚙️ Criando parâmetros globais...");
+    await prisma.parametro.createMany({
+        data: [
+            { chave: "app.name", valor: "StreamShare", tipo: "string", descricao: "Nome do sistema" },
+            { chave: "smtp.host", valor: "smtp.mailtrap.io", tipo: "string", descricao: "Host SMTP" },
+            { chave: "smtp.port", valor: "2525", tipo: "string", descricao: "Porta SMTP" },
+            { chave: "whatsapp.enabled", valor: "true", tipo: "boolean", descricao: "Habilitar WhatsApp globalmente" },
+        ]
+    });
+    console.log(`  ✅ 4 parâmetros globais criados`);
+
     console.log("\n✨ Seed essencial finalizado!");
 }
 
 main()
     .catch((e) => {
         console.error("❌ Erro ao executar seed:", e);
-        process.exit(1);
     })
     .finally(async () => {
         await prisma.$disconnect();

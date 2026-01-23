@@ -45,16 +45,29 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@streamshare/database";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getCurrentUser();
+  let isSystemAdmin = false;
+
+  if (session) {
+    const admin = await prisma.usuarioAdmin.findUnique({
+      where: { usuarioId: session.userId, isAtivo: true },
+    });
+    isSystemAdmin = !!admin;
+  }
+
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} antialiased flex bg-gray-50/50`}>
         <ToastProvider>
-          <ConditionalLayout>{children}</ConditionalLayout>
+          <ConditionalLayout isSystemAdmin={isSystemAdmin}>{children}</ConditionalLayout>
           <ToastContainer />
         </ToastProvider>
       </body>

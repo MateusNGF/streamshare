@@ -18,7 +18,7 @@ export function createSelectors<T extends object>(store: StoreApi<T>) {
     useStore.use = {} as any;
 
     for (const k of Object.keys(store.getState())) {
-        (useStore.use as any)[k] = () => store((s) => s[k as keyof T]);
+        (useStore.use as any)[k] = () => store.getState()[k as keyof T];
     }
 
     return useStore;

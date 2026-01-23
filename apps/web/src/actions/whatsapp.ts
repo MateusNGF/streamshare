@@ -3,7 +3,6 @@
 import { prisma } from "@streamshare/database";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import crypto from "crypto";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -19,23 +18,6 @@ async function getContext() {
     return { userId: session.userId, contaId: userAccount.contaId };
 }
 
-// Criptografia simples (em produção, usar lib como crypto-js ou AWS KMS)
-function encrypt(text: string): string {
-    const key = process.env.ENCRYPTION_KEY || "default-encryption-key-change-me";
-    const cipher = crypto.createCipher("aes-256-cbc", key);
-    let encrypted = cipher.update(text, "utf8", "hex");
-    encrypted += cipher.final("hex");
-    return encrypted;
-}
-
-function decrypt(text: string): string {
-    const key = process.env.ENCRYPTION_KEY || "default-encryption-key-change-me";
-    const decipher = crypto.createDecipher("aes-256-cbc", key);
-    let decrypted = decipher.update(text, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-    return decrypted;
-}
-
 export async function getWhatsAppConfig() {
     const { contaId } = await getContext();
 
@@ -43,20 +25,10 @@ export async function getWhatsAppConfig() {
         where: { contaId },
     });
 
-    if (!config) return null;
-
-    // Não retornar credenciais completas
-    return {
-        ...config,
-        apiKey: config.apiKey ? "••••••••" : "",
-        apiSecret: config.apiSecret ? "••••••••" : "",
-    };
+    return config;
 }
 
 export async function saveWhatsAppConfig(data: {
-    apiKey: string;
-    apiSecret?: string;
-    phoneNumber?: string;
     notificarNovaAssinatura: boolean;
     notificarCobrancaGerada: boolean;
     notificarCobrancaVencendo: boolean;
@@ -68,71 +40,33 @@ export async function saveWhatsAppConfig(data: {
 }) {
     const { contaId } = await getContext();
 
-    // Verificar se já existe configuração
-    const existingConfig = await prisma.whatsAppConfig.findUnique({
-        where: { contaId }
-    });
-
-    const isApiKeyMasked = data.apiKey === "••••••••";
-    const isApiSecretMasked = data.apiSecret === "••••••••";
-
-    // Validações - só exigir se não existir config ou valor não for mascarado
-    if (!data.apiKey || (isApiKeyMasked && !existingConfig)) {
-        throw new Error("Account SID é obrigatório");
-    }
-
-    if (!data.apiSecret || (isApiSecretMasked && !existingConfig)) {
-        throw new Error("Auth Token é obrigatório");
-    }
-
-    if (!data.phoneNumber) {
-        throw new Error("Número WhatsApp (From) é obrigatório");
-    }
-
+    // Validações
     if (data.diasAvisoVencimento < 0 || data.diasAvisoVencimento > 30) {
         throw new Error("Dias de aviso deve estar entre 0 e 30");
-    }
-
-
-    const encryptedData: any = {
-        phoneNumber: data.phoneNumber || "",
-        notificarNovaAssinatura: data.notificarNovaAssinatura,
-        notificarCobrancaGerada: data.notificarCobrancaGerada,
-        notificarCobrancaVencendo: data.notificarCobrancaVencendo,
-        notificarCobrancaAtrasada: data.notificarCobrancaAtrasada,
-        notificarAssinaturaSuspensa: data.notificarAssinaturaSuspensa,
-        notificarPagamentoConfirmado: data.notificarPagamentoConfirmado,
-        diasAvisoVencimento: data.diasAvisoVencimento,
-        isAtivo: data.isAtivo,
-    };
-
-    // Only encrypt if not masked
-    if (data.apiKey && !isApiKeyMasked) {
-        encryptedData.apiKey = encrypt(data.apiKey);
-    }
-    if (data.apiSecret && !isApiSecretMasked) {
-        encryptedData.apiSecret = encrypt(data.apiSecret);
     }
 
     await prisma.whatsAppConfig.upsert({
         where: { contaId },
         create: {
             contaId,
-            ...encryptedData,
-            apiKey: encryptedData.apiKey || "",
+            notificarNovaAssinatura: data.notificarNovaAssinatura,
+            notificarCobrancaGerada: data.notificarCobrancaGerada,
+            notificarCobrancaVencendo: data.notificarCobrancaVencendo,
+            notificarCobrancaAtrasada: data.notificarCobrancaAtrasada,
+            notificarAssinaturaSuspensa: data.notificarAssinaturaSuspensa,
+            notificarPagamentoConfirmado: data.notificarPagamentoConfirmado,
+            diasAvisoVencimento: data.diasAvisoVencimento,
+            isAtivo: data.isAtivo,
         },
         update: {
-            ...(encryptedData.apiKey && { apiKey: encryptedData.apiKey }),
-            ...(encryptedData.apiSecret && { apiSecret: encryptedData.apiSecret }),
-            phoneNumber: encryptedData.phoneNumber,
-            notificarNovaAssinatura: encryptedData.notificarNovaAssinatura,
-            notificarCobrancaGerada: encryptedData.notificarCobrancaGerada,
-            notificarCobrancaVencendo: encryptedData.notificarCobrancaVencendo,
-            notificarCobrancaAtrasada: encryptedData.notificarCobrancaAtrasada,
-            notificarAssinaturaSuspensa: encryptedData.notificarAssinaturaSuspensa,
-            notificarPagamentoConfirmado: encryptedData.notificarPagamentoConfirmado,
-            diasAvisoVencimento: encryptedData.diasAvisoVencimento,
-            isAtivo: encryptedData.isAtivo,
+            notificarNovaAssinatura: data.notificarNovaAssinatura,
+            notificarCobrancaGerada: data.notificarCobrancaGerada,
+            notificarCobrancaVencendo: data.notificarCobrancaVencendo,
+            notificarCobrancaAtrasada: data.notificarCobrancaAtrasada,
+            notificarAssinaturaSuspensa: data.notificarAssinaturaSuspensa,
+            notificarPagamentoConfirmado: data.notificarPagamentoConfirmado,
+            diasAvisoVencimento: data.diasAvisoVencimento,
+            isAtivo: data.isAtivo,
         },
     });
 

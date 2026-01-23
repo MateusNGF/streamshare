@@ -5,42 +5,25 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-    LayoutDashboard,
-    Users,
-    Tv,
-    CreditCard,
+    Play,
     Settings,
     LogOut,
-    FileSignature,
-    ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
-import { MobileMenuButton } from "./MobileMenuButton";
+import { MobileMenuButton } from "../layout/MobileMenuButton";
 
-interface SidebarProps {
-    isSystemAdmin?: boolean;
-}
+const menuItems = [
+    { icon: Play, label: "Catálogo", href: "/admin/catalogo" },
+    { icon: Settings, label: "Parâmetros", href: "/admin/parametros" },
+];
 
-export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
+export function AdminSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    const menuItems = [
-        { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-        { icon: Users, label: "Participantes", href: "/participantes" },
-        { icon: Tv, label: "Streamings", href: "/streamings" },
-        { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
-        { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
-        { icon: Settings, label: "Configurações", href: "/configuracoes" },
-    ];
-
-    if (isSystemAdmin) {
-        menuItems.push({ icon: ShieldCheck, label: "Painel Admin", href: "/admin/parametros" });
-    }
 
     const handleLogout = async () => {
         setLoading(true);
@@ -82,7 +65,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
             >
-                <div className="p-6 flex items-center gap-3">
+                <div className="p-6 flex items-center gap-3 border-b">
                     <Image
                         src="/assets/logo-branca.jpg"
                         alt="StreamShare"
@@ -90,10 +73,13 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                         height={40}
                         className="rounded-lg"
                     />
-                    <span className="text-xl font-bold text-gray-900">StreamShare</span>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-bold text-gray-900">StreamShare</span>
+                        <span className="text-xs text-gray-500 font-medium">Administração</span>
+                    </div>
                 </div>
 
-                <nav className="flex-1 px-4 mt-6" aria-label="Menu principal">
+                <nav className="flex-1 px-4 mt-6" aria-label="Menu administrativo">
                     <ul className="space-y-2">
                         {menuItems.map((item) => {
                             const isActive = pathname === item.href;
@@ -121,6 +107,16 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 </nav>
 
                 <div className="p-4 border-t border-gray-100">
+                    <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all touch-manipulation mb-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m12 19-7-7 7-7" />
+                            <path d="M19 12H5" />
+                        </svg>
+                        <span>Voltar ao Dashboard</span>
+                    </Link>
                     <button
                         onClick={() => setIsLogoutModalOpen(true)}
                         aria-label="Sair da conta"

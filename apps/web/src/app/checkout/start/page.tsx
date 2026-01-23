@@ -12,8 +12,8 @@ export default function CheckoutStartPage() {
     useEffect(() => {
         if (planId) {
             createCheckoutSession(planId as any)
-                .then((res) => {
-                    if (res?.url) window.location.href = res.url;
+                .then((res: any) => {
+                    if (res && 'url' in res) window.location.href = res.url;
                 })
                 .catch((err) => {
                     console.error(err);
