@@ -77,7 +77,7 @@ export default async function LandingPage() {
                 href="/dashboard"
                 className="px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
               >
-                Acessar Painel
+                Painel
               </Link>
             ) : (
               <>
@@ -85,7 +85,7 @@ export default async function LandingPage() {
                   href="/login"
                   className="px-6 py-2 text-gray-700 font-bold hover:text-primary transition-all"
                 >
-                  Login
+                  Entrar
                 </Link>
                 <Link
                   href="/login"

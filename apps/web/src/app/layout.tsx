@@ -64,7 +64,7 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} antialiased justify-center flex bg-gray-50/50`}>
+      <body className={`${inter.className} antialiased justify-center w-full flex bg-gray-50/50`}>
         <ToastProvider>
           {children}
           <ToastContainer />

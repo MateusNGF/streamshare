@@ -17,8 +17,8 @@ export function middleware(request: NextRequest) {
         pathname.startsWith("/cobrancas") ||
         pathname.startsWith("/configuracoes");
 
-    // 1. If user is logged in and tries to access public routes (except landing sometimes, but usually login/signup), redirect to dashboard
-    if (token && isPublicRoute && pathname !== "/esqueci-senha") {
+    // 1. If user is logged in and tries to access login page, redirect to dashboard
+    if (token && pathname === "/login") {
         return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 

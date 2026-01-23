@@ -8,9 +8,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Toast, ToastVariant } from "@/components/ui/Toast";
 
-
-import { ConfirmPlanChangeModal } from "@/components/modals/ConfirmPlanChangeModal";
-
 interface PlansClientProps {
     currentPlan: string;
     isLoggedIn?: boolean;
@@ -22,7 +19,6 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null);
-    const [selectedPlanForConfirmation, setSelectedPlanForConfirmation] = useState<PlanDefinition | null>(null);
 
     useEffect(() => {
         if (searchParams.get("success")) {
@@ -34,21 +30,13 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
         }
     }, [searchParams, router]);
 
-    const handleSelectPlan = (plan: PlanDefinition) => {
+    const handleSelectPlan = async (plan: PlanDefinition) => {
         if (!isLoggedIn) {
             router.push(`/login?plan=${plan.id}`);
             return;
         }
 
         if (plan.id === currentPlan) return;
-
-        // Open modal for confirmation
-        setSelectedPlanForConfirmation(plan);
-    };
-
-    const confirmChangePlan = async () => {
-        const plan = selectedPlanForConfirmation;
-        if (!plan) return;
 
         setLoading(plan.id);
         try {
@@ -59,7 +47,6 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                 setToast({ message: "Plano alterado com sucesso!", variant: "success" });
                 router.refresh();
                 setLoading(null);
-                setSelectedPlanForConfirmation(null);
             }
         } catch (error) {
             console.error("Failed to update plan", error);
@@ -188,19 +175,6 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                     Precisa de um plano personalizado? <a href="#" className="text-primary hover:underline">Entre em contato</a> com nossa equipe comercial.
                 </p>
             </div>
-
-            {/* Modal de Confirmação */}
-            {selectedPlanForConfirmation && (
-                <ConfirmPlanChangeModal
-                    isOpen={!!selectedPlanForConfirmation}
-                    onClose={() => setSelectedPlanForConfirmation(null)}
-                    onConfirm={confirmChangePlan}
-                    loading={loading === selectedPlanForConfirmation.id}
-                    planName={selectedPlanForConfirmation.label}
-                    price={selectedPlanForConfirmation.price}
-                    currentPlanName={PLANS_LIST.find(p => p.id === currentPlan)?.label || "Atual"}
-                />
-            )}
 
             {toast && (
                 <Toast
