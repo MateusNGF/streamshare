@@ -198,6 +198,12 @@ export async function createStreaming(data: {
             valorIntegral: data.valorIntegral,
             limiteParticipantes: data.limiteParticipantes,
         },
+        include: {
+            catalogo: true,
+            _count: {
+                select: { assinaturas: true }
+            }
+        }
     });
 
     revalidatePath("/streamings");
@@ -269,6 +275,12 @@ export async function updateStreaming(
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
             },
+            include: {
+                catalogo: true,
+                _count: {
+                    select: { assinaturas: true }
+                }
+            }
         });
 
         revalidatePath("/streamings");
@@ -288,6 +300,12 @@ export async function updateStreaming(
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
             },
+            include: {
+                catalogo: true,
+                _count: {
+                    select: { assinaturas: true }
+                }
+            }
         });
 
         const updated = await tx.assinatura.updateMany({

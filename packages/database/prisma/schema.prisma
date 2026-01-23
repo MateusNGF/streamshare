@@ -10,7 +10,6 @@ datasource db {
 enum PlanoConta {
   basico
   pro
-  premium
 }
 
 enum ProviderAuth {
@@ -71,6 +70,10 @@ model Conta {
   participantes  Participante[]
   streamings     Streaming[]
   whatsappConfig WhatsAppConfig?
+
+  stripeCustomerId          String?   @unique
+  stripeSubscriptionId      String?   @unique
+  stripeSubscriptionStatus  String?
 
   @@map("conta")
 }

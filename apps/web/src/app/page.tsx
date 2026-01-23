@@ -22,7 +22,27 @@ import {
   HeartHandshake,
 } from "lucide-react";
 
-export default function LandingPage() {
+import { prisma } from "@streamshare/database";
+import { getCurrentUser } from "@/lib/auth";
+import { PlansClient } from "@/components/planos/PlansClient";
+
+export default async function LandingPage() {
+  const session = await getCurrentUser();
+  let account = null;
+
+  if (session) {
+    account = await prisma.contaUsuario.findFirst({
+      where: { usuarioId: session.userId, isAtivo: true },
+      include: {
+        conta: {
+          select: {
+            plano: true
+          }
+        }
+      }
+    });
+  }
+
   return (
     <div className="min-h-screen w-full bg-white">
       {/* Navbar */}
@@ -361,88 +381,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: "Free",
-                price: "Grátis",
-                period: "",
-                savings: "",
-                features: [
-                  "1 streaming",
-                  "Até 5 participantes no total",
-                  "Controle manual de cobranças",
-                  "Dashboard básico",
-                  "Visualização de relatórios",
-                  "Suporte por email",
-                ],
-              },
-              {
-                name: "Pro",
-                price: "R$ 9,90",
-                period: "/mês",
-                savings: "Economize R$ 118,80/ano no plano anual",
-                highlight: true,
-                badge: "🔥 Recomendado",
-                features: [
-                  "Streamings ilimitados",
-                  "Participantes ilimitados",
-                  "Automação de cobranças via WhatsApp",
-                  "Lembretes automáticos",
-                  "Dashboard completo e em tempo real",
-                  "Relatórios detalhados",
-                  "Controle de inadimplência",
-                  "Notificações inteligentes",
-                  "Suporte prioritário",
-                ],
-              },
-            ].map((plan, idx) => (
-              <div
-                key={idx}
-                className={`bg-white p-8 rounded-2xl relative ${plan.highlight
-                  ? "border-2 border-primary shadow-xl scale-105 transform"
-                  : "border border-gray-100 shadow-sm"
-                  }`}
-              >
-                {plan.badge && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-primary text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg whitespace-nowrap">
-                      {plan.badge}
-                    </span>
-                  </div>
-                )}
-                <h3 className="text-2xl font-bold text-gray-900 mt-4 mb-2">{plan.name}</h3>
-                <div className="mb-2">
-                  <span className="text-5xl font-bold text-gray-900">{plan.price}</span>
-                  {plan.period && <span className="text-gray-600 text-xl">{plan.period}</span>}
-                </div>
-                {plan.savings && (
-                  <div className="text-green-600 font-semibold text-sm mb-6">{plan.savings}</div>
-                )}
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-600">
-                      <CheckCircle2 className="text-primary flex-shrink-0 mt-1" size={18} />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className={`block text-center px-6 py-4 rounded-xl font-bold transition-all ${plan.highlight
-                    ? "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25"
-                    : "border-2 border-primary text-primary hover:bg-primary hover:text-white"
-                    }`}
-                >
-                  {plan.name === "Free" ? "Começar Grátis" : "Assinar Agora"}
-                </Link>
-                {plan.highlight && (
-                  <p className="text-center text-xs text-gray-500 mt-3">
-                    Cancele quando quiser • Sem fidelidade
-                  </p>
-                )}
-              </div>
-            ))}
+          <div className="max-w-6xl mx-auto">
+            <PlansClient isLoggedIn={!!session} currentPlan={account?.conta.plano || "basico"} />
           </div>
 
           {/* Comparison note */}

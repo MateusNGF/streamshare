@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Chrome } from "lucide-react";
 
 export function SignupForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const plan = searchParams.get("plan");
+
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -45,7 +48,12 @@ export function SignupForm() {
             }
 
             // Redirect to dashboard
-            router.push("/dashboard");
+            // Redirect to checkout if plan is selected, otherwise dashboard
+            if (plan) {
+                router.push(`/checkout/start?plan=${plan}`);
+            } else {
+                router.push("/dashboard");
+            }
             router.refresh();
         } catch (err: any) {
             setErrors({ general: err.message });

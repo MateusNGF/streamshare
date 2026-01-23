@@ -147,27 +147,29 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                     {/* Grid */}
                     {filteredStreamings.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                            {filteredStreamings.map((s) => (
-                                <StreamingDetailCard
-                                    key={s.id}
-                                    id={s.id}
-                                    name={s.catalogo.nome}
-                                    color={s.catalogo.corPrimaria}
-                                    initial={s.catalogo.nome.charAt(0).toUpperCase()}
-                                    iconeUrl={s.catalogo.iconeUrl}
-                                    slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
-                                    price={String(s.valorIntegral)}
-                                    frequency="Mensal"
-                                    onEdit={() => {
-                                        setSelectedStreaming(s);
-                                        setIsEditModalOpen(true);
-                                    }}
-                                    onDelete={() => {
-                                        setSelectedStreaming(s);
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                />
-                            ))}
+                            {filteredStreamings
+                                .filter((s) => s.catalogo) // Only render if catalogo is defined
+                                .map((s) => (
+                                    <StreamingDetailCard
+                                        key={s.id}
+                                        id={s.id}
+                                        name={s.catalogo.nome}
+                                        color={s.catalogo.corPrimaria}
+                                        initial={s.catalogo.nome.charAt(0).toUpperCase()}
+                                        iconeUrl={s.catalogo.iconeUrl}
+                                        slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
+                                        price={String(s.valorIntegral)}
+                                        frequency="Mensal"
+                                        onEdit={() => {
+                                            setSelectedStreaming(s);
+                                            setIsEditModalOpen(true);
+                                        }}
+                                        onDelete={() => {
+                                            setSelectedStreaming(s);
+                                            setIsDeleteModalOpen(true);
+                                        }}
+                                    />
+                                ))}
                         </div>
                     ) : (
                         <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -216,7 +218,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 onConfirm={handleDelete}
                 loading={loading}
                 title="Remover do Catálogo"
-                message={`Tem certeza que deseja remover ${selectedStreaming?.catalogo.nome}? Todas as assinaturas vinculadas poderão ser afetadas.`}
+                message={`Tem certeza que deseja remover ${selectedStreaming?.catalogo?.nome || 'este serviço'}? Todas as assinaturas vinculadas poderão ser afetadas.`}
             />
         </PageContainer>
     );

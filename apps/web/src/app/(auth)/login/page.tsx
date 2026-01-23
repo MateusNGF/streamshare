@@ -1,4 +1,5 @@
 "use client";
+import { useSearchParams } from "next/navigation";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -8,7 +9,9 @@ import { SignupForm } from "@/components/auth/SignupForm";
 type AuthTab = "login" | "signup";
 
 export default function AuthPage() {
-    const [activeTab, setActiveTab] = useState<AuthTab>("login");
+    const searchParams = useSearchParams();
+    const hasPlan = searchParams.get("plan");
+    const [activeTab, setActiveTab] = useState<AuthTab>(hasPlan ? "signup" : "login");
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-gray-900 p-4">

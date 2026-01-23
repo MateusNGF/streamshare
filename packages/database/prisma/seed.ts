@@ -92,18 +92,12 @@ async function main() {
     // 2. Criar Contas
     console.log("\n🏢 Criando contas...");
 
-    // NOTA: limiteGrupos aqui é temporário e será migrado para tabela PlanoConfig
-    // Valores atuais estão alinhados com a recomendação conservadora:
-    // - basico: 5 grupos (permitirá 1 streaming, 5 participantes após implementação)
-    // - pro: 20 grupos (permitirá 10 streamings, 100 participantes após implementação)
-    // - premium: 100 grupos (permitirá 50 streamings, 500 participantes após implementação)
-
     const conta1 = await prisma.conta.create({
         data: {
             nome: "StreamShare Master",
             email: "contato@streamshare.com.br",
             plano: PlanoConta.pro,
-            limiteGrupos: 20, // Alinhado com PlanoConfig.pro
+            limiteGrupos: 20,
             isAtivo: true,
         },
     });
@@ -114,22 +108,11 @@ async function main() {
             nome: "Grupo Familia Silva",
             email: "silva.streaming@gmail.com",
             plano: PlanoConta.basico,
-            limiteGrupos: 2, // ✅ AJUSTADO: basico deve ter menos recursos
+            limiteGrupos: 2,
             isAtivo: true,
         },
     });
     console.log(`  ✅ Conta Básico: ${conta2.nome}`);
-
-    const conta3 = await prisma.conta.create({
-        data: {
-            nome: "Revenda Premium Streams",
-            email: "premium@revendastreaming.com",
-            plano: PlanoConta.premium,
-            limiteGrupos: 100, // Alinhado com PlanoConfig.premium
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ Conta Premium: ${conta3.nome}`);
 
     // 3. Criar Usuários
     console.log("\n👤 Criando usuários...");
@@ -159,29 +142,6 @@ async function main() {
     });
     console.log(`  ✅ ${usuario2.nome} (${usuario2.email})`);
 
-    const usuario3 = await prisma.usuario.create({
-        data: {
-            email: "maria.santos@hotmail.com",
-            nome: "Maria Santos",
-            senhaHash,
-            provider: ProviderAuth.local,
-            isAtivo: true,
-            ultimoLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 dias atrás
-        },
-    });
-    console.log(`  ✅ ${usuario3.nome} (${usuario3.email})`);
-
-    const usuario4 = await prisma.usuario.create({
-        data: {
-            email: "carlos.oliveira@outlook.com",
-            nome: "Carlos Oliveira",
-            senhaHash,
-            provider: ProviderAuth.google,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ ${usuario4.nome} (${usuario4.email})`);
-
     // 4. Vincular Usuários às Contas
     console.log("\n🔗 Vinculando usuários às contas...");
     await prisma.contaUsuario.create({
@@ -203,27 +163,6 @@ async function main() {
         },
     });
     console.log(`  ✅ ${usuario2.nome} → ${conta2.nome} (Owner)`);
-
-    await prisma.contaUsuario.create({
-        data: {
-            contaId: conta3.id,
-            usuarioId: usuario3.id,
-            nivelAcesso: NivelAcesso.owner,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ ${usuario3.nome} → ${conta3.nome} (Owner)`);
-
-    // Usuario 4 como admin na conta 1
-    await prisma.contaUsuario.create({
-        data: {
-            contaId: conta1.id,
-            usuarioId: usuario4.id,
-            nivelAcesso: NivelAcesso.admin,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ ${usuario4.nome} → ${conta1.nome} (Admin)`);
 
     // 5. Criar Participantes
     console.log("\n👥 Criando participantes...");
@@ -272,27 +211,6 @@ async function main() {
     });
     console.log(`  ✅ ${participante4.nome}`);
 
-    const participante5 = await prisma.participante.create({
-        data: {
-            contaId: conta3.id,
-            nome: "Juliana Martins",
-            whatsappNumero: "+5531999887766",
-            cpf: "567.890.123-45",
-            email: "juliana.martins@email.com",
-        },
-    });
-    console.log(`  ✅ ${participante5.nome}`);
-
-    const participante6 = await prisma.participante.create({
-        data: {
-            contaId: conta3.id,
-            nome: "Ricardo Souza",
-            whatsappNumero: "+5531988776655",
-            cpf: "678.901.234-56",
-        },
-    });
-    console.log(`  ✅ ${participante6.nome}`);
-
     // 6. Criar Streamings
     console.log("\n🎬 Criando streamings...");
     const streamingNetflix = await prisma.streaming.create({
@@ -337,39 +255,14 @@ async function main() {
     });
     console.log(`  ✅ Spotify - Conta 2`);
 
-    const streamingPrime = await prisma.streaming.create({
-        data: {
-            contaId: conta3.id,
-            streamingCatalogoId: catalogoMap.get("Prime Video")!.id,
-            valorIntegral: 14.90,
-            limiteParticipantes: 3,
-            credenciaisLogin: "prime@revenda.com",
-            credenciaisSenha: "prime123",
-            frequenciasHabilitadas: "mensal,anual",
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ Prime Video - Conta 3`);
-
-    const streamingHBO = await prisma.streaming.create({
-        data: {
-            contaId: conta3.id,
-            streamingCatalogoId: catalogoMap.get("HBO Max")!.id,
-            valorIntegral: 34.90,
-            limiteParticipantes: 5,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ HBO Max - Conta 3`);
-
     // 7. Criar Grupos
     console.log("\n📦 Criando grupos...");
     const grupo1 = await prisma.grupo.create({
         data: {
             contaId: conta1.id,
-            nome: "Grupo Premium",
+            nome: "Grupo Master",
             descricao: "Grupo com Netflix e Disney+",
-            linkConvite: "premium-abc123",
+            linkConvite: "master-abc123",
             permitirEscolhaStreamings: true,
             isPublico: true,
             isAtivo: true,
@@ -390,19 +283,6 @@ async function main() {
     });
     console.log(`  ✅ ${grupo2.nome}`);
 
-    const grupo3 = await prisma.grupo.create({
-        data: {
-            contaId: conta3.id,
-            nome: "Revenda Mix",
-            descricao: "Diversos streamings disponíveis",
-            linkConvite: "revenda-mix-def456",
-            permitirEscolhaStreamings: true,
-            isPublico: true,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ ${grupo3.nome}`);
-
     // 8. Vincular Streamings aos Grupos
     console.log("\n🔗 Vinculando streamings aos grupos...");
     await prisma.grupoStreaming.create({
@@ -412,7 +292,6 @@ async function main() {
             isAtivo: true,
         },
     });
-    console.log(`  ✅ Netflix → Grupo Premium`);
 
     await prisma.grupoStreaming.create({
         data: {
@@ -421,7 +300,6 @@ async function main() {
             isAtivo: true,
         },
     });
-    console.log(`  ✅ Disney+ → Grupo Premium`);
 
     await prisma.grupoStreaming.create({
         data: {
@@ -431,24 +309,6 @@ async function main() {
         },
     });
     console.log(`  ✅ Spotify → Família Silva`);
-
-    await prisma.grupoStreaming.create({
-        data: {
-            streamingId: streamingPrime.id,
-            grupoId: grupo3.id,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ Prime Video → Revenda Mix`);
-
-    await prisma.grupoStreaming.create({
-        data: {
-            streamingId: streamingHBO.id,
-            grupoId: grupo3.id,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ HBO Max → Revenda Mix`);
 
     // 9. Criar Assinaturas
     console.log("\n📝 Criando assinaturas...");
@@ -500,50 +360,6 @@ async function main() {
     });
     console.log(`  ✅ ${participante3.nome} → Spotify (Ativa - 5 dias de atraso)`);
 
-    // Assinatura suspensa - Spotify
-    const assinatura4 = await prisma.assinatura.create({
-        data: {
-            participanteId: participante4.id,
-            streamingId: streamingSpotify.id,
-            frequencia: FrequenciaPagamento.mensal,
-            status: StatusAssinatura.suspensa,
-            dataInicio: doisMesesAtras,
-            valor: 5.82,
-            diasAtraso: 15,
-            dataSuspensao: new Date(),
-            motivoSuspensao: "Pagamento em atraso há mais de 15 dias",
-        },
-    });
-    console.log(`  ✅ ${participante4.nome} → Spotify (Suspensa)`);
-
-    // Assinatura ativa - Prime Video
-    const assinatura5 = await prisma.assinatura.create({
-        data: {
-            participanteId: participante5.id,
-            streamingId: streamingPrime.id,
-            frequencia: FrequenciaPagamento.trimestral,
-            status: StatusAssinatura.ativa,
-            dataInicio: umMesAtras,
-            valor: 4.97, // 14.90 / 3 participantes
-            diasAtraso: 0,
-        },
-    });
-    console.log(`  ✅ ${participante5.nome} → Prime Video (Ativa - Trimestral)`);
-
-    // Assinatura ativa - HBO Max
-    const assinatura6 = await prisma.assinatura.create({
-        data: {
-            participanteId: participante6.id,
-            streamingId: streamingHBO.id,
-            frequencia: FrequenciaPagamento.anual,
-            status: StatusAssinatura.ativa,
-            dataInicio: umMesAtras,
-            valor: 6.98, // 34.90 / 5 participantes
-            diasAtraso: 0,
-        },
-    });
-    console.log(`  ✅ ${participante6.nome} → HBO Max (Ativa - Anual)`);
-
     // 10. Criar Cobranças
     console.log("\n💰 Criando cobranças...");
 
@@ -575,77 +391,6 @@ async function main() {
     });
     console.log(`  ✅ Netflix - Cobrança Pendente (${participante1.nome})`);
 
-    // Cobrança paga - Disney+
-    await prisma.cobranca.create({
-        data: {
-            assinaturaId: assinatura2.id,
-            valor: 10.98,
-            periodoInicio: umMesAtras,
-            periodoFim: hoje,
-            dataPagamento: new Date(hoje.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 dias atrás
-            status: StatusCobranca.pago,
-            comprovanteUrl: "https://exemplo.com/comprovante2.pdf",
-        },
-    });
-    console.log(`  ✅ Disney+ - Cobrança Paga (${participante2.nome})`);
-
-    // Cobrança atrasada - Spotify
-    const cincoDiasAtras = new Date(hoje.getTime() - 5 * 24 * 60 * 60 * 1000);
-    await prisma.cobranca.create({
-        data: {
-            assinaturaId: assinatura3.id,
-            valor: 5.82,
-            periodoInicio: doisMesesAtras,
-            periodoFim: cincoDiasAtras,
-            status: StatusCobranca.atrasado,
-        },
-    });
-    console.log(`  ✅ Spotify - Cobrança Atrasada (${participante3.nome})`);
-
-    // Cobrança cancelada - Spotify (suspensa)
-    await prisma.cobranca.create({
-        data: {
-            assinaturaId: assinatura4.id,
-            valor: 5.82,
-            periodoInicio: doisMesesAtras,
-            periodoFim: umMesAtras,
-            status: StatusCobranca.cancelado,
-        },
-    });
-    console.log(`  ✅ Spotify - Cobrança Cancelada (${participante4.nome})`);
-
-    // Cobrança paga - Prime Video (trimestral)
-    const tresProximosMeses = new Date(hoje);
-    tresProximosMeses.setMonth(tresProximosMeses.getMonth() + 3);
-    await prisma.cobranca.create({
-        data: {
-            assinaturaId: assinatura5.id,
-            valor: 4.97,
-            periodoInicio: hoje,
-            periodoFim: tresProximosMeses,
-            dataPagamento: hoje,
-            status: StatusCobranca.pago,
-            comprovanteUrl: "https://exemplo.com/comprovante3.pdf",
-        },
-    });
-    console.log(`  ✅ Prime Video - Cobrança Paga Trimestral (${participante5.nome})`);
-
-    // Cobrança paga - HBO Max (anual)
-    const umAnoProximo = new Date(hoje);
-    umAnoProximo.setFullYear(umAnoProximo.getFullYear() + 1);
-    await prisma.cobranca.create({
-        data: {
-            assinaturaId: assinatura6.id,
-            valor: 6.98,
-            periodoInicio: hoje,
-            periodoFim: umAnoProximo,
-            dataPagamento: hoje,
-            status: StatusCobranca.pago,
-            comprovanteUrl: "https://exemplo.com/comprovante4.pdf",
-        },
-    });
-    console.log(`  ✅ HBO Max - Cobrança Paga Anual (${participante6.nome})`);
-
     // 11. Criar Configurações do WhatsApp
     console.log("\n📱 Criando configurações do WhatsApp...");
     const whatsappConfig1 = await prisma.whatsAppConfig.create({
@@ -667,124 +412,7 @@ async function main() {
     });
     console.log(`  ✅ WhatsApp Config - Conta 1`);
 
-    const whatsappConfig2 = await prisma.whatsAppConfig.create({
-        data: {
-            contaId: conta2.id,
-            provider: "twilio",
-            apiKey: "AC0987654321fedcba",
-            apiSecret: "auth_token_secret_456",
-            phoneNumber: "+5521988888888",
-            notificarNovaAssinatura: true,
-            notificarCobrancaGerada: true,
-            notificarCobrancaVencendo: false,
-            notificarCobrancaAtrasada: true,
-            notificarAssinaturaSuspensa: true,
-            notificarPagamentoConfirmado: false,
-            diasAvisoVencimento: 5,
-            isAtivo: true,
-        },
-    });
-    console.log(`  ✅ WhatsApp Config - Conta 2`);
-
-    // 12. Criar Logs do WhatsApp
-    console.log("\n📋 Criando logs do WhatsApp...");
-
-    // Log de nova assinatura - enviado
-    await prisma.whatsAppLog.create({
-        data: {
-            configId: whatsappConfig1.id,
-            participanteId: participante1.id,
-            tipo: TipoNotificacaoWhatsApp.nova_assinatura,
-            numeroDestino: participante1.whatsappNumero,
-            mensagem: `Olá ${participante1.nome}! Sua assinatura do Netflix foi criada com sucesso! 🎉`,
-            enviado: true,
-            providerId: "SM1234567890abcdef",
-        },
-    });
-    console.log(`  ✅ Log: Nova assinatura (${participante1.nome})`);
-
-    // Log de cobrança gerada - enviado
-    await prisma.whatsAppLog.create({
-        data: {
-            configId: whatsappConfig1.id,
-            participanteId: participante1.id,
-            tipo: TipoNotificacaoWhatsApp.cobranca_gerada,
-            numeroDestino: participante1.whatsappNumero,
-            mensagem: `Olá ${participante1.nome}! Nova cobrança gerada: R$ 13,98 para Netflix.`,
-            enviado: true,
-            providerId: "SM0987654321fedcba",
-        },
-    });
-    console.log(`  ✅ Log: Cobrança gerada (${participante1.nome})`);
-
-    // Log de pagamento confirmado - enviado
-    await prisma.whatsAppLog.create({
-        data: {
-            configId: whatsappConfig1.id,
-            participanteId: participante1.id,
-            tipo: TipoNotificacaoWhatsApp.pagamento_confirmado,
-            numeroDestino: participante1.whatsappNumero,
-            mensagem: `Olá ${participante1.nome}! Pagamento confirmado! 💚 Obrigado!`,
-            enviado: true,
-            providerId: "SM1122334455aabbcc",
-        },
-    });
-    console.log(`  ✅ Log: Pagamento confirmado (${participante1.nome})`);
-
-    // Log de cobrança atrasada - enviado
-    await prisma.whatsAppLog.create({
-        data: {
-            configId: whatsappConfig2.id,
-            participanteId: participante3.id,
-            tipo: TipoNotificacaoWhatsApp.cobranca_atrasada,
-            numeroDestino: participante3.whatsappNumero,
-            mensagem: `Olá ${participante3.nome}! Sua cobrança do Spotify está atrasada há 5 dias. Por favor, realize o pagamento.`,
-            enviado: true,
-            providerId: "SM5566778899ddeeff",
-        },
-    });
-    console.log(`  ✅ Log: Cobrança atrasada (${participante3.nome})`);
-
-    // Log de assinatura suspensa - enviado
-    await prisma.whatsAppLog.create({
-        data: {
-            configId: whatsappConfig2.id,
-            participanteId: participante4.id,
-            tipo: TipoNotificacaoWhatsApp.assinatura_suspensa,
-            numeroDestino: participante4.whatsappNumero,
-            mensagem: `Olá ${participante4.nome}! Sua assinatura do Spotify foi suspensa devido ao atraso no pagamento.`,
-            enviado: true,
-            providerId: "SM9988776655ccbbaa",
-        },
-    });
-    console.log(`  ✅ Log: Assinatura suspensa (${participante4.nome})`);
-
-    // Log de falha no envio
-    await prisma.whatsAppLog.create({
-        data: {
-            configId: whatsappConfig1.id,
-            participanteId: participante2.id,
-            tipo: TipoNotificacaoWhatsApp.cobranca_vencendo,
-            numeroDestino: participante2.whatsappNumero,
-            mensagem: `Olá ${participante2.nome}! Sua cobrança vence em 3 dias.`,
-            enviado: false,
-            erro: "Erro ao enviar mensagem: número bloqueado ou inválido",
-        },
-    });
-    console.log(`  ✅ Log: Tentativa de envio (falhou - ${participante2.nome})`);
-
-    console.log("\n✨ Seed completo finalizado com sucesso!");
-    console.log("\n📊 Resumo:");
-    console.log(`   • ${await prisma.conta.count()} contas`);
-    console.log(`   • ${await prisma.usuario.count()} usuários`);
-    console.log(`   • ${await prisma.participante.count()} participantes`);
-    console.log(`   • ${await prisma.streamingCatalogo.count()} streamings no catálogo`);
-    console.log(`   • ${await prisma.streaming.count()} streamings configurados`);
-    console.log(`   • ${await prisma.grupo.count()} grupos`);
-    console.log(`   • ${await prisma.assinatura.count()} assinaturas`);
-    console.log(`   • ${await prisma.cobranca.count()} cobranças`);
-    console.log(`   • ${await prisma.whatsAppConfig.count()} configurações WhatsApp`);
-    console.log(`   • ${await prisma.whatsAppLog.count()} logs WhatsApp\n`);
+    console.log("\n✨ Seed essencial finalizado!");
 }
 
 main()

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
+
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
 import { Input } from "@/components/ui/Input";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -164,7 +165,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                     disabled={loadingProfile || !hasProfileChanges}
                                     className={`
                                         ${hasProfileChanges ? "bg-accent" : "bg-primary"}
-                                        hover:bg-accent text-white px-6 py-3 rounded-xl 
+                                        hover:bg-accent text-white px-6 py-3 rounded-2xl 
                                         font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
                                     `}
                                 >
@@ -249,7 +250,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                         disabled={loadingAccount || !hasAccountChanges}
                                         className={`
                                             ${hasAccountChanges ? "bg-accent" : "bg-primary"}
-                                            hover:bg-accent text-white px-6 py-3 rounded-xl 
+                                            hover:bg-accent text-white px-6 py-3 rounded-2xl 
                                             font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
                                         `}
                                     >
@@ -289,10 +290,11 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                         </section>
                     </div>
 
+
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    < div className="space-y-6" >
                         {/* Plano Atual */}
-                        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                        < section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm" >
                             <div className="flex items-center gap-3 mb-6">
                                 <CreditCard className="text-primary" size={24} />
                                 <h2 className="text-xl font-bold text-gray-900">Plano Atual</h2>
@@ -316,13 +318,16 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                         <span className="font-semibold text-gray-900">Ilimitado</span>
                                     </div>
                                 </div>
-                                <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-bold transition-all mt-4 cursor-not-allowed opacity-50">
-                                    Alterar Plano (Em breve)
+                                <button
+                                    onClick={() => router.push("/planos")}
+                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-2xl font-bold transition-all mt-4"
+                                >
+                                    Alterar Plano
                                 </button>
                             </div>
-                        </section>
-                    </div>
-                </div>
+                        </section >
+                    </div >
+                </div >
             ),
         },
         {

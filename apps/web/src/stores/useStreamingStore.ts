@@ -134,6 +134,8 @@ export const useStreamingStore = create<StreamingStore>()(
                                     streamingCatalogoId: data.catalogoId,
                                     valorIntegral: data.valorIntegral,
                                     limiteParticipantes: data.limiteParticipantes,
+                                    // Preserve catalogo relation during optimistic update
+                                    catalogo: s.catalogo,
                                 }
                                 : s
                         ),
@@ -216,8 +218,8 @@ export const useStreamingStore = create<StreamingStore>()(
                     return streamings.filter((streaming) => {
                         // Search term filter
                         if (filters.searchTerm) {
-                            const matchesSearch = streaming.catalogo.nome
-                                .toLowerCase()
+                            const matchesSearch = streaming.catalogo?.nome
+                                ?.toLowerCase()
                                 .includes(filters.searchTerm.toLowerCase());
                             if (!matchesSearch) return false;
                         }
