@@ -13,23 +13,29 @@ export function ConditionalLayout({
 }) {
     const pathname = usePathname();
 
-    // Pages that should NOT show the sidebar
-    const publicPages = ["/", "/login", "/esqueci-senha"];
-    const isPublicPage = publicPages.includes(pathname);
-
-    // Admin pages have their own AdminSidebar
+    // Routes that SHOULD show a sidebar
+    const dashboardRoutes = ["/dashboard", "/assinaturas", "/cobrancas", "/participantes", "/planos", "/streamings", "/configuracoes"];
+    const isDashboardPage = dashboardRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
     const isAdminPage = pathname.startsWith("/admin");
 
-    if (isPublicPage) {
-        return <>{children}</>;
+    const showSidebar = isDashboardPage || isAdminPage;
+
+    if (!showSidebar) {
+        return (
+            <div className="flex flex-col min-h-screen w-full bg-gray-50">
+                {children}
+            </div>
+        );
     }
 
     return (
-        <>
+        <div className="flex min-h-screen bg-gray-50">
             {isAdminPage ? <AdminSidebar /> : <Sidebar isSystemAdmin={isSystemAdmin} />}
             <main id="main-content" className="flex-1 min-w-0 h-screen overflow-y-auto">
-                {children}
+                <div className="p-4 md:p-8">
+                    {children}
+                </div>
             </main>
-        </>
+        </div>
     );
 }

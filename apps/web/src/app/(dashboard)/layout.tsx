@@ -20,12 +20,18 @@ export default async function DashboardLayout({
         include: { conta: true },
     });
 
+    const systemAdmin = await prisma.usuarioAdmin.findUnique({
+        where: { usuarioId: session.userId, isAtivo: true },
+    });
+
     const status = userAccount?.conta?.stripeSubscriptionStatus || null;
+    const isSystemAdmin = !!systemAdmin;
 
     return (
         <div className="flex min-h-screen bg-gray-50">
-            <main className="flex-1 p-8 overflow-y-auto h-screen">
-                <div className="max-w-7xl mx-auto">
+            <Sidebar isSystemAdmin={isSystemAdmin} />
+            <main className="flex-1 overflow-y-auto h-screen">
+                <div className="p-4 md:p-8 max-w-7xl mx-auto">
                     <SubscriptionAlert status={status} />
                     {children}
                 </div>

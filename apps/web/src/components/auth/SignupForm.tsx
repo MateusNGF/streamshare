@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Chrome } from "lucide-react";
 
@@ -114,7 +115,14 @@ export function SignupForm() {
                         required
                     />
                     <span className="text-sm text-gray-600">
-                        Eu aceito os termos e condições e a política de privacidade
+                        Eu aceito os{" "}
+                        <Link href="/termos-de-uso" target="_blank" className="text-primary hover:underline">
+                            termos e condições
+                        </Link>{" "}
+                        e a{" "}
+                        <Link href="/politica-de-privacidade" target="_blank" className="text-primary hover:underline">
+                            política de privacidade
+                        </Link>
                     </span>
                 </label>
                 {errors.acceptTerms && (

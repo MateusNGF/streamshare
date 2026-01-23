@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import "@/cron/init"; // Initialize cron jobs
@@ -65,9 +64,9 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} antialiased flex bg-gray-50/50`}>
+      <body className={`${inter.className} antialiased justify-center flex bg-gray-50/50`}>
         <ToastProvider>
-          <ConditionalLayout isSystemAdmin={isSystemAdmin}>{children}</ConditionalLayout>
+          {children}
           <ToastContainer />
         </ToastProvider>
       </body>

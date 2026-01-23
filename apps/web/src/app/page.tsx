@@ -72,18 +72,29 @@ export default async function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="px-6 py-2 text-gray-700 font-bold hover:text-primary transition-all"
-            >
-              Login
-            </Link>
-            <Link
-              href="/login"
-              className="px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
-            >
-              Começar Agora
-            </Link>
+            {session ? (
+              <Link
+                href="/dashboard"
+                className="px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
+              >
+                Acessar Painel
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-6 py-2 text-gray-700 font-bold hover:text-primary transition-all"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
+                >
+                  Começar Agora
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -131,10 +142,10 @@ export default async function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/login"
+                href={session ? "/dashboard" : "/login"}
                 className="group px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all flex items-center gap-2"
               >
-                Começar Grátis Agora
+                {session ? "Acessar Meu Painel" : "Começar Grátis Agora"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </Link>
               <button className="px-8 py-4 border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 transition-all">
@@ -519,10 +530,10 @@ export default async function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
               <Link
-                href="/login"
+                href={session ? "/dashboard" : "/login"}
                 className="group px-10 py-5 bg-white text-primary font-bold text-lg rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all flex items-center gap-2"
               >
-                Começar Agora - É Grátis
+                {session ? "Ir para o Painel" : "Começar Agora - É Grátis"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={24} />
               </Link>
             </div>
@@ -576,21 +587,26 @@ export default async function LandingPage() {
                     Planos
                   </a>
                 </li>
+                <li>
+                  <a href="#faq" className="hover:text-white">
+                    FAQ
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold mb-4">Empresa</h4>
+              <h4 className="font-bold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <a href="#" className="hover:text-white">
-                    Sobre
-                  </a>
+                  <Link href="/termos-de-uso" className="hover:text-white">
+                    Termos de Uso
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
-                    Blog
-                  </a>
+                  <Link href="/politica-de-privacidade" className="hover:text-white">
+                    Política de Privacidade
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -600,11 +616,11 @@ export default async function LandingPage() {
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <a href="#faq" className="hover:text-white">
-                    FAQ
+                    Central de Ajuda
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <a href="mailto:contato@streamshare.com.br" className="hover:text-white">
                     Contato
                   </a>
                 </li>
@@ -613,9 +629,14 @@ export default async function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between">
-            <p className="text-gray-400 text-sm">
-              © 2026 StreamShare. Todos os direitos reservados.
-            </p>
+            <div className="flex flex-col gap-1">
+              <p className="text-gray-400 text-sm">
+                © 2026 StreamShare. Todos os direitos reservados.
+              </p>
+              <p className="text-gray-500 text-[10px] max-w-md">
+                O StreamShare é uma plataforma independente e não possui vínculo oficial com os serviços de streaming mencionados. As marcas são propriedade de seus respectivos donos.
+              </p>
+            </div>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <a href="#" className="text-gray-400 hover:text-white">
                 <Facebook size={20} />
