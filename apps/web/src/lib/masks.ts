@@ -69,10 +69,15 @@ export function removeMask(value: string): string {
  * @returns Formatted currency string
  */
 export function formatCurrencyBRL(value: number | string): string {
+    // Re-use logic or duplicate for now, but ensure consistency.
+    // Ideally we should import from financeiro-utils but that creates circular deps if not careful.
+    // For now, I will align the implementation.
+    const numberValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numberValue)) return 'R$ 0,00';
     return new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
-    }).format(Number(value));
+    }).format(numberValue);
 }
 
 /**

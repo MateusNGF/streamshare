@@ -7,6 +7,13 @@ const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
     anual: 12
 };
 
+export const FREQUENCIA_MULTIPLICADORES: Record<FrequenciaPagamento, number> = {
+    mensal: 1,
+    trimestral: 1 / 3,
+    semestral: 1 / 6,
+    anual: 1 / 12,
+};
+
 /**
  * Calculate next due date based on frequency
  */
@@ -40,8 +47,20 @@ export function estaAtrasado(dataVencimento: Date): boolean {
 /**
  * Format currency to BRL
  */
-export function formatarMoeda(valor: number | Prisma.Decimal): string {
-    const numberValue = typeof valor === 'number' ? valor : Number(valor.toString());
+export function formatarMoeda(valor: number | string | Prisma.Decimal): string {
+    let numberValue: number;
+
+    if (typeof valor === 'number') {
+        numberValue = valor;
+    } else if (typeof valor === 'string') {
+        numberValue = parseFloat(valor);
+    } else {
+        // Handle Prisma Decimal
+        numberValue = Number(valor.toString());
+    }
+
+    if (isNaN(numberValue)) return 'R$ 0,00';
+
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'

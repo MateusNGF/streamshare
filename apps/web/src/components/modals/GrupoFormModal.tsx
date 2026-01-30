@@ -4,14 +4,17 @@ import { useState, useEffect, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
-import { Tv, Check } from "lucide-react";
+import { Tv, Check, Users, DollarSign } from "lucide-react";
 import { createGrupo, updateGrupo, getStreamingsParaGrupo, getGrupoById } from "@/actions/grupos";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
+import { formatarMoeda } from "@/lib/financeiro-utils";
 
 type Streaming = {
     id: number;
     apelido: string;
+    valorIntegral: any; // Accepts number | string | Prisma.Decimal
+    limiteParticipantes: number;
     catalogo: {
         id: number;
         nome: string;
@@ -227,8 +230,15 @@ export function GrupoFormModal({
                                             <p className="font-medium text-gray-900 text-sm truncate">
                                                 {streaming.apelido || streaming.catalogo.nome}
                                             </p>
-                                            <p className="text-xs text-gray-500">
-                                                {streaming.catalogo.nome} • {streaming._count.assinaturas} assinante{streaming._count.assinaturas !== 1 ? 's' : ''}
+                                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-3">
+                                                <span className="flex items-center gap-1">
+                                                    <DollarSign size={10} />
+                                                    {formatarMoeda(streaming.valorIntegral)}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Users size={10} />
+                                                    {streaming._count.assinaturas}/{streaming.limiteParticipantes}
+                                                </span>
                                             </p>
                                         </div>
                                         {isSelected && (

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Plus, MessageCircle, Pencil, Trash2, Tv } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { GrupoFormModal } from "@/components/modals/GrupoFormModal";
 import { GrupoRenovacaoModal } from "@/components/modals/GrupoRenovacaoModal";
@@ -98,20 +99,20 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
             />
 
             {grupos.length === 0 ? (
-                <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                    <Tv size={48} className="mx-auto text-gray-300 mb-4" />
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Nenhum grupo cadastrado</h3>
-                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                        Crie grupos para agrupar seus streamings e facilitar o envio de mensagens de renovação via WhatsApp.
-                    </p>
-                    <button
-                        onClick={handleOpenCreate}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
-                    >
-                        <Plus size={20} />
-                        Criar Primeiro Grupo
-                    </button>
-                </div>
+                <EmptyState
+                    icon={Tv}
+                    title="Nenhum grupo cadastrado"
+                    description="Crie grupos para agrupar seus streamings e facilitar o envio de mensagens de renovação via WhatsApp."
+                    action={
+                        <button
+                            onClick={handleOpenCreate}
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
+                        >
+                            <Plus size={20} />
+                            Criar Primeiro Grupo
+                        </button>
+                    }
+                />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {grupos.map((grupo) => (

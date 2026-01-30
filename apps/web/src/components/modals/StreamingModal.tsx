@@ -8,6 +8,8 @@ import { Spinner } from "@/components/ui/Spinner";
 import { CatalogoPicker } from "@/components/streamings/CatalogoPicker";
 import { getCatalogos } from "@/actions/streamings";
 import { cn } from "@/lib/utils";
+import { StreamingSchema } from "@/lib/schemas";
+import { ZodIssue } from "zod";
 
 interface StreamingModalProps {
     isOpen: boolean;
@@ -46,25 +48,21 @@ export function StreamingModal({
     const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
 
     const validate = () => {
-        const newErrors: Partial<Record<keyof StreamingFormData, string>> = {};
-        if (!formData.catalogoId) newErrors.catalogoId = "Selecione um serviço";
+        const result = StreamingSchema.safeParse(formData);
 
-        if (!formData.apelido || !formData.apelido.trim()) {
-            newErrors.apelido = "Nome do streaming é obrigatório";
+        if (!result.success) {
+            const formattedErrors: Partial<Record<keyof StreamingFormData, string>> = {};
+            result.error.issues.forEach((issue: ZodIssue) => {
+                if (issue.path[0]) {
+                    formattedErrors[issue.path[0] as keyof StreamingFormData] = issue.message;
+                }
+            });
+            setErrors(formattedErrors);
+            return false;
         }
 
-        const valor = parseFloat(formData.valorIntegral);
-        if (isNaN(valor) || valor <= 0) {
-            newErrors.valorIntegral = "Valor deve ser maior que zero";
-        }
-
-        const limite = parseInt(formData.limiteParticipantes);
-        if (isNaN(limite) || limite <= 0) {
-            newErrors.limiteParticipantes = "Limite deve ser maior que zero";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        setErrors({});
+        return true;
     };
 
     useEffect(() => {

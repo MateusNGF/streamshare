@@ -1,4 +1,5 @@
 import { Calendar, User, CreditCard } from "lucide-react";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 interface PaymentRowProps {
     participant: string;
@@ -15,26 +16,6 @@ export function PaymentRow({
     dueDate,
     status,
 }: PaymentRowProps) {
-    const statusConfig = {
-        pago: {
-            bg: "bg-green-50",
-            text: "text-green-600",
-            label: "Pago",
-        },
-        pendente: {
-            bg: "bg-amber-50",
-            text: "text-amber-600",
-            label: "Pendente",
-        },
-        atrasado: {
-            bg: "bg-red-50",
-            text: "text-red-600",
-            label: "Atrasado",
-        },
-    };
-
-    const config = statusConfig[status];
-
     return (
         <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100 hover:bg-gray-50 transition-all last:border-b-0">
             <div className="flex items-center gap-6 flex-1">
@@ -56,11 +37,9 @@ export function PaymentRow({
                 <p className="text-lg font-bold text-gray-900 min-w-[100px] text-right">
                     R$ {value}
                 </p>
-                <span
-                    className={`${config.bg} ${config.text} text-xs font-semibold px-3 py-1.5 rounded-full min-w-[90px] text-center`}
-                >
-                    {config.label}
-                </span>
+                <div className="min-w-[90px] flex justify-center">
+                    <StatusBadge status={status} />
+                </div>
             </div>
         </div>
     );

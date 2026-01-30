@@ -1,4 +1,5 @@
 import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
+import { formatarMoeda } from "@/lib/financeiro-utils";
 
 interface StreamingDetailCardProps {
     id: number;
@@ -8,7 +9,7 @@ interface StreamingDetailCardProps {
     initial: string;
     iconeUrl?: string | null;
     slots: { occupied: number; total: number };
-    price: string;
+    price: number | string; // Changed to accept number/string for formatter
     frequency: string;
     onEdit: () => void;
     onDelete: () => void;
@@ -28,6 +29,7 @@ export function StreamingDetailCard({
 }: StreamingDetailCardProps) {
     const percentage = (slots.occupied / slots.total) * 100;
     const isNearFull = percentage >= 80;
+    const available = slots.total - slots.occupied;
 
     return (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all group">
@@ -64,9 +66,9 @@ export function StreamingDetailCard({
                             </div>
                         </div>
                         {catalogName && catalogName !== name && (
-                            <p className="text-xs text-gray-400">{catalogName}</p>
+                            <div className="text-xs text-gray-400">{catalogName}</div>
                         )}
-                        <p className="text-sm text-gray-500">{frequency}</p>
+                        <div className="text-sm text-gray-500">{frequency}</div>
                     </div>
                 </div>
             </div>
@@ -76,7 +78,7 @@ export function StreamingDetailCard({
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Users size={16} className="text-primary" />
                         <span>
-                            {slots.occupied}/{slots.total} vagas ocupadas
+                            {slots.occupied}/{slots.total} vagas • <span className="text-gray-500 font-normal">{available} disponíveis</span>
                         </span>
                     </div>
                     <span
@@ -104,7 +106,11 @@ export function StreamingDetailCard({
                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <DollarSign size={16} className="text-primary" />
-                        <span>R$ {price}</span>
+                        <span>{formatarMoeda(price)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 justify-end">
+                        <Calendar size={16} className="text-gray-400" />
+                        <span className="capitalize">{frequency}</span>
                     </div>
                 </div>
             </div>

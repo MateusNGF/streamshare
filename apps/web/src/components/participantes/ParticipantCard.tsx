@@ -1,4 +1,5 @@
 import { Phone, Mail, CreditCard, Edit, Trash2 } from "lucide-react";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 interface ParticipantCardProps {
     id: number;
@@ -51,12 +52,7 @@ export function ParticipantCard({
                                 </button>
                             </div>
                         </div>
-                        <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${status === "ativa" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                                }`}
-                        >
-                            {status === "ativa" ? "● Ativa" : status === "suspensa" ? "● Suspensa" : "● Inativo"}
-                        </span>
+                        <StatusBadge status={status} />
                     </div>
                 </div>
             </div>

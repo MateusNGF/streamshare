@@ -3,6 +3,7 @@
 import { prisma } from "@streamshare/database";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { StreamingSchema } from "@/lib/schemas";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -94,7 +95,7 @@ export async function deleteCatalogoItem(id: number) {
 export async function getStreamings() {
     const { contaId } = await getContext();
 
-    return prisma.streaming.findMany({
+    const streamings = await prisma.streaming.findMany({
         where: { contaId },
         include: {
             catalogo: true,
@@ -107,6 +108,11 @@ export async function getStreamings() {
             { catalogo: { nome: "asc" } }
         ]
     });
+
+    return streamings.map(s => ({
+        ...s,
+        valorIntegral: Number(s.valorIntegral)
+    }));
 }
 
 /**
@@ -157,19 +163,13 @@ export async function createStreaming(data: {
     const { contaId } = await getContext();
 
     // Business validations
-    if (!data.apelido || !data.apelido.trim()) {
-        throw new Error("Nome do streaming é obrigatório");
-    }
+    // Business validations using Zod
+    const validatedData = StreamingSchema.parse({
+        ...data,
+        catalogoId: String(data.catalogoId)
+    });
 
-    if (!Number.isFinite(data.valorIntegral) || data.valorIntegral <= 0) {
-        throw new Error("Valor integral deve ser maior que zero");
-    }
-
-    if (!Number.isInteger(data.limiteParticipantes) || data.limiteParticipantes < 1) {
-        throw new Error("Limite de participantes deve ser no mínimo 1");
-    }
-
-    if (data.limiteParticipantes > 100) {
+    if (validatedData.limiteParticipantes > 100) {
         throw new Error("Limite de participantes não pode exceder 100");
     }
 
@@ -205,7 +205,10 @@ export async function createStreaming(data: {
     });
 
     revalidatePath("/streamings");
-    return streaming;
+    return {
+        ...streaming,
+        valorIntegral: Number(streaming.valorIntegral)
+    };
 }
 
 export async function updateStreaming(
@@ -221,15 +224,13 @@ export async function updateStreaming(
     const { contaId } = await getContext();
 
     // Business validations
-    if (!Number.isFinite(data.valorIntegral) || data.valorIntegral <= 0) {
-        throw new Error("Valor integral deve ser maior que zero");
-    }
+    // Business validations using Zod
+    const validatedData = StreamingSchema.parse({
+        ...data,
+        catalogoId: String(data.catalogoId)
+    });
 
-    if (!Number.isInteger(data.limiteParticipantes) || data.limiteParticipantes < 1) {
-        throw new Error("Limite de participantes deve ser no mínimo 1");
-    }
-
-    if (data.limiteParticipantes > 100) {
+    if (validatedData.limiteParticipantes > 100) {
         throw new Error("Limite de participantes não pode exceder 100");
     }
 
@@ -286,7 +287,10 @@ export async function updateStreaming(
         revalidatePath("/streamings");
         revalidatePath("/assinaturas");
         return {
-            streaming,
+            streaming: {
+                ...streaming,
+                valorIntegral: Number(streaming.valorIntegral)
+            },
             updatedSubscriptions: 0
         };
     }
@@ -326,7 +330,10 @@ export async function updateStreaming(
     revalidatePath("/streamings");
     revalidatePath("/assinaturas");
     return {
-        streaming: result.streaming,
+        streaming: {
+            ...result.streaming,
+            valorIntegral: Number(result.streaming.valorIntegral)
+        },
         updatedSubscriptions: result.updatedCount
     };
 }

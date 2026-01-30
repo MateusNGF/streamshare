@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { FrequenciaPagamento } from "@streamshare/database";
+import { FREQUENCIA_MULTIPLICADORES, formatarMoeda } from "@/lib/financeiro-utils";
 import { Check, ChevronRight, ChevronLeft, Search } from "lucide-react";
 
 interface StreamingOption {
@@ -275,7 +276,7 @@ export function AssinaturaMultiplaModal({
                                         {isFull && " • LOTADO"}
                                     </p>
                                     <p className="text-xs font-bold text-primary mt-1">
-                                        R$ {streaming.valorIntegral.toFixed(2)}
+                                        {formatarMoeda(streaming.valorIntegral)}
                                     </p>
                                 </button>
                             );
@@ -318,7 +319,8 @@ export function AssinaturaMultiplaModal({
                                         </div>
                                         <div className="flex-1">
                                             <h4 className="font-bold text-gray-900">{streaming.nome}</h4>
-                                            <p className="text-xs text-gray-500">Valor sugerido: R$ {streaming.valorIntegral.toFixed(2)}</p>
+                                            <h4 className="font-bold text-gray-900">{streaming.nome}</h4>
+                                            <p className="text-xs text-gray-500">Valor sugerido: {formatarMoeda(streaming.valorIntegral)}</p>
                                         </div>
                                     </div>
 
@@ -352,7 +354,7 @@ export function AssinaturaMultiplaModal({
                                                 placeholder={(streaming.valorIntegral / streaming.limiteParticipantes).toFixed(2)}
                                             />
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Sugestão: R$ {(streaming.valorIntegral / streaming.limiteParticipantes).toFixed(2)} ({streaming.limiteParticipantes}× = R$ {streaming.valorIntegral.toFixed(2)})
+                                                Sugestão: {formatarMoeda(streaming.valorIntegral / streaming.limiteParticipantes)} ({streaming.limiteParticipantes}× = {formatarMoeda(streaming.valorIntegral)})
                                             </p>
                                         </div>
                                     </div>
@@ -446,19 +448,11 @@ export function AssinaturaMultiplaModal({
                         </div>
                         <div className="mt-4 pt-4 border-t-2 border-gray-200 space-y-2">
                             {(() => {
-                                // Mapear frequências para multiplicadores mensais
-                                const frequenciaMultiplicadores: Record<FrequenciaPagamento, number> = {
-                                    [FrequenciaPagamento.mensal]: 1,
-                                    [FrequenciaPagamento.trimestral]: 1 / 3,
-                                    [FrequenciaPagamento.semestral]: 1 / 6,
-                                    [FrequenciaPagamento.anual]: 1 / 12,
-                                };
-
                                 // Normalizar todos os valores para mensal
                                 const totalMensal = Array.from(configurations.values())
                                     .reduce((sum, config) => {
                                         const valor = parseFloat(config.valor || "0");
-                                        const multiplicador = frequenciaMultiplicadores[config.frequencia];
+                                        const multiplicador = FREQUENCIA_MULTIPLICADORES[config.frequencia];
                                         return sum + (valor * multiplicador);
                                     }, 0);
 
@@ -475,7 +469,7 @@ export function AssinaturaMultiplaModal({
                                         <div className="flex justify-between items-center">
                                             <p className="font-bold text-gray-900 capitalize">Total {frequencias[0]}:</p>
                                             <p className="text-2xl font-bold text-primary">
-                                                R$ {totalDireto.toFixed(2)}
+                                                {formatarMoeda(totalDireto)}
                                             </p>
                                         </div>
                                     );
@@ -486,7 +480,7 @@ export function AssinaturaMultiplaModal({
                                             <div className="flex justify-between items-center">
                                                 <p className="font-bold text-gray-900">Equivalente Mensal:</p>
                                                 <p className="text-2xl font-bold text-primary">
-                                                    R$ {totalMensal.toFixed(2)}
+                                                    {formatarMoeda(totalMensal)}
                                                     <span className="text-xs font-normal text-gray-500 ml-1">/mês</span>
                                                 </p>
                                             </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { StreamingDetailCard } from "@/components/streamings/StreamingDetailCard";
 import { StreamingModal, StreamingFormData } from "@/components/modals/StreamingModal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -35,10 +36,12 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedStreaming, setSelectedStreaming] = useState<any | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     // Initialize store with server data on mount
     useEffect(() => {
         fetchStreamings();
+        setMounted(true);
     }, [fetchStreamings]);
 
     // Show error toast if any
@@ -48,8 +51,11 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
         }
     }, [error, toast]);
 
-    // Get filtered streamings
-    const filteredStreamings = getFiltered();
+    // Anti-hydration mismatch: Use initialData on server/first render, then store data
+    // This allows SEO to work (server renders initialData) and prevents hydration errors
+    // when persisted store has different data than server.
+    const displayStreamings = mounted ? getFiltered() : (initialData || []);
+    const isLoading = mounted ? loading : false; // Server is never loading, it has data
 
     // Actions with Zustand store
     const handleAdd = async (data: StreamingFormData) => {
@@ -139,7 +145,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             </div>
 
             {/* Loading State */}
-            {loading && streamings.length === 0 ? (
+            {isLoading && displayStreamings.length === 0 ? (
                 <div className="text-center py-12 md:py-20">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     <p className="text-gray-600 mt-4">Carregando streamings...</p>
@@ -147,9 +153,9 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             ) : (
                 <>
                     {/* Grid */}
-                    {filteredStreamings.length > 0 ? (
+                    {displayStreamings.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                            {filteredStreamings
+                            {displayStreamings
                                 .filter((s) => s.catalogo) // Only render if catalogo is defined
                                 .map((s) => (
                                     <StreamingDetailCard
@@ -161,7 +167,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                                         initial={(s.apelido || s.catalogo.nome).charAt(0).toUpperCase()}
                                         iconeUrl={s.catalogo.iconeUrl}
                                         slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
-                                        price={String(s.valorIntegral)}
+                                        price={s.valorIntegral}
                                         frequency="Mensal"
                                         onEdit={() => {
                                             setSelectedStreaming(s);
@@ -175,13 +181,13 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                                 ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                            <p className="text-gray-400 text-base md:text-lg">
-                                {filters.searchTerm
-                                    ? "Nenhum serviço encontrado com esse nome."
-                                    : "Nenhum serviço de streaming cadastrado no seu catálogo."}
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon={Search}
+                            title="Nenhum serviço encontrado"
+                            description={filters.searchTerm
+                                ? "Não encontramos nenhum serviço com o termo pesquisado."
+                                : "Você ainda não cadastrou nenhum serviço de streaming."}
+                        />
                     )}
                 </>
             )}

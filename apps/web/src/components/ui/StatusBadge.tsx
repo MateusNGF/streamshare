@@ -1,22 +1,51 @@
-import { StatusCobranca } from "@streamshare/database";
+import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
-    status: StatusCobranca;
+    status: string;
+    label?: string;
+    className?: string;
 }
 
-const statusConfig: Record<StatusCobranca, { color: string; label: string }> = {
-    pendente: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Pendente" },
+const statusStyles: Record<string, { color: string; label: string }> = {
+    // Green / Success
     pago: { color: "bg-green-100 text-green-700 border-green-200", label: "Pago" },
+    ativa: { color: "bg-green-100 text-green-700 border-green-200", label: "Ativa" },
+    ativo: { color: "bg-green-100 text-green-700 border-green-200", label: "Ativo" },
+
+    // Amber / Warning / Pending
+    pendente: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Pendente" },
+    suspensa: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Suspensa" },
+    aguardando: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Aguardando" },
+
+    // Red / Error / Overdue
     atrasado: { color: "bg-red-100 text-red-700 border-red-200", label: "Atrasado" },
-    cancelado: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelado" }
+    past_due: { color: "bg-red-100 text-red-700 border-red-200", label: "Em Atraso" },
+    unpaid: { color: "bg-red-100 text-red-700 border-red-200", label: "Não Pago" },
+    inativo: { color: "bg-red-100 text-red-700 border-red-200", label: "Inativo" },
+    bloqueado: { color: "bg-red-100 text-red-700 border-red-200", label: "Bloqueado" },
+
+    // Gray / Neutral
+    cancelado: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelado" },
+    cancelada: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelada" },
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-    const config = statusConfig[status];
+export function StatusBadge({ status, label, className }: StatusBadgeProps) {
+    const normalizedStatus = status.toLowerCase();
+    const config = statusStyles[normalizedStatus] || {
+        color: "bg-gray-100 text-gray-700 border-gray-200",
+        label: status
+    };
 
     return (
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${config.color}`}>
-            {config.label}
+        <span
+            className={cn(
+                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap",
+                config.color,
+                className
+            )}
+        >
+            <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+            {label || config.label}
         </span>
     );
 }
