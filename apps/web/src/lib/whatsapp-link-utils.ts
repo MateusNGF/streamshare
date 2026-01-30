@@ -40,3 +40,20 @@ export function generateWhatsAppLink(phoneNumber: string, message: string): stri
 
     return `https://wa.me/${numberForLink}?text=${encodedMessage}`;
 }
+
+/**
+ * Gera link wa.me apenas com texto (sem número de destino)
+ * Útil para copiar mensagem e enviar manualmente
+ * @param message - Mensagem a incluir no link
+ * @returns URL wa.me formatada sem número de destino
+ * 
+ * @example
+ * generateWhatsAppLinkTextOnly('Olá!')
+ * // Returns: 'https://wa.me/?text=Ol%C3%A1!'
+ */
+export function generateWhatsAppLinkTextOnly(message: string): string {
+    validateMessage(message);
+    const encodedMessage = encodeURIComponent(message);
+    return `https://wa.me/?text=${encodedMessage}`;
+}
+

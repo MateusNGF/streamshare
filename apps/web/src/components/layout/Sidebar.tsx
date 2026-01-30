@@ -12,7 +12,8 @@ import {
     Settings,
     LogOut,
     FileSignature,
-    ShieldCheck
+    ShieldCheck,
+    FolderOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -35,6 +36,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
         { icon: Tv, label: "Streamings", href: "/streamings" },
         { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
         { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
+        { icon: FolderOpen, label: "Grupos", href: "/grupos" },
         { icon: Settings, label: "Configurações", href: "/configuracoes" },
     ];
 
