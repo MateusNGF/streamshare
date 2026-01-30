@@ -19,6 +19,7 @@ interface StreamingModalProps {
 
 export interface StreamingFormData {
     catalogoId: string;
+    apelido: string;
     valorIntegral: string;
     limiteParticipantes: string;
     activeSubscriptions?: number;
@@ -36,6 +37,7 @@ export function StreamingModal({
     const [formData, setFormData] = useState<StreamingFormData>(
         streaming || {
             catalogoId: "",
+            apelido: "",
             valorIntegral: "",
             limiteParticipantes: "",
         }
@@ -46,6 +48,10 @@ export function StreamingModal({
     const validate = () => {
         const newErrors: Partial<Record<keyof StreamingFormData, string>> = {};
         if (!formData.catalogoId) newErrors.catalogoId = "Selecione um serviço";
+
+        if (!formData.apelido || !formData.apelido.trim()) {
+            newErrors.apelido = "Nome do streaming é obrigatório";
+        }
 
         const valor = parseFloat(formData.valorIntegral);
         if (isNaN(valor) || valor <= 0) {
@@ -87,6 +93,7 @@ export function StreamingModal({
             setStep(1); // Start at step 1 when creating
             setFormData(prev => ({
                 ...prev,
+                apelido: "",
                 valorIntegral: "",
                 limiteParticipantes: "",
             }));
@@ -202,6 +209,17 @@ export function StreamingModal({
                                 </div>
                             </div>
                         )}
+
+                        <Input
+                            label="Nome do Streaming"
+                            type="text"
+                            value={formData.apelido || selectedCatalogo?.nome}
+                            onChange={(e) => handleChange("apelido", e.target.value)}
+                            placeholder={selectedCatalogo?.nome || "Ex: Netflix Família"}
+                            error={errors.apelido}
+                            required
+                            className="mb-4"
+                        />
 
                         <div className="grid grid-cols-2 gap-4">
                             <Input

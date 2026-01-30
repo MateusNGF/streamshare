@@ -56,6 +56,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
         try {
             await createStreamingStore({
                 catalogoId: parseInt(data.catalogoId),
+                apelido: data.apelido,
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
@@ -72,6 +73,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
         try {
             const result = await updateStreamingStore(selectedStreaming.id, {
                 catalogoId: parseInt(data.catalogoId),
+                apelido: data.apelido,
                 valorIntegral: parseFloat(data.valorIntegral),
                 limiteParticipantes: parseInt(data.limiteParticipantes),
                 updateExistingSubscriptions: data.updateExistingSubscriptions,
@@ -153,9 +155,10 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                                     <StreamingDetailCard
                                         key={s.id}
                                         id={s.id}
-                                        name={s.catalogo.nome}
+                                        name={s.apelido || s.catalogo.nome}
+                                        catalogName={s.catalogo.nome}
                                         color={s.catalogo.corPrimaria}
-                                        initial={s.catalogo.nome.charAt(0).toUpperCase()}
+                                        initial={(s.apelido || s.catalogo.nome).charAt(0).toUpperCase()}
                                         iconeUrl={s.catalogo.iconeUrl}
                                         slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
                                         price={String(s.valorIntegral)}
@@ -202,6 +205,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                     selectedStreaming
                         ? {
                             catalogoId: String(selectedStreaming.streamingCatalogoId),
+                            apelido: selectedStreaming.apelido || "",
                             valorIntegral: String(selectedStreaming.valorIntegral),
                             limiteParticipantes: String(selectedStreaming.limiteParticipantes),
                             activeSubscriptions: selectedStreaming._count?.assinaturas || 0,

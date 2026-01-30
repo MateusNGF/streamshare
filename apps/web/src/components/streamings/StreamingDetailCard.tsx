@@ -3,6 +3,7 @@ import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
 interface StreamingDetailCardProps {
     id: number;
     name: string;
+    catalogName?: string;
     color: string;
     initial: string;
     iconeUrl?: string | null;
@@ -15,6 +16,7 @@ interface StreamingDetailCardProps {
 
 export function StreamingDetailCard({
     name,
+    catalogName,
     color,
     initial,
     iconeUrl,
@@ -61,6 +63,9 @@ export function StreamingDetailCard({
                                 </button>
                             </div>
                         </div>
+                        {catalogName && catalogName !== name && (
+                            <p className="text-xs text-gray-400">{catalogName}</p>
+                        )}
                         <p className="text-sm text-gray-500">{frequency}</p>
                     </div>
                 </div>

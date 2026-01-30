@@ -47,11 +47,12 @@ export default function AssinaturasClient({
     // Prepare streamings data with ocupados count
     const streamingsWithOcupados = streamings.map(s => ({
         id: s.id,
-        nome: s.catalogo.nome,
+        nome: s.apelido || s.catalogo.nome,
         valorIntegral: Number(s.valorIntegral),
         limiteParticipantes: s.limiteParticipantes,
         ocupados: s._count?.assinaturas || 0,
         cor: s.catalogo.corPrimaria,
+        iconeUrl: s.catalogo.iconeUrl,
         frequenciasHabilitadas: s.frequenciasHabilitadas || "mensal,trimestral,semestral,anual"
     }));
 
@@ -97,7 +98,7 @@ export default function AssinaturasClient({
                             {initialSubscriptions.map((sub) => (
                                 <TableRow key={sub.id}>
                                     <TableCell className="font-medium">{sub.participante.nome}</TableCell>
-                                    <TableCell>{sub.streaming.catalogo.nome}</TableCell>
+                                    <TableCell>{sub.streaming.apelido || sub.streaming.catalogo.nome}</TableCell>
                                     <TableCell>{formatCurrency(Number(sub.valor))}</TableCell>
                                     <TableCell className="capitalize">{sub.frequencia}</TableCell>
                                     <TableCell>

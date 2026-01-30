@@ -143,7 +143,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                                     style={{ backgroundColor: cobranca.assinatura.streaming.catalogo.corPrimaria }}
                                                 />
                                                 <span className="text-sm text-gray-700">
-                                                    {cobranca.assinatura.streaming.catalogo.nome}
+                                                    {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
                                                 </span>
                                             </div>
                                         </td>

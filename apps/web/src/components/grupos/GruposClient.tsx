@@ -13,6 +13,14 @@ type Grupo = {
     id: number;
     nome: string;
     descricao: string | null;
+    streamings: {
+        streaming: {
+            apelido: string;
+            catalogo: {
+                nome: string;
+            };
+        };
+    }[];
     _count: {
         streamings: number;
     };
@@ -143,9 +151,26 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Tv size={16} className="text-gray-400" />
-                                <span>{grupo._count.streamings} streaming(s)</span>
+                            <div className="mt-4">
+                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                    <Tv size={16} className="text-gray-400" />
+                                    <span>{grupo._count.streamings} serviços</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {grupo.streamings.slice(0, 5).map((item, i) => (
+                                        <span
+                                            key={i}
+                                            className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs font-medium text-gray-600"
+                                        >
+                                            {item.streaming.apelido || item.streaming.catalogo.nome}
+                                        </span>
+                                    ))}
+                                    {grupo.streamings.length > 5 && (
+                                        <span className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs text-gray-400">
+                                            +{grupo.streamings.length - 5}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}

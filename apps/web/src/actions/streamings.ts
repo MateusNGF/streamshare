@@ -102,7 +102,10 @@ export async function getStreamings() {
                 select: { assinaturas: true }
             }
         },
-        orderBy: { catalogo: { nome: "asc" } },
+        orderBy: [
+            { apelido: "asc" },
+            { catalogo: { nome: "asc" } }
+        ]
     });
 }
 
@@ -147,12 +150,17 @@ export async function updateExistingSubscriptionValues(streamingId: number, newV
 
 export async function createStreaming(data: {
     catalogoId: number;
+    apelido: string;
     valorIntegral: number;
     limiteParticipantes: number;
 }) {
     const { contaId } = await getContext();
 
     // Business validations
+    if (!data.apelido || !data.apelido.trim()) {
+        throw new Error("Nome do streaming é obrigatório");
+    }
+
     if (!Number.isFinite(data.valorIntegral) || data.valorIntegral <= 0) {
         throw new Error("Valor integral deve ser maior que zero");
     }
@@ -178,23 +186,13 @@ export async function createStreaming(data: {
         throw new Error("Este catálogo de streaming não está mais disponível");
     }
 
-    // Check for duplicate (same account + same catalog)
-    const existing = await prisma.streaming.findFirst({
-        where: {
-            contaId,
-            streamingCatalogoId: data.catalogoId,
-            isAtivo: true
-        }
-    });
-
-    if (existing) {
-        throw new Error(`Você já possui um ${catalogo.nome} cadastrado`);
-    }
+    // Note: Duplicate catalog check removed - multiple instances allowed with different names
 
     const streaming = await prisma.streaming.create({
         data: {
             contaId,
             streamingCatalogoId: data.catalogoId,
+            apelido: data.apelido.trim(),
             valorIntegral: data.valorIntegral,
             limiteParticipantes: data.limiteParticipantes,
         },
@@ -214,6 +212,7 @@ export async function updateStreaming(
     id: number,
     data: {
         catalogoId: number;
+        apelido: string;
         valorIntegral: number;
         limiteParticipantes: number;
         updateExistingSubscriptions?: boolean; // Optional: update existing subscription values
@@ -272,6 +271,7 @@ export async function updateStreaming(
             where: { id, contaId },
             data: {
                 streamingCatalogoId: data.catalogoId,
+                apelido: data.apelido.trim(),
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
             },
@@ -297,6 +297,7 @@ export async function updateStreaming(
             where: { id, contaId },
             data: {
                 streamingCatalogoId: data.catalogoId,
+                apelido: data.apelido.trim(),
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
             },

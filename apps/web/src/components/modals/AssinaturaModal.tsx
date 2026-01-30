@@ -148,7 +148,14 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                                     return (
                                         <SelectItem key={s.id} value={s.id.toString()} disabled={available <= 0}>
                                             <div className="flex items-center gap-2">
-                                                {s.catalogo.nome}
+                                                {s.catalogo.iconeUrl && (
+                                                    <img
+                                                        src={s.catalogo.iconeUrl}
+                                                        alt={s.catalogo.nome}
+                                                        className="w-5 h-5 object-contain"
+                                                    />
+                                                )}
+                                                {s.apelido || s.catalogo.nome}
                                                 <span className="text-xs text-muted-foreground">
                                                     ({available} vagas)
                                                 </span>

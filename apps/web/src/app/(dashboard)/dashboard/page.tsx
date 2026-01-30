@@ -99,7 +99,7 @@ export default async function DashboardPage() {
                             streamings.map((s) => (
                                 <StreamingCard
                                     key={s.id}
-                                    name={s.catalogo.nome}
+                                    name={s.apelido || s.catalogo.nome}
                                     initial={s.catalogo.nome.charAt(0).toUpperCase()}
                                     color={s.catalogo.corPrimaria}
                                     slots={{ occupied: s._count.assinaturas, total: s.limiteParticipantes }}
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
                                 <RecentSubscription
                                     key={sub.id}
                                     name={sub.participante.nome}
-                                    streaming={sub.streaming.catalogo.nome}
+                                    streaming={sub.streaming.apelido || sub.streaming.catalogo.nome}
                                     value={String(sub.valor)}
                                     status={sub.status === "ativa" ? "Ativa" : "Em atraso"}
                                 />

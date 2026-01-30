@@ -37,6 +37,14 @@ export async function getGrupos() {
     return prisma.grupo.findMany({
         where: { contaId, isAtivo: true },
         include: {
+            streamings: {
+                where: { isAtivo: true },
+                include: {
+                    streaming: {
+                        include: { catalogo: true }
+                    }
+                }
+            },
             _count: {
                 select: { streamings: true }
             }
@@ -272,8 +280,9 @@ export async function gerarMensagemRenovacao(
         const limiteParticipantes = streaming.limiteParticipantes || 1; // Prevent division by zero
         const valorPorPessoa = valorIntegral / limiteParticipantes;
 
-        // Header: Only individual value
-        mensagem += `\n🎬 *${catalogo.nome}* • R$ ${valorPorPessoa.toFixed(2).replace('.', ',')} p/ cada\n\n`;
+        // Header: Only individual value - Use apelido (or catalogo.nome as fallback)
+        const streamingNome = streaming.apelido || catalogo.nome;
+        mensagem += `\n🎬 *${streamingNome}* • R$ ${valorPorPessoa.toFixed(2).replace('.', ',')} p/ cada\n\n`;
 
         // Listar participantes com status
         assinaturas.forEach((assinatura, index) => {
@@ -329,6 +338,9 @@ export async function getStreamingsParaGrupo() {
                 }
             }
         },
-        orderBy: { catalogo: { nome: "asc" } }
+        orderBy: [
+            { apelido: "asc" },
+            { catalogo: { nome: "asc" } }
+        ]
     });
 }

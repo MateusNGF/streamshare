@@ -26,6 +26,7 @@ interface StreamingStore {
     fetchStreamings: (force?: boolean) => Promise<void>;
     createStreaming: (data: {
         catalogoId: number;
+        apelido: string;
         valorIntegral: number;
         limiteParticipantes: number;
     }) => Promise<StreamingWithRelations>;
@@ -33,6 +34,7 @@ interface StreamingStore {
         id: number,
         data: {
             catalogoId: number;
+            apelido: string;
             valorIntegral: number;
             limiteParticipantes: number;
             updateExistingSubscriptions?: boolean;
@@ -132,6 +134,7 @@ export const useStreamingStore = create<StreamingStore>()(
                                 ? {
                                     ...s,
                                     streamingCatalogoId: data.catalogoId,
+                                    apelido: data.apelido,
                                     valorIntegral: data.valorIntegral,
                                     limiteParticipantes: data.limiteParticipantes,
                                     // Preserve catalogo relation during optimistic update
@@ -216,12 +219,16 @@ export const useStreamingStore = create<StreamingStore>()(
                     const { streamings, filters } = get();
 
                     return streamings.filter((streaming) => {
-                        // Search term filter
+                        // Search term filter - now searches apelido too
                         if (filters.searchTerm) {
-                            const matchesSearch = streaming.catalogo?.nome
+                            const searchLower = filters.searchTerm.toLowerCase();
+                            const matchesApelido = streaming.apelido
                                 ?.toLowerCase()
-                                .includes(filters.searchTerm.toLowerCase());
-                            if (!matchesSearch) return false;
+                                .includes(searchLower);
+                            const matchesCatalogo = streaming.catalogo?.nome
+                                ?.toLowerCase()
+                                .includes(searchLower);
+                            if (!matchesApelido && !matchesCatalogo) return false;
                         }
 
                         // Catalogo filter

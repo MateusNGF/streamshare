@@ -149,6 +149,7 @@ model Streaming {
   id                       Int                  @id @default(autoincrement())
   contaId                  Int
   streamingCatalogoId      Int
+  apelido                  String
   valorIntegral            Decimal
   limiteParticipantes      Int
   credenciaisLogin         String?

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 type Streaming = {
     id: number;
+    apelido: string;
     catalogo: {
         id: number;
         nome: string;
@@ -209,7 +210,7 @@ export function GrupoFormModal({
                                         )}
                                     >
                                         <div
-                                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden shadow-sm"
                                             style={{ backgroundColor: streaming.catalogo.corPrimaria }}
                                         >
                                             {streaming.catalogo.iconeUrl ? (
@@ -224,10 +225,10 @@ export function GrupoFormModal({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium text-gray-900 text-sm truncate">
-                                                {streaming.catalogo.nome}
+                                                {streaming.apelido || streaming.catalogo.nome}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {streaming._count.assinaturas} assinante(s)
+                                                {streaming.catalogo.nome} • {streaming._count.assinaturas} assinante{streaming._count.assinaturas !== 1 ? 's' : ''}
                                             </p>
                                         </div>
                                         {isSelected && (

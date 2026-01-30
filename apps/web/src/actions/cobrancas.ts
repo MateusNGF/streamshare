@@ -308,7 +308,7 @@ export async function enviarNotificacaoCobranca(
     let mensagem: string;
 
     const participante = cobranca.assinatura.participante.nome;
-    const streaming = cobranca.assinatura.streaming.catalogo.nome;
+    const streaming = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
     const valor = `R$ ${Number(cobranca.valor).toFixed(2)}`;
 
     switch (cobranca.status) {
