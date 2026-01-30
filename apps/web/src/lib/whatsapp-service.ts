@@ -92,6 +92,23 @@ export async function sendWhatsAppNotification(
     participanteId: number,
     mensagem: string
 ) {
+    // ------------------------------------------------------------------
+    // LINK ONLY MODE (TEMPORARY)
+    // ------------------------------------------------------------------
+    // Keep internal logic but do NOT call external provider.
+    // This allows the system to "think" it sent, so we can mock success.
+    const LINK_ONLY_MODE = true;
+
+    if (LINK_ONLY_MODE) {
+        console.log(`[WhatsApp Mock] Would send to participant ${participanteId}: ${mensagem}`);
+        // We can optionally log to database still if we want to track "attempts"
+        // For now, just return success so the flow continues.
+        return {
+            success: true,
+            providerId: "mock-link-only-mode"
+        };
+    }
+
     // 1. Buscar parâmetros globais do sistema
     const parametros = await prisma.parametro.findMany({
         where: {

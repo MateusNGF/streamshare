@@ -102,6 +102,7 @@ export function StreamingModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (loading) return; // Prevent double submit
         if (validate()) {
             onSave({ ...formData, updateExistingSubscriptions });
         }
@@ -123,6 +124,7 @@ export function StreamingModal({
                 <>
                     {step === 2 && !streaming && (
                         <button
+                            type="button"
                             onClick={() => setStep(1)}
                             className="mr-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base"
                         >
@@ -130,6 +132,7 @@ export function StreamingModal({
                         </button>
                     )}
                     <button
+                        type="button"
                         onClick={onClose}
                         className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base"
                     >
@@ -137,6 +140,7 @@ export function StreamingModal({
                     </button>
                     {step === 1 ? (
                         <button
+                            type="button"
                             onClick={() => setStep(2)}
                             disabled={!formData.catalogoId}
                             className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 text-sm sm:text-base"
@@ -145,6 +149,7 @@ export function StreamingModal({
                         </button>
                     ) : (
                         <button
+                            type="button"
                             onClick={handleSubmit}
                             disabled={loading || catalogos.length === 0}
                             className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center gap-2"

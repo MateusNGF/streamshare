@@ -30,6 +30,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
         deleteStreaming: deleteStreamingStore,
         setFilters,
         getFiltered,
+        clearError,
     } = useStreamingStore();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -45,11 +46,13 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
     }, [fetchStreamings]);
 
     // Show error toast if any
+    // Show error toast if any
     useEffect(() => {
         if (error) {
             toast.error(error);
+            clearError();
         }
-    }, [error, toast]);
+    }, [error, toast, clearError]);
 
     // Anti-hydration mismatch: Use initialData on server/first render, then store data
     // This allows SEO to work (server renders initialData) and prevents hydration errors
@@ -69,7 +72,8 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             toast.success("Streaming criado com sucesso!");
             setIsAddModalOpen(false);
         } catch (error: any) {
-            toast.error(error?.message || "Erro ao criar streaming");
+            // Error is handled by store listener
+            console.error(error);
         }
     };
 
@@ -95,7 +99,8 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             setIsEditModalOpen(false);
             setSelectedStreaming(null);
         } catch (error: any) {
-            toast.error(error?.message || "Erro ao atualizar streaming");
+            // Error is handled by store listener
+            console.error(error);
         }
     };
 
@@ -108,7 +113,8 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             setIsDeleteModalOpen(false);
             setSelectedStreaming(null);
         } catch (error: any) {
-            toast.error(error?.message || "Erro ao excluir streaming");
+            // Error is handled by store listener
+            console.error(error);
         }
     };
 

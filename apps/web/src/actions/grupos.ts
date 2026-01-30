@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PLANS } from "@/config/plans";
 
 // ============================================
 // CONTEXT HELPER
@@ -99,7 +100,32 @@ export async function createGrupo(data: {
     descricao?: string;
     streamingIds: number[];
 }) {
+
+
+    // ... inside createGrupo ...
+
     const { contaId } = await getContext();
+
+    // 1. Validate Plan Limits
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { plano: true }
+    });
+
+    if (!conta) throw new Error("Conta não encontrada");
+
+    const planConfig = PLANS[conta.plano];
+
+    const currentGruposCount = await prisma.grupo.count({
+        where: { contaId, isAtivo: true }
+    });
+
+    if (currentGruposCount >= planConfig.maxGrupos) {
+        throw new Error(
+            `Seu plano (${planConfig.label}) permite apenas ${planConfig.maxGrupos} grupo(s). ` +
+            `Atualize para o plano PRO para ter acesso ilimitado.`
+        );
+    }
 
     // Validações
     if (!data.nome || !data.nome.trim()) {
@@ -166,6 +192,27 @@ export async function updateGrupo(
     }
 ) {
     const { contaId } = await getContext();
+
+    // 1. Validate Plan Limits
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { plano: true }
+    });
+
+    if (!conta) throw new Error("Conta não encontrada");
+
+    const planConfig = PLANS[conta.plano];
+
+    const currentGruposCount = await prisma.grupo.count({
+        where: { contaId, isAtivo: true }
+    });
+
+    if (currentGruposCount >= planConfig.maxGrupos) {
+        throw new Error(
+            `Seu plano (${planConfig.label}) permite apenas ${planConfig.maxGrupos} grupo(s). ` +
+            `Atualize para o plano PRO para ter acesso ilimitado.`
+        );
+    }
 
     // Validações
     if (!data.nome || !data.nome.trim()) {

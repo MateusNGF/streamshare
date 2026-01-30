@@ -10,6 +10,7 @@ import {
 import { KPICard } from "@/components/dashboard/KPICard";
 import { StreamingCard } from "@/components/dashboard/StreamingCard";
 import { RecentSubscription } from "@/components/dashboard/RecentSubscription";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDashboardStats, getRecentSubscriptions, getDashboardStreamings } from "@/actions/dashboard";
@@ -42,16 +43,11 @@ export default async function DashboardPage() {
                             <Bell size={20} />
                             <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                         </button>
-                        <button
-                            aria-label="Adicionar novo streaming"
-                            className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
-                        >
-                            <Plus size={20} />
-                            Novo Streaming
-                        </button>
                     </div>
                 }
             />
+
+            <QuickActions />
 
             {/* KPI Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">

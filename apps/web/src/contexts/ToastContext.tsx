@@ -13,17 +13,18 @@ export function ToastProvider({ children }: ToastProviderProps) {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
     const showToast = useCallback((type: ToastType, message: string, duration: number = 5000) => {
-        const id = Math.random().toString(36).substring(2, 9);
-        const newToast: Toast = { id, type, message, duration };
+        // Deduplication: Check if a toast with the same message already exists
+        setToasts((prev) => {
+            const exists = prev.some(t => t.message === message && t.type === type);
+            if (exists) return prev;
 
-        setToasts((prev) => [...prev, newToast]);
+            const id = Math.random().toString(36).substring(2, 9);
+            const newToast: Toast = { id, type, message, duration };
 
-        // Auto-dismiss
-        if (duration > 0) {
-            setTimeout(() => {
-                hideToast(id);
-            }, duration);
-        }
+
+
+            return [...prev, newToast];
+        });
     }, []);
 
     const hideToast = useCallback((id: string) => {

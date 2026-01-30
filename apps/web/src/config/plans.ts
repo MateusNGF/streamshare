@@ -11,7 +11,11 @@ export interface PlanDefinition {
     description: string;
     subDescription?: string;
     price: number;
-    limiteGrupos: number;
+    // Limits
+    maxStreamings: number;
+    maxGrupos: number;
+    maxParticipantes: number;
+
     features: PlanFeature[];
     highlighted?: boolean;
     color: string;
@@ -25,15 +29,19 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
         description: "Para quem está começando.",
         subDescription: "Gerencie poucos grupos",
         price: 0,
-        limiteGrupos: 5,
+
+        maxStreamings: 1,
+        maxGrupos: 1,
+        maxParticipantes: 6,
+
         color: "gray",
         // No price ID for free plan
         features: [
-            { text: "Até 5 Grupos de Streaming", included: true },
+            { text: "1 Serviço de Streaming", included: true },
+            { text: "Até 6 Participantes por serviço", included: true },
+            { text: "1 Grupo de compartilhamento", included: true },
             { text: "Painel de Gestão Completo", included: true },
             { text: "Cobrança Manual", included: true },
-            { text: "Sem Integração de Pagamento Auto", included: false },
-            { text: "Suporte Básico", included: true },
         ],
     },
     [PlanoConta.pro]: {
@@ -42,16 +50,20 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
         description: "Para administradores sérios.",
         subDescription: "Expanda sua operação",
         price: 29.90,
-        limiteGrupos: 20,
+
+        maxStreamings: 9999, // Unlimited
+        maxGrupos: 9999,    // Unlimited
+        maxParticipantes: 9999, // Unlimited
+
         highlighted: true,
         color: "primary",
         stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO, // Env var
         features: [
-            { text: "Até 20 Grupos de Streaming", included: true },
+            { text: "Streamings Ilimitados", included: true },
+            { text: "Participantes Ilimitados", included: true },
+            { text: "Grupos Ilimitados", included: true },
             { text: "Automação de WhatsApp", included: true },
             { text: "Cobranças Automáticas", included: true },
-            { text: "Relatórios Financeiros Avançados", included: true },
-            { text: "Suporte Prioritário", included: true },
         ],
     },
 

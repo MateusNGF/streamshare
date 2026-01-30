@@ -4,6 +4,7 @@ import { prisma } from "@streamshare/database";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { StreamingSchema } from "@/lib/schemas";
+import { PLANS } from "@/config/plans";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -160,7 +161,40 @@ export async function createStreaming(data: {
     valorIntegral: number;
     limiteParticipantes: number;
 }) {
+
+
+    // ... inside createStreaming ...
+
     const { contaId } = await getContext();
+
+    // 1. Fetch Account and Plan
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { plano: true }
+    });
+
+    if (!conta) throw new Error("Conta não encontrada");
+
+    const planConfig = PLANS[conta.plano];
+
+    // 2. Validate Streaming Count Limit
+    const currentStreamingsCount = await prisma.streaming.count({
+        where: { contaId }
+    });
+
+    if (currentStreamingsCount >= planConfig.maxStreamings) {
+        throw new Error(
+            `Seu plano (${planConfig.label}) permite apenas ${planConfig.maxStreamings} streaming(s). ` +
+            `Atualize para o plano PRO para ter acesso ilimitado.`
+        );
+    }
+
+    // 3. Validate Participants Limit
+    if (data.limiteParticipantes > planConfig.maxParticipantes) {
+        throw new Error(
+            `Seu plano (${planConfig.label}) permite no máximo ${planConfig.maxParticipantes} participantes por streaming.`
+        );
+    }
 
     // Business validations
     // Business validations using Zod

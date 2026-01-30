@@ -53,6 +53,15 @@ export function ToastItem({ toast, onClose }: ToastItemProps) {
         return () => clearTimeout(timer);
     }, []);
 
+    useEffect(() => {
+        if (toast.duration && toast.duration > 0) {
+            const timer = setTimeout(() => {
+                handleClose();
+            }, toast.duration);
+            return () => clearTimeout(timer);
+        }
+    }, [toast.duration]);
+
     const handleClose = () => {
         setIsLeaving(true);
         setTimeout(() => {
