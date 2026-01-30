@@ -70,7 +70,7 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                 </div>
             )}
 
-            <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="mt-8 flex flex-col items-center justify-center gap-8 px-4 lg:flex-row lg:items-stretch lg:flex-wrap">
                 {PLANS_LIST.map((plan) => {
                     const isCurrent = currentPlan === plan.id;
                     const isHighlighted = plan.highlighted;
@@ -79,7 +79,7 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                         <div
                             key={plan.id}
                             className={`
-                                relative flex flex-col p-8 rounded-[32px] transition-all duration-300
+                                relative flex flex-col p-8 rounded-[32px] transition-all duration-300 w-full max-w-sm
                                 ${isHighlighted
                                     ? "bg-gray-900 text-white shadow-xl scale-105 border-2 border-primary ring-4 ring-primary/10 z-10 hover:shadow-2xl hover:scale-[1.07]"
                                     : "bg-white text-gray-900 border border-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-2"
@@ -88,7 +88,7 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                         >
                             {/* Badge Popular (se houver) */}
                             {isHighlighted && (
-                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 animate-pulse">
+                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 animate-pulse whitespace-nowrap">
                                     <Star size={14} fill="currentColor" />
                                     Mais Popular
                                 </div>
