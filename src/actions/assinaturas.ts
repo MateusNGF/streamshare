@@ -261,7 +261,7 @@ export async function createMultipleAssinaturas(data: {
             });
 
             if (existing) {
-                throw new Error(`Participante já possui assinatura ${existing.status} em ${streaming.catalogo.nome}`);
+                throw new Error(`Participante já possui assinatura ${existing.status} em ${streaming.apelido || streaming.catalogo.nome}`);
             }
 
             // Create subscription

@@ -13,7 +13,6 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/hooks/useToast";
 import { formatCurrency } from "@/lib/utils";
 import { createMultipleAssinaturas } from "@/actions/assinaturas";
-import { AssinaturaModal } from "@/components/modals/AssinaturaModal";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
 
 interface AssinaturasClientProps {
@@ -29,7 +28,6 @@ export default function AssinaturasClient({
 }: AssinaturasClientProps) {
     const router = useRouter();
     const toast = useToast();
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -65,6 +63,8 @@ export default function AssinaturasClient({
     const streamingsWithOcupados = streamings.map(s => ({
         id: s.id,
         nome: s.apelido || s.catalogo.nome,
+        apelido: s.apelido,
+        catalogoNome: s.catalogo.nome,
         valorIntegral: Number(s.valorIntegral),
         limiteParticipantes: s.limiteParticipantes,
         ocupados: s._count?.assinaturas || 0,
@@ -90,21 +90,12 @@ export default function AssinaturasClient({
                 action={
                     <div className="flex gap-3">
                         <Button
-                            variant="outline"
-                            onClick={() => setIsModalOpen(true)}
-                            className="gap-2"
-                        >
-                            <Plus size={18} />
-                            <span className="hidden sm:inline">Nova Individual</span>
-                            <span className="sm:hidden">Nova</span>
-                        </Button>
-                        <Button
                             onClick={() => setIsMultipleModalOpen(true)}
                             className="gap-2 bg-primary text-white shadow-lg shadow-primary/25"
                         >
                             <Plus size={20} />
-                            <span className="hidden sm:inline">Múltiplas Assinaturas</span>
-                            <span className="sm:hidden">Múltiplas</span>
+                            <span className="hidden sm:inline">Nova Assinatura</span>
+                            <span className="sm:hidden">Nova</span>
                         </Button>
                     </div>
                 }
@@ -228,13 +219,7 @@ export default function AssinaturasClient({
                     </div>
                 </div>
 
-                <AssinaturaModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        router.refresh();
-                    }}
-                />
+
 
                 <AssinaturaMultiplaModal
                     isOpen={isMultipleModalOpen}

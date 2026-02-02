@@ -3,12 +3,14 @@
 import { useState, useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { FrequenciaPagamento } from "@prisma/client";
-import { FREQUENCIA_MULTIPLICADORES, formatarMoeda } from "@/lib/financeiro-utils";
+import { FREQUENCIA_MULTIPLICADORES, INTERVALOS_MESES, formatarMoeda, calcularProximoVencimento } from "@/lib/financeiro-utils";
 import { Check, ChevronRight, ChevronLeft, Search } from "lucide-react";
 
 interface StreamingOption {
     id: number;
     nome: string;
+    apelido?: string;
+    catalogoNome?: string;
     valorIntegral: number;
     limiteParticipantes: number;
     ocupados: number;
@@ -97,8 +99,26 @@ export function AssinaturaMultiplaModal({
     const handleUpdateConfig = (streamingId: number, field: keyof SelectedStreaming, value: any) => {
         const newConfigs = new Map(configurations);
         const current = newConfigs.get(streamingId);
+
         if (current) {
-            newConfigs.set(streamingId, { ...current, [field]: value });
+            let updates = { [field]: value };
+
+            // Se alterou a frequência, recalcula o valor sugerido
+            if (field === 'frequencia') {
+                const streaming = streamings.find(s => s.id === streamingId);
+                if (streaming) {
+                    const novaFrequencia = value as FrequenciaPagamento;
+                    const valorMensal = streaming.valorIntegral / streaming.limiteParticipantes;
+                    const novoValor = valorMensal * INTERVALOS_MESES[novaFrequencia];
+
+                    updates = {
+                        ...updates,
+                        valor: novoValor.toFixed(2)
+                    };
+                }
+            }
+
+            newConfigs.set(streamingId, { ...current, ...updates });
             setConfigurations(newConfigs);
         }
     };
@@ -318,9 +338,12 @@ export function AssinaturaMultiplaModal({
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <h4 className="font-bold text-gray-900">{streaming.nome}</h4>
-                                            <h4 className="font-bold text-gray-900">{streaming.nome}</h4>
-                                            <p className="text-xs text-gray-500">Valor sugerido: {formatarMoeda(streaming.valorIntegral)}</p>
+                                            <h4 className="font-bold text-gray-900">
+                                                {streaming.apelido || streaming.nome}
+                                            </h4>
+                                            {streaming.apelido && (
+                                                <p className="text-xs text-muted-foreground">{streaming.catalogoNome}</p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -354,7 +377,7 @@ export function AssinaturaMultiplaModal({
                                                 placeholder={(streaming.valorIntegral / streaming.limiteParticipantes).toFixed(2)}
                                             />
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Sugestão: {formatarMoeda(streaming.valorIntegral / streaming.limiteParticipantes)} ({streaming.limiteParticipantes}× = {formatarMoeda(streaming.valorIntegral)})
+                                                Valor mensal sugerido: {formatarMoeda(streaming.valorIntegral / streaming.limiteParticipantes)}/mês
                                             </p>
                                         </div>
                                     </div>
@@ -439,9 +462,18 @@ export function AssinaturaMultiplaModal({
                                                 <p className="text-xs text-gray-500 capitalize">{config.frequencia}</p>
                                             </div>
                                         </div>
-                                        <p className="font-bold text-primary">
-                                            R$ {parseFloat(config.valor).toFixed(2)}
-                                        </p>
+                                        <div className="text-right">
+                                            <p className="font-bold text-primary">
+                                                R$ {parseFloat(config.valor).toFixed(2)}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground opacity-70">
+                                                Vence em: {(() => {
+                                                    const [ano, mes, dia] = dataInicio.split('-').map(Number);
+                                                    const dataBase = new Date(ano, mes - 1, dia);
+                                                    return calcularProximoVencimento(dataBase, config.frequencia).toLocaleDateString('pt-BR');
+                                                })()}
+                                            </p>
+                                        </div>
                                     </div>
                                 );
                             })}

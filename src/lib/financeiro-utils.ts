@@ -1,6 +1,6 @@
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
 
-const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
+export const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
     mensal: 1,
     trimestral: 3,
     semestral: 6,
