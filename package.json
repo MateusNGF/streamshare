@@ -1,28 +1,52 @@
 {
-    "name": "streamshare-monorepo",
-    "private": true,
-    "scripts": {
-        "build": "turbo run build",
-        "dev": "turbo run dev",
-        "start": "turbo run start",
-        "prod": "pnpm build && pnpm start",
-        "lint": "turbo run lint",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-        "db:generate": "pnpm --filter @streamshare/database run generate",
-        "db:push": "pnpm --filter @streamshare/database run push",
-        "db:migrate": "pnpm --filter @streamshare/database exec prisma migrate dev",
-        "db:seed": "pnpm --filter @streamshare/database exec prisma db seed",
-        "db:studio": "pnpm --filter @streamshare/database run studio"
-    },
-    "devDependencies": {
-        "@types/node-cron": "^3.0.11",
-        "prettier": "^3.2.5",
-        "turbo": "latest"
-    },
-    "packageManager": "pnpm@10.19.0",
-    "dependencies": {
-        "date-fns": "^4.1.0",
-        "node-cron": "^4.2.1",
-        "resend": "^6.7.0"
-    }
+  "name": "streamshare",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "npx tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.2",
+    "@types/nodemailer": "^7.0.5",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "cookie": "^1.1.1",
+    "date-fns": "^4.1.0",
+    "focus-trap-react": "^11.0.6",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.378.0",
+    "next": "14.2.3",
+    "nodemailer": "^7.0.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "stripe": "^20.2.0",
+    "tailwind-merge": "^2.3.0",
+    "zod": "^4.3.6",
+    "node-cron": "^4.2.1",
+    "zustand": "^5.0.10"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/cookie": "^1.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
+    "postcss": "^8",
+    "prisma": "^5.10.2",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.7.1",
+    "typescript": "^5"
+  }
 }
