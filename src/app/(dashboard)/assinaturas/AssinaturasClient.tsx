@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Filter, RefreshCw } from "lucide-react";
+import { Plus, Search, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/Select";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -16,27 +15,11 @@ import { formatCurrency } from "@/lib/utils";
 import { createMultipleAssinaturas } from "@/actions/assinaturas";
 import { AssinaturaModal } from "@/components/modals/AssinaturaModal";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
-import type { Assinatura, Participante, Streaming, StreamingCatalogo, FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
-
-// Extended types to include relations
-type AssinaturaWithRelations = Assinatura & {
-    participante: Participante;
-    streaming: Streaming & {
-        catalogo: StreamingCatalogo;
-    };
-};
-
-type StreamingWithCount = Streaming & {
-    catalogo: StreamingCatalogo;
-    _count?: {
-        assinaturas: number;
-    };
-};
 
 interface AssinaturasClientProps {
-    initialSubscriptions: AssinaturaWithRelations[];
-    participantes: Participante[];
-    streamings: StreamingWithCount[];
+    initialSubscriptions: any[];
+    participantes: any[];
+    streamings: any[];
 }
 
 export default function AssinaturasClient({
