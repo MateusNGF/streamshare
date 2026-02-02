@@ -50,7 +50,7 @@ export async function createAssinatura(data: {
     valor: number;
     dataInicio: string; // ISO Date string
 }) {
-    await getContext(); // Validate auth
+    const { contaId } = await getContext(); // Validate auth
 
     // Business validations
     if (!Number.isFinite(data.valor) || data.valor <= 0) {
@@ -80,6 +80,36 @@ export async function createAssinatura(data: {
     // Use transaction to ensure atomicity between subscription and initial charge creation
     const result = await prisma.$transaction(async (tx) => {
         // Validations
+        const streaming = await tx.streaming.findUnique({
+            where: { id: data.streamingId },
+            include: {
+                catalogo: true,
+                _count: {
+                    select: {
+                        assinaturas: {
+                            where: {
+                                status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa] }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!streaming) {
+            throw new Error("Streaming não encontrado");
+        }
+
+        if (streaming.contaId !== contaId) {
+            throw new Error("Você não tem permissão para usar este streaming");
+        }
+
+        // Check slot availability
+        const assinaturasAtivas = streaming._count.assinaturas;
+        if (assinaturasAtivas >= streaming.limiteParticipantes) {
+            throw new Error(`${streaming.catalogo.nome}: Sem vagas disponíveis (${assinaturasAtivas}/${streaming.limiteParticipantes})`);
+        }
+
         const existing = await tx.assinatura.findFirst({
             where: {
                 participanteId: data.participanteId,
@@ -122,14 +152,10 @@ export async function createAssinatura(data: {
             }
         });
 
-        // Fetch participant and streaming data for WhatsApp notification
+        // Fetch participant data for WhatsApp notification
         const participante = await tx.participante.findUnique({
             where: { id: data.participanteId },
             select: { nome: true, contaId: true },
-        });
-        const streaming = await tx.streaming.findUnique({
-            where: { id: data.streamingId },
-            include: { catalogo: true },
         });
 
         return { assinatura, cobranca, participante, streaming };
