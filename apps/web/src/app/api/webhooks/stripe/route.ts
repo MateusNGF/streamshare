@@ -41,7 +41,7 @@ export async function POST(req: Request) {
                 stripeSubscriptionId: session.subscription as string,
                 stripeSubscriptionStatus: "active",
                 plano: plano,
-                limiteGrupos: planConfig?.limiteGrupos || 5
+                limiteGrupos: planConfig?.maxGrupos || 5
             },
         });
     }

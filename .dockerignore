@@ -1,39 +1,16 @@
-# Dependencies
-node_modules/
+
+**/node_modules
+.next
+build
+dist
+.git
+.turbo
+.DS_Store
+*.pem
+*.key
+.env
+.env.*
+! .env.example
 npm-debug.log
 yarn-error.log
 pnpm-debug.log
-
-# Build cache
-.next/
-.turbo/
-out/
-dist/
-
-# Environment files (will be injected at runtime)
-.env
-.env*.local
-
-# Git
-.git/
-.gitignore
-
-# Documentation
-*.md
-docs/
-
-# IDE
-.vscode/
-.idea/
-
-# Testing
-coverage/
-.nyc_output/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Misc
-*.log
-.cache/

@@ -38,8 +38,8 @@ export type StreamingSchemaType = z.infer<typeof StreamingSchema>;
 export const AssinaturaSchema = z.object({
     streamingId: z.number(),
 
-    frequencia: z.nativeEnum(FrequenciaPagamento, {
-        errorMap: () => ({ message: "Selecione uma frequência válida" })
+    frequencia: z.enum(FrequenciaPagamento, {
+        error: () => ({ message: "Selecione uma frequência válida" })
     }),
 
     valor: numericString(
