@@ -149,7 +149,7 @@ export default async function LandingPage() {
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </Link>
               <button className="px-8 py-4 border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 transition-all">
-                Ver Como Funciona
+                <a href="#como-funciona">Ver Como Funciona</a>
               </button>
             </div>
 
@@ -345,7 +345,7 @@ export default async function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-white">
+      <section id="como-funciona" className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Como Funciona</h2>
@@ -381,16 +381,7 @@ export default async function LandingPage() {
       {/* Pricing */}
       <section id="planos" className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Planos e Preços</h2>
-            <p className="text-xl text-gray-600 mb-4">Escolha o plano ideal para você</p>
-            <div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full">
-              <Award className="text-green-600" size={20} />
-              <span className="text-green-700 font-semibold">
-                Garantia de reembolso em 7 dias
-              </span>
-            </div>
-          </div>
+
 
           <div className="max-w-6xl mx-auto">
             <PlansClient isLoggedIn={!!session} currentPlan={account?.conta.plano || "basico"} />
