@@ -68,14 +68,15 @@ SelectTrigger.displayName = "SelectTrigger";
 
 interface SelectValueProps {
     placeholder?: string;
+    children?: React.ReactNode;
 }
 
-const SelectValue = ({ placeholder }: SelectValueProps) => {
+const SelectValue = ({ placeholder, children }: SelectValueProps) => {
     const { value } = useSelectContext();
 
     return (
         <span className={value ? "text-gray-900" : "text-gray-500"}>
-            {value || placeholder}
+            {children || value || placeholder}
         </span>
     );
 };

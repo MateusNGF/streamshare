@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AdminUser } from "@/actions/admin/users";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import {
     Table,
     TableBody,
@@ -50,6 +51,22 @@ export function UsersClient({ users, metadata }: UsersClientProps) {
         router.replace(`${pathname}?${params.toString()}`);
     };
 
+
+    const filters: FilterConfig[] = [
+        {
+            key: "q",
+            type: "text",
+            placeholder: "Buscar por nome ou email...",
+            className: "w-full"
+        }
+    ];
+
+    const handleFilterChange = (key: string, value: string) => {
+        if (key === "q") {
+            handleSearch(value);
+        }
+    };
+
     return (
         <PageContainer>
             <PageHeader
@@ -58,16 +75,12 @@ export function UsersClient({ users, metadata }: UsersClientProps) {
             />
 
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
-                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
-                    <Search size={20} className="text-gray-400 flex-shrink-0" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nome ou email..."
-                        defaultValue={searchParams.get("q")?.toString()}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500 min-w-0"
-                    />
-                </div>
+                <GenericFilter
+                    filters={filters}
+                    values={{ q: searchParams.get("q")?.toString() || "" }}
+                    onChange={handleFilterChange}
+                    className="w-full"
+                />
             </div>
 
             {users.length === 0 ? (

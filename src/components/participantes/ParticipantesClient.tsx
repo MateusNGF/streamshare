@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus } from "lucide-react";
+import { GenericFilter } from "@/components/ui/GenericFilter";
 import { ParticipantCard } from "@/components/participantes/ParticipantCard";
 import { ParticipantModal, ParticipantFormData } from "@/components/modals/ParticipantModal";
 import { DeleteModal } from "@/components/modals/DeleteModal";
@@ -106,24 +107,18 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
             />
 
             {/* Search and Filters */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                <div className="flex-1 flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
-                    <Search size={20} className="text-gray-400 flex-shrink-0" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nome, telefone ou CPF..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500 min-w-0"
-                    />
-                </div>
-                <button
-                    className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all touch-manipulation whitespace-nowrap"
-                    aria-label="Abrir filtros"
-                >
-                    <Filter size={20} />
-                    <span className="hidden sm:inline">Filtros</span>
-                </button>
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
+                <GenericFilter
+                    filters={[{
+                        key: "search",
+                        type: "text",
+                        placeholder: "Buscar por nome, telefone ou CPF...",
+                        className: "w-full"
+                    }]}
+                    values={{ search: searchTerm }}
+                    onChange={(key: string, value: string) => setSearchTerm(value)}
+                    onClear={() => setSearchTerm("")}
+                />
             </div>
 
             {/* Stats (Real time) */}

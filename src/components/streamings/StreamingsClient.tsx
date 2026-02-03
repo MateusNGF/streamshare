@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
+import { GenericFilter } from "@/components/ui/GenericFilter";
 import { StreamingDetailCard } from "@/components/streamings/StreamingDetailCard";
 import { StreamingModal, StreamingFormData } from "@/components/modals/StreamingModal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -137,18 +138,52 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
             />
 
             {/* Search and Filters */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                <div className="flex-1 flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
-                    <Search size={20} className="text-gray-400 flex-shrink-0" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por serviço..."
-                        value={filters.searchTerm}
-                        onChange={(e) => setFilters({ searchTerm: e.target.value })}
-                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500 min-w-0"
-                    />
-                </div>
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
+                <GenericFilter
+                    filters={[
+                        {
+                            key: "searchTerm",
+                            type: "text",
+                            placeholder: "Buscar por serviço...",
+                            className: "w-full md:w-auto flex-1"
+                        },
+                        {
+                            key: "catalogoId",
+                            type: "select",
+                            label: "Tipo de Serviço",
+                            className: "w-full md:w-[200px]",
+                            options: Array.from(new Set(streamings.map(s => JSON.stringify({ id: s.catalogo.id, nome: s.catalogo.nome }))))
+                                .map((json: any) => JSON.parse(json))
+                                .map((cat: any) => ({
+                                    label: cat.nome,
+                                    value: String(cat.id)
+                                }))
+                        },
+                        {
+                            key: "onlyFull",
+                            type: "switch",
+                            label: "Apenas grupos lotados",
+                            className: "w-auto"
+                        }
+                    ]}
+                    values={{
+                        searchTerm: filters.searchTerm,
+                        catalogoId: filters.catalogoId ? String(filters.catalogoId) : "all",
+                        onlyFull: String(filters.onlyFull || false)
+                    }}
+                    onChange={(key: string, value: string) => {
+                        if (key === 'catalogoId') {
+                            setFilters({ ...filters, catalogoId: value === 'all' ? undefined : Number(value) });
+                        } else if (key === 'onlyFull') {
+                            setFilters({ ...filters, onlyFull: value === 'true' });
+                        } else {
+                            setFilters({ ...filters, [key]: value });
+                        }
+                    }}
+                    onClear={() => setFilters({ searchTerm: "", catalogoId: undefined, onlyFull: false })}
+                />
             </div>
+
 
             {/* Loading State */}
             {isLoading && displayStreamings.length === 0 ? (

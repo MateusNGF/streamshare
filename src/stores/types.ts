@@ -68,6 +68,7 @@ export type CobrancaWithRelations = Omit<Cobranca, 'valor'> & {
 export interface StreamingFilters {
     searchTerm: string;
     catalogoId?: number;
+    onlyFull?: boolean;
 }
 
 export interface CobrancaFilters {

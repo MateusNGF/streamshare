@@ -236,6 +236,14 @@ export const useStreamingStore = create<StreamingStore>()(
                             return false;
                         }
 
+                        // Only Full Groups filter
+                        if (filters.onlyFull) {
+                            const occupied = streaming._count?.assinaturas || 0;
+                            if (occupied < streaming.limiteParticipantes) {
+                                return false;
+                            }
+                        }
+
                         return true;
                     });
                 },

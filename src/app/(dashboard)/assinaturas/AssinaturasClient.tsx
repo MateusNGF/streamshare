@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/Select";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -15,6 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 import { createMultipleAssinaturas } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -36,6 +35,42 @@ export default function AssinaturasClient({
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [streamingFilter, setStreamingFilter] = useState<string>("all");
+
+    const filters: FilterConfig[] = [
+        {
+            key: "search",
+            type: "text",
+            placeholder: "Buscar participante...",
+            className: "flex-1 min-w-[200px]"
+        },
+        {
+            key: "status",
+            type: "select",
+            label: "Status",
+            className: "w-full md:w-[150px]",
+            options: [
+                { label: "Ativas", value: "ativa" },
+                { label: "Suspensas", value: "suspensa" },
+                { label: "Canceladas", value: "cancelada" }
+            ]
+        },
+        {
+            key: "streaming",
+            type: "select",
+            label: "Streaming",
+            className: "w-full md:w-[200px]",
+            options: streamings.map(s => ({
+                label: s.apelido || s.catalogo.nome,
+                value: s.id.toString()
+            }))
+        }
+    ];
+
+    const handleFilterChange = (key: string, value: string) => {
+        if (key === "search") setSearchTerm(value);
+        if (key === "status") setStatusFilter(value);
+        if (key === "streaming") setStreamingFilter(value);
+    };
 
     const handleCreateMultiple = async (data: any) => {
         setLoading(true);
@@ -102,58 +137,23 @@ export default function AssinaturasClient({
                 }
             />
 
+
             <div className="bg-card text-card-foreground shadow-sm">
                 <div className="space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-2.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Buscar participante..."
-                                className="pl-9"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex gap-4 w-full md:w-auto">
-                            <div className="w-full md:w-[180px]">
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger>
-                                        <Filter className="w-4 h-4 mr-2" />
-                                        <span className="text-sm">
-                                            {statusFilter === "all" ? "Todos" : getStatusLabel(statusFilter)}
-                                        </span>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos</SelectItem>
-                                        <SelectItem value="ativa">Ativas</SelectItem>
-                                        <SelectItem value="suspensa">Suspensas</SelectItem>
-                                        <SelectItem value="cancelada">Canceladas</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="w-full md:w-[200px]">
-                                <Select value={streamingFilter} onValueChange={setStreamingFilter}>
-                                    <SelectTrigger>
-                                        <span className="text-sm">
-                                            {(() => {
-                                                if (streamingFilter === "all") return "Todas";
-                                                const s = streamings.find(s => s.id.toString() === streamingFilter);
-                                                return s ? (s.apelido || s.catalogo.nome) : "Todas";
-                                            })()}
-                                        </span>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todas</SelectItem>
-                                        {streamings.map((s) => (
-                                            <SelectItem key={s.id} value={s.id.toString()}>
-                                                {s.apelido || s.catalogo.nome}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
+                    <GenericFilter
+                        filters={filters}
+                        values={{
+                            search: searchTerm,
+                            status: statusFilter,
+                            streaming: streamingFilter
+                        }}
+                        onChange={handleFilterChange}
+                        onClear={() => {
+                            setSearchTerm("");
+                            setStatusFilter("all");
+                            setStreamingFilter("all");
+                        }}
+                    />
 
                     <div className="rounded-md border">
                         <Table>

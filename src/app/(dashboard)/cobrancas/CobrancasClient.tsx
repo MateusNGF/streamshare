@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { DollarSign, CheckCircle, AlertCircle, MessageCircle, MoreVertical, Check } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, MessageCircle, MoreVertical, Check, Search } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { GenericFilter } from "@/components/ui/GenericFilter";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { confirmarPagamento, enviarNotificacaoCobranca } from "@/actions/cobrancas";
 import type { EnviarNotificacaoResult } from "@/types/whatsapp";
 import { useToast } from "@/hooks/useToast";
@@ -23,6 +25,12 @@ interface CobrancasClientProps {
 
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
     const toast = useToast();
+
+    // Filters State
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+
+    // Data & UI State
     const [cobrancas, setCobrancas] = useState(cobrancasIniciais);
     const [loading, setLoading] = useState(false);
     const [sendingWhatsApp, setSendingWhatsApp] = useState<number | null>(null);
@@ -39,6 +47,12 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const filteredCobrancas = cobrancas.filter(c => {
+        const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     const handleConfirmarPagamento = async (id: number) => {
         setLoading(true);
@@ -101,16 +115,53 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 />
             </div>
 
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
+                <GenericFilter
+                    filters={[
+                        {
+                            key: "search",
+                            type: "text",
+                            placeholder: "Buscar participante...",
+                            className: "flex-1 min-w-[200px]"
+                        },
+                        {
+                            key: "status",
+                            type: "select",
+                            label: "Status",
+                            className: "w-full md:w-[200px]",
+                            options: [
+                                { label: "Pendente", value: "pendente" },
+                                { label: "Pago", value: "pago" },
+                                { label: "Atrasado", value: "atrasado" },
+                                { label: "Cancelado", value: "cancelado" }
+                            ]
+                        }
+                    ]}
+                    values={{ search: searchTerm, status: statusFilter }}
+                    onChange={(key: string, value: string) => {
+                        if (key === "search") setSearchTerm(value);
+                        if (key === "status") setStatusFilter(value);
+                    }}
+                    onClear={() => {
+                        setSearchTerm("");
+                        setStatusFilter("all");
+                    }}
+                />
+            </div>
+
             {/* Charges Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {cobrancas.length === 0 ? (
-                    <div className="p-12 text-center text-gray-500">
-                        <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-lg font-medium mb-2">Nenhuma cobrança encontrada</p>
-                        <p className="text-sm">
-                            Crie assinaturas para participantes e as cobranças serão geradas automaticamente.
-                        </p>
-                    </div>
+                {filteredCobrancas.length === 0 ? (
+                    <EmptyState
+                        icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
+                        title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Nenhuma cobrança registrada"}
+                        description={
+                            searchTerm || statusFilter !== 'all'
+                                ? "Não encontramos nenhuma cobrança com os filtros selecionados."
+                                : "Crie assinaturas para participantes e as cobranças serão geradas automaticamente."
+                        }
+                    />
                 ) : (
                     <div className="overflow-x-scroll min-h-[calc(100vh-20rem)] ">
                         <table className="w-full">
@@ -126,7 +177,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                 </tr>
                             </thead>
                             <tbody>
-                                {cobrancas.map((cobranca: any) => (
+                                {filteredCobrancas.map((cobranca: any) => (
                                     <tr key={cobranca.id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="p-4">
                                             <div className="font-medium text-gray-900">
