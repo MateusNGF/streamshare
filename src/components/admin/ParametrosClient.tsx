@@ -177,33 +177,33 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
 
             {/* Tabs */}
             <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm mb-6">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                     <button
                         onClick={() => setActiveSection("smtp")}
                         className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${activeSection === "smtp"
-                                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                : "text-gray-500 hover:bg-gray-50"
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-gray-500 hover:bg-gray-50"
                             }`}
                     >
-                        Configurações SMTP
+                        SMTP
                     </button>
                     <button
                         onClick={() => setActiveSection("whatsapp")}
                         className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${activeSection === "whatsapp"
-                                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                : "text-gray-500 hover:bg-gray-50"
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-gray-500 hover:bg-gray-50"
                             }`}
                     >
-                        WhatsApp / Twilio
+                        WhatsApp
                     </button>
                     <button
                         onClick={() => setActiveSection("general")}
                         className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${activeSection === "general"
-                                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                : "text-gray-500 hover:bg-gray-50"
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "text-gray-500 hover:bg-gray-50"
                             }`}
                     >
-                        Configurações Gerais
+                        Geral
                     </button>
                 </div>
             </div>
@@ -212,14 +212,22 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
             {activeSection === "smtp" && (
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">Configurações de Email (SMTP)</h3>
+                        <h3 className="text-xl font-bold text-gray-900">
+                            <span className="md:hidden">SMTP</span>
+                            <span className="hidden md:inline">Configurações de Email (SMTP)</span>
+                        </h3>
                         <button
                             onClick={handleTestSmtp}
                             disabled={testing}
                             className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
                         >
                             <TestTube size={18} />
-                            {testing ? "Testando..." : "Testar Conexão"}
+                            {testing ? "Testando..." : (
+                                <>
+                                    <span className="md:hidden">Testar</span>
+                                    <span className="hidden md:inline">Testar Conexão</span>
+                                </>
+                            )}
                         </button>
                     </div>
 
@@ -292,14 +300,22 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
             {activeSection === "whatsapp" && (
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">Configurações WhatsApp (Twilio)</h3>
+                        <h3 className="text-xl font-bold text-gray-900">
+                            <span className="md:hidden">WhatsApp</span>
+                            <span className="hidden md:inline">Configurações WhatsApp </span>
+                        </h3>
                         <button
                             onClick={handleTestWhatsApp}
                             disabled={testing}
                             className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
                         >
                             <TestTube size={18} />
-                            {testing ? "Testando..." : "Testar Conexão"}
+                            {testing ? "Testando..." : (
+                                <>
+                                    <span className="md:hidden">Testar</span>
+                                    <span className="hidden md:inline">Testar Conexão</span>
+                                </>
+                            )}
                         </button>
                     </div>
 
@@ -351,7 +367,10 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
             {/* General Section */}
             {activeSection === "general" && (
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">Configurações Gerais</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-6">
+                        <span className="md:hidden">Geral</span>
+                        <span className="hidden md:inline">Configurações Gerais</span>
+                    </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input
