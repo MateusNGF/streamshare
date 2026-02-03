@@ -49,11 +49,11 @@ export function generateWhatsAppLink(phoneNumber: string, message: string): stri
  * 
  * @example
  * generateWhatsAppLinkTextOnly('Olá!')
- * // Returns: 'https://wa.me/?text=Ol%C3%A1!'
+ * // Returns: 'https://api.whatsapp.com/send?text=Ol%C3%A1!'
  */
 export function generateWhatsAppLinkTextOnly(message: string): string {
     validateMessage(message);
     const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/?text=${encodedMessage}`;
+    return `https://api.whatsapp.com/send?text=${encodedMessage}`;
 }
 

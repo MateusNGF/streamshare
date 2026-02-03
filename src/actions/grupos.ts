@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PLANS } from "@/config/plans";
 
@@ -302,16 +302,56 @@ export async function gerarMensagemRenovacao(
     grupoId: number,
     mesReferencia: Date = new Date()
 ): Promise<string> {
-    const grupo = await getGrupoById(grupoId);
+    const { contaId } = await getContext();
+
+    // Calculate start and end of the reference month
+    const start = startOfMonth(mesReferencia);
+    const end = endOfMonth(mesReferencia);
+
+    const grupo = await prisma.grupo.findFirst({
+        where: { id: grupoId, contaId, isAtivo: true },
+        include: {
+            streamings: {
+                where: { isAtivo: true },
+                include: {
+                    streaming: {
+                        include: {
+                            catalogo: true,
+                            assinaturas: {
+                                where: {
+                                    status: { in: ["ativa", "suspensa"] },
+                                    dataInicio: { lte: end }
+                                },
+                                include: {
+                                    participante: true,
+                                    // Filter charges that overlap with the reference month
+                                    cobrancas: {
+                                        where: {
+                                            periodoInicio: { lte: end },
+                                            periodoFim: { gte: start }
+                                        },
+                                        orderBy: { periodoFim: "desc" },
+                                        take: 1
+                                    }
+                                },
+                                orderBy: { createdAt: "asc" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
 
     if (!grupo) {
         throw new Error("Grupo não encontrado");
     }
 
-    // Formatar nome do mês
+    // Formatar nome do mês e ano
     const nomeMes = format(mesReferencia, "MMMM", { locale: ptBR }).toUpperCase();
+    const ano = format(mesReferencia, "yyyy");
 
-    let mensagem = `RENOVAÇÃO - ${nomeMes}\n`;
+    let mensagem = ` *RENOVAÇÃO - ${nomeMes}/${ano}* \n\n`;
 
     for (const gs of grupo.streamings) {
         const streaming = gs.streaming;
@@ -329,16 +369,18 @@ export async function gerarMensagemRenovacao(
 
         // Header: Only individual value - Use apelido (or catalogo.nome as fallback)
         const streamingNome = streaming.apelido || catalogo.nome;
-        mensagem += `\n🎬 *${streamingNome}* • R$ ${valorPorPessoa.toFixed(2).replace('.', ',')} p/ cada\n\n`;
+        mensagem += `\n 🎬 *${streamingNome}* • R$ ${valorPorPessoa.toFixed(2).replace('.', ',')} p/ cada\n\n`;
 
         // Listar participantes com status
         assinaturas.forEach((assinatura, index) => {
             const participante = assinatura.participante;
-            const ultimaCobranca = assinatura.cobrancas[0];
+            const cobrancaReferencia = assinatura.cobrancas[0];
 
             // Determinar emoji de status - APENAS PAGO TEM ÍCONE
             let statusEmoji = "";
-            if (ultimaCobranca?.status === "pago") {
+
+            // Check if we found a charge for this period and if it is paid
+            if (cobrancaReferencia?.status === "pago") {
                 statusEmoji = "✅";
             }
 
@@ -353,9 +395,9 @@ export async function gerarMensagemRenovacao(
             // Adicionar indicação de período pré-pago para assinaturas não-mensais pagas
             if (
                 assinatura.frequencia !== "mensal" &&
-                ultimaCobranca?.status === "pago"
+                cobrancaReferencia?.status === "pago"
             ) {
-                const periodoFim = new Date(ultimaCobranca.periodoFim);
+                const periodoFim = new Date(cobrancaReferencia.periodoFim);
                 const mesAno = format(periodoFim, "MMM/yy", { locale: ptBR });
                 linha += ` (pago até ${mesAno})`;
             }
