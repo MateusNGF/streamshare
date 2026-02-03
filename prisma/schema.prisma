@@ -56,14 +56,14 @@ enum TipoNotificacaoWhatsApp {
 //////////////////////////////////////////////////
 
 model Conta {
-  id             Int             @id @default(autoincrement())
-  nome           String?
-  email          String?         @unique
-  plano          PlanoConta
-  limiteGrupos   Int             @default(5)
-  isAtivo        Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id           Int        @id @default(autoincrement())
+  nome         String?
+  email        String?    @unique
+  plano        PlanoConta
+  limiteGrupos Int        @default(5)
+  isAtivo      Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   usuarios       ContaUsuario[]
   grupos         Grupo[]
@@ -71,31 +71,31 @@ model Conta {
   streamings     Streaming[]
   whatsappConfig WhatsAppConfig?
 
-  stripeCustomerId          String?   @unique
-  stripeSubscriptionId      String?   @unique
-  stripeSubscriptionStatus  String?
+  stripeCustomerId         String? @unique
+  stripeSubscriptionId     String? @unique
+  stripeSubscriptionStatus String?
 
   @@map("conta")
 }
 
 model Usuario {
-  id                Int             @id @default(autoincrement())
-  email             String          @unique
-  nome              String
-  senhaHash         String?
-  provider          ProviderAuth    @default(local)
-  isAtivo           Boolean         @default(true)
-  ultimoLogin       DateTime?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id               Int          @id @default(autoincrement())
+  email            String       @unique
+  nome             String
+  senhaHash        String?
+  provider         ProviderAuth @default(local)
+  isAtivo          Boolean      @default(true)
+  ultimoLogin      DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
-  contas            ContaUsuario[]
-  participante      Participante?
-  admin             UsuarioAdmin?
+  contas       ContaUsuario[]
+  participante Participante?
+  admin        UsuarioAdmin?
 
-   @@map("usuario")
+  @@map("usuario")
 }
 
 model ContaUsuario {
@@ -105,122 +105,121 @@ model ContaUsuario {
   nivelAcesso NivelAcesso @default(admin)
   isAtivo     Boolean     @default(true)
 
-  conta       Conta       @relation(fields: [contaId], references: [id])
-  usuario     Usuario     @relation(fields: [usuarioId], references: [id])
+  conta   Conta   @relation(fields: [contaId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
 
   @@unique([contaId, usuarioId])
-
   @@map("conta_usuario")
 }
 
 model Grupo {
-  id                         Int                @id @default(autoincrement())
-  contaId                    Int
-  nome                       String
-  descricao                  String?
-  linkConvite                String             @unique
-  permitirEscolhaStreamings  Boolean            @default(true)
-  isPublico                  Boolean            @default(false)
-  isAtivo                    Boolean            @default(true)
-  createdAt                  DateTime           @default(now())
-  updatedAt                  DateTime           @updatedAt
+  id                        Int      @id @default(autoincrement())
+  contaId                   Int
+  nome                      String
+  descricao                 String?
+  linkConvite               String   @unique
+  permitirEscolhaStreamings Boolean  @default(true)
+  isPublico                 Boolean  @default(false)
+  isAtivo                   Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
-  conta                      Conta              @relation(fields: [contaId], references: [id])
-  streamings                 GrupoStreaming[]
+  conta      Conta            @relation(fields: [contaId], references: [id])
+  streamings GrupoStreaming[]
 
   @@map("grupo")
 }
 
 model StreamingCatalogo {
-  id           Int         @id @default(autoincrement())
-  nome         String
-  iconeUrl     String?
-  corPrimaria  String      @default("#000000")
-  isAtivo      Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id          Int      @id @default(autoincrement())
+  nome        String
+  iconeUrl    String?
+  corPrimaria String   @default("#000000")
+  isAtivo     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  streamings   Streaming[]
+  streamings Streaming[]
 
   @@map("streaming_catalogo")
 }
 
 model Streaming {
-  id                       Int                  @id @default(autoincrement())
-  contaId                  Int
-  streamingCatalogoId      Int
-  apelido                  String?
-  valorIntegral            Decimal
-  limiteParticipantes      Int
-  credenciaisLogin         String?
-  credenciaisSenha         String?
-  frequenciasHabilitadas   String               @default("mensal,trimestral,semestral,anual")
-  isAtivo                  Boolean              @default(true)
-  createdAt                DateTime             @default(now())
-  updatedAt                DateTime             @updatedAt
+  id                     Int      @id @default(autoincrement())
+  contaId                Int
+  streamingCatalogoId    Int
+  apelido                String?  @default("")
+  valorIntegral          Decimal
+  limiteParticipantes    Int
+  credenciaisLogin       String?
+  credenciaisSenha       String?
+  frequenciasHabilitadas String   @default("mensal,trimestral,semestral,anual")
+  isAtivo                Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
-  conta                    Conta                @relation(fields: [contaId], references: [id])
-  catalogo                 StreamingCatalogo    @relation(fields: [streamingCatalogoId], references: [id])
-  grupos                    GrupoStreaming[]
-  assinaturas               Assinatura[]
+  conta       Conta             @relation(fields: [contaId], references: [id])
+  catalogo    StreamingCatalogo @relation(fields: [streamingCatalogoId], references: [id])
+  grupos      GrupoStreaming[]
+  assinaturas Assinatura[]
 
   @@map("streaming")
 }
 
 model GrupoStreaming {
-  id           Int        @id @default(autoincrement())
-  streamingId  Int
-  grupoId      Int
-  isAtivo      Boolean    @default(true)
+  id          Int     @id @default(autoincrement())
+  streamingId Int
+  grupoId     Int
+  isAtivo     Boolean @default(true)
 
-  streaming    Streaming  @relation(fields: [streamingId], references: [id])
-  grupo        Grupo      @relation(fields: [grupoId], references: [id])
+  streaming Streaming @relation(fields: [streamingId], references: [id])
+  grupo     Grupo     @relation(fields: [grupoId], references: [id])
 
   @@unique([streamingId, grupoId])
-
   @@map("grupo_streaming")
 }
 
 model Participante {
-  id              Int           @id @default(autoincrement())
-  contaId         Int
-  nome            String
-  whatsappNumero  String        @unique
-  cpf             String        @unique
-  email           String?
-  userId          Int?          @unique
+  id             Int     @id @default(autoincrement())
+  contaId        Int
+  nome           String
+  whatsappNumero String
+  cpf            String? @default("")
+  email          String?
+  userId         Int?    @unique
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  conta           Conta         @relation(fields: [contaId], references: [id])
-  usuario         Usuario?      @relation(fields: [userId], references: [id])
-  assinaturas     Assinatura[]
-  whatsappLogs    WhatsAppLog[]
+  conta        Conta         @relation(fields: [contaId], references: [id])
+  usuario      Usuario?      @relation(fields: [userId], references: [id])
+  assinaturas  Assinatura[]
+  whatsappLogs WhatsAppLog[]
 
+  @@unique([contaId, cpf])
+  @@unique([contaId, whatsappNumero])
   @@map("participante")
 }
 
 model Assinatura {
-  id                Int                 @id @default(autoincrement())
-  participanteId    Int
-  streamingId       Int
-  frequencia        FrequenciaPagamento
-  status            StatusAssinatura    @default(ativa)
-  dataInicio        DateTime
-  valor             Decimal
-  diasAtraso        Int                 @default(0)
+  id              Int                 @id @default(autoincrement())
+  participanteId  Int
+  streamingId     Int
+  frequencia      FrequenciaPagamento
+  status          StatusAssinatura    @default(ativa)
+  dataInicio      DateTime
+  valor           Decimal
+  diasAtraso      Int                 @default(0)
   dataSuspensao   DateTime?
   motivoSuspensao String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
-  participante      Participante        @relation(fields: [participanteId], references: [id])
-  streaming         Streaming           @relation(fields: [streamingId], references: [id])
-  cobrancas         Cobranca[]
+  participante Participante @relation(fields: [participanteId], references: [id])
+  streaming    Streaming    @relation(fields: [streamingId], references: [id])
+  cobrancas    Cobranca[]
 
   @@unique([participanteId, streamingId])
-
   @@map("assinatura")
 }
 
@@ -236,52 +235,52 @@ model Cobranca {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  assinatura     Assinatura     @relation(fields: [assinaturaId], references: [id])
+  assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
 
   @@map("cobranca")
 }
 
 model WhatsAppConfig {
-  id                           Int      @id @default(autoincrement())
-  contaId                      Int      @unique
-  
-  notificarNovaAssinatura      Boolean  @default(true)
-  notificarCobrancaGerada      Boolean  @default(true)
-  notificarCobrancaVencendo    Boolean  @default(true)
-  notificarCobrancaAtrasada    Boolean  @default(true)
-  notificarAssinaturaSuspensa  Boolean  @default(true)
-  notificarPagamentoConfirmado Boolean  @default(true)
-  
-  diasAvisoVencimento          Int      @default(3)
-  isAtivo                      Boolean  @default(true)
-  
-  createdAt                    DateTime @default(now())
-  updatedAt                    DateTime @updatedAt
-  
-  conta                        Conta    @relation(fields: [contaId], references: [id])
-  logs                         WhatsAppLog[]
-  
+  id      Int @id @default(autoincrement())
+  contaId Int @unique
+
+  notificarNovaAssinatura      Boolean @default(true)
+  notificarCobrancaGerada      Boolean @default(true)
+  notificarCobrancaVencendo    Boolean @default(true)
+  notificarCobrancaAtrasada    Boolean @default(true)
+  notificarAssinaturaSuspensa  Boolean @default(true)
+  notificarPagamentoConfirmado Boolean @default(true)
+
+  diasAvisoVencimento Int     @default(3)
+  isAtivo             Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conta Conta         @relation(fields: [contaId], references: [id])
+  logs  WhatsAppLog[]
+
   @@map("whatsapp_config")
 }
 
 model WhatsAppLog {
-  id             Int                      @id @default(autoincrement())
+  id             Int  @id @default(autoincrement())
   configId       Int
   participanteId Int?
-  
-  tipo           TipoNotificacaoWhatsApp
-  numeroDestino  String
-  mensagem       String                   @db.Text
-  
-  enviado        Boolean                  @default(false)
-  erro           String?                  @db.Text
-  providerId     String?
-  
-  createdAt      DateTime                 @default(now())
-  
-  config         WhatsAppConfig           @relation(fields: [configId], references: [id])
-  participante   Participante?            @relation(fields: [participanteId], references: [id])
-  
+
+  tipo          TipoNotificacaoWhatsApp
+  numeroDestino String
+  mensagem      String                  @db.Text
+
+  enviado    Boolean @default(false)
+  erro       String? @db.Text
+  providerId String?
+
+  createdAt DateTime @default(now())
+
+  config       WhatsAppConfig @relation(fields: [configId], references: [id])
+  participante Participante?  @relation(fields: [participanteId], references: [id])
+
   @@index([configId, createdAt])
   @@map("whatsapp_log")
 }
@@ -293,21 +292,20 @@ model UsuarioAdmin {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
 
   @@map("usuario_admin")
 }
 
 model Parametro {
-  id          Int      @id @default(autoincrement())
-  chave       String   @unique
-  valor       String   @db.Text
-  tipo        String   @default("string") // string, number, boolean, json
-  descricao   String?
-  isAtivo     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  chave     String   @unique
+  valor     String   @db.Text
+  tipo      String   @default("string") // string, number, boolean, json
+  descricao String?
+  isAtivo   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("parametro")
 }
-

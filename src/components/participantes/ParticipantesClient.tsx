@@ -14,7 +14,7 @@ interface Participante {
     id: number;
     nome: string;
     whatsappNumero: string;
-    cpf: string;
+    cpf: string | null;
     email?: string | null;
     _count: {
         assinaturas: number;
@@ -41,7 +41,7 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
             return (
                 p.nome.toLowerCase().includes(search) ||
                 p.whatsappNumero.includes(search) ||
-                p.cpf.includes(search)
+                (p.cpf && p.cpf.includes(search))
             );
         });
     }, [initialData, searchTerm]);
@@ -195,7 +195,7 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
                         ? {
                             nome: selectedParticipant.nome,
                             whatsappNumero: selectedParticipant.whatsappNumero,
-                            cpf: selectedParticipant.cpf,
+                            cpf: selectedParticipant.cpf ?? "",
                             email: selectedParticipant.email || "",
                         }
                         : undefined

@@ -6,7 +6,7 @@ interface ParticipantCardProps {
     name: string;
     whatsapp: string;
     email?: string;
-    cpf: string;
+    cpf?: string | null;
     subscriptionsCount: number;
     status: "ativa" | "suspensa" | "inativo";
     onEdit: () => void;

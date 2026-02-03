@@ -15,7 +15,7 @@ interface ParticipantModalProps {
     participant?: {
         nome: string;
         whatsappNumero: string;
-        cpf: string;
+        cpf?: string;
         email?: string;
     };
     loading?: boolean;
@@ -24,7 +24,7 @@ interface ParticipantModalProps {
 export interface ParticipantFormData {
     nome: string;
     whatsappNumero: string;
-    cpf: string;
+    cpf?: string;
     email?: string;
 }
 
@@ -61,10 +61,10 @@ export function ParticipantModal({
         }
 
         // CPF validation
-        if (!formData.cpf.trim()) {
-            newErrors.cpf = ValidationMessages.cpf.required;
-        } else if (!validateCPF(formData.cpf)) {
-            newErrors.cpf = ValidationMessages.cpf.invalid;
+        if (formData.cpf && formData.cpf.trim() !== "") {
+            if (!validateCPF(formData.cpf)) {
+                newErrors.cpf = ValidationMessages.cpf.invalid;
+            }
         }
 
         // WhatsApp validation
@@ -150,7 +150,6 @@ export function ParticipantModal({
                     onValueChange={(value) => handleChange("cpf", value)}
                     placeholder="123.456.789-00"
                     error={errors.cpf}
-                    required
                 />
                 <Input
                     label="Email (opcional)"

@@ -36,7 +36,7 @@ export async function getParticipantes() {
 export async function createParticipante(data: {
     nome: string;
     whatsappNumero: string;
-    cpf: string;
+    cpf?: string;
     email?: string;
 }) {
     const { contaId } = await getContext();
@@ -46,7 +46,7 @@ export async function createParticipante(data: {
         throw new Error("Nome é obrigatório");
     }
 
-    if (!data.cpf || !validateCPF(data.cpf)) {
+    if (data.cpf && data.cpf.trim() !== "" && !validateCPF(data.cpf)) {
         throw new Error("CPF inválido");
     }
 
@@ -61,6 +61,7 @@ export async function createParticipante(data: {
     const participante = await prisma.participante.create({
         data: {
             ...data,
+            cpf: data.cpf || "",
             contaId,
         },
     });
@@ -74,7 +75,7 @@ export async function updateParticipante(
     data: {
         nome: string;
         whatsappNumero: string;
-        cpf: string;
+        cpf?: string;
         email?: string;
     }
 ) {
@@ -85,7 +86,7 @@ export async function updateParticipante(
         throw new Error("Nome é obrigatório");
     }
 
-    if (!data.cpf || !validateCPF(data.cpf)) {
+    if (data.cpf && data.cpf.trim() !== "" && !validateCPF(data.cpf)) {
         throw new Error("CPF inválido");
     }
 
@@ -99,7 +100,10 @@ export async function updateParticipante(
 
     const participante = await prisma.participante.update({
         where: { id, contaId },
-        data,
+        data: {
+            ...data,
+            cpf: data.cpf || "",
+        },
     });
 
     revalidatePath("/participantes");

@@ -139,7 +139,6 @@ export function validateEmail(email: string): boolean {
  */
 export const ValidationMessages = {
     cpf: {
-        required: "CPF é obrigatório",
         invalid: "CPF inválido",
         format: "CPF deve ter 11 dígitos",
     },
