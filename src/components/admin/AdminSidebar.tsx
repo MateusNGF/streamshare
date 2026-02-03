@@ -8,6 +8,7 @@ import {
     Play,
     Settings,
     LogOut,
+    User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -16,6 +17,7 @@ import { MobileMenuButton } from "../layout/MobileMenuButton";
 const menuItems = [
     { icon: Play, label: "Catálogo", href: "/admin/catalogo" },
     { icon: Settings, label: "Parâmetros", href: "/admin/parametros" },
+    { icon: User, label: "Usuários", href: "/admin/usuarios" },
 ];
 
 export function AdminSidebar() {
