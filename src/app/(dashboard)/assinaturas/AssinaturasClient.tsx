@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/useToast";
 import { formatCurrency } from "@/lib/utils";
 import { createMultipleAssinaturas } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -207,8 +208,13 @@ export default function AssinaturasClient({
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
-                                            Nenhuma assinatura encontrada com os filtros atuais.
+                                        <TableCell colSpan={6}>
+                                            <EmptyState
+                                                title="Nenhuma assinatura encontrada"
+                                                description="Não encontramos nenhuma assinatura com os filtros selecionados."
+                                                icon={Search}
+                                                className="border-0 shadow-none py-8 my-4"
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 )}

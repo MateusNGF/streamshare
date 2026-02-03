@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
 import { FREQUENCIA_MULTIPLICADORES, INTERVALOS_MESES, formatarMoeda, calcularProximoVencimento } from "@/lib/financeiro-utils";
 import { Check, ChevronRight, ChevronLeft, Search } from "lucide-react";
@@ -210,7 +211,7 @@ export function AssinaturaMultiplaModal({
                             >
                                 {loading ? (
                                     <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <Spinner size="sm" color="white" />
                                         Criando...
                                     </>
                                 ) : (
