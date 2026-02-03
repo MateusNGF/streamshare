@@ -202,18 +202,19 @@ model Participante {
 }
 
 model Assinatura {
-  id              Int                 @id @default(autoincrement())
-  participanteId  Int
-  streamingId     Int
-  frequencia      FrequenciaPagamento
-  status          StatusAssinatura    @default(ativa)
-  dataInicio      DateTime
-  valor           Decimal
-  diasAtraso      Int                 @default(0)
-  dataSuspensao   DateTime?
-  motivoSuspensao String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id                     Int                 @id @default(autoincrement())
+  participanteId         Int
+  streamingId            Int
+  frequencia             FrequenciaPagamento
+  status                 StatusAssinatura    @default(ativa)
+  dataInicio             DateTime
+  valor                  Decimal
+  diasAtraso             Int                 @default(0)
+  dataSuspensao          DateTime?
+  motivoSuspensao        String?
+  cobrancaAutomaticaPaga Boolean             @default(false)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
 
   participante Participante @relation(fields: [participanteId], references: [id])
   streaming    Streaming    @relation(fields: [streamingId], references: [id])

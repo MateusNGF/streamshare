@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
 import { FREQUENCIA_MULTIPLICADORES, INTERVALOS_MESES, formatarMoeda, calcularProximoVencimento } from "@/lib/financeiro-utils";
@@ -43,6 +44,7 @@ interface AssinaturaMultiplaModalProps {
             valor: number;
         }>;
         dataInicio: string;
+        cobrancaAutomaticaPaga?: boolean;
     }) => void;
     participantes: ParticipanteOption[];
     streamings: StreamingOption[];
@@ -60,6 +62,7 @@ export function AssinaturaMultiplaModal({
     const [step, setStep] = useState(1);
     const [participanteId, setParticipanteId] = useState("");
     const [dataInicio, setDataInicio] = useState(new Date().toISOString().split('T')[0]);
+    const [cobrancaAutomaticaPaga, setCobrancaAutomaticaPaga] = useState(false);
     const [selectedStreamingIds, setSelectedStreamingIds] = useState<Set<number>>(new Set());
     const [configurations, setConfigurations] = useState<Map<number, SelectedStreaming>>(new Map());
     const [searchTerm, setSearchTerm] = useState("");
@@ -146,7 +149,8 @@ export function AssinaturaMultiplaModal({
                 frequencia: config.frequencia,
                 valor: parseFloat(config.valor)
             })),
-            dataInicio
+            dataInicio,
+            cobrancaAutomaticaPaga
         });
     };
 
@@ -154,6 +158,7 @@ export function AssinaturaMultiplaModal({
         setStep(1);
         setParticipanteId("");
         setDataInicio(new Date().toISOString().split('T')[0]);
+        setCobrancaAutomaticaPaga(false);
         setSelectedStreamingIds(new Set());
         setConfigurations(new Map());
         setSearchTerm("");
@@ -430,6 +435,25 @@ export function AssinaturaMultiplaModal({
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 disabled={loading}
                             />
+                        </div>
+
+                        <div className="md:col-span-2 mt-4">
+                            <div className="flex items-center justify-between space-x-2 rounded-lg border p-4 bg-white">
+                                <div className="space-y-0.5">
+                                    <label
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Marca cobranças como Sempre Paga
+                                    </label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Todas as cobranças geradas recorrentes serão debitadas e marcadas como Paga.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={cobrancaAutomaticaPaga}
+                                    onCheckedChange={setCobrancaAutomaticaPaga}
+                                />
+                            </div>
                         </div>
                     </div>
 

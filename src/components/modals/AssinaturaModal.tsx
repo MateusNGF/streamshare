@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { getParticipantes } from "@/actions/participantes";
@@ -31,6 +32,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
         frequencia: "mensal",
         valor: "",
         dataInicio: new Date().toISOString().split('T')[0],
+        cobrancaAutomaticaPaga: false,
     });
 
     useEffect(() => {
@@ -48,6 +50,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                 frequencia: "mensal",
                 valor: "",
                 dataInicio: new Date().toISOString().split('T')[0],
+                cobrancaAutomaticaPaga: false,
             });
         }
     }, [isOpen, preSelectedParticipanteId]);
@@ -85,6 +88,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                 frequencia: formData.frequencia as any,
                 valor: parseFloat(formData.valor),
                 dataInicio: formData.dataInicio,
+                cobrancaAutomaticaPaga: formData.cobrancaAutomaticaPaga,
             });
             onClose();
         } catch (error: any) {
@@ -202,6 +206,23 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                             type="date"
                             value={formData.dataInicio}
                             disabled
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <label
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                Marca cobranças como Sempre Paga
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                                Todas as cobranças geradas recorrentes serão debitadas e marcadas como Paga.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={formData.cobrancaAutomaticaPaga}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, cobrancaAutomaticaPaga: checked }))}
                         />
                     </div>
                 </div>

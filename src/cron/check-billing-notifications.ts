@@ -5,11 +5,11 @@ import { addDays, differenceInDays, subHours } from "date-fns";
 
 /**
  * Inicializa o cron job para notificações automáticas de cobranças
- * Executa diariamente às 9h da manhã
+ * Executa semanalmente (segundas-feiras) às 9h da manhã
  */
 export function startBillingNotificationCron() {
-    // Executar diariamente às 9h
-    cron.schedule('0 9 * * *', async () => {
+    // Executar semanalmente (segunda-feira) às 9h
+    cron.schedule('0 9 * * 1', async () => {
         console.log('[CRON] Iniciando verificação de cobranças...');
         try {
             await checkAndNotifyPendingBillings();
@@ -20,7 +20,7 @@ export function startBillingNotificationCron() {
         }
     });
 
-    console.log('✅ Billing notification cron job initialized (runs daily at 9:00 AM)');
+    console.log('✅ Billing notification cron job initialized (runs weekly on Mondays at 9:00 AM)');
 }
 
 /**

@@ -29,6 +29,7 @@ interface AssinaturaStore {
         frequencia: FrequenciaPagamento;
         valor: number;
         dataInicio: string;
+        cobrancaAutomaticaPaga?: boolean;
     }) => Promise<AssinaturaWithRelations>;
     selectAssinatura: (assinatura: AssinaturaWithRelations | null) => void;
 

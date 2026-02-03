@@ -49,6 +49,7 @@ export async function createAssinatura(data: {
     frequencia: FrequenciaPagamento;
     valor: number;
     dataInicio: string; // ISO Date string
+    cobrancaAutomaticaPaga?: boolean;
 }) {
     const { contaId } = await getContext(); // Validate auth
 
@@ -134,6 +135,7 @@ export async function createAssinatura(data: {
                 dataInicio: dataInicio,
                 status: StatusAssinatura.ativa,
                 diasAtraso: 0,
+                cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
             },
         });
 
@@ -148,7 +150,8 @@ export async function createAssinatura(data: {
                 valor: valorCobranca,
                 periodoInicio,
                 periodoFim,
-                status: "pendente"
+                status: data.cobrancaAutomaticaPaga ? "pago" : "pendente",
+                dataPagamento: data.cobrancaAutomaticaPaga ? new Date() : null,
             }
         });
 
@@ -205,6 +208,7 @@ export async function createMultipleAssinaturas(data: {
         valor: number;
     }>;
     dataInicio: string;
+    cobrancaAutomaticaPaga?: boolean;
 }) {
     const { contaId } = await getContext();
 
@@ -274,6 +278,7 @@ export async function createMultipleAssinaturas(data: {
                     dataInicio: dataInicio,
                     status: StatusAssinatura.ativa,
                     diasAtraso: 0,
+                    cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
                 }
             });
 
