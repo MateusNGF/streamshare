@@ -25,6 +25,7 @@ import {
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { PlansClient } from "@/components/planos/PlansClient";
+import { LandingNavbar } from "@/components/layout/LandingNavbar";
 
 export default async function LandingPage() {
   const session = await getCurrentUser();
@@ -46,61 +47,10 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen w-full bg-white">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/assets/logo-branca.jpg"
-              alt="StreamShare Logo"
-              width={48}
-              height={48}
-              className="rounded-xl"
-            />
-            <span className="text-2xl font-bold text-gray-900">StreamShare</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#recursos" className="text-gray-600 hover:text-primary font-medium">
-              Recursos
-            </a>
-            <a href="#planos" className="text-gray-600 hover:text-primary font-medium">
-              Planos
-            </a>
-            <a href="#faq" className="text-gray-600 hover:text-primary font-medium">
-              FAQ
-            </a>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {session ? (
-              <Link
-                href="/dashboard"
-                className="px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
-              >
-                Painel
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="px-6 py-2 text-gray-700 font-bold hover:text-primary transition-all"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
-                >
-                  Começar Agora
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <LandingNavbar session={session} />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white">
+      <section className="pt-24 md:pt-32 pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             {/* Urgency Badge */}
