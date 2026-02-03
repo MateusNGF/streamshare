@@ -8,16 +8,24 @@ import "@/cron/init"; // Initialize cron jobs
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StreamShare",
-  description: "Plataforma para gestão colaborativa de assinaturas de streaming",
-  authors: [{ name: "StreamShare" }],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://streamshare.com.br"),
+  title: {
+    default: "StreamShare | Gestão de Assinaturas",
+    template: "%s | StreamShare",
+  },
+  description: "Plataforma completa para gestão colaborativa de assinaturas de streaming. Economize compartilhando suas assinaturas com segurança.",
+  keywords: ["streaming", "assinaturas", "gestão", "compartilhamento", "netflix", "spotify", "economia"],
+  authors: [{ name: "StreamShare Team" }],
+  creator: "StreamShare",
+  publisher: "StreamShare",
   icons: {
     icon: "/assets/favicon.ico",
     shortcut: "/assets/favicon.ico",
+    apple: "/assets/favicon.ico", // Ideally should be a png
   },
   openGraph: {
-    title: "StreamShare",
-    description: "Plataforma para gestão colaborativa de assinaturas de streaming",
+    title: "StreamShare | Gestão de Assinaturas",
+    description: "Plataforma completa para gestão colaborativa de assinaturas de streaming. Economize compartilhando suas assinaturas com segurança.",
     url: "/",
     siteName: "StreamShare",
     images: [
@@ -25,7 +33,7 @@ export const metadata: Metadata = {
         url: "/assets/banner-dois.jpg",
         width: 1200,
         height: 630,
-        alt: "StreamShare - Gestão colaborativa de assinaturas de streaming",
+        alt: "StreamShare Dashboard",
       },
     ],
     locale: "pt_BR",
@@ -33,14 +41,25 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@streamshare_br",
-    title: "StreamShare",
-    description: "Plataforma para gestão colaborativa de assinaturas de streaming",
-    images: ["/assets/banner-tres.jpg"],
+    title: "StreamShare | Gestão de Assinaturas",
+    description: "Economize compartilhando suas assinaturas de streaming com segurança.",
+    images: ["/assets/banner-dois.jpg"], // Using the same reliable image
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   viewport: {
     width: "device-width",
     initialScale: 1.0,
+    maximumScale: 1.0,
   },
 };
 
