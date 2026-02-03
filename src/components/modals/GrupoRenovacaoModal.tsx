@@ -85,12 +85,6 @@ export function GrupoRenovacaoModal({
             footer={
                 <>
                     <button
-                        onClick={onClose}
-                        className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all"
-                    >
-                        Fechar
-                    </button>
-                    <button
                         onClick={handleCopy}
                         disabled={loading || !mensagem}
                         className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 flex items-center gap-2"
