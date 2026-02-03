@@ -9,6 +9,7 @@ import { GrupoFormModal } from "@/components/modals/GrupoFormModal";
 import { GrupoRenovacaoModal } from "@/components/modals/GrupoRenovacaoModal";
 import { deleteGrupo } from "@/actions/grupos";
 import { useToast } from "@/hooks/useToast";
+import { PageContainer } from "../layout/PageContainer";
 
 type Grupo = {
     id: number;
@@ -83,7 +84,7 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
     };
 
     return (
-        <>
+        <PageContainer>
             <PageHeader
                 title="Grupos"
                 description="Agrupe seus streamings para facilitar a geração de mensagens de renovação"
@@ -205,6 +206,6 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
                     grupoNome={selectedGrupo.nome}
                 />
             )}
-        </>
+        </PageContainer>
     );
 }
