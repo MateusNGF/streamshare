@@ -34,7 +34,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -54,7 +54,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby={titleId.current}
-                    className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                    className="relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full sm:max-w-2xl min-h-[90vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-200"
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100">
@@ -71,7 +71,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
                     </div>
 
                     {/* Body */}
-                    <div className="p-4 md:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+                    <div className="p-4 md:p-6 overflow-y-auto max-h-[calc(90vh-140px)] sm:max-h-[calc(90vh-140px)] flex-1">
                         {children}
                     </div>
 

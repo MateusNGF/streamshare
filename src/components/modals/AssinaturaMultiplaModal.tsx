@@ -173,7 +173,7 @@ export function AssinaturaMultiplaModal({
             onClose={handleClose}
             title={`Criar Múltiplas Assinaturas - Passo ${step}/3`}
             footer={
-                <div className="flex items-center justify-between w-full">
+                <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4 md:gap-0">
                     <div className="flex gap-2">
                         {[1, 2, 3].map(s => (
                             <div
@@ -400,7 +400,7 @@ export function AssinaturaMultiplaModal({
                     </div>
 
                     {/* Participant & Date */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Participante *
