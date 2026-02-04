@@ -11,42 +11,49 @@ export const SUPPORTED_CURRENCIES = {
         symbol: 'R$',
         name: 'Real Brasileiro',
         locale: 'pt-BR',
+        decimals: 2,
     },
     USD: {
         code: 'USD',
         symbol: '$',
         name: 'Dólar Americano',
         locale: 'en-US',
+        decimals: 2,
     },
     EUR: {
         code: 'EUR',
         symbol: '€',
         name: 'Euro',
         locale: 'de-DE',
+        decimals: 2,
     },
     ARS: {
         code: 'ARS',
         symbol: '$',
         name: 'Peso Argentino',
         locale: 'es-AR',
+        decimals: 2,
     },
     BOB: {
         code: 'BOB',
         symbol: 'Bs',
         name: 'Boliviano',
         locale: 'es-BO',
+        decimals: 2,
     },
     PYG: {
         code: 'PYG',
         symbol: '₲',
         name: 'Guaraní Paraguaio',
         locale: 'es-PY',
+        decimals: 0, // Guaraní doesn't use decimal places
     },
     UYU: {
         code: 'UYU',
         symbol: '$U',
         name: 'Peso Uruguaio',
         locale: 'es-UY',
+        decimals: 2,
     },
 } as const;
 

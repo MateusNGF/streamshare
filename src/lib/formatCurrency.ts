@@ -38,12 +38,12 @@ export function formatCurrency(
     // Get currency info
     const currency = getCurrencyInfo(currencyCode);
 
-    // Format using Intl.NumberFormat
+    // Format using Intl.NumberFormat with dynamic decimal places
     return new Intl.NumberFormat(currency.locale, {
         style: 'currency',
         currency: currency.code,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: currency.decimals,
+        maximumFractionDigits: currency.decimals,
     }).format(numericValue);
 }
 
@@ -84,10 +84,12 @@ export function formatCurrencyCompact(
 
     const currency = getCurrencyInfo(currencyCode);
 
+    // For compact notation, use at most 1 decimal for currencies that support decimals
+    // For PYG (decimals: 0), this will still show no decimals
     return new Intl.NumberFormat(currency.locale, {
         style: 'currency',
         currency: currency.code,
         notation: 'compact',
-        maximumFractionDigits: 1,
+        maximumFractionDigits: currency.decimals === 0 ? 0 : 1,
     }).format(numericValue);
 }
