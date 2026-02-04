@@ -752,7 +752,7 @@ export function AssinaturaMultiplaModal({
                         disabled={loading}
                     >
                         <ChevronLeft size={18} />
-                        Voltar
+                        <span className="hidden md:inline">Voltar</span>
                     </button>
                 )}
                 {step < ModalStep.SUMMARY ? (
