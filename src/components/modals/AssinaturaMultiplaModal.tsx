@@ -293,8 +293,8 @@ function StepParticipants({
                 </p>
             </div>
 
-            <div className="flex flex-col flex-1 border rounded-xl overflow-hidden shadow-sm">
-                <div className="p-2 bg-gray-50 border-b flex flex-col gap-2">
+            <div className="flex flex-col flex-1 lg:p-2 p-1 gap-2 rounded-xl overflow-hidden shadow-sm">
+                <div className="  flex flex-col gap-3">
                     {/* Toolbar: Search + Actions */}
                     <div className="flex gap-2 items-center">
                         <div className="relative flex-1">
@@ -330,7 +330,7 @@ function StepParticipants({
 
                     {/* Capacity Warning */}
                     {capacityInfo.showWarning && (
-                        <div className={`text-xs px-2 py-1.5 rounded-md border flex items-start gap-2 ${capacityInfo.isOverloaded
+                        <div className={`text-sm px-2 py-1.5 rounded-md border flex items-start gap-2 ${capacityInfo.isOverloaded
                             ? "bg-red-50 border-red-200 text-red-700"
                             : "bg-blue-50 border-blue-200 text-blue-700"
                             }`}>
@@ -347,7 +347,7 @@ function StepParticipants({
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-1 space-y-0.5">
+                <div className="flex-1 overflow-y-auto space-y-1">
                     {filtered.map(p => {
                         const isSelected = selectedIds.has(p.id);
                         return (
@@ -360,7 +360,7 @@ function StepParticipants({
                                     }`}
                             >
                                 <div className="flex items-center gap-2 overflow-hidden">
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isSelected ? "bg-primary text-white" : "bg-gray-200 text-gray-600"
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold shrink-0 ${isSelected ? "bg-primary text-white" : "bg-gray-200 text-gray-600"
                                         }`}>
                                         {p.nome.charAt(0)}
                                     </div>
