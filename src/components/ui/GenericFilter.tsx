@@ -128,12 +128,7 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                         onValueChange={(val) => setLocalValues(filter.key, val)}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"}>
-                                {(localValues[filter.key] === "all" || !localValues[filter.key])
-                                    ? "Todos"
-                                    : filter.options?.find(o => o.value === localValues[filter.key])?.label || localValues[filter.key]
-                                }
-                            </SelectValue>
+                            <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Todos</SelectItem>
