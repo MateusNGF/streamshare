@@ -10,9 +10,10 @@ interface ModalProps {
     title: string;
     children: React.ReactNode;
     footer?: React.ReactNode;
+    className?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer, className }: ModalProps) {
     const titleId = useRef(`modal-title-${Math.random().toString(36).substr(2, 9)}`);
 
     useEffect(() => {
@@ -54,7 +55,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby={titleId.current}
-                    className="relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full sm:max-w-2xl min-h-[90vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-200"
+                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[90vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-200 ${className || 'sm:max-w-2xl'}`}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100">

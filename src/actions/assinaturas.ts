@@ -197,11 +197,33 @@ export async function createAssinatura(data: {
 }
 
 /**
- * Create multiple subscriptions for one participant at once
- * Uses transaction to ensure all-or-nothing behavior
+ * Create multiple subscriptions for ONE participant at once
+ * @deprecated Use createBulkAssinaturas instead
  */
 export async function createMultipleAssinaturas(data: {
     participanteId: number;
+    assinaturas: Array<{
+        streamingId: number;
+        frequencia: FrequenciaPagamento;
+        valor: number;
+    }>;
+    dataInicio: string;
+    cobrancaAutomaticaPaga?: boolean;
+}) {
+    return createBulkAssinaturas({
+        participanteIds: [data.participanteId],
+        assinaturas: data.assinaturas,
+        dataInicio: data.dataInicio,
+        cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga
+    });
+}
+
+/**
+ * Create multiple subscriptions for MULTIPLE participants at once
+ * M participants * N streamings = M*N subscriptions
+ */
+export async function createBulkAssinaturas(data: {
+    participanteIds: number[];
     assinaturas: Array<{
         streamingId: number;
         frequencia: FrequenciaPagamento;
@@ -215,14 +237,20 @@ export async function createMultipleAssinaturas(data: {
     if (!data.assinaturas || data.assinaturas.length === 0) {
         throw new Error("Selecione pelo menos um streaming");
     }
+    if (!data.participanteIds || data.participanteIds.length === 0) {
+        throw new Error("Selecione pelo menos um participante");
+    }
 
     const dataInicio = new Date(data.dataInicio);
-    const results: Array<{ streamingId: number; assinaturaId: number }> = [];
+    const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
 
     // Use transaction for atomicity - all or nothing
     await prisma.$transaction(async (tx) => {
+        // Pre-validate streamings once
+        const validStreamings = new Map();
         for (const ass of data.assinaturas) {
-            // Validate streaming exists and get details
+            if (validStreamings.has(ass.streamingId)) continue;
+
             const streaming = await tx.streaming.findUnique({
                 where: { id: ass.streamingId },
                 include: {
@@ -239,65 +267,82 @@ export async function createMultipleAssinaturas(data: {
                 }
             });
 
-            if (!streaming) {
-                throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
-            }
+            if (!streaming) throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
+            if (streaming.contaId !== contaId) throw new Error(`Você não tem permissão para usar ${streaming.catalogo.nome}`);
+            validStreamings.set(ass.streamingId, streaming);
+        }
 
-            if (streaming.contaId !== contaId) {
-                throw new Error(`Você não tem permissão para usar ${streaming.catalogo.nome}`);
-            }
-
-            // Check slot availability
+        // Calculate total slots needed per streaming
+        const participantesCount = data.participanteIds.length;
+        for (const ass of data.assinaturas) {
+            const streaming = validStreamings.get(ass.streamingId);
             const assinaturasAtivas = streaming._count.assinaturas;
-            if (assinaturasAtivas >= streaming.limiteParticipantes) {
-                throw new Error(`${streaming.catalogo.nome}: Sem vagas disponíveis (${assinaturasAtivas}/${streaming.limiteParticipantes})`);
+            // Note: This simple check assumes this transaction is the only one adding, 
+            // but effectively we need to check if we have enough slots for ALL participants.
+            // However, since we are iterating, we will check incrementally or subtract total.
+            // Let's check total capacity needed:
+            if (assinaturasAtivas + participantesCount > streaming.limiteParticipantes) {
+                throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes. Necessário ${participantesCount}, Disponível ${streaming.limiteParticipantes - assinaturasAtivas}`);
             }
+        }
 
-            // Check for existing active/suspended subscription
-            const existing = await tx.assinatura.findFirst({
-                where: {
-                    participanteId: data.participanteId,
-                    streamingId: ass.streamingId,
-                    NOT: {
-                        status: StatusAssinatura.cancelada
+        // Iterate participants
+        for (const participanteId of data.participanteIds) {
+            // Iterate subscriptions
+            for (const ass of data.assinaturas) {
+                const streaming = validStreamings.get(ass.streamingId);
+
+                // Note: We already checked capacity in bulk above, but concurrency could be an issue if high traffic.
+                // For this app scale, the bulk check above is likely sufficient.
+                // Check if user already has it
+                const existing = await tx.assinatura.findFirst({
+                    where: {
+                        participanteId: participanteId,
+                        streamingId: ass.streamingId,
+                        NOT: {
+                            status: StatusAssinatura.cancelada
+                        }
                     }
+                });
+
+                if (existing) {
+                    // Get participant name for better error
+                    const p = await tx.participante.findUnique({ where: { id: participanteId }, select: { nome: true } });
+                    throw new Error(`${p?.nome || 'Participante'} já possui assinatura ativa em ${streaming.apelido || streaming.catalogo.nome}`);
                 }
-            });
 
-            if (existing) {
-                throw new Error(`Participante já possui assinatura ${existing.status} em ${streaming.apelido || streaming.catalogo.nome}`);
-            }
+                // Create subscription
+                const assinatura = await tx.assinatura.create({
+                    data: {
+                        participanteId: participanteId,
+                        streamingId: ass.streamingId,
+                        frequencia: ass.frequencia,
+                        valor: ass.valor,
+                        dataInicio: dataInicio,
+                        status: StatusAssinatura.ativa,
+                        diasAtraso: 0,
+                        cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
+                    }
+                });
 
-            // Create subscription
-            const assinatura = await tx.assinatura.create({
-                data: {
-                    participanteId: data.participanteId,
+                results.push({
                     streamingId: ass.streamingId,
-                    frequencia: ass.frequencia,
-                    valor: ass.valor,
-                    dataInicio: dataInicio,
-                    status: StatusAssinatura.ativa,
-                    diasAtraso: 0,
-                    cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
-                }
-            });
-
-            results.push({
-                streamingId: ass.streamingId,
-                assinaturaId: assinatura.id
-            });
+                    assinaturaId: assinatura.id,
+                    participanteId: participanteId
+                });
+            }
         }
     });
 
     // Generate charges for all created subscriptions (outside transaction)
-    for (const result of results) {
+    // We can do this with Promise.all for speed since they are independent
+    await Promise.all(results.map(async (result) => {
         try {
             await criarCobrancaInicial(result.assinaturaId);
         } catch (error) {
             console.error(`Failed to create charge for subscription ${result.assinaturaId}:`, error);
-            // Don't fail the entire operation if charge creation fails
         }
-    }
+    }));
 
     revalidatePath("/assinaturas");
     revalidatePath("/cobrancas");

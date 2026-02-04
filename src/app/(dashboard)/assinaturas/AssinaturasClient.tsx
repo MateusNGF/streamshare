@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/hooks/useToast";
 import { formatCurrency } from "@/lib/utils";
-import { createMultipleAssinaturas } from "@/actions/assinaturas";
+import { createBulkAssinaturas } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
@@ -75,7 +75,7 @@ export default function AssinaturasClient({
     const handleCreateMultiple = async (data: any) => {
         setLoading(true);
         try {
-            const result = await createMultipleAssinaturas(data);
+            const result = await createBulkAssinaturas(data);
             const message = `${result.created} assinatura${result.created > 1 ? 's' : ''} criada${result.created > 1 ? 's' : ''} com sucesso!`;
             toast.success(message);
             setIsMultipleModalOpen(false);
