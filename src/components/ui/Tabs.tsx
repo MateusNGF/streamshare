@@ -13,10 +13,23 @@ export interface TabItem {
 interface TabsProps {
     tabs: TabItem[];
     defaultTab?: string;
+    value?: string;
+    onValueChange?: (value: string) => void;
 }
 
-export function Tabs({ tabs, defaultTab }: TabsProps) {
-    const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+export function Tabs({ tabs, defaultTab, value, onValueChange }: TabsProps) {
+    const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || tabs[0]?.id);
+
+    const activeTab = value !== undefined ? value : internalActiveTab;
+
+    const handleTabChange = (tabId: string) => {
+        if (onValueChange) {
+            onValueChange(tabId);
+        }
+        if (value === undefined) {
+            setInternalActiveTab(tabId);
+        }
+    };
 
     const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
@@ -31,7 +44,7 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => handleTabChange(tab.id)}
                             className={`
                                 flex items-center gap-2 px-4 py-3 font-semibold text-sm md:text-base
                                 border-b-2 transition-all whitespace-nowrap

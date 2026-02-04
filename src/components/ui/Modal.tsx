@@ -1,7 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FocusTrap } from "focus-trap-react";
 
 interface ModalProps {
@@ -15,8 +16,10 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children, footer, className }: ModalProps) {
     const titleId = useRef(`modal-title-${Math.random().toString(36).substr(2, 9)}`);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
         };
@@ -32,9 +35,9 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
         };
     }, [isOpen, onClose]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             {/* Backdrop */}
             <div
@@ -55,7 +58,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby={titleId.current}
-                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[90vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-200 ${className || 'sm:max-w-2xl'}`}
+                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[70vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-200 ${className || 'sm:max-w-2xl'}`}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100">
@@ -84,6 +87,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
                     )}
                 </div>
             </FocusTrap>
-        </div>
+        </div>,
+        document.body
     );
 }

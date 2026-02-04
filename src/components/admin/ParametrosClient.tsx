@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Save, TestTube, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import { Save, Mail, MessageSquare, Settings } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Input } from "@/components/ui/Input";
 import { upsertParametros, testSmtpConnection, testWhatsAppConnection } from "@/actions/parametros";
 import { useToast } from "@/hooks/useToast";
+import { Tabs, TabItem } from "@/components/ui/Tabs";
+import { SmtpTab } from "@/components/admin/parametros/SmtpTab";
+import { WhatsappTab } from "@/components/admin/parametros/WhatsappTab";
+import { GeneralTab } from "@/components/admin/parametros/GeneralTab";
 
 interface Parametro {
     id: number;
@@ -158,6 +161,50 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
         }
     };
 
+    const tabsData: TabItem[] = [
+        {
+            id: "smtp",
+            label: "SMTP",
+            icon: Mail,
+            content: (
+                <SmtpTab
+                    config={smtpConfig}
+                    onChange={setSmtpConfig}
+                    showPassword={!!showPasswords["smtp_password"]}
+                    onTogglePassword={() => togglePasswordVisibility("smtp_password")}
+                    onTest={handleTestSmtp}
+                    testing={testing}
+                />
+            )
+        },
+        {
+            id: "whatsapp",
+            label: "WhatsApp",
+            icon: MessageSquare,
+            content: (
+                <WhatsappTab
+                    config={whatsappConfig}
+                    onChange={setWhatsappConfig}
+                    showPassword={!!showPasswords["whatsapp_token"]}
+                    onTogglePassword={() => togglePasswordVisibility("whatsapp_token")}
+                    onTest={handleTestWhatsApp}
+                    testing={testing}
+                />
+            )
+        },
+        {
+            id: "general",
+            label: "Geral",
+            icon: Settings,
+            content: (
+                <GeneralTab
+                    config={generalConfig}
+                    onChange={setGeneralConfig}
+                />
+            )
+        }
+    ];
+
     return (
         <PageContainer>
             <PageHeader
@@ -175,232 +222,11 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
                 }
             />
 
-            {/* Tabs */}
-            <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm mb-6">
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <button
-                        onClick={() => setActiveSection("smtp")}
-                        className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${activeSection === "smtp"
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-gray-500 hover:bg-gray-50"
-                            }`}
-                    >
-                        SMTP
-                    </button>
-                    <button
-                        onClick={() => setActiveSection("whatsapp")}
-                        className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${activeSection === "whatsapp"
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-gray-500 hover:bg-gray-50"
-                            }`}
-                    >
-                        WhatsApp
-                    </button>
-                    <button
-                        onClick={() => setActiveSection("general")}
-                        className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${activeSection === "general"
-                            ? "bg-primary text-white shadow-lg shadow-primary/20"
-                            : "text-gray-500 hover:bg-gray-50"
-                            }`}
-                    >
-                        Geral
-                    </button>
-                </div>
-            </div>
-
-            {/* SMTP Section */}
-            {activeSection === "smtp" && (
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">
-                            <span className="md:hidden">SMTP</span>
-                            <span className="hidden md:inline">Configurações de Email (SMTP)</span>
-                        </h3>
-                        <button
-                            onClick={handleTestSmtp}
-                            disabled={testing}
-                            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
-                        >
-                            <TestTube size={18} />
-                            {testing ? "Testando..." : (
-                                <>
-                                    <span className="md:hidden">Testar</span>
-                                    <span className="hidden md:inline">Testar Conexão</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                            label="Host SMTP"
-                            value={smtpConfig.host}
-                            onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })}
-                            placeholder="smtp.gmail.com"
-                        />
-                        <Input
-                            label="Porta"
-                            type="number"
-                            value={smtpConfig.port}
-                            onChange={(e) => setSmtpConfig({ ...smtpConfig, port: e.target.value })}
-                            placeholder="587"
-                        />
-                        <Input
-                            label="Usuário"
-                            value={smtpConfig.user}
-                            onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
-                            placeholder="seu-email@gmail.com"
-                        />
-                        <div className="relative">
-                            <Input
-                                label="Senha"
-                                type={showPasswords["smtp_password"] ? "text" : "password"}
-                                value={smtpConfig.password}
-                                onChange={(e) => setSmtpConfig({ ...smtpConfig, password: e.target.value })}
-                                placeholder="••••••••"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => togglePasswordVisibility("smtp_password")}
-                                className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600"
-                            >
-                                {showPasswords["smtp_password"] ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                        <Input
-                            label="Email Remetente"
-                            type="email"
-                            value={smtpConfig.fromEmail}
-                            onChange={(e) => setSmtpConfig({ ...smtpConfig, fromEmail: e.target.value })}
-                            placeholder="noreply@streamshare.com"
-                        />
-                        <Input
-                            label="Nome do Remetente"
-                            value={smtpConfig.fromName}
-                            onChange={(e) => setSmtpConfig({ ...smtpConfig, fromName: e.target.value })}
-                            placeholder="StreamShare"
-                        />
-                    </div>
-
-                    <div className="mt-6">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={smtpConfig.useTls}
-                                onChange={(e) => setSmtpConfig({ ...smtpConfig, useTls: e.target.checked })}
-                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                            />
-                            <span className="font-medium text-gray-700">Usar TLS/SSL</span>
-                        </label>
-                    </div>
-                </div>
-            )}
-
-            {/* WhatsApp Section */}
-            {activeSection === "whatsapp" && (
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-gray-900">
-                            <span className="md:hidden">WhatsApp</span>
-                            <span className="hidden md:inline">Configurações WhatsApp </span>
-                        </h3>
-                        <button
-                            onClick={handleTestWhatsApp}
-                            disabled={testing}
-                            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
-                        >
-                            <TestTube size={18} />
-                            {testing ? "Testando..." : (
-                                <>
-                                    <span className="md:hidden">Testar</span>
-                                    <span className="hidden md:inline">Testar Conexão</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                            label="Account SID"
-                            value={whatsappConfig.accountSid}
-                            onChange={(e) => setWhatsappConfig({ ...whatsappConfig, accountSid: e.target.value })}
-                            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        />
-                        <div className="relative">
-                            <Input
-                                label="Auth Token"
-                                type={showPasswords["whatsapp_token"] ? "text" : "password"}
-                                value={whatsappConfig.authToken}
-                                onChange={(e) => setWhatsappConfig({ ...whatsappConfig, authToken: e.target.value })}
-                                placeholder="••••••••••••••••••••••••••••••••"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => togglePasswordVisibility("whatsapp_token")}
-                                className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600"
-                            >
-                                {showPasswords["whatsapp_token"] ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                        <Input
-                            label="Número de Telefone"
-                            value={whatsappConfig.phoneNumber}
-                            onChange={(e) => setWhatsappConfig({ ...whatsappConfig, phoneNumber: e.target.value })}
-                            placeholder="+5511999999999"
-                        />
-                    </div>
-
-                    <div className="mt-6">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={whatsappConfig.enabled}
-                                onChange={(e) => setWhatsappConfig({ ...whatsappConfig, enabled: e.target.checked })}
-                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                            />
-                            <span className="font-medium text-gray-700">Habilitar integração WhatsApp</span>
-                        </label>
-                    </div>
-                </div>
-            )}
-
-            {/* General Section */}
-            {activeSection === "general" && (
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">
-                        <span className="md:hidden">Geral</span>
-                        <span className="hidden md:inline">Configurações Gerais</span>
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                            label="Nome da Aplicação"
-                            value={generalConfig.appName}
-                            onChange={(e) => setGeneralConfig({ ...generalConfig, appName: e.target.value })}
-                            placeholder="StreamShare"
-                        />
-                        <Input
-                            label="URL Base"
-                            type="url"
-                            value={generalConfig.baseUrl}
-                            onChange={(e) => setGeneralConfig({ ...generalConfig, baseUrl: e.target.value })}
-                            placeholder="https://streamshare.com"
-                        />
-                        <Input
-                            label="Timezone"
-                            value={generalConfig.timezone}
-                            onChange={(e) => setGeneralConfig({ ...generalConfig, timezone: e.target.value })}
-                            placeholder="America/Sao_Paulo"
-                        />
-                        <Input
-                            label="Moeda Padrão"
-                            value={generalConfig.currency}
-                            onChange={(e) => setGeneralConfig({ ...generalConfig, currency: e.target.value })}
-                            placeholder="BRL"
-                        />
-                    </div>
-                </div>
-            )}
+            <Tabs
+                tabs={tabsData}
+                value={activeSection}
+                onValueChange={(val) => setActiveSection(val as ConfigSection)}
+            />
         </PageContainer>
     );
 }
