@@ -260,7 +260,7 @@ export function StreamingModal({
                                         </p>
                                         <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
                                             <li><strong>Limite de vagas:</strong> Não pode ser menor que {formData.activeSubscriptions}</li>
-                                            <li><strong>Valor:</strong> Mudanças afetarão apenas novas assinaturas (a menos que você marque a opção abaixo)</li>
+                                            <li><strong>Valor:</strong> Mudanças afetarão apenas novas cobranças</li>
                                         </ul>
 
                                         {/* Option to update existing subscriptions when value changes */}
