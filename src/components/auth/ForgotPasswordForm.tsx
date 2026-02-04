@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/Input";
-import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 export function ForgotPasswordForm() {
     const [email, setEmail] = useState("");
@@ -39,20 +41,22 @@ export function ForgotPasswordForm() {
 
     if (success) {
         return (
-            <div className="space-y-6">
-                <div className="bg-green-50 border-2 border-green-200 text-green-800 p-6 rounded-xl text-center">
-                    <div className="text-4xl mb-3">✉️</div>
-                    <h3 className="font-bold text-lg mb-2">Email Enviado!</h3>
-                    <p className="text-sm">
-                        Se o email <strong>{email}</strong> estiver cadastrado, você receberá instruções para redefinir sua senha.
+            <div className="space-y-8">
+                <div className="bg-green-50 border border-green-100 text-green-800 p-8 rounded-2xl text-center shadow-inner">
+                    <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-3xl">
+                        ✉️
+                    </div>
+                    <h3 className="font-bold text-xl mb-3 text-green-900">Email Enviado!</h3>
+                    <p className="text-green-700 leading-relaxed">
+                        Se o email <strong className="font-semibold text-green-900">{email}</strong> estiver cadastrado, você receberá instruções para redefinir sua senha.
                     </p>
                 </div>
 
                 <Link
                     href="/login"
-                    className="flex items-center justify-center gap-2 text-primary hover:text-accent font-medium transition-colors"
+                    className="flex items-center justify-center gap-2 text-primary hover:text-accent font-bold py-4 rounded-xl hover:bg-primary/5 transition-all"
                 >
-                    <ArrowLeft size={18} />
+                    <ArrowLeft size={20} />
                     Voltar para o login
                 </Link>
             </div>
@@ -61,42 +65,45 @@ export function ForgotPasswordForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="text-center mb-6">
-                <p className="text-gray-600">
-                    Digite seu email e enviaremos instruções para redefinir sua senha.
+            <div className="hidden md:block text-center mb-6">
+                <p className="text-gray-500">
+                    Digite seu email cadastrado e enviaremos um link para você redefinir sua senha.
                 </p>
             </div>
 
             {error && (
-                <div role="alert" className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
+                <div role="alert" className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm border border-red-100 flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
                     {error}
                 </div>
             )}
 
-            <Input
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-            />
+            <div className="space-y-4">
+                <Input
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    required
+                    className="bg-gray-50 border-gray-200 focus:bg-white transition-colors"
+                />
+            </div>
 
-            <button
+            <Button
                 type="submit"
                 disabled={loading}
-                aria-busy={loading}
-                className="w-full bg-primary hover:bg-accent text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                className="w-full text-base py-6 shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
             >
                 {loading ? "Enviando..." : "Enviar Instruções"}
-            </button>
+            </Button>
 
             <Link
                 href="/login"
-                className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-900 font-semibold py-2 transition-colors md:hidden"
             >
-                <ArrowLeft size={18} />
-                Voltar para o login
+                <ChevronLeft size={20} />
+                Voltar
             </Link>
         </form>
     );
