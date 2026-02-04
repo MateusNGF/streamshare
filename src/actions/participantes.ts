@@ -26,7 +26,15 @@ export async function getParticipantes() {
         where: { contaId },
         include: {
             _count: {
-                select: { assinaturas: true },
+                select: {
+                    assinaturas: {
+                        where: {
+                            status: {
+                                in: ["ativa", "suspensa"]
+                            }
+                        }
+                    }
+                },
             },
         },
         orderBy: { nome: "asc" },

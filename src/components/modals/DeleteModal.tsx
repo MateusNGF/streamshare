@@ -8,8 +8,9 @@ interface DeleteModalProps {
     onClose: () => void;
     onConfirm: () => void;
     title: string;
-    message: string;
+    message: React.ReactNode;
     loading?: boolean;
+    confirmDisabled?: boolean;
 }
 
 export function DeleteModal({
@@ -19,6 +20,7 @@ export function DeleteModal({
     title,
     message,
     loading,
+    confirmDisabled,
 }: DeleteModalProps) {
     const handleConfirm = () => {
         onConfirm();
@@ -30,28 +32,28 @@ export function DeleteModal({
             onClose={onClose}
             title={title}
             footer={
-                <>
+                <div className="flex w-full gap-3 sm:w-auto">
                     <button
                         onClick={onClose}
-                        className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                        className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all justify-center"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleConfirm}
-                        disabled={loading}
-                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25 transition-all disabled:opacity-50"
+                        disabled={loading || confirmDisabled}
+                        className="flex-1 sm:flex-none px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed justify-center"
                     >
                         {loading ? "Excluindo..." : "Excluir"}
                     </button>
-                </>
+                </div>
             }
         >
             <div className="flex flex-col items-center text-center py-4">
                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
                     <AlertTriangle className="text-red-600" size={32} />
                 </div>
-                <p className="text-gray-600">{message}</p>
+                <div className="text-gray-600">{message}</div>
             </div>
         </Modal>
     );

@@ -83,7 +83,11 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
             toast.success("Participante excluído com sucesso!");
             setIsDeleteModalOpen(false);
         } catch (error) {
-            toast.error("Erro ao excluir participante");
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("Erro ao excluir participante");
+            }
         } finally {
             setLoading(false);
         }
@@ -202,7 +206,24 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
                 onConfirm={handleDelete}
                 loading={loading}
                 title="Excluir Participante"
-                message={`Tem certeza que deseja excluir ${selectedParticipant?.nome}? Esta ação removerá o participante da base de dados.`}
+                confirmDisabled={selectedParticipant ? selectedParticipant._count.assinaturas > 0 : false}
+                message={
+                    selectedParticipant && selectedParticipant._count.assinaturas > 0 ? (
+                        <div className="flex flex-col gap-2">
+                            <p className="font-medium text-gray-900">
+                                Não é possível excluir {selectedParticipant.nome}
+                            </p>
+                            <p className="text-sm">
+                                Este participante possui <strong className="text-red-600">{selectedParticipant._count.assinaturas} assinatura(s) ativa(s)</strong>.
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                O Administrador precisa encerrar as assinaturas primeiro e depois deletar.
+                            </p>
+                        </div>
+                    ) : (
+                        `Tem certeza que deseja excluir ${selectedParticipant?.nome}? Esta ação removerá o participante da base de dados.`
+                    )
+                }
             />
         </PageContainer>
     );
