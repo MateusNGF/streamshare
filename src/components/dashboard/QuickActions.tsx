@@ -19,7 +19,7 @@ export function QuickActions() {
             await createStreaming({
                 catalogoId: parseInt(data.catalogoId),
                 apelido: data.apelido,
-                valorIntegral: parseFloat(data.valorIntegral),
+                valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
 
