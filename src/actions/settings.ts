@@ -102,12 +102,14 @@ export async function updateAccount(data: { nome: string; email: string }) {
     revalidatePath("/configuracoes");
 }
 
+import { getSupportedCurrencyCodes } from "@/types/currency.types";
+
 export async function updateCurrency(currencyCode: string) {
     const { contaId } = await getContext();
 
     // Validar código de moeda
-    const validCurrencies = ['BRL', 'USD', 'EUR'];
-    if (!validCurrencies.includes(currencyCode)) {
+    const validCurrencies = getSupportedCurrencyCodes();
+    if (!validCurrencies.includes(currencyCode as any)) {
         throw new Error('Código de moeda inválido');
     }
 
