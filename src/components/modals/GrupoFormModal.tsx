@@ -198,7 +198,7 @@ export function GrupoFormModal({
                             <p className="text-sm">Nenhum streaming cadastrado</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-1 gap-3 max-h-64 overflow-y-auto p-1">
                             {streamings.map((streaming) => {
                                 const isSelected = selectedStreamingIds.includes(streaming.id);
                                 return (
