@@ -1,9 +1,12 @@
+'use client';
+
 import { MoreVertical } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface StreamingCardProps {
     name: string;
     slots: { occupied: number; total: number };
-    value: string;
+    value: number;
     color: string;
     initial: string;
     iconeUrl?: string | null;
@@ -11,6 +14,7 @@ interface StreamingCardProps {
 
 export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: StreamingCardProps) {
     const percentage = (slots.occupied / slots.total) * 100;
+    const { format } = useCurrency();
 
     return (
         <div className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
@@ -27,7 +31,7 @@ export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: 
                 </div>
                 <div>
                     <h4 className="font-semibold text-gray-900">{name}</h4>
-                    <p className="text-sm text-gray-500">{slots.occupied}/{slots.total} vagas • R$ {value}</p>
+                    <p className="text-sm text-gray-500">{slots.occupied}/{slots.total} vagas • {format(value)}</p>
                     <div className="w-48 h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
                         <div
                             className="h-full bg-primary"

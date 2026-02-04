@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PLANS } from "@/config/plans";
+import type { CurrencyCode } from "@/types/currency.types";
 
 // ============================================
 // CONTEXT HELPER
@@ -363,13 +364,20 @@ export async function gerarMensagemRenovacao(
         if (assinaturas.length === 0) continue;
 
         // Calcular valor por pessoa (valor integral / limite de participantes)
-        const valorIntegral = Number(streaming.valorIntegral);
+        const valorIntegral = streaming.valorIntegral.toNumber();
         const limiteParticipantes = streaming.limiteParticipantes || 1; // Prevent division by zero
         const valorPorPessoa = valorIntegral / limiteParticipantes;
 
+        // Fetch user's currency preference (outside loop would be better, but need contaId)
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { moedaPreferencia: true }
+        });
+        const { formatCurrency } = await import("@/lib/formatCurrency");
+
         // Header: Only individual value - Use apelido (or catalogo.nome as fallback)
         const streamingNome = streaming.apelido || catalogo.nome;
-        mensagem += `\n 🎬 *${streamingNome}* • R$ ${valorPorPessoa.toFixed(2).replace('.', ',')} p/ cada\n\n`;
+        mensagem += `\n 🎬 *${streamingNome}* • ${formatCurrency(valorPorPessoa, (conta?.moedaPreferencia as CurrencyCode) || 'BRL')} p/ cada\n\n`;
 
         // Listar participantes com status
         assinaturas.forEach((assinatura, index) => {

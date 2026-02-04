@@ -112,7 +112,7 @@ export async function getStreamings() {
 
     return streamings.map(s => ({
         ...s,
-        valorIntegral: Number(s.valorIntegral)
+        valorIntegral: s.valorIntegral.toNumber()
     }));
 }
 
@@ -241,7 +241,7 @@ export async function createStreaming(data: {
     revalidatePath("/streamings");
     return {
         ...streaming,
-        valorIntegral: Number(streaming.valorIntegral)
+        valorIntegral: streaming.valorIntegral.toNumber()
     };
 }
 
@@ -323,7 +323,7 @@ export async function updateStreaming(
         return {
             streaming: {
                 ...streaming,
-                valorIntegral: Number(streaming.valorIntegral)
+                valorIntegral: streaming.valorIntegral.toNumber()
             },
             updatedSubscriptions: 0
         };
@@ -366,7 +366,7 @@ export async function updateStreaming(
     return {
         streaming: {
             ...result.streaming,
-            valorIntegral: Number(result.streaming.valorIntegral)
+            valorIntegral: result.streaming.valorIntegral.toNumber()
         },
         updatedSubscriptions: result.updatedCount
     };

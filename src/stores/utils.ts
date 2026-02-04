@@ -72,16 +72,7 @@ export function debounce<T extends (...args: any[]) => any>(
     };
 }
 
-/**
- * Format currency for display
- */
-export function formatCurrency(value: number | string): string {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(numValue);
-}
+
 
 /**
  * Safe JSON parse with fallback

@@ -29,7 +29,18 @@ export async function getSettingsData() {
 
     const userAccount = await prisma.contaUsuario.findFirst({
         where: { usuarioId: session.userId, isAtivo: true },
-        include: { conta: true },
+        include: {
+            conta: {
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    plano: true,
+                    limiteGrupos: true,
+                    moedaPreferencia: true,
+                },
+            },
+        },
     });
 
     return {
@@ -89,5 +100,22 @@ export async function updateAccount(data: { nome: string; email: string }) {
     });
 
     revalidatePath("/configuracoes");
+}
+
+export async function updateCurrency(currencyCode: string) {
+    const { contaId } = await getContext();
+
+    // Validar código de moeda
+    const validCurrencies = ['BRL', 'USD', 'EUR'];
+    if (!validCurrencies.includes(currencyCode)) {
+        throw new Error('Código de moeda inválido');
+    }
+
+    await prisma.conta.update({
+        where: { id: contaId },
+        data: { moedaPreferencia: currencyCode },
+    });
+
+    revalidatePath('/configuracoes');
 }
 

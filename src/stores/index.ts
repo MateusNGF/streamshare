@@ -17,4 +17,4 @@ export type {
     KPIsFinanceiros,
 } from "./types";
 
-export { isStale, formatCurrency } from "./utils";
+export { isStale } from "./utils";

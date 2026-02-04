@@ -1,12 +1,17 @@
+'use client';
+
+import { useCurrency } from "@/hooks/useCurrency";
+
 interface RecentSubscriptionProps {
     name: string;
     streaming: string;
-    value: string;
+    value: number;
     status: "Ativa" | "Em atraso";
 }
 
 export function RecentSubscription({ name, streaming, value, status }: RecentSubscriptionProps) {
     const initial = name.charAt(0).toUpperCase();
+    const { format } = useCurrency();
 
     return (
         <div className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all">
@@ -20,7 +25,7 @@ export function RecentSubscription({ name, streaming, value, status }: RecentSub
                 </div>
             </div>
             <div className="text-right">
-                <p className="font-semibold text-gray-900">R$ {value}</p>
+                <p className="font-semibold text-gray-900">{format(value)}</p>
                 <span className={`text-[10px] font-bold uppercase tracking-wider ${status === "Ativa" ? "text-green-500" : "text-amber-500"
                     }`}>
                     ● {status}

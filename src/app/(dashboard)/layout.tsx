@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SubscriptionAlert } from "@/components/dashboard/SubscriptionAlert";
+import { CurrencyInitializer } from "@/components/CurrencyInitializer";
 
 export default async function DashboardLayout({
     children,
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
 
     return (
         <div className="flex min-h-screen bg-gray-50 w-full">
+            <CurrencyInitializer currencyCode={userAccount?.conta?.moedaPreferencia || 'BRL'} />
             <Sidebar isSystemAdmin={isSystemAdmin} />
             <main className="flex-1 overflow-y-auto h-screen">
                 <div className="p-4 md:p-8 max-w-7xl mx-auto">

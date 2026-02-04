@@ -2,6 +2,8 @@ import cron from 'node-cron';
 import { prisma } from "@/lib/db";
 import { sendWhatsAppNotification, whatsappTemplates } from "@/lib/whatsapp-service";
 import { addDays, differenceInDays, subHours } from "date-fns";
+import { formatCurrency } from "@/lib/formatCurrency";
+import type { CurrencyCode } from "@/types/currency.types";
 
 /**
  * Inicializa o cron job para notificações automáticas de cobranças
@@ -87,11 +89,17 @@ async function checkAndNotifyPendingBillings() {
             // Calcular dias restantes
             const diasRestantes = differenceInDays(new Date(cobranca.periodoFim), new Date());
 
+            // Fetch account currency
+            const conta = await prisma.conta.findUnique({
+                where: { id: config.contaId },
+                select: { moedaPreferencia: true }
+            });
+
             // Criar mensagem
             const mensagem = whatsappTemplates.cobrancaVencendo(
                 cobranca.assinatura.participante.nome,
                 cobranca.assinatura.streaming.catalogo.nome,
-                `R$ ${Number(cobranca.valor).toFixed(2)}`,
+                formatCurrency(Number(cobranca.valor), (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
                 diasRestantes
             );
 
@@ -186,11 +194,17 @@ async function checkAndNotifyOverdueBillings() {
             // Calcular dias de atraso
             const diasAtraso = differenceInDays(new Date(), new Date(cobranca.periodoFim));
 
+            // Fetch account currency
+            const conta = await prisma.conta.findUnique({
+                where: { id: config.contaId },
+                select: { moedaPreferencia: true }
+            });
+
             // Criar mensagem
             const mensagem = whatsappTemplates.cobrancaAtrasada(
                 cobranca.assinatura.participante.nome,
                 cobranca.assinatura.streaming.catalogo.nome,
-                `R$ ${Number(cobranca.valor).toFixed(2)}`,
+                formatCurrency(Number(cobranca.valor), (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
                 diasAtraso
             );
 

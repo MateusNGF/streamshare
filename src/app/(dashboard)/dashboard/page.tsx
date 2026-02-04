@@ -15,6 +15,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDashboardStats, getRecentSubscriptions, getDashboardStreamings } from "@/actions/dashboard";
 
+import { formatCurrency } from "@/lib/formatCurrency";
+
 export default async function DashboardPage() {
     const [stats, recentSubscriptions, streamings] = await Promise.all([
         getDashboardStats(),
@@ -22,11 +24,8 @@ export default async function DashboardPage() {
         getDashboardStreamings(),
     ]);
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(value);
+    const format = (value: number) => {
+        return formatCurrency(value, stats.currencyCode as any);
     };
 
     return (
@@ -53,7 +52,7 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">
                 <KPICard
                     title="Receita Mensal"
-                    value={formatCurrency(stats.monthlyRevenue)}
+                    value={format(stats.monthlyRevenue)}
                     change="+0%" // Placeholder for now
                     trend="up"
                     icon={TrendingUp}
@@ -99,7 +98,7 @@ export default async function DashboardPage() {
                                     initial={s.catalogo.nome.charAt(0).toUpperCase()}
                                     color={s.catalogo.corPrimaria}
                                     slots={{ occupied: s._count.assinaturas, total: s.limiteParticipantes }}
-                                    value={String(s.valorIntegral)}
+                                    value={s.valorIntegral.toNumber()}
                                 />
                             ))
                         ) : (
@@ -123,7 +122,7 @@ export default async function DashboardPage() {
                                     key={sub.id}
                                     name={sub.participante.nome}
                                     streaming={sub.streaming.apelido || sub.streaming.catalogo.nome}
-                                    value={String(sub.valor)}
+                                    value={sub.valor.toNumber()}
                                     status={sub.status === "ativa" ? "Ativa" : "Em atraso"}
                                 />
                             ))

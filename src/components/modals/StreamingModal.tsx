@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
@@ -10,6 +11,7 @@ import { getCatalogos } from "@/actions/streamings";
 import { cn } from "@/lib/utils";
 import { StreamingSchema } from "@/lib/schemas";
 import { ZodIssue } from "zod";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface StreamingModalProps {
     isOpen: boolean;
@@ -22,7 +24,7 @@ interface StreamingModalProps {
 export interface StreamingFormData {
     catalogoId: string;
     apelido: string;
-    valorIntegral: string;
+    valorIntegral: number | string;
     limiteParticipantes: string;
     activeSubscriptions?: number;
 }
@@ -40,12 +42,13 @@ export function StreamingModal({
         streaming || {
             catalogoId: "",
             apelido: "",
-            valorIntegral: "",
+            valorIntegral: 0,
             limiteParticipantes: "",
         }
     );
     const [updateExistingSubscriptions, setUpdateExistingSubscriptions] = useState(false);
     const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
+    const { currencyInfo } = useCurrency();
 
     const validate = () => {
         const result = StreamingSchema.safeParse(formData);
@@ -92,7 +95,7 @@ export function StreamingModal({
             setFormData(prev => ({
                 ...prev,
                 apelido: "",
-                valorIntegral: "",
+                valorIntegral: 0,
                 limiteParticipantes: "",
             }));
         }
@@ -225,13 +228,11 @@ export function StreamingModal({
                         />
 
                         <div className="grid grid-cols-2 gap-4">
-                            <Input
+                            <CurrencyInput
                                 label="Valor Integral (Mensal)"
-                                type="number"
-                                step="0.01"
-                                value={formData.valorIntegral}
-                                onChange={(e) => handleChange("valorIntegral", e.target.value)}
-                                placeholder="55.90"
+                                value={typeof formData.valorIntegral === 'number' ? formData.valorIntegral : parseFloat(formData.valorIntegral) || 0}
+                                onValueChange={(val) => handleChange("valorIntegral", String(val || 0))}
+                                placeholder="R$ 0,00"
                                 error={errors.valorIntegral}
                                 required
                             />
@@ -273,7 +274,7 @@ export function StreamingModal({
                                                     className="mt-0.5 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                                                 />
                                                 <span className="text-xs text-amber-800 group-hover:text-amber-900">
-                                                    Atualizar o valor das <strong>{formData.activeSubscriptions} assinatura(s) existente(s)</strong> para R$ {formData.valorIntegral}
+                                                    Atualizar o valor das <strong>{formData.activeSubscriptions} assinatura(s) existente(s)</strong> para {currencyInfo.symbol} {formData.valorIntegral}
                                                 </span>
                                             </label>
                                         )}

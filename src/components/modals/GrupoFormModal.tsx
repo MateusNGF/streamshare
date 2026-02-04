@@ -4,11 +4,11 @@ import { useState, useEffect, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
-import { Tv, Check, Users, DollarSign } from "lucide-react";
+import { Tv, Check, Users } from "lucide-react";
 import { createGrupo, updateGrupo, getStreamingsParaGrupo, getGrupoById } from "@/actions/grupos";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
-import { formatarMoeda } from "@/lib/financeiro-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type Streaming = {
     id: number;
@@ -53,6 +53,7 @@ export function GrupoFormModal({
     const [loading, setLoading] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [errors, setErrors] = useState<{ nome?: string; streamings?: string }>({});
+    const { format } = useCurrency();
 
     // Load streamings on mount
     useEffect(() => {
@@ -232,8 +233,7 @@ export function GrupoFormModal({
                                             </p>
                                             <p className="text-xs text-gray-500 mt-1 flex items-center gap-3">
                                                 <span className="flex items-center gap-1">
-                                                    <DollarSign size={10} />
-                                                    {formatarMoeda(streaming.valorIntegral)}
+                                                    {format(streaming.valorIntegral)}
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <Users size={10} />

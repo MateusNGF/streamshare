@@ -9,6 +9,7 @@ import {
     calcularProximoVencimento,
     calcularValorPeriodo
 } from "@/lib/financeiro-utils";
+import type { CurrencyCode } from "@/types/currency.types";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -142,7 +143,7 @@ export async function createAssinatura(data: {
         // Auto-generate first charge within the same transaction
         const periodoInicio = dataInicio;
         const periodoFim = calcularProximoVencimento(periodoInicio, data.frequencia);
-        const valorCobranca = calcularValorPeriodo(new (await import("@prisma/client")).Prisma.Decimal(data.valor), data.frequencia);
+        const valorCobranca = calcularValorPeriodo(new (await import("@prisma/client")).Prisma.Decimal(data.valor.toString()), data.frequencia);
 
         const cobranca = await tx.cobranca.create({
             data: {
@@ -167,12 +168,19 @@ export async function createAssinatura(data: {
     // Send WhatsApp notification (outside transaction - not critical)
     try {
         const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+        const { formatCurrency } = await import("@/lib/formatCurrency");
 
         if (result.participante && result.streaming) {
+            // Fetch user's currency preference
+            const conta = await prisma.conta.findUnique({
+                where: { id: result.participante.contaId },
+                select: { moedaPreferencia: true }
+            });
+
             const mensagem = whatsappTemplates.novaAssinatura(
                 result.participante.nome,
                 result.streaming.catalogo.nome,
-                `R$ ${data.valor.toFixed(2)}`,
+                formatCurrency(data.valor, (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
                 dataInicio.toLocaleDateString("pt-BR")
             );
 

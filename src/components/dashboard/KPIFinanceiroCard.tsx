@@ -1,4 +1,7 @@
+'use client';
+
 import { LucideIcon } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface KPIFinanceiroCardProps {
     titulo: string;
@@ -14,13 +17,15 @@ const corConfig: Record<"primary" | "green" | "red", string> = {
 };
 
 export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor }: KPIFinanceiroCardProps) {
+    const { format } = useCurrency();
+
     return (
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
             <div className={`inline-flex p-3 rounded-2xl ${corConfig[cor]} mb-4`}>
                 <Icon className="w-6 h-6" />
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)}
+                {format(valor)}
             </div>
             <div className="text-gray-500 text-sm">{titulo}</div>
         </div>

@@ -9,7 +9,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/hooks/useToast";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import { createBulkAssinaturas } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,6 +28,7 @@ export default function AssinaturasClient({
 }: AssinaturasClientProps) {
     const router = useRouter();
     const toast = useToast();
+    const { format } = useCurrency();
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -193,7 +194,7 @@ export default function AssinaturasClient({
                                                     <span>{sub.streaming.apelido || sub.streaming.catalogo.nome}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{formatCurrency(Number(sub.valor))}</TableCell>
+                                            <TableCell>{format(Number(sub.valor))}</TableCell>
                                             <TableCell className="capitalize">{sub.frequencia}</TableCell>
                                             <TableCell>
                                                 <StatusBadge status={sub.status} />

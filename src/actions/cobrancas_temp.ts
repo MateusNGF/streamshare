@@ -163,15 +163,15 @@ export async function getKPIsFinanceiros() {
 
     const totalPendente = todasCobrancas
         .filter(c => c.status === StatusCobranca.pendente)
-        .reduce((sum, c) => sum + Number(c.valor), 0);
+        .reduce((sum, c) => sum + c.valor.toNumber(), 0);
 
     const receitaConfirmada = todasCobrancas
         .filter(c => c.status === StatusCobranca.pago)
-        .reduce((sum, c) => sum + Number(c.valor), 0);
+        .reduce((sum, c) => sum + c.valor.toNumber(), 0);
 
     const emAtraso = todasCobrancas
         .filter(c => c.status === StatusCobranca.pendente && estaAtrasado(c.periodoFim))
-        .reduce((sum, c) => sum + Number(c.valor), 0);
+        .reduce((sum, c) => sum + c.valor.toNumber(), 0);
 
     return {
         totalPendente,

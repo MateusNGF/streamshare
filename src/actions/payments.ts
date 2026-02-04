@@ -40,16 +40,16 @@ export async function getPaymentsData() {
     });
 
     // Calculate billing stats
-    const totalToReceive = assinaturas.reduce((sum, sub) => sum + Number(sub.valor), 0);
+    const totalToReceive = assinaturas.reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
     const received = assinaturas
         .filter((sub) => sub.status === "ativa" && sub.diasAtraso === 0)
-        .reduce((sum, sub) => sum + Number(sub.valor), 0); // Simplified: assuming active/no delay means paid for this month
+        .reduce((sum, sub) => sum + sub.valor.toNumber(), 0); // Simplified: assuming active/no delay means paid for this month
     const pending = assinaturas
         .filter((sub) => sub.status === "ativa" && sub.diasAtraso === 0) // Placeholder logic for pending
-        .reduce((sum, sub) => sum + Number(sub.valor), 0);
+        .reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
     const overdue = assinaturas
         .filter((sub) => sub.diasAtraso > 0)
-        .reduce((sum, sub) => sum + Number(sub.valor), 0);
+        .reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
 
     return {
         assinaturas,

@@ -5,8 +5,11 @@ import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
-import { INTERVALOS_MESES, formatarMoeda } from "@/lib/financeiro-utils";
+import { INTERVALOS_MESES } from "@/lib/financeiro-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Check, ChevronRight, ChevronLeft, Search, Users, X, Calendar, Wallet } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 
 // --- Types ---
 
@@ -77,6 +80,7 @@ function StepStreamings({
     searchTerm: string;
     onSearchChange: (val: string) => void;
 }) {
+    const { format } = useCurrency();
     // Local filtering
     const filtered = useMemo(() => {
         if (!searchTerm) return streamings;
@@ -151,7 +155,7 @@ function StepStreamings({
                                 {isFull && " • LOTADO"}
                             </p>
                             <p className="text-xs font-bold text-primary mt-1">
-                                {formatarMoeda(streaming.valorIntegral)}
+                                {format(streaming.valorIntegral)}
                             </p>
                         </button>
                     );
@@ -170,6 +174,7 @@ function StepConfiguration({
     configurations: Map<number, SelectedStreaming>;
     onUpdate: (id: number, field: keyof SelectedStreaming, value: any) => void;
 }) {
+    const { format, currencyInfo } = useCurrency();
     return (
         <div className="space-y-4">
             <div>
@@ -216,32 +221,32 @@ function StepConfiguration({
                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                         Frequência
                                     </label>
-                                    <select
+                                    <Select
                                         value={config.frequencia}
-                                        onChange={(e) => onUpdate(streaming.id, 'frequencia', e.target.value as FrequenciaPagamento)}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                        onValueChange={(value) => onUpdate(streaming.id, 'frequencia', value as FrequenciaPagamento)}
                                     >
-                                        <option value={FrequenciaPagamento.mensal}>Mensal</option>
-                                        <option value={FrequenciaPagamento.trimestral}>Trimestral</option>
-                                        <option value={FrequenciaPagamento.semestral}>Semestral</option>
-                                        <option value={FrequenciaPagamento.anual}>Anual</option>
-                                    </select>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={FrequenciaPagamento.mensal}>Mensal</SelectItem>
+                                            <SelectItem value={FrequenciaPagamento.trimestral}>Trimestral</SelectItem>
+                                            <SelectItem value={FrequenciaPagamento.semestral}>Semestral</SelectItem>
+                                            <SelectItem value={FrequenciaPagamento.anual}>Anual</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                                        Valor (R$)
+                                        Valor ({currencyInfo.symbol})
                                     </label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={config.valor}
-                                        onChange={(e) => onUpdate(streaming.id, 'valor', e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                    <CurrencyInput
+                                        value={parseFloat(config.valor)}
+                                        onChange={(val) => onUpdate(streaming.id, 'valor', val.toString())}
                                         placeholder={(streaming.valorIntegral / streaming.limiteParticipantes).toFixed(2)}
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Valor mensal sugerido: {formatarMoeda(streaming.valorIntegral / streaming.limiteParticipantes)}/mês
+                                        Valor mensal sugerido: {format(streaming.valorIntegral / streaming.limiteParticipantes)}/mês
                                     </p>
                                 </div>
                             </div>
@@ -403,6 +408,7 @@ function StepSummary({
     onCobrancaChange: (val: boolean) => void;
     overloadedStreamings: StreamingOption[];
 }) {
+    const { format } = useCurrency();
     const isOverloaded = overloadedStreamings.length > 0;
     const totalAssinaturas = configurations.size * selectedParticipants.length;
     const totalUnitario = Array.from(configurations.values()).reduce((sum, c) => sum + parseFloat(c.valor || "0"), 0);
@@ -525,7 +531,7 @@ function StepSummary({
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="font-bold text-sm text-gray-700">
-                                            R$ {parseFloat(config.valor).toFixed(2)}
+                                            {format(parseFloat(config.valor))}
                                         </p>
                                     </div>
                                 </div>
@@ -537,14 +543,14 @@ function StepSummary({
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-500">Valor por Pessoa:</span>
                             <span className="font-bold text-gray-700">
-                                {formatarMoeda(totalUnitario)}
+                                {format(totalUnitario)}
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="font-bold text-gray-900">Total Geral:</span>
                             <div className="text-right">
                                 <p className="text-xl font-bold text-primary">
-                                    {formatarMoeda(totalGeral)}
+                                    {format(totalGeral)}
                                 </p>
                                 <p className="text-[10px] text-gray-400 font-normal">
                                     {totalAssinaturas} novas assinaturas

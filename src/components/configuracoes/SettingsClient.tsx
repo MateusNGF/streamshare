@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare } from "lucide-react";
+import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare, DollarSign } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
 
@@ -11,13 +11,15 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Toast, ToastVariant } from "@/components/ui/Toast";
-import { updateProfile, updateAccount } from "@/actions/settings";
+import { updateProfile, updateAccount, updateCurrency } from "@/actions/settings";
+import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import NotificationsTab from "@/components/settings/NotificationsTab";
 
 interface SettingsClientProps {
     initialData: {
         user: { nome: string; email: string } | null;
-        conta: { nome: string | null; email: string | null; plano: string } | null | any;
+        conta: { nome: string | null; email: string | null; plano: string; moedaPreferencia?: string } | null | any;
     };
 }
 
@@ -35,6 +37,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [loadingAccount, setLoadingAccount] = useState(false);
     const [loadingLogout, setLoadingLogout] = useState(false);
+    const [loadingCurrency, setLoadingCurrency] = useState(false);
 
     // Toast state
     const [toast, setToast] = useState<ToastState | null>(null);
@@ -49,6 +52,10 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         nome: initialData.conta?.nome || "",
         email: initialData.conta?.email || "",
     });
+
+    const [currency, setCurrency] = useState<CurrencyCode>(
+        (initialData.conta?.moedaPreferencia as CurrencyCode) || 'BRL'
+    );
 
     // Detectar alterações pendentes
     const hasProfileChanges =
@@ -121,6 +128,20 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
             showToast(message, "error");
         } finally {
             setLoadingAccount(false);
+        }
+    };
+
+    const onUpdateCurrency = async (newCurrency: CurrencyCode) => {
+        setLoadingCurrency(true);
+        try {
+            await updateCurrency(newCurrency);
+            setCurrency(newCurrency);
+            showToast("Moeda atualizada com sucesso!", "success");
+        } catch (error: any) {
+            const message = error?.message || "Erro ao atualizar moeda";
+            showToast(message, "error");
+        } finally {
+            setLoadingCurrency(false);
         }
     };
 
@@ -262,6 +283,50 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                     </button>
                                 </div>
                             </form>
+                        </section>
+
+                        {/* Preferências de Moeda */}
+                        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-3 mb-6">
+                                <DollarSign className="text-primary" size={24} />
+                                <h2 className="text-xl font-bold text-gray-900">Preferências de Moeda</h2>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Moeda Padrão
+                                    </label>
+                                    <Select value={currency} onValueChange={(value) => onUpdateCurrency(value as CurrencyCode)} disabled={loadingCurrency}>
+                                        <SelectTrigger className="w-full h-auto py-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl">{SUPPORTED_CURRENCIES[currency].symbol}</span>
+                                                <div className="text-left">
+                                                    <p className="text-sm font-semibold text-gray-900">{SUPPORTED_CURRENCIES[currency].name}</p>
+                                                    <p className="text-xs text-gray-500">{SUPPORTED_CURRENCIES[currency].code}</p>
+                                                </div>
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
+                                                <SelectItem key={code} value={code}>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-2xl">{info.symbol}</span>
+                                                        <div className="text-left">
+                                                            <span className="block text-sm font-semibold text-gray-900">
+                                                                {info.name}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500">{info.code}</span>
+                                                        </div>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                    Esta moeda será usada para exibir todos os valores no sistema.
+                                </p>
+                            </div>
                         </section>
                     </div>
 

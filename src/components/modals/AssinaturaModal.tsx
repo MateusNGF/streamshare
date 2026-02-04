@@ -11,6 +11,7 @@ import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
 import { createAssinatura } from "@/actions/assinaturas";
 import { AlertCircle } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface AssinaturaModalProps {
     isOpen: boolean;
@@ -34,6 +35,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
         dataInicio: new Date().toISOString().split('T')[0],
         cobrancaAutomaticaPaga: false,
     });
+    const { currencyInfo } = useCurrency();
 
     useEffect(() => {
         if (isOpen) {
@@ -190,7 +192,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label>Valor (R$)</Label>
+                            <Label>Valor ({currencyInfo.symbol})</Label>
                             <Input
                                 type="number"
                                 step="0.01"

@@ -1,4 +1,6 @@
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
+import { formatCurrency } from "./formatCurrency";
+import { CurrencyCode } from "@/types/currency.types";
 
 export const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
     mensal: 1,
@@ -44,25 +46,4 @@ export function estaAtrasado(dataVencimento: Date): boolean {
     return new Date() > dataVencimento;
 }
 
-/**
- * Format currency to BRL
- */
-export function formatarMoeda(valor: number | string | Prisma.Decimal): string {
-    let numberValue: number;
 
-    if (typeof valor === 'number') {
-        numberValue = valor;
-    } else if (typeof valor === 'string') {
-        numberValue = parseFloat(valor);
-    } else {
-        // Handle Prisma Decimal
-        numberValue = Number(valor.toString());
-    }
-
-    if (isNaN(numberValue)) return 'R$ 0,00';
-
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(numberValue);
-}

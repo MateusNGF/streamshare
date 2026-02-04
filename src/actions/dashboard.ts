@@ -29,7 +29,7 @@ export async function getDashboardStats() {
         select: { valor: true },
     });
 
-    const monthlyRevenue = subscriptions.reduce((sum, sub) => sum + Number(sub.valor), 0);
+    const monthlyRevenue = subscriptions.reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
 
     // 2. Participantes Ativos (Count of participants with at least one active subscription)
     const activeParticipantsCount = await prisma.participante.count({
@@ -76,11 +76,18 @@ export async function getDashboardStats() {
 
     const defaultRate = totalAssinaturas > 0 ? (overdueAssinaturas / totalAssinaturas) * 100 : 0;
 
+    // 5. Get Currency Preference
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { moedaPreferencia: true }
+    });
+
     return {
         monthlyRevenue,
         activeParticipantsCount,
         occupationRate,
         defaultRate,
+        currencyCode: conta?.moedaPreferencia || 'BRL'
     };
 }
 

@@ -10,6 +10,7 @@ import {
     estaAtrasado
 } from "@/lib/financeiro-utils";
 import type { EnviarNotificacaoResult } from "@/types/whatsapp";
+import type { CurrencyCode } from "@/types/currency.types";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -251,7 +252,15 @@ export async function enviarNotificacaoCobranca(
 
     const participante = cobranca.assinatura.participante.nome;
     const streaming = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
-    const valor = `R$ ${Number(cobranca.valor).toFixed(2)}`;
+
+    // Fetch user's currency preference
+    const conta = await prisma.conta.findUnique({
+        where: { id: cobranca.assinatura.participante.contaId },
+        select: { moedaPreferencia: true }
+    });
+
+    const { formatCurrency } = await import("@/lib/formatCurrency");
+    const valor = formatCurrency(cobranca.valor.toNumber(), (conta?.moedaPreferencia as CurrencyCode) || 'BRL');
 
     switch (cobranca.status) {
         case 'pendente': {

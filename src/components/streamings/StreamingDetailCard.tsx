@@ -1,5 +1,5 @@
 import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
-import { formatarMoeda } from "@/lib/financeiro-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface StreamingDetailCardProps {
     id: number;
@@ -27,6 +27,7 @@ export function StreamingDetailCard({
     onEdit,
     onDelete,
 }: StreamingDetailCardProps) {
+    const { format } = useCurrency();
     const percentage = (slots.occupied / slots.total) * 100;
     const isNearFull = percentage >= 80;
     const available = slots.total - slots.occupied;
@@ -105,8 +106,7 @@ export function StreamingDetailCard({
 
                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <DollarSign size={16} className="text-primary" />
-                        <span>{formatarMoeda(price)}</span>
+                        <span>{format(typeof price === 'string' ? parseFloat(price) : price)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600 justify-end">
                         <Calendar size={16} className="text-gray-400" />

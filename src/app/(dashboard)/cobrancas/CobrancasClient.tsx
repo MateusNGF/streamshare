@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { confirmarPagamento, enviarNotificacaoCobranca } from "@/actions/cobrancas";
 import type { EnviarNotificacaoResult } from "@/types/whatsapp";
 import { useToast } from "@/hooks/useToast";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface CobrancasClientProps {
     kpis: {
@@ -25,6 +26,7 @@ interface CobrancasClientProps {
 
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
     const toast = useToast();
+    const { format } = useCurrency();
 
     // Filters State
     const [searchTerm, setSearchTerm] = useState("");
@@ -200,10 +202,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                         </td>
                                         <td className="p-4 text-right">
                                             <span className="font-semibold text-gray-900">
-                                                {new Intl.NumberFormat('pt-BR', {
-                                                    style: 'currency',
-                                                    currency: 'BRL'
-                                                }).format(Number(cobranca.valor))}
+                                                {format(Number(cobranca.valor))}
                                             </span>
                                         </td>
                                         <td className="p-4">

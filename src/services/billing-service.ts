@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { calcularProximoVencimento, calcularValorPeriodo } from "@/lib/financeiro-utils";
+import { Prisma } from "@prisma/client";
 
 /**
  * Service responsible for billing logic independent of user session.
@@ -32,7 +33,7 @@ export const billingService = {
 
         const cobrancasParaCriar: Array<{
             assinaturaId: number;
-            valor: number;
+            valor: Prisma.Decimal;
             periodoInicio: Date;
             periodoFim: Date;
         }> = [];
@@ -55,7 +56,7 @@ export const billingService = {
 
                 cobrancasParaCriar.push({
                     assinaturaId: assinatura.id,
-                    valor: Number(valor), // Convert Decimal to number for storage
+                    valor: valor,
                     periodoInicio,
                     periodoFim
                 });
