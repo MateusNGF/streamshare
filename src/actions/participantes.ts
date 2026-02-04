@@ -61,7 +61,7 @@ export async function createParticipante(data: {
     const participante = await prisma.participante.create({
         data: {
             ...data,
-            cpf: data.cpf || "",
+            cpf: data.cpf || null,
             contaId,
         },
     });
@@ -102,7 +102,7 @@ export async function updateParticipante(
         where: { id, contaId },
         data: {
             ...data,
-            cpf: data.cpf || "",
+            cpf: data.cpf || null,
         },
     });
 
