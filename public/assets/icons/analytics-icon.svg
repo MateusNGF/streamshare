@@ -1,0 +1,119 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bar1Gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A78BFA;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bar2Gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bar3Gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#818CF8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F3E8FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E9D5FF;stop-opacity:1" />
+    </linearGradient>
+    <filter id="chartShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="4"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Decorative elements -->
+  <circle cx="240" cy="65" r="6" fill="#DDD6FE" opacity="0.6"/>
+  <circle cx="60" cy="80" r="4" fill="#8B5CF6" opacity="0.4"/>
+  <circle cx="250" cy="215" r="5" fill="#C4B5FD" opacity="0.5"/>
+  <rect x="55" y="235" width="10" height="10" rx="2" fill="#A78BFA" opacity="0.3" transform="rotate(45 60 240)"/>
+  
+  <!-- Shadow -->
+  <ellipse cx="150" cy="240" rx="75" ry="8" fill="#1E1B4B" opacity="0.15"/>
+  
+  <!-- Chart Container -->
+  <g filter="url(#chartShadow)">
+    <rect x="70" y="85" width="160" height="140" rx="16" fill="url(#bgGradient)" stroke="#7C3AED" stroke-width="3"/>
+    
+    <!-- Grid lines -->
+    <g stroke="#8B5CF6" stroke-width="1" opacity="0.2" stroke-dasharray="4 4">
+      <line x1="75" y1="115" x2="225" y2="115"/>
+      <line x1="75" y1="145" x2="225" y2="145"/>
+      <line x1="75" y1="175" x2="225" y2="175"/>
+      <line x1="75" y1="205" x2="225" y2="205"/>
+    </g>
+    
+    <!-- Animated Chart Bars -->
+    <g>
+      <!-- Bar 1 -->
+      <rect x="90" y="165" width="22" height="45" rx="4" fill="url(#bar1Gradient)" stroke="#5B21B6" stroke-width="2">
+        <animate attributeName="height" values="45;50;45" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="y" values="165;160;165" dur="2s" repeatCount="indefinite"/>
+      </rect>
+      
+      <!-- Bar 2 -->
+      <rect x="122" y="145" width="22" height="65" rx="4" fill="url(#bar2Gradient)" stroke="#5B21B6" stroke-width="2">
+        <animate attributeName="height" values="65;70;65" dur="2.3s" repeatCount="indefinite"/>
+        <animate attributeName="y" values="145;140;145" dur="2.3s" repeatCount="indefinite"/>
+      </rect>
+      
+      <!-- Bar 3 (tallest) -->
+      <rect x="154" y="115" width="22" height="95" rx="4" fill="url(#bar3Gradient)" stroke="#4338CA" stroke-width="2">
+        <animate attributeName="height" values="95;100;95" dur="2.5s" repeatCount="indefinite"/>
+        <animate attributeName="y" values="115;110;115" dur="2.5s" repeatCount="indefinite"/>
+      </rect>
+      
+      <!-- Bar 4 -->
+      <rect x="186" y="135" width="22" height="75" rx="4" fill="url(#bar2Gradient)" stroke="#5B21B6" stroke-width="2">
+        <animate attributeName="height" values="75;80;75" dur="2.2s" repeatCount="indefinite"/>
+        <animate attributeName="y" values="135;130;135" dur="2.2s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+    
+    <!-- Trend Line with Dots -->
+    <g>
+      <path d="M 85 185 L 110 165 L 145 155 L 180 125 L 215 115" 
+            stroke="#10B981" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <animate attributeName="stroke-dasharray" values="0,200;200,0" dur="2s" repeatCount="indefinite"/>
+      </path>
+      
+      <!-- Dots on trend line -->
+      <circle cx="85" cy="185" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+      <circle cx="110" cy="165" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+      <circle cx="145" cy="155" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+      <circle cx="180" cy="125" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+      <circle cx="215" cy="115" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    </g>
+    
+    <!-- Arrow pointing up (growth) -->
+    <g transform="translate(210, 105)">
+      <path d="M 0 0 L -6 8 L 6 8 Z" fill="#10B981">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 0,-3; 0,0" dur="1.5s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+  
+  <!-- Floating percentage -->
+  <g transform="translate(195, 55)">
+    <rect x="0" y="0" width="45" height="24" rx="12" fill="#10B981" stroke="#065F46" stroke-width="2"/>
+    <text x="22.5" y="16" font-size="13" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">+24%</text>
+    <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite"/>
+  </g>
+  
+  <!-- Sparkles -->
+  <g fill="#8B5CF6" opacity="0.6">
+    <circle cx="70" cy="120" r="2">
+      <animate attributeName="opacity" values="0.6;0;0.6" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="230" cy="200" r="2">
+      <animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

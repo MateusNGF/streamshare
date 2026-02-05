@@ -1,0 +1,105 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bellBodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#6366F1"/>
+    </linearGradient>
+    <linearGradient id="bellRimGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7C3AED"/>
+      <stop offset="50%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#6366F1"/>
+    </linearGradient>
+    <filter id="bellShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="6"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.25"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background decorative elements -->
+  <circle cx="230" cy="70" r="5" fill="#DDD6FE" opacity="0.6"/>
+  <circle cx="65" cy="90" r="4" fill="#8B5CF6" opacity="0.4"/>
+  
+  <!-- Shadow on floor -->
+  <ellipse cx="150" cy="250" rx="55" ry="6" fill="#1E1B4B" opacity="0.15">
+    <animate attributeName="rx" values="55;45;55" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.15;0.1;0.15" dur="3s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Floating Container -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,-8; 0,0" dur="3s" repeatCount="indefinite"/>
+    
+    <!-- Rotating Bell Wrapper -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 150 80; 12 150 80; -12 150 80; 0 150 80" dur="2s" repeatCount="indefinite"/>
+      
+      <!-- Bell Top Handle (Ring) -->
+      <path d="M 150 60 L 150 80" stroke="#1E1B4B" stroke-width="4"/>
+      <circle cx="150" cy="65" r="8" fill="#F3E8FF" stroke="#4C1D95" stroke-width="3"/>
+
+      <!-- Main Bell Body -->
+      <g filter="url(#bellShadow)">
+        <!-- Dome Shape -->
+        <path d="M 100 170 
+                 Q 100 80 150 80 
+                 Q 200 80 200 170" 
+              fill="url(#bellBodyGradient)" stroke="#4C1D95" stroke-width="3"/>
+        
+        <!-- Rim at bottom -->
+        <path d="M 85 170 
+                 L 215 170 
+                 Q 215 185 150 185 
+                 Q 85 185 85 170 Z" 
+              fill="url(#bellRimGradient)" stroke="#4C1D95" stroke-width="3"/>
+              
+        <!-- Clapper (Pendulum Ball) -->
+        <circle cx="150" cy="185" r="10" fill="#1E1B4B"/>
+        
+        <!-- Shine/Highlight -->
+        <ellipse cx="130" cy="120" rx="15" ry="30" fill="white" opacity="0.2" transform="rotate(-10 130 120)"/>
+      </g>
+    </g>
+    
+    <!-- Notification Badge (Floating independently slightly) -->
+    <g transform="translate(190, 85)">
+      <animateTransform attributeName="transform" type="translate" values="190,85; 190,80; 190,85" dur="2s" repeatCount="indefinite"/>
+      <circle cx="0" cy="0" r="18" fill="#EF4444" stroke="white" stroke-width="3"/>
+      <text x="0" y="7" font-size="20" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">1</text>
+    </g>
+  </g>
+  
+  <!-- Modern Sound Waves -->
+  <g stroke="#7C3AED" stroke-width="4" stroke-linecap="round" fill="none">
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,-8; 0,0" dur="3s" repeatCount="indefinite"/>
+    
+    <!-- Right waves -->
+    <path d="M 230 120 Q 245 135 230 150" opacity="0.6">
+        <animate attributeName="opacity" values="0.6;1;0.6" dur="0.8s" repeatCount="indefinite"/>
+        <animate attributeName="d" values="M 230 120 Q 245 135 230 150; M 235 115 Q 255 135 235 155; M 230 120 Q 245 135 230 150" dur="0.8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 245 110 Q 265 135 245 160" opacity="0.3">
+        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="0.8s" begin="0.2s" repeatCount="indefinite"/>
+    </path>
+    
+    <!-- Left waves -->
+    <path d="M 70 120 Q 55 135 70 150" opacity="0.6">
+        <animate attributeName="opacity" values="0.6;1;0.6" dur="0.8s" repeatCount="indefinite"/>
+        <animate attributeName="d" values="M 70 120 Q 55 135 70 150; M 65 115 Q 45 135 65 155; M 70 120 Q 55 135 70 150" dur="0.8s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  
+  <!-- Floating particles -->
+  <circle cx="45" cy="180" r="3" fill="#A78BFA" opacity="0.6">
+    <animate attributeName="cy" values="180;170;180" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="260" cy="190" r="2" fill="#A78BFA" opacity="0.6">
+    <animate attributeName="cy" values="190;200;190" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>
