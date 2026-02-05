@@ -26,6 +26,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { PlansClient } from "@/components/planos/PlansClient";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
+import { InteractiveBackground } from "@/components/landing/InteractiveBackground";
 
 export default async function LandingPage() {
   const session = await getCurrentUser();
@@ -50,8 +51,11 @@ export default async function LandingPage() {
       <LandingNavbar session={session} />
 
       {/* Hero Section */}
-      <section className="pt-24 md:pt-32 pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white">
-        <div className="container mx-auto px-6">
+      <section className="relative pt-24 md:pt-32 pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white overflow-hidden">
+        {/* Interactive Background */}
+        <InteractiveBackground />
+
+        <div className="relative z-10 container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             {/* Urgency Badge */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6">
@@ -93,8 +97,7 @@ export default async function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href={session ? "/dashboard" : "/login"}
-                className="group px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all flex items-center gap-2"
-              >
+                className="group px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all flex items-center gap-2">
                 {session ? "Acessar Meu Painel" : "Começar Grátis Agora"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </Link>
