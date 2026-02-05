@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
+import { NotificationsModal } from "@/components/modals/NotificationsModal"; // New Import
 import { MobileMenuButton } from "./MobileMenuButton";
 
 interface SidebarProps {
@@ -29,6 +30,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // New State
     const [loading, setLoading] = useState(false);
 
     const menuItems = [
@@ -80,6 +82,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
+                        onClick={() => setIsNotificationsOpen(true)} // Wired onClick
                         aria-label="Notificações"
                         className="p-2 text-gray-500 hover:text-gray-900 relative touch-manipulation"
                     >
@@ -162,6 +165,12 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                     onClose={() => setIsLogoutModalOpen(false)}
                     onConfirm={handleLogout}
                     loading={loading}
+                />
+
+                {/* Notifications Modal */}
+                <NotificationsModal
+                    isOpen={isNotificationsOpen}
+                    onClose={() => setIsNotificationsOpen(false)}
                 />
             </div>
         </>
