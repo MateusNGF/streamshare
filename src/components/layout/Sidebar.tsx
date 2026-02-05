@@ -13,7 +13,8 @@ import {
     LogOut,
     FileSignature,
     ShieldCheck,
-    FolderOpen
+    FolderOpen,
+    Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -62,11 +63,34 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
 
     return (
         <>
+            {/* Mobile Header */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 z-[45] h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6">
+                <div className="flex items-center gap-3">
+                    <MobileMenuButton
+                        isOpen={isMobileMenuOpen}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    />
+                    <Image
+                        src="/assets/logo-branca.jpg"
+                        alt="StreamShare"
+                        width={45}
+                        height={45}
+                        className="rounded-lg"
+                    />
+                </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        aria-label="Notificações"
+                        className="p-2 text-gray-500 hover:text-gray-900 relative touch-manipulation"
+                    >
+                        <Bell size={20} />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                    </button>
+
+                </div>
+            </header>
             {/* Mobile Menu Button */}
-            <MobileMenuButton
-                isOpen={isMobileMenuOpen}
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
+
 
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (

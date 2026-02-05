@@ -34,15 +34,7 @@ export default async function DashboardPage() {
                 title="Dashboard"
                 description="Bem-vindo de volta!"
                 action={
-                    <div className="flex items-center gap-4">
-                        <button
-                            aria-label="Notificações"
-                            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:text-gray-900 shadow-sm relative touch-manipulation"
-                        >
-                            <Bell size={20} />
-                            <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-                        </button>
-                    </div>
+                    <></>
                 }
             />
 
