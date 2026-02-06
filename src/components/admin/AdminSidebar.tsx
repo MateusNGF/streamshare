@@ -9,9 +9,11 @@ import {
     Settings,
     LogOut,
     User,
+    Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
+import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { MobileMenuButton } from "../layout/MobileMenuButton";
 
 const menuItems = [
@@ -25,6 +27,7 @@ export function AdminSidebar() {
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleLogout = async () => {
@@ -45,11 +48,35 @@ export function AdminSidebar() {
 
     return (
         <>
-            {/* Mobile Menu Button */}
-            <MobileMenuButton
-                isOpen={isMobileMenuOpen}
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
+            {/* Mobile Header */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 z-[45] h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6">
+                <div className="flex items-center gap-3">
+                    <MobileMenuButton
+                        isOpen={isMobileMenuOpen}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    />
+                    <div className="flex items-center gap-2">
+                        <Image
+                            src="/assets/logo-branca.jpg"
+                            alt="StreamShare"
+                            width={32}
+                            height={32}
+                            className="rounded-lg"
+                        />
+                        <span className="text-sm font-bold text-gray-900">Painel - StreamShare </span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsNotificationsOpen(true)}
+                        aria-label="Notificações"
+                        className="p-2 text-gray-500 hover:text-gray-900 relative touch-manipulation"
+                    >
+                        <Bell size={20} />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                    </button>
+                </div>
+            </header>
 
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (
@@ -137,6 +164,10 @@ export function AdminSidebar() {
                     onClose={() => setIsLogoutModalOpen(false)}
                     onConfirm={handleLogout}
                     loading={loading}
+                />
+                <NotificationsModal
+                    isOpen={isNotificationsOpen}
+                    onClose={() => setIsNotificationsOpen(false)}
                 />
             </div>
         </>
