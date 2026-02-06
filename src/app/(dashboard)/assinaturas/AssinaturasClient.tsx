@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Plus, Search, Eye, XCircle, Trash } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -10,10 +10,12 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/hooks/useToast";
 import { useCurrency } from "@/hooks/useCurrency";
-import { createBulkAssinaturas } from "@/actions/assinaturas";
+import { createBulkAssinaturas, cancelarAssinatura } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
+import { CancelarAssinaturaModal } from "@/components/modals/CancelarAssinaturaModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import { Dropdown } from "@/components/ui/Dropdown";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -27,15 +29,19 @@ export default function AssinaturasClient({
     streamings
 }: AssinaturasClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const toast = useToast();
     const { format } = useCurrency();
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
+    const [cancelling, setCancelling] = useState(false);
 
-    // Filters
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>("all");
-    const [streamingFilter, setStreamingFilter] = useState<string>("all");
+    // Get current filter values from URL
+    const searchTerm = searchParams.get("search") || "";
+    const statusFilter = searchParams.get("status") || "all";
+    const streamingFilter = searchParams.get("streaming") || "all";
 
     const filters: FilterConfig[] = [
         {
@@ -68,9 +74,15 @@ export default function AssinaturasClient({
     ];
 
     const handleFilterChange = (key: string, value: string) => {
-        if (key === "search") setSearchTerm(value);
-        if (key === "status") setStatusFilter(value);
-        if (key === "streaming") setStreamingFilter(value);
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (value === "" || value === "all") {
+            params.delete(key);
+        } else {
+            params.set(key, value);
+        }
+
+        router.push(`/assinaturas?${params.toString()}`);
     };
 
     const handleCreateMultiple = async (data: any) => {
@@ -88,13 +100,22 @@ export default function AssinaturasClient({
         }
     };
 
-    // Filter Logic
-    const filteredSubscriptions = initialSubscriptions.filter(sub => {
-        const matchesSearch = sub.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === "all" || sub.status === statusFilter;
-        const matchesStreaming = streamingFilter === "all" || sub.streamingId.toString() === streamingFilter;
-        return matchesSearch && matchesStatus && matchesStreaming;
-    });
+    const handleCancelAssinatura = async () => {
+        if (!selectedAssinatura) return;
+
+        setCancelling(true);
+        try {
+            await cancelarAssinatura(selectedAssinatura.id);
+            toast.success('Assinatura cancelada com sucesso');
+            setCancelModalOpen(false);
+            setSelectedAssinatura(null);
+            router.refresh();
+        } catch (error: any) {
+            toast.error(error.message || 'Falha ao cancelar assinatura');
+        } finally {
+            setCancelling(false);
+        }
+    };
 
     // Prepare streamings data for the multiple modal
     const streamingsWithOcupados = streamings.map(s => ({
@@ -150,9 +171,7 @@ export default function AssinaturasClient({
                         }}
                         onChange={handleFilterChange}
                         onClear={() => {
-                            setSearchTerm("");
-                            setStatusFilter("all");
-                            setStreamingFilter("all");
+                            router.push('/assinaturas');
                         }}
                     />
 
@@ -169,8 +188,8 @@ export default function AssinaturasClient({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredSubscriptions.length > 0 ? (
-                                    filteredSubscriptions.map((sub) => (
+                                {initialSubscriptions.length > 0 ? (
+                                    initialSubscriptions.map((sub) => (
                                         <TableRow key={sub.id}>
                                             <TableCell className="font-medium">
                                                 <div className="flex flex-col">
@@ -200,10 +219,29 @@ export default function AssinaturasClient({
                                                 <StatusBadge status={sub.status} />
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {/* TODO: Add edit/cancel actions */}
-                                                <Button variant="ghost" size="sm">
-                                                    Detalhes
-                                                </Button>
+                                                <Dropdown
+                                                    options={[
+                                                        {
+                                                            label: "Detalhes",
+                                                            icon: <Eye size={16} />,
+                                                            onClick: () => {
+                                                                // TODO: Implement details view
+                                                                toast.info("Detalhes em breve");
+                                                            }
+                                                        },
+                                                        ...(sub.status !== "cancelada" ? [
+                                                            {
+                                                                label: "Cancelar",
+                                                                icon: <Trash size={16} />,
+                                                                onClick: () => {
+                                                                    setSelectedAssinatura(sub);
+                                                                    setCancelModalOpen(true);
+                                                                },
+                                                                variant: "danger" as const
+                                                            }
+                                                        ] : [])
+                                                    ]}
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -234,6 +272,17 @@ export default function AssinaturasClient({
                 participantes={participantes}
                 streamings={streamingsWithOcupados}
                 loading={loading}
+            />
+
+            <CancelarAssinaturaModal
+                isOpen={cancelModalOpen}
+                onClose={() => {
+                    setCancelModalOpen(false);
+                    setSelectedAssinatura(null);
+                }}
+                onConfirm={handleCancelAssinatura}
+                assinatura={selectedAssinatura}
+                loading={cancelling}
             />
         </PageContainer>
     );

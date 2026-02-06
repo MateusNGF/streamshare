@@ -54,7 +54,7 @@ export function AdminSidebar() {
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/60 z-40 lg:hidden animate-fade-in backdrop-blur-sm"
                     onClick={closeMobileMenu}
                     aria-hidden="true"
                 />
@@ -63,7 +63,7 @@ export function AdminSidebar() {
             {/* Sidebar */}
             <div
                 className={cn(
-                    "fixed lg:static w-64 bg-white border-r h-screen flex flex-col z-[42] transition-transform duration-300 lg:transform-none",
+                    "fixed lg:static w-64 bg-white border-r h-screen flex flex-col z-[42] transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:transform-none shadow-2xl lg:shadow-none",
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
             >
@@ -73,7 +73,7 @@ export function AdminSidebar() {
                         alt="StreamShare"
                         width={40}
                         height={40}
-                        className="rounded-lg"
+                        className="rounded-lg transition-transform hover:scale-110 duration-300"
                     />
                     <div className="flex flex-col">
                         <span className="text-xl font-bold text-gray-900">StreamShare</span>
@@ -93,13 +93,16 @@ export function AdminSidebar() {
                                         aria-label={item.label}
                                         aria-current={isActive ? "page" : undefined}
                                         className={cn(
-                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all touch-manipulation",
+                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 touch-manipulation group",
                                             isActive
-                                                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1"
                                         )}
                                     >
-                                        <item.icon size={20} className={isActive ? "text-white" : "text-gray-400"} />
+                                        <item.icon size={20} className={cn(
+                                            "transition-transform duration-200",
+                                            isActive ? "text-white" : "text-gray-400 group-hover:scale-110"
+                                        )} />
                                         <span className="font-medium">{item.label}</span>
                                     </Link>
                                 </li>
@@ -111,9 +114,9 @@ export function AdminSidebar() {
                 <div className="p-4 border-t border-gray-100">
                     <Link
                         href="/dashboard"
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all touch-manipulation mb-2"
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1 transition-all duration-200 touch-manipulation mb-2 group"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform duration-200">
                             <path d="m12 19-7-7 7-7" />
                             <path d="M19 12H5" />
                         </svg>
@@ -122,9 +125,9 @@ export function AdminSidebar() {
                     <button
                         onClick={() => setIsLogoutModalOpen(true)}
                         aria-label="Sair da conta"
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 transition-all touch-manipulation"
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 hover:translate-x-1 transition-all duration-200 touch-manipulation group"
                     >
-                        <LogOut size={20} />
+                        <LogOut size={20} className="group-hover:scale-110 transition-transform duration-200" />
                         <span>Sair</span>
                     </button>
                 </div>

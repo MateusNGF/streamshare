@@ -4,9 +4,21 @@ import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
 import AssinaturasClient from "./AssinaturasClient";
 
-export default async function AssinaturasPage() {
+interface AssinaturasPageProps {
+    searchParams: {
+        status?: string;
+        streaming?: string;
+        search?: string;
+    };
+}
+
+export default async function AssinaturasPage({ searchParams }: AssinaturasPageProps) {
     const [assinaturas, participantes, streamings] = await Promise.all([
-        getAssinaturas(),
+        getAssinaturas({
+            status: searchParams.status,
+            streamingId: searchParams.streaming,
+            searchTerm: searchParams.search
+        }),
         getParticipantes(),
         getStreamings()
     ]);
@@ -19,3 +31,4 @@ export default async function AssinaturasPage() {
         />
     );
 }
+

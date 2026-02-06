@@ -213,6 +213,7 @@ model Assinatura {
   diasAtraso             Int                 @default(0)
   dataSuspensao          DateTime?
   motivoSuspensao        String?
+  dataCancelamento       DateTime?
   cobrancaAutomaticaPaga Boolean             @default(false)
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt

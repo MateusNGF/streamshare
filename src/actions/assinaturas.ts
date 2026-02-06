@@ -25,13 +25,46 @@ async function getContext() {
     return { userId: session.userId, contaId: userAccount.contaId };
 }
 
-export async function getAssinaturas() {
+export async function getAssinaturas(filters?: {
+    status?: string;
+    streamingId?: string;
+    searchTerm?: string;
+}) {
     const { contaId } = await getContext();
 
+    // Build where clause based on filters
+    const whereClause: any = {
+        participante: { contaId },
+    };
+
+    // Status filter - exclude 'cancelada' by default when no status is specified
+    if (filters?.status && filters.status !== "all") {
+        whereClause.status = filters.status;
+    } else {
+        // When "all" or no filter, exclude cancelled subscriptions
+        whereClause.status = {
+            not: StatusAssinatura.cancelada
+        };
+    }
+
+    // Streaming filter
+    if (filters?.streamingId && filters.streamingId !== "all") {
+        whereClause.streamingId = parseInt(filters.streamingId);
+    }
+
+    // Search filter (participant name)
+    if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
+        whereClause.participante = {
+            contaId,
+            nome: {
+                contains: filters.searchTerm,
+                mode: 'insensitive'
+            }
+        };
+    }
+
     return prisma.assinatura.findMany({
-        where: {
-            participante: { contaId },
-        },
+        where: whereClause,
         include: {
             participante: true,
             streaming: {
@@ -361,4 +394,83 @@ export async function createBulkAssinaturas(data: {
         created: results.length,
         assinaturas: results
     };
+}
+
+/**
+ * Cancel a subscription
+ * Only active or suspended subscriptions can be cancelled
+ */
+export async function cancelarAssinatura(assinaturaId: number) {
+    const { contaId } = await getContext();
+
+    // Validate subscription exists and belongs to user's account
+    const assinatura = await prisma.assinatura.findUnique({
+        where: { id: assinaturaId },
+        include: {
+            participante: {
+                select: {
+                    id: true,
+                    nome: true,
+                    contaId: true,
+                    whatsappNumero: true
+                }
+            },
+            streaming: {
+                include: {
+                    catalogo: true
+                }
+            }
+        }
+    });
+
+    if (!assinatura) {
+        throw new Error("Assinatura não encontrada");
+    }
+
+    if (assinatura.participante.contaId !== contaId) {
+        throw new Error("Você não tem permissão para cancelar esta assinatura");
+    }
+
+    // Validate current status
+    if (assinatura.status === StatusAssinatura.cancelada) {
+        throw new Error("Esta assinatura já está cancelada");
+    }
+
+    if (assinatura.status !== StatusAssinatura.ativa && assinatura.status !== StatusAssinatura.suspensa) {
+        throw new Error("Apenas assinaturas ativas ou suspensas podem ser canceladas");
+    }
+
+    // Update subscription status to cancelled
+    const updatedAssinatura = await prisma.assinatura.update({
+        where: { id: assinaturaId },
+        data: {
+            status: StatusAssinatura.cancelada,
+            dataCancelamento: new Date(),
+            updatedAt: new Date()
+        }
+    });
+
+    // Send WhatsApp notification (non-blocking)
+    try {
+        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+
+        const mensagem = `🚫 *Assinatura Cancelada*\n\nOlá ${assinatura.participante.nome},\n\nSua assinatura de *${assinatura.streaming.catalogo.nome}* foi cancelada.\n\nSe você tiver alguma dúvida, entre em contato conosco.`;
+
+        await sendWhatsAppNotification(
+            contaId,
+            "assinatura_suspensa", // Reusing existing type as closest match
+            assinatura.participante.id,
+            mensagem
+        );
+    } catch (error) {
+        console.error("Erro ao enviar notificação WhatsApp:", error);
+    }
+
+    // Revalidate all relevant paths
+    revalidatePath("/assinaturas");
+    revalidatePath("/participantes");
+    revalidatePath("/streamings");
+    revalidatePath("/cobrancas");
+
+    return updatedAssinatura;
 }
