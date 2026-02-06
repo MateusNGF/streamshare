@@ -184,7 +184,7 @@ model Participante {
   id             Int     @id @default(autoincrement())
   contaId        Int
   nome           String
-  whatsappNumero String
+  whatsappNumero String?
   cpf            String? @default("")
   email          String?
   userId         Int?    @unique

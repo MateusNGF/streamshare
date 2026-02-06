@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 interface ParticipantCardProps {
     id: number;
     name: string;
-    whatsapp: string;
+    whatsapp?: string;
     email?: string;
     cpf?: string | null;
     subscriptionsCount: number;
@@ -58,10 +58,12 @@ export function ParticipantCard({
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone size={16} className="text-primary" />
-                    <span>{whatsapp}</span>
-                </div>
+                {whatsapp && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Phone size={16} className="text-primary" />
+                        <span>{whatsapp}</span>
+                    </div>
+                )}
                 {email && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Mail size={16} className="text-primary" />

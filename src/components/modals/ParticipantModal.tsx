@@ -23,7 +23,7 @@ interface ParticipantModalProps {
 
 export interface ParticipantFormData {
     nome: string;
-    whatsappNumero: string;
+    whatsappNumero?: string;
     cpf?: string;
     email?: string;
 }
@@ -67,11 +67,11 @@ export function ParticipantModal({
             }
         }
 
-        // WhatsApp validation
-        if (!formData.whatsappNumero.trim()) {
-            newErrors.whatsappNumero = ValidationMessages.phone.required;
-        } else if (!validatePhone(formData.whatsappNumero)) {
-            newErrors.whatsappNumero = ValidationMessages.phone.invalid;
+        // WhatsApp validation (optional)
+        if (formData.whatsappNumero && formData.whatsappNumero.trim() !== "") {
+            if (!validatePhone(formData.whatsappNumero)) {
+                newErrors.whatsappNumero = ValidationMessages.phone.invalid;
+            }
         }
 
         // Email validation (optional field)
@@ -137,10 +137,9 @@ export function ParticipantModal({
                 />
                 <PhoneInput
                     label="WhatsApp"
-                    value={formData.whatsappNumero}
+                    value={formData.whatsappNumero || ""}
                     onChange={(value) => handleChange("whatsappNumero", value)}
                     error={errors.whatsappNumero}
-                    required
                 />
                 <MaskedInput
                     label="CPF"
@@ -152,7 +151,7 @@ export function ParticipantModal({
                     error={errors.cpf}
                 />
                 <Input
-                    label="Email (opcional)"
+                    label="Email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}

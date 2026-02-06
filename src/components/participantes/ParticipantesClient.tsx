@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/useToast";
 interface Participante {
     id: number;
     nome: string;
-    whatsappNumero: string;
+    whatsappNumero: string | null;
     cpf: string | null;
     email?: string | null;
     _count: {
@@ -41,7 +41,7 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
             const search = searchTerm.toLowerCase();
             return (
                 p.nome.toLowerCase().includes(search) ||
-                p.whatsappNumero.includes(search) ||
+                (p.whatsappNumero && p.whatsappNumero.includes(search)) ||
                 (p.cpf && p.cpf.includes(search))
             );
         });
@@ -154,7 +154,7 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
                                 key={p.id}
                                 id={p.id}
                                 name={p.nome}
-                                whatsapp={p.whatsappNumero}
+                                whatsapp={p.whatsappNumero || undefined}
                                 email={p.email || undefined}
                                 cpf={p.cpf}
                                 subscriptionsCount={p._count.assinaturas}
@@ -193,7 +193,7 @@ export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
                     selectedParticipant
                         ? {
                             nome: selectedParticipant.nome,
-                            whatsappNumero: selectedParticipant.whatsappNumero,
+                            whatsappNumero: selectedParticipant.whatsappNumero || "",
                             cpf: selectedParticipant.cpf ?? "",
                             email: selectedParticipant.email || "",
                         }

@@ -43,7 +43,7 @@ export async function getParticipantes() {
 
 export async function createParticipante(data: {
     nome: string;
-    whatsappNumero: string;
+    whatsappNumero?: string;
     cpf?: string;
     email?: string;
 }) {
@@ -58,7 +58,7 @@ export async function createParticipante(data: {
         throw new Error("CPF inválido");
     }
 
-    if (!data.whatsappNumero || !validatePhone(data.whatsappNumero)) {
+    if (data.whatsappNumero && data.whatsappNumero.trim() !== "" && !validatePhone(data.whatsappNumero)) {
         throw new Error("Telefone inválido");
     }
 
@@ -70,6 +70,7 @@ export async function createParticipante(data: {
         data: {
             ...data,
             cpf: data.cpf || null,
+            whatsappNumero: data.whatsappNumero || null,
             contaId,
         },
     });
@@ -82,7 +83,7 @@ export async function updateParticipante(
     id: number,
     data: {
         nome: string;
-        whatsappNumero: string;
+        whatsappNumero?: string;
         cpf?: string;
         email?: string;
     }
@@ -98,7 +99,7 @@ export async function updateParticipante(
         throw new Error("CPF inválido");
     }
 
-    if (!data.whatsappNumero || !validatePhone(data.whatsappNumero)) {
+    if (data.whatsappNumero && data.whatsappNumero.trim() !== "" && !validatePhone(data.whatsappNumero)) {
         throw new Error("Telefone inválido");
     }
 
@@ -111,6 +112,7 @@ export async function updateParticipante(
         data: {
             ...data,
             cpf: data.cpf || null,
+            whatsappNumero: data.whatsappNumero || null,
         },
     });
 
