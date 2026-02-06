@@ -90,7 +90,7 @@ export function Dropdown({ options }: DropdownProps) {
             {isOpen && createPortal(
                 <div
                     data-dropdown-portal
-                    className="fixed z-[9999] w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-100"
+                    className="fixed z-[9999] w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-scale-in origin-top-left duration-200"
                     style={{
                         top: position.top,
                         left: position.left,

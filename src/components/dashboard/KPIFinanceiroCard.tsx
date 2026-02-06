@@ -20,8 +20,8 @@ export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor }: KPIFinanc
     const { format } = useCurrency();
 
     return (
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-            <div className={`inline-flex p-3 rounded-2xl ${corConfig[cor]} mb-4`}>
+        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className={`inline-flex p-3 rounded-2xl ${corConfig[cor]} mb-4 transition-transform hover:scale-110 duration-300`}>
                 <Icon className="w-6 h-6" />
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">

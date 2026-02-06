@@ -26,8 +26,8 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
     return (
         <nav
             className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out ${isScrolled || isMenuOpen
-                ? "bg-[#0f172a] border-b border-gray-800 shadow-xl backdrop-blur-xl bg-opacity-95"
-                : "bg-transparent border-transparent py-2"
+                ? "bg-[#0f172a]/95 border-b border-gray-800 shadow-xl backdrop-blur-xl"
+                : "bg-transparent border-transparent py-4"
                 }`}
         >
             <div className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between w-full">
@@ -38,7 +38,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                         alt="StreamShare Logo"
                         width={48}
                         height={48}
-                        className="rounded-xl shadow-lg"
+                        className="rounded-xl shadow-lg transition-transform hover:rotate-3 duration-300"
                     />
                     <span className="text-2xl font-bold text-white tracking-tight">StreamShare</span>
                 </div>
@@ -46,16 +46,16 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                 {/* Desktop Navigation */}
                 <div className="hidden min-w-[50%] lg:flex items-center justify-center gap-10">
                     <a href="#recursos" className="group relative text-gray-300 hover:text-white font-medium transition-colors whitespace-nowrap py-2">
-                        <span>Recursos</span>
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                        <span className="relative z-10 transition-transform group-hover:-translate-y-0.5 inline-block">Recursos</span>
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
                     <a href="#planos" className="group relative text-gray-300 hover:text-white font-medium transition-colors whitespace-nowrap py-2">
-                        <span>Planos</span>
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                        <span className="relative z-10 transition-transform group-hover:-translate-y-0.5 inline-block">Planos</span>
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
                     <a href="#faq" className="group relative text-gray-300 hover:text-white font-medium transition-colors whitespace-nowrap py-2">
-                        <span>FAQ</span>
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                        <span className="relative z-10 transition-transform group-hover:-translate-y-0.5 inline-block">FAQ</span>
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
                 </div>
 
@@ -110,11 +110,11 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
             </div>
 
             {/* Mobile Menu Overlay */}
-            <div className={`lg:hidden absolute top-full left-0 w-full bg-[#0f172a] border-b border-gray-800 shadow-2xl transition-all duration-300 ease-in-out origin-top ${isMenuOpen ? "opacity-100 scale-y-100 max-h-[500px] visible" : "opacity-0 scale-y-95 max-h-0 invisible"}`}>
+            <div className={`lg:hidden absolute top-full left-0 w-full bg-[#0f172a]/95 backdrop-blur-xl border-b border-gray-800 shadow-2xl transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) origin-top ${isMenuOpen ? "opacity-100 scale-y-100 max-h-[500px] visible" : "opacity-0 scale-y-95 max-h-0 invisible"}`}>
                 <div className="p-6 flex flex-col gap-2">
                     <a
                         href="#recursos"
-                        className="flex items-center justify-between text-lg font-medium text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all"
+                        className="flex items-center justify-between text-lg font-medium text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all animate-slide-in-from-left stagger-1"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Recursos
@@ -122,7 +122,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                     </a>
                     <a
                         href="#planos"
-                        className="flex items-center justify-between text-lg font-medium text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all"
+                        className="flex items-center justify-between text-lg font-medium text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all animate-slide-in-from-left stagger-2"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Planos
@@ -130,7 +130,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                     </a>
                     <a
                         href="#faq"
-                        className="flex items-center justify-between text-lg font-medium text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all"
+                        className="flex items-center justify-between text-lg font-medium text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-xl transition-all animate-slide-in-from-left stagger-3"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         FAQ

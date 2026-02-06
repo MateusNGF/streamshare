@@ -43,7 +43,7 @@ export function Drawer({ isOpen, onClose, title, children, footer, side = "right
         <div className="fixed inset-0 z-50 flex justify-end">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
                 onClick={onClose}
                 aria-hidden="true"
             />
@@ -61,8 +61,10 @@ export function Drawer({ isOpen, onClose, title, children, footer, side = "right
                     aria-modal="true"
                     aria-labelledby={titleId.current}
                     className={cn(
-                        "relative bg-white shadow-2xl flex flex-col overflow-hidden animate-in duration-300 ease-in-out",
-                        sideClasses
+                        "relative bg-white shadow-2xl flex flex-col overflow-hidden",
+                        side === "right"
+                            ? "inset-y-0 right-0 h-full w-full sm:w-[400px] border-l rounded-l-2xl animate-slide-in-from-right [animation-duration:400ms] [animation-timing-function:cubic-bezier(0.16,1,0.3,1)]"
+                            : "inset-x-0 bottom-0 h-[90vh] w-full border-t rounded-t-2xl animate-slide-in-from-bottom [animation-duration:400ms] [animation-timing-function:cubic-bezier(0.16,1,0.3,1)]"
                     )}
                 >
                     {/* Header */}
@@ -73,7 +75,7 @@ export function Drawer({ isOpen, onClose, title, children, footer, side = "right
                         <button
                             onClick={onClose}
                             aria-label="Fechar"
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all"
+                            className="p-2 hover:bg-gray-100 rounded-full transition-all hover:rotate-90 duration-300"
                         >
                             <X size={20} className="text-gray-500" />
                         </button>

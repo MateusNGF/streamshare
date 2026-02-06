@@ -62,7 +62,7 @@ export function Tabs({ tabs, defaultTab, value, onValueChange }: TabsProps) {
             </div>
 
             {/* Tab Content */}
-            <div className="animate-in fade-in duration-300">
+            <div className="animate-fade-in slide-in-from-left duration-300" key={activeTab}>
                 {activeTabData?.content}
             </div>
         </div>

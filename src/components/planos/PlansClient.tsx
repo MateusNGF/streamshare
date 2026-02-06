@@ -58,10 +58,10 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
     return (
         <div className="w-full">
             {showHeader && (
-                <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="text-center mb-16 animate-fade-in slide-in-from-bottom-4 duration-700">
                     <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Planos e Preços</h2>
                     <p className="text-xl text-gray-600 mb-4">Escolha o plano ideal para você</p>
-                    <div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full hover:bg-green-200 transition-colors">
+                    <div className="inline-flex items-center gap-2 bg-green-100 px-6 py-3 rounded-full hover:bg-green-200 transition-colors animate-bounce-subtle">
                         <Star className="text-green-600" size={20} fill="currentColor" />
                         <span className="text-green-700 font-semibold">
                             Garantia de reembolso em 7 dias
@@ -71,7 +71,7 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
             )}
 
             <div className="mt-8 flex flex-col items-center justify-center gap-8 px-4 lg:flex-row lg:items-stretch lg:flex-wrap">
-                {PLANS_LIST.map((plan) => {
+                {PLANS_LIST.map((plan, index) => {
                     const isCurrent = currentPlan === plan.id;
                     const isHighlighted = plan.highlighted;
 
@@ -79,17 +79,18 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                         <div
                             key={plan.id}
                             className={`
-                                relative flex flex-col p-8 rounded-[32px] transition-all duration-300 w-full max-w-sm
+                                relative flex flex-col p-8 rounded-[32px] transition-all duration-300 w-full max-w-sm animate-scale-in
                                 ${isHighlighted
                                     ? "bg-gray-900 text-white shadow-xl scale-105 border-2 border-primary ring-4 ring-primary/10 z-10 hover:shadow-2xl hover:scale-[1.07]"
-                                    : "bg-white text-gray-900 border border-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-2"
+                                    : "bg-white text-gray-900 border border-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-2 hover:border-primary/20"
                                 }
                             `}
+                            style={{ animationDelay: `${index * 150}ms` }}
                         >
                             {/* Badge Popular (se houver) */}
                             {isHighlighted && (
-                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 animate-pulse whitespace-nowrap">
-                                    <Star size={14} fill="currentColor" />
+                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 animate-pulse-subtle whitespace-nowrap">
+                                    <Star size={14} fill="currentColor" className="animate-spin-slow" />
                                     Mais Popular
                                 </div>
                             )}

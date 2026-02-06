@@ -58,50 +58,50 @@ export default async function LandingPage() {
         <div className="relative z-10 container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             {/* Urgency Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6">
-              <Zap className="text-yellow-300" size={20} />
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6 animate-fade-in">
+              <Zap className="text-yellow-300 animate-pulse" size={20} />
               <span className="font-semibold text-white">
                 Junte-se aos early adopters que já estão economizando
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slide-in-from-bottom stagger-1">
               Economize até{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-green-300">
                 80% em streaming
               </span>{" "}
               sem complicação
             </h1>
-            <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto animate-slide-in-from-bottom stagger-2">
               Chega de pagar caro sozinho! Compartilhe Netflix, Spotify, Disney+ e mais
               com seus amigos e familiares. Organize grupos, automatize cobranças e
               nunca mais se preocupe com contas atrasadas.
             </p>
 
             {/* Value Props */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mb-10 text-purple-100">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-6 mb-10 text-purple-100 animate-fade-in stagger-3">
+              <div className="flex items-center gap-2 transition-transform hover:scale-110 duration-300">
                 <CheckCircle2 className="text-green-300" size={20} />
                 <span>Sem taxa inicial</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 transition-transform hover:scale-110 duration-300">
                 <CheckCircle2 className="text-green-300" size={20} />
                 <span>Cancele quando quiser</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 transition-transform hover:scale-110 duration-300">
                 <CheckCircle2 className="text-green-300" size={20} />
                 <span>100% seguro</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in stagger-4">
               <Link
                 href={session ? "/dashboard" : "/login"}
-                className="group px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all flex items-center gap-2">
+                className="group px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2">
                 {session ? "Acessar Meu Painel" : "Começar Grátis Agora"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </Link>
-              <button className="px-8 py-4 border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 transition-all">
+              <button className="px-8 py-4 border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-300">
                 <a href="#como-funciona">Ver Como Funciona</a>
               </button>
             </div>
@@ -135,8 +135,8 @@ export default async function LandingPage() {
               { num: "Até 80%", label: "De Economia Possível", icon: DollarSign },
               { num: "100%", label: "Automatizado", icon: Zap },
             ].map((stat, idx) => (
-              <div key={idx} className="text-center text-white">
-                <stat.icon className="mx-auto mb-3" size={40} />
+              <div key={idx} className="text-center text-white animate-scale-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                <stat.icon className="mx-auto mb-3 transition-transform hover:scale-110 duration-300" size={40} />
                 <div className="text-4xl md:text-5xl font-bold mb-2">{stat.num}</div>
                 <div className="text-purple-100 text-lg">{stat.label}</div>
               </div>
@@ -182,10 +182,10 @@ export default async function LandingPage() {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all"
+                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="flex items-start gap-4">
-                  <div className="bg-red-50 p-3 rounded-xl">
+                  <div className="bg-red-50 p-3 rounded-xl transition-transform hover:scale-110 duration-300">
                     <item.icon className="text-red-500" size={24} />
                   </div>
                   <div className="flex-1">
@@ -235,9 +235,9 @@ export default async function LandingPage() {
             ].map((feature, idx) => (
               <div
                 key={idx}
-                className="bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100"
+                className="bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 group"
               >
-                <div className="bg-primary/10 p-4 rounded-xl w-fit mb-4">
+                <div className="bg-primary/10 p-4 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
                   <feature.icon className="text-primary" size={32} />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
@@ -282,9 +282,9 @@ export default async function LandingPage() {
             ].map((feature, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-4 p-6 bg-gray-50 rounded-xl hover:bg-white hover:shadow-md transition-all border border-gray-100"
+                className="flex items-start gap-4 p-6 bg-gray-50 rounded-xl hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 group"
               >
-                <div className="bg-primary/10 p-3 rounded-lg">
+                <div className="bg-primary/10 p-3 rounded-lg group-hover:scale-110 transition-transform duration-300">
                   <feature.icon className="text-primary" size={24} />
                 </div>
                 <div>
@@ -319,8 +319,8 @@ export default async function LandingPage() {
                 desc: "Compartilhe e gerencie cobranças automaticamente",
               },
             ].map((step, idx) => (
-              <div key={idx} className="text-center">
-                <div className="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div key={idx} className="text-center group">
+                <div className="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
                   {step.num}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
@@ -448,13 +448,13 @@ export default async function LandingPage() {
             ].map((faq, idx) => (
               <details
                 key={idx}
-                className="bg-gray-50 p-6 rounded-xl border border-gray-100 group"
+                className="bg-gray-50 p-6 rounded-xl border border-gray-100 group hover:shadow-md transition-all duration-300"
               >
-                <summary className="font-bold text-gray-900 cursor-pointer list-none flex items-center justify-between">
+                <summary className="font-bold text-gray-900 cursor-pointer list-none flex items-center justify-between group-hover:text-primary transition-colors">
                   {faq.q}
-                  <span className="text-primary">+</span>
+                  <span className="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
                 </summary>
-                <p className="mt-4 text-gray-600">{faq.a}</p>
+                <p className="mt-4 text-gray-600 animate-fade-in">{faq.a}</p>
               </details>
             ))}
           </div>
@@ -475,7 +475,7 @@ export default async function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
               <Link
                 href={session ? "/dashboard" : "/login"}
-                className="group px-10 py-5 bg-white text-primary font-bold text-lg rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all flex items-center gap-2"
+                className="group px-10 py-5 bg-white text-primary font-bold text-lg rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2"
               >
                 {session ? "Ir para o Painel" : "Começar Agora - É Grátis"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={24} />
@@ -582,16 +582,16 @@ export default async function LandingPage() {
               </p>
             </div>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                 <Instagram size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110">
                 <Linkedin size={20} />
               </a>
             </div>

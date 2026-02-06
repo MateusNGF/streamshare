@@ -41,7 +41,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
                 onClick={onClose}
                 aria-hidden="true"
             />
@@ -58,7 +58,11 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby={titleId.current}
-                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[70vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-200 ${className || 'sm:max-w-2xl'}`}
+                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[70vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden 
+                        animate-slide-in-from-bottom sm:animate-scale-in 
+                        [animation-duration:400ms] sm:[animation-duration:300ms]
+                        [animation-timing-function:cubic-bezier(0.16,1,0.3,1)] sm:[animation-timing-function:ease-out]
+                        ${className || 'sm:max-w-2xl'}`}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100">
@@ -68,7 +72,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
                         <button
                             onClick={onClose}
                             aria-label="Fechar modal"
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all touch-manipulation"
+                            className="p-2 hover:bg-gray-100 rounded-full transition-all touch-manipulation hover:rotate-90 duration-300"
                         >
                             <X size={20} className="text-gray-500" />
                         </button>

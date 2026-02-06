@@ -25,7 +25,7 @@ export function Skeleton({
 
     const animationClasses = {
         pulse: "animate-pulse",
-        wave: "animate-wave",
+        wave: "animate-shimmer",
         none: "",
     };
 

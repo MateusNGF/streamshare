@@ -7,14 +7,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className = "", variant = "default", size = "default", ...props }, ref) => {
-        const baseStyles = "inline-flex items-center justify-center gap-2 font-bold transition-all touch-manipulation disabled:opacity-50 disabled:pointer-events-none";
+        const baseStyles = "inline-flex items-center justify-center gap-2 font-bold transition-all touch-manipulation disabled:opacity-50 disabled:pointer-events-none active:scale-95 duration-200";
 
         const variantStyles = {
-            default: "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25",
-            secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700",
-            outline: "border border-gray-200 hover:bg-gray-50 text-gray-700",
+            default: "bg-primary hover:bg-accent text-white shadow-lg shadow-primary/25 hover:-translate-y-0.5",
+            secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700 hover:-translate-y-0.5",
+            outline: "border border-gray-200 hover:bg-gray-50 text-gray-700 hover:-translate-y-0.5",
             ghost: "hover:bg-gray-100 text-gray-700",
-            destructive: "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/25",
+            destructive: "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/25 hover:-translate-y-0.5",
         };
 
         const sizeStyles = {
