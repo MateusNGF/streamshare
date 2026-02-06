@@ -98,7 +98,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/60 z-40 lg:hidden animate-fade-in backdrop-blur-sm"
                     onClick={closeMobileMenu}
                     aria-hidden="true"
                 />
@@ -107,7 +107,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
             {/* Sidebar */}
             <div
                 className={cn(
-                    "fixed lg:static w-64 bg-white border-r h-screen flex flex-col z-[42] transition-transform duration-300 lg:transform-none",
+                    "fixed lg:static w-64 bg-white border-r h-screen flex flex-col z-[42] transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:transform-none shadow-2xl lg:shadow-none",
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
             >
@@ -117,7 +117,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                         alt="StreamShare"
                         width={40}
                         height={40}
-                        className="rounded-lg"
+                        className="rounded-lg transition-transform hover:scale-110 duration-300"
                     />
                     <span className="text-xl font-bold text-gray-900">StreamShare</span>
                 </div>
@@ -134,13 +134,16 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                                         aria-label={item.label}
                                         aria-current={isActive ? "page" : undefined}
                                         className={cn(
-                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all touch-manipulation",
+                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 touch-manipulation group",
                                             isActive
-                                                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1"
                                         )}
                                     >
-                                        <item.icon size={20} className={isActive ? "text-white" : "text-gray-400"} />
+                                        <item.icon size={20} className={cn(
+                                            "transition-transform duration-200",
+                                            isActive ? "text-white" : "text-gray-400 group-hover:scale-110"
+                                        )} />
                                         <span className="font-medium">{item.label}</span>
                                     </Link>
                                 </li>
@@ -153,9 +156,9 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                     <button
                         onClick={() => setIsLogoutModalOpen(true)}
                         aria-label="Sair da conta"
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 transition-all touch-manipulation"
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 hover:translate-x-1 transition-all duration-200 touch-manipulation group"
                     >
-                        <LogOut size={20} />
+                        <LogOut size={20} className="group-hover:scale-110 transition-transform duration-200" />
                         <span>Sair</span>
                     </button>
                 </div>
