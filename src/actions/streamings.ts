@@ -101,7 +101,13 @@ export async function getStreamings() {
         include: {
             catalogo: true,
             _count: {
-                select: { assinaturas: true }
+                select: {
+                    assinaturas: {
+                        where: {
+                            status: { not: "cancelada" }
+                        }
+                    }
+                }
             }
         },
         orderBy: [
@@ -233,7 +239,13 @@ export async function createStreaming(data: {
         include: {
             catalogo: true,
             _count: {
-                select: { assinaturas: true }
+                select: {
+                    assinaturas: {
+                        where: {
+                            status: { not: "cancelada" }
+                        }
+                    }
+                }
             }
         }
     });
@@ -313,7 +325,13 @@ export async function updateStreaming(
             include: {
                 catalogo: true,
                 _count: {
-                    select: { assinaturas: true }
+                    select: {
+                        assinaturas: {
+                            where: {
+                                status: { not: "cancelada" }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -342,7 +360,13 @@ export async function updateStreaming(
             include: {
                 catalogo: true,
                 _count: {
-                    select: { assinaturas: true }
+                    select: {
+                        assinaturas: {
+                            where: {
+                                status: { not: "cancelada" }
+                            }
+                        }
+                    }
                 }
             }
         });
