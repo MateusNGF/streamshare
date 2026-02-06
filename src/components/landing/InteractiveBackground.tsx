@@ -128,8 +128,14 @@ export function InteractiveBackground() {
         };
 
         const init = () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
+            const parent = canvas.parentElement;
+            if (parent) {
+                width = canvas.width = parent.clientWidth;
+                height = canvas.height = parent.clientHeight;
+            } else {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
 
             pointsRef.current = [];
             cols = Math.ceil(width / configRef.current.spacing) + 2;
@@ -152,8 +158,9 @@ export function InteractiveBackground() {
         };
 
         const handleMouseMove = (e: MouseEvent) => {
-            mouseRef.current.x = e.clientX;
-            mouseRef.current.y = e.clientY;
+            const rect = canvas.getBoundingClientRect();
+            mouseRef.current.x = e.clientX - rect.left;
+            mouseRef.current.y = e.clientY - rect.top;
         };
 
         const handleMouseLeave = () => {
@@ -163,8 +170,9 @@ export function InteractiveBackground() {
 
         const handleTouchMove = (e: TouchEvent) => {
             if (e.touches.length > 0) {
-                mouseRef.current.x = e.touches[0].clientX;
-                mouseRef.current.y = e.touches[0].clientY;
+                const rect = canvas.getBoundingClientRect();
+                mouseRef.current.x = e.touches[0].clientX - rect.left;
+                mouseRef.current.y = e.touches[0].clientY - rect.top;
             }
         };
 
@@ -179,6 +187,18 @@ export function InteractiveBackground() {
 
         // Event listeners
         window.addEventListener("resize", handleResize);
+        // Mouse events should be on the canvas or window?
+        // If we use relative coordinates based on getBoundingClientRect, we should probably listen on the window to track it even if it leaves slightly, but for "InteractiveBackground" usually it's better to verify if the user intention is "mouse over this section".
+        // However, the original code had window listeners.
+        // If I use window listener, e.clientX is correct global, but rect is local.
+        // e.clientX - rect.left works for window listener too as long as the canvas is in the DOM.
+
+        // Better to keep window listener for resize.
+        // For mousemove, usually we want effect when over the element. 
+        // But let's stick to the plan: "Update handleMouseMove to calculate coordinates relative to the canvas element".
+        // The original code added event listeners to `window`. 
+        // If I attach to window, `getBoundingClientRect` will work fine.
+
         window.addEventListener("mousemove", handleMouseMove);
         window.addEventListener("mouseleave", handleMouseLeave);
         window.addEventListener("touchmove", handleTouchMove, { passive: true });
