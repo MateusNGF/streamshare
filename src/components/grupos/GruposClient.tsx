@@ -116,66 +116,83 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
                 />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {grupos.map((grupo) => (
-                        <div
-                            key={grupo.id}
-                            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-lg transition-shadow"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{grupo.nome}</h3>
-                                    {grupo.descricao && (
-                                        <p className="text-sm text-gray-500 mt-1">{grupo.descricao}</p>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={() => handleOpenRenovacao(grupo)}
-                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                        title="Gerar mensagem de renovação"
-                                    >
-                                        <MessageCircle size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleOpenEdit(grupo)}
-                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                        title="Editar grupo"
-                                    >
-                                        <Pencil size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleOpenDelete(grupo)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Excluir grupo"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
+                    {grupos.map((grupo) => {
+                        // Aggregation logic
+                        const aggregated = grupo.streamings.reduce((acc, item) => {
+                            const name = item.streaming.apelido || item.streaming.catalogo.nome;
+                            acc.set(name, (acc.get(name) || 0) + 1);
+                            return acc;
+                        }, new Map<string, number>());
 
-                            <div className="mt-4">
-                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                    <Tv size={16} className="text-gray-400" />
-                                    <span>{grupo._count.streamings} serviços</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {grupo.streamings.slice(0, 5).map((item, i) => (
-                                        <span
-                                            key={i}
-                                            className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs font-medium text-gray-600"
+                        const displayItems = Array.from(aggregated.entries());
+                        const remainingCount = displayItems.length - 5;
+
+                        return (
+                            <div
+                                key={grupo.id}
+                                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-lg transition-shadow"
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900">{grupo.nome}</h3>
+                                        {grupo.descricao && (
+                                            <p className="text-sm text-gray-500 mt-1">{grupo.descricao}</p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => handleOpenRenovacao(grupo)}
+                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                            title="Gerar mensagem de renovação"
                                         >
-                                            {item.streaming.apelido || item.streaming.catalogo.nome}
-                                        </span>
-                                    ))}
-                                    {grupo.streamings.length > 5 && (
-                                        <span className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs text-gray-400">
-                                            +{grupo.streamings.length - 5}
-                                        </span>
-                                    )}
+                                            <MessageCircle size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleOpenEdit(grupo)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Editar grupo"
+                                        >
+                                            <Pencil size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleOpenDelete(grupo)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Excluir grupo"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                        <Tv size={16} className="text-gray-400" />
+                                        <span>{grupo._count.streamings} assinaturas</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {displayItems.slice(0, 5).map(([name, count], i) => (
+                                            <span
+                                                key={i}
+                                                className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs font-medium text-gray-600 flex items-center gap-1"
+                                            >
+                                                {name}
+                                                {count > 1 && (
+                                                    <span className="text-primary font-bold bg-primary/10 px-1 rounded-[4px] text-[10px]">
+                                                        {count}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ))}
+                                        {remainingCount > 0 && (
+                                            <span className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs text-gray-400">
+                                                +{remainingCount}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

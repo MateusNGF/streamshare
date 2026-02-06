@@ -347,9 +347,8 @@ export async function createBulkAssinaturas(data: {
                 });
 
                 if (existing) {
-                    // Get participant name for better error
-                    const p = await tx.participante.findUnique({ where: { id: participanteId }, select: { nome: true } });
-                    throw new Error(`${p?.nome || 'Participante'} já possui assinatura ativa em ${streaming.apelido || streaming.catalogo.nome}`);
+                    // Do nothing - allow multiple subscriptions
+                    // console.log(`Adding additional subscription for participant ${participanteId} to streaming ${ass.streamingId}`);
                 }
 
                 // Create subscription

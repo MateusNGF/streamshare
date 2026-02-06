@@ -7,7 +7,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
 import { INTERVALOS_MESES } from "@/lib/financeiro-utils";
 import { useCurrency } from "@/hooks/useCurrency";
-import { Check, ChevronRight, ChevronLeft, Search, Users, X, Calendar, Wallet } from "lucide-react";
+import { Check, ChevronRight, ChevronLeft, Search, Users, X, Calendar, Wallet, Plus, Minus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 
@@ -261,7 +261,9 @@ function StepConfiguration({
 function StepParticipants({
     participantes,
     selectedIds,
+    quantities,
     onToggle,
+    onQuantityChange,
     onSelectAll,
     searchTerm,
     onSearchChange,
@@ -269,7 +271,9 @@ function StepParticipants({
 }: {
     participantes: ParticipanteOption[];
     selectedIds: Set<number>;
+    quantities: Map<number, number>;
     onToggle: (id: number) => void;
+    onQuantityChange: (id: number, delta: number) => void;
     onSelectAll: () => void;
     searchTerm: string;
     onSearchChange: (val: string) => void;
@@ -350,16 +354,18 @@ function StepParticipants({
                 <div className="flex-1 overflow-y-auto space-y-1">
                     {filtered.map(p => {
                         const isSelected = selectedIds.has(p.id);
+                        const qty = quantities.get(p.id) || 1;
+
                         return (
-                            <button
+                            <div
                                 key={p.id}
-                                onClick={() => onToggle(p.id)}
-                                className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isSelected
+                                className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all cursor-pointer ${isSelected
                                     ? "bg-primary/5 border border-primary/20"
                                     : "hover:bg-gray-50 border border-transparent"
                                     }`}
+                                onClick={() => onToggle(p.id)}
                             >
-                                <div className="flex items-center gap-2 overflow-hidden">
+                                <div className="flex items-center gap-2 overflow-hidden flex-1">
                                     <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold shrink-0 ${isSelected ? "bg-primary text-white" : "bg-gray-200 text-gray-600"
                                         }`}>
                                         {p.nome.charAt(0)}
@@ -373,8 +379,30 @@ function StepParticipants({
                                         </p>
                                     </div>
                                 </div>
+
+                                {isSelected && (
+                                    <div className="flex items-center gap-2 mr-2" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => onQuantityChange(p.id, -1)}
+                                            className="p-1 hover:bg-gray-200 rounded text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                                            disabled={qty <= 1}
+                                            title="Diminuir quantidade"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="text-xs font-bold w-4 text-center">{qty}</span>
+                                        <button
+                                            onClick={() => onQuantityChange(p.id, 1)}
+                                            className="p-1 hover:bg-gray-200 rounded text-gray-600 transition-colors"
+                                            title="Aumentar quantidade"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                )}
+
                                 {isSelected && <Check size={14} className="text-primary shrink-0" />}
-                            </button>
+                            </div>
                         );
                     })}
                     {filtered.length === 0 && (
@@ -400,7 +428,7 @@ function StepSummary({
     overloadedStreamings
 }: {
     selectedStreamings: StreamingOption[];
-    selectedParticipants: ParticipanteOption[];
+    selectedParticipants: (ParticipanteOption & { quantidade?: number })[];
     configurations: Map<number, SelectedStreaming>;
     dataInicio: string;
     onDataInicioChange: (val: string) => void;
@@ -410,9 +438,10 @@ function StepSummary({
 }) {
     const { format } = useCurrency();
     const isOverloaded = overloadedStreamings.length > 0;
-    const totalAssinaturas = configurations.size * selectedParticipants.length;
+    const totalSlots = selectedParticipants.reduce((sum, p) => sum + (p.quantidade || 1), 0);
+    const totalAssinaturas = configurations.size * totalSlots;
     const totalUnitario = Array.from(configurations.values()).reduce((sum, c) => sum + parseFloat(c.valor || "0"), 0);
-    const totalGeral = totalUnitario * selectedParticipants.length;
+    const totalGeral = totalUnitario * totalSlots;
 
     return (
         <div className="space-y-4">
@@ -431,7 +460,7 @@ function StepSummary({
                         Limite de vagas excedido
                     </h4>
                     <p className="text-sm mb-2">
-                        Os seguintes streamings não suportam {selectedParticipants.length} participantes:
+                        Os seguintes streamings não suportam {selectedParticipants.reduce((acc, p) => acc + (p.quantidade || 1), 0)} assinaturas:
                     </p>
                     <ul className="list-disc list-inside text-sm space-y-1">
                         {overloadedStreamings.map(s => (
@@ -485,13 +514,20 @@ function StepSummary({
                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 max-h-[220px] overflow-y-auto">
                         <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2 sticky top-0 bg-gray-50 pb-2 z-10">
                             <Users size={16} />
-                            Participantes ({selectedParticipants.length})
+                            Participantes ({selectedParticipants.reduce((acc, p) => acc + (p.quantidade || 1), 0)})
                         </h4>
                         <div className="space-y-1">
                             {selectedParticipants.map(p => (
-                                <div key={p.id} className="text-xs text-gray-600 flex items-center gap-2">
-                                    <div className="w-1 h-1 rounded-full bg-gray-400" />
-                                    {p.nome}
+                                <div key={p.id} className="text-xs text-gray-600 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-gray-400" />
+                                        {p.nome}
+                                    </div>
+                                    {(p.quantidade || 1) > 1 && (
+                                        <span className="font-bold bg-primary/10 text-primary px-1.5 rounded text-[10px]">
+                                            {p.quantidade}x
+                                        </span>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -580,6 +616,7 @@ export function AssinaturaMultiplaModal({
     const [cobrancaAutomaticaPaga, setCobrancaAutomaticaPaga] = useState(false);
     const [selectedStreamingIds, setSelectedStreamingIds] = useState<Set<number>>(new Set());
     const [configurations, setConfigurations] = useState<Map<number, SelectedStreaming>>(new Map());
+    const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
     const [searchTerm, setSearchTerm] = useState("");
     const [participanteSearchTerm, setParticipanteSearchTerm] = useState("");
 
@@ -611,12 +648,40 @@ export function AssinaturaMultiplaModal({
 
     const handleToggleParticipante = (id: number) => {
         const newSet = new Set(selectedParticipanteIds);
+        const newQuantities = new Map(quantities);
+
         if (newSet.has(id)) {
             newSet.delete(id);
+            newQuantities.delete(id);
         } else {
             newSet.add(id);
+            newQuantities.set(id, 1);
         }
         setSelectedParticipanteIds(newSet);
+        setQuantities(newQuantities);
+    };
+
+    const handleQuantityChange = (id: number, delta: number) => {
+        const currentQty = quantities.get(id) || 1;
+        const newQty = Math.max(1, currentQty + delta);
+
+        // Calculate total slots used by OTHER participants
+        let totalUsed = 0;
+        quantities.forEach((qty, pid) => {
+            if (pid !== id) totalUsed += qty;
+        });
+
+        // Check if new quantity exceeds limit for ANY selected streaming
+        // We need to check against the TIGHTEST constraint among selected streamings
+        const minAvailable = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
+
+        if (totalUsed + newQty <= minAvailable + 50) { // Allow going over (validation is done elsewhere), but maybe cap reasonably? 
+            // Actually, the requirement says "Validação: A soma das assinaturas informadas não pode ultrapassar o limiteMaximo de vagas do grupo."
+            // Let's rely on the global validation `isOverloaded` for blocking next step, but here we update state.
+            const newQuantities = new Map(quantities);
+            newQuantities.set(id, newQty);
+            setQuantities(newQuantities);
+        }
     };
 
     const handleSelectAllParticipantes = () => {
@@ -629,10 +694,19 @@ export function AssinaturaMultiplaModal({
 
         if (selectedParticipanteIds.size === filtered.length) {
             setSelectedParticipanteIds(new Set());
+            setQuantities(new Map());
         } else {
             const newSet = new Set(selectedParticipanteIds);
-            filtered.forEach(p => newSet.add(p.id));
+            const newQuantities = new Map(quantities);
+
+            filtered.forEach(p => {
+                newSet.add(p.id);
+                if (!newQuantities.has(p.id)) {
+                    newQuantities.set(p.id, 1);
+                }
+            });
             setSelectedParticipanteIds(newSet);
+            setQuantities(newQuantities);
         }
     };
 
@@ -663,6 +737,7 @@ export function AssinaturaMultiplaModal({
     const handleClose = () => {
         setStep(ModalStep.STREAMING);
         setSelectedParticipanteIds(new Set());
+        setQuantities(new Map());
         setDataInicio(new Date().toISOString().split('T')[0]);
         setCobrancaAutomaticaPaga(false);
         setSelectedStreamingIds(new Set());
@@ -680,11 +755,12 @@ export function AssinaturaMultiplaModal({
 
     // Calculate overloaded streamings
     const overloadedStreamings = useMemo(() => {
+        const totalSlotsNeeded = Array.from(quantities.values()).reduce((a, b) => a + b, 0);
         return selectedStreamings.filter(s => {
             const available = s.limiteParticipantes - s.ocupados;
-            return selectedParticipanteIds.size > available;
+            return totalSlotsNeeded > available;
         });
-    }, [selectedStreamings, selectedParticipanteIds, streamings]);
+    }, [selectedStreamings, quantities, streamings]);
 
     const isOverloaded = overloadedStreamings.length > 0;
 
@@ -721,8 +797,16 @@ export function AssinaturaMultiplaModal({
     const handleSubmit = () => {
         if (selectedParticipanteIds.size === 0 || configurations.size === 0 || isOverloaded) return;
 
+        const expandedParticipanteIds: number[] = [];
+        selectedParticipanteIds.forEach(id => {
+            const qty = quantities.get(id) || 1;
+            for (let i = 0; i < qty; i++) {
+                expandedParticipanteIds.push(id);
+            }
+        });
+
         onSave({
-            participanteIds: Array.from(selectedParticipanteIds),
+            participanteIds: expandedParticipanteIds,
             assinaturas: Array.from(configurations.values()).map(config => ({
                 streamingId: config.streamingId,
                 frequencia: config.frequencia,
@@ -805,42 +889,54 @@ export function AssinaturaMultiplaModal({
                 />
             )}
 
-            {step === ModalStep.VALUES && (
-                <StepConfiguration
-                    selectedStreamings={selectedStreamings}
-                    configurations={configurations}
-                    onUpdate={handleUpdateConfig}
-                />
-            )}
+            {
+                step === ModalStep.VALUES && (
+                    <StepConfiguration
+                        selectedStreamings={selectedStreamings}
+                        configurations={configurations}
+                        onUpdate={handleUpdateConfig}
+                    />
+                )
+            }
 
-            {step === ModalStep.PARTICIPANTS && (
-                <StepParticipants
-                    participantes={participantes}
-                    selectedIds={selectedParticipanteIds}
-                    onToggle={handleToggleParticipante}
-                    onSelectAll={handleSelectAllParticipantes}
-                    searchTerm={participanteSearchTerm}
-                    onSearchChange={setParticipanteSearchTerm}
-                    capacityInfo={{
-                        isOverloaded,
-                        minSlots: minAvailableSlots,
-                        showWarning: showCapacityWarning
-                    }}
-                />
-            )}
+            {
+                step === ModalStep.PARTICIPANTS && (
+                    <StepParticipants
+                        participantes={participantes}
+                        selectedIds={selectedParticipanteIds}
+                        quantities={quantities}
+                        onToggle={handleToggleParticipante}
+                        onQuantityChange={handleQuantityChange}
+                        onSelectAll={handleSelectAllParticipantes}
+                        searchTerm={participanteSearchTerm}
+                        onSearchChange={setParticipanteSearchTerm}
+                        capacityInfo={{
+                            isOverloaded,
+                            minSlots: minAvailableSlots,
+                            showWarning: showCapacityWarning
+                        }}
+                    />
+                )
+            }
 
-            {step === ModalStep.SUMMARY && (
-                <StepSummary
-                    selectedStreamings={selectedStreamings}
-                    selectedParticipants={participantes.filter(p => selectedParticipanteIds.has(p.id))}
-                    configurations={configurations}
-                    dataInicio={dataInicio}
-                    onDataInicioChange={setDataInicio}
-                    cobrancaAutomatica={cobrancaAutomaticaPaga}
-                    onCobrancaChange={setCobrancaAutomaticaPaga}
-                    overloadedStreamings={overloadedStreamings}
-                />
-            )}
-        </Modal>
+            {
+                step === ModalStep.SUMMARY && (
+                    <StepSummary
+                        selectedStreamings={selectedStreamings}
+                        selectedParticipants={Array.from(selectedParticipanteIds).map(id => {
+                            const original = participantes.find(p => p.id === id);
+                            return original ? { ...original, quantidade: quantities.get(id) || 1 } : null
+                        }).filter(Boolean) as any[]}
+                        configurations={configurations}
+                        dataInicio={dataInicio}
+                        onDataInicioChange={setDataInicio}
+                        cobrancaAutomatica={cobrancaAutomaticaPaga}
+                        onCobrancaChange={setCobrancaAutomaticaPaga}
+                        overloadedStreamings={overloadedStreamings}
+                    />
+                )
+            }
+        </Modal >
     );
 }
+

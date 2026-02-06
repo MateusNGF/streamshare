@@ -222,7 +222,6 @@ model Assinatura {
   streaming    Streaming    @relation(fields: [streamingId], references: [id])
   cobrancas    Cobranca[]
 
-  @@unique([participanteId, streamingId])
   @@map("assinatura")
 }
 
