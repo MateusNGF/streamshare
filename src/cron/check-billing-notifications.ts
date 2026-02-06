@@ -121,7 +121,7 @@ async function checkAndNotifyPendingBillings() {
                             configId: config.id,
                             participanteId: cobranca.assinatura.participanteId,
                             tipo: 'cobranca_vencendo',
-                            numeroDestino: cobranca.assinatura.participante.whatsappNumero,
+                            numeroDestino: cobranca.assinatura.participante.whatsappNumero || '',
                             mensagem,
                             enviado: false,
                             erro: 'Sistema: Notificação pendente - WhatsApp não configurado (CRON)'
@@ -226,7 +226,7 @@ async function checkAndNotifyOverdueBillings() {
                             configId: config.id,
                             participanteId: cobranca.assinatura.participanteId,
                             tipo: 'cobranca_atrasada',
-                            numeroDestino: cobranca.assinatura.participante.whatsappNumero,
+                            numeroDestino: cobranca.assinatura.participante.whatsappNumero || '',
                             mensagem,
                             enviado: false,
                             erro: 'Sistema: Notificação de atraso pendente - WhatsApp não configurado (CRON)'
