@@ -9,5 +9,5 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 });
 
 export function getStripeUrl(path: string) {
-    return `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${path}`;
+    return `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}${path}`;
 }
