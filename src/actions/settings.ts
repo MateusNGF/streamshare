@@ -24,7 +24,7 @@ export async function getSettingsData() {
 
     const user = await prisma.usuario.findUnique({
         where: { id: session.userId },
-        select: { nome: true, email: true },
+        select: { nome: true, email: true, whatsapp: true },
     });
 
     const userAccount = await prisma.contaUsuario.findFirst({
@@ -38,6 +38,7 @@ export async function getSettingsData() {
                     plano: true,
                     limiteGrupos: true,
                     moedaPreferencia: true,
+                    chavePix: true,
                 },
             },
         },
@@ -49,7 +50,7 @@ export async function getSettingsData() {
     };
 }
 
-export async function updateProfile(data: { nome: string; email: string }) {
+export async function updateProfile(data: { nome: string; email: string; whatsapp?: string }) {
     const { userId } = await getContext();
 
     await prisma.usuario.update({
@@ -57,13 +58,14 @@ export async function updateProfile(data: { nome: string; email: string }) {
         data: {
             nome: data.nome,
             email: data.email,
+            whatsapp: data.whatsapp,
         },
     });
 
     revalidatePath("/configuracoes");
 }
 
-export async function updateAccount(data: { nome: string; email: string }) {
+export async function updateAccount(data: { nome: string; email: string; chavePix?: string }) {
     const { contaId } = await getContext();
 
     // Validar email se fornecido
@@ -95,6 +97,7 @@ export async function updateAccount(data: { nome: string; email: string }) {
             data: {
                 nome: data.nome,
                 email: data.email,
+                chavePix: data.chavePix,
             },
         });
     });

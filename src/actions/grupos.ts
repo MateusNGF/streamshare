@@ -348,9 +348,21 @@ export async function gerarMensagemRenovacao(
         throw new Error("Grupo não encontrado");
     }
 
-    // Formatar nome do mês e ano
+    // Format name of month and year
     const nomeMes = format(mesReferencia, "MMMM", { locale: ptBR }).toUpperCase();
     const ano = format(mesReferencia, "yyyy");
+
+    // Fetch account details (currency and PIX key)
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: {
+            moedaPreferencia: true,
+            chavePix: true
+        }
+    });
+
+    const { formatCurrency } = await import("@/lib/formatCurrency");
+    const currency = (conta?.moedaPreferencia as CurrencyCode) || 'BRL';
 
     let mensagem = ` *RENOVAÇÃO - ${nomeMes}/${ano}* \n\n`;
 
@@ -368,16 +380,9 @@ export async function gerarMensagemRenovacao(
         const limiteParticipantes = streaming.limiteParticipantes || 1; // Prevent division by zero
         const valorPorPessoa = valorIntegral / limiteParticipantes;
 
-        // Fetch user's currency preference (outside loop would be better, but need contaId)
-        const conta = await prisma.conta.findUnique({
-            where: { id: contaId },
-            select: { moedaPreferencia: true }
-        });
-        const { formatCurrency } = await import("@/lib/formatCurrency");
-
         // Header: Only individual value - Use apelido (or catalogo.nome as fallback)
         const streamingNome = streaming.apelido || catalogo.nome;
-        mensagem += `\n 🎬 *${streamingNome}* • ${formatCurrency(valorPorPessoa, (conta?.moedaPreferencia as CurrencyCode) || 'BRL')} p/ cada\n\n`;
+        mensagem += `\n 🎬 *${streamingNome}* • ${formatCurrency(valorPorPessoa, currency)} p/ cada\n\n`;
 
         // Listar participantes com status
         assinaturas.forEach((assinatura, index) => {
@@ -412,6 +417,10 @@ export async function gerarMensagemRenovacao(
 
             mensagem += `${linha}\n`;
         });
+    }
+
+    if (conta?.chavePix) {
+        mensagem += `\nPIX: *${conta.chavePix}*`;
     }
 
     return mensagem.trim();

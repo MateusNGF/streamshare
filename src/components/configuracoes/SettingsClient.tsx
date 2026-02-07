@@ -15,11 +15,12 @@ import { updateProfile, updateAccount, updateCurrency } from "@/actions/settings
 import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import NotificationsTab from "@/components/settings/NotificationsTab";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 
 interface SettingsClientProps {
     initialData: {
-        user: { nome: string; email: string } | null;
-        conta: { nome: string | null; email: string | null; plano: string; moedaPreferencia?: string } | null | any;
+        user: { nome: string; email: string; whatsapp?: string | null } | null;
+        conta: { nome: string | null; email: string | null; plano: string; moedaPreferencia?: string; chavePix?: string | null } | null | any;
     };
 }
 
@@ -46,11 +47,13 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [profileData, setProfileData] = useState({
         nome: initialData.user?.nome || "",
         email: initialData.user?.email || "",
+        whatsapp: initialData.user?.whatsapp || "",
     });
 
     const [accountData, setAccountData] = useState({
         nome: initialData.conta?.nome || "",
         email: initialData.conta?.email || "",
+        chavePix: initialData.conta?.chavePix || "",
     });
 
     const [currency, setCurrency] = useState<CurrencyCode>(
@@ -59,11 +62,13 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
     // Detectar alterações pendentes
     const hasProfileChanges =
-        profileData.nome !== initialData.user?.nome;
+        profileData.nome !== initialData.user?.nome ||
+        profileData.whatsapp !== (initialData.user?.whatsapp || "");
 
     const hasAccountChanges =
         accountData.nome !== (initialData.conta?.nome || "") ||
-        accountData.email !== (initialData.conta?.email || "");
+        accountData.email !== (initialData.conta?.email || "") ||
+        accountData.chavePix !== (initialData.conta?.chavePix || "");
 
     // Validação de email no frontend
     const validateEmail = (email: string): string | null => {
@@ -177,6 +182,13 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                 disabled
                                 className="bg-gray-50 cursor-not-allowed"
                             />
+                            <PhoneInput
+                                label="WhatsApp"
+                                value={profileData.whatsapp}
+                                onChange={(value) => setProfileData({ ...profileData, whatsapp: value })}
+                                placeholder="(11) 99999-9999"
+                                disabled={loadingProfile}
+                            />
                             <p className="text-xs text-gray-400 mt-1">
                                 * O email de login não pode ser alterado por segurança.
                             </p>
@@ -263,6 +275,14 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                     value={accountData.email}
                                     onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
                                     placeholder="Ex: financeiro@email.com"
+                                    disabled={loadingAccount}
+                                />
+                                <Input
+                                    label="Chave PIX"
+                                    type="text"
+                                    value={accountData.chavePix}
+                                    onChange={(e) => setAccountData({ ...accountData, chavePix: e.target.value })}
+                                    placeholder="Ex: CPF, Email, Telefone ou Chave Aleatória"
                                     disabled={loadingAccount}
                                 />
                                 <div className="pt-4">
