@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,8 +18,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
-import { NotificationsModal } from "@/components/modals/NotificationsModal"; // New Import
+import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { MobileMenuButton } from "./MobileMenuButton";
+import { getNotificacoes } from "@/actions/notificacoes";
 
 interface SidebarProps {
     isSystemAdmin?: boolean;
@@ -30,8 +31,38 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // New State
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Load unread notifications count
+    useEffect(() => {
+        const loadUnreadCount = async () => {
+            try {
+                const { naoLidas } = await getNotificacoes({ limite: 1 });
+                setUnreadCount(naoLidas);
+            } catch (error) {
+                console.error("Failed to load notification count", error);
+            }
+        };
+
+        loadUnreadCount();
+
+        // Refresh count every 30 seconds
+        const interval = setInterval(loadUnreadCount, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Refresh count when modal closes
+    const handleCloseNotifications = async () => {
+        setIsNotificationsOpen(false);
+        try {
+            const { naoLidas } = await getNotificacoes({ limite: 1 });
+            setUnreadCount(naoLidas);
+        } catch (error) {
+            console.error("Failed to refresh notification count", error);
+        }
+    };
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -82,12 +113,16 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => setIsNotificationsOpen(true)} // Wired onClick
+                        onClick={() => setIsNotificationsOpen(true)}
                         aria-label="Notificações"
                         className="p-2 text-gray-500 hover:text-gray-900 relative touch-manipulation"
                     >
                         <Bell size={20} />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                        {unreadCount > 0 && (
+                            <span className="absolutetop-1 right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white px-1">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
                     </button>
 
                 </div>
@@ -173,7 +208,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 {/* Notifications Modal */}
                 <NotificationsModal
                     isOpen={isNotificationsOpen}
-                    onClose={() => setIsNotificationsOpen(false)}
+                    onClose={handleCloseNotifications}
                 />
             </div>
         </>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { validateCPF, validatePhone, validateEmail } from "@/lib/validation";
+import { criarNotificacao } from "@/actions/notificacoes";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -75,6 +76,17 @@ export async function createParticipante(data: {
         },
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "participante_criado",
+        titulo: `Participante adicionado`,
+        descricao: `${participante.nome} foi adicionado ao sistema.`,
+        entidadeId: participante.id,
+        metadata: {
+            whatsapp: participante.whatsappNumero
+        }
+    });
+
     revalidatePath("/participantes");
     return participante;
 }
@@ -116,6 +128,14 @@ export async function updateParticipante(
         },
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "participante_editado",
+        titulo: `Participante atualizado`,
+        descricao: `As informações de ${participante.nome} foram atualizadas.`,
+        entidadeId: participante.id
+    });
+
     revalidatePath("/participantes");
     return participante;
 }
@@ -141,10 +161,39 @@ export async function deleteParticipante(id: number) {
             );
         }
 
+        // Get participant name before deleting
+        const participante = await tx.participante.findUnique({
+            where: { id, contaId },
+            select: { nome: true }
+        });
+
+        if (!participante) {
+            throw new Error("Participante não encontrado");
+        }
+
         // Delete the participant
         await tx.participante.delete({
             where: { id, contaId },
         });
+
+        // Create notification (outside transaction to avoid rollback issues)
+        return participante.nome;
+    });
+
+    // Create notification
+    const participanteName = await prisma.$transaction(async (tx) => {
+        const p = await tx.participante.findUnique({
+            where: { id },
+            select: { nome: true }
+        });
+        return p?.nome;
+    }).catch(() => null);
+
+    await criarNotificacao({
+        tipo: "participante_excluido",
+        titulo: `Participante removido`,
+        descricao: participanteName ? `${participanteName} foi removido do sistema.` : "Um participante foi removido do sistema.",
+        entidadeId: id
     });
 
     revalidatePath("/participantes");

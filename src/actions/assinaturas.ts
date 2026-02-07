@@ -10,6 +10,7 @@ import {
     calcularValorPeriodo
 } from "@/lib/financeiro-utils";
 import type { CurrencyCode } from "@/types/currency.types";
+import { criarNotificacao } from "@/actions/notificacoes";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -226,8 +227,16 @@ export async function createAssinatura(data: {
         }
     } catch (error) {
         // Log but don't fail the operation
-        console.error("Erro ao enviar notificação WhatsApp:", error);
+        console.error("WhatsApp notification failed:", error);
     }
+
+    // Create notification
+    await criarNotificacao({
+        tipo: "assinatura_criada",
+        titulo: `Nova assinatura criada`,
+        descricao: `Assinatura de ${result.streaming.catalogo.nome} para ${result.participante?.nome || 'participante'} foi criada.`,
+        entidadeId: result.assinatura.id
+    });
 
     revalidatePath("/assinaturas");
     revalidatePath("/participantes");
@@ -384,6 +393,17 @@ export async function createBulkAssinaturas(data: {
         }
     }));
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "assinatura_criada",
+        titulo: `Assinaturas criadas em lote`,
+        descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
+        metadata: {
+            totalAssinaturas: results.length,
+            totalParticipantes: data.participanteIds.length
+        }
+    });
+
     revalidatePath("/assinaturas");
     revalidatePath("/cobrancas");
     revalidatePath("/participantes");
@@ -464,6 +484,14 @@ export async function cancelarAssinatura(assinaturaId: number) {
     } catch (error) {
         console.error("Erro ao enviar notificação WhatsApp:", error);
     }
+
+    // Create notification
+    await criarNotificacao({
+        tipo: "assinatura_cancelada",
+        titulo: `Assinatura cancelada`,
+        descricao: `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
+        entidadeId: assinaturaId
+    });
 
     // Revalidate all relevant paths
     revalidatePath("/assinaturas");

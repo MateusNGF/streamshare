@@ -1,9 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
 import { StatusCobranca } from "@prisma/client";
+import { criarNotificacao } from "@/actions/notificacoes";
 import {
     calcularProximoVencimento,
     calcularValorPeriodo,
@@ -143,7 +144,23 @@ export async function confirmarPagamento(
             status: StatusCobranca.pago,
             dataPagamento: new Date(),
             comprovanteUrl
+        },
+        include: {
+            assinatura: {
+                include: {
+                    participante: true,
+                    streaming: true
+                }
+            }
         }
+    });
+
+    // Create notification
+    await criarNotificacao({
+        tipo: "cobranca_confirmada",
+        titulo: `Pagamento confirmado`,
+        descricao: `Pagamento de ${updated.assinatura.participante.nome} no valor de ${updated.valor} foi confirmado.`,
+        entidadeId: cobrancaId
     });
 
     revalidatePath("/cobrancas");
@@ -178,7 +195,22 @@ export async function cancelarCobranca(cobrancaId: number) {
         where: { id: cobrancaId },
         data: {
             status: StatusCobranca.cancelado
+        },
+        include: {
+            assinatura: {
+                include: {
+                    participante: true
+                }
+            }
         }
+    });
+
+    // Create notification
+    await criarNotificacao({
+        tipo: "cobranca_cancelada",
+        titulo: `Cobrança cancelada`,
+        descricao: `Cobrança de ${updated.assinatura.participante.nome} foi cancelada.`,
+        entidadeId: cobrancaId
     });
 
     revalidatePath("/cobrancas");

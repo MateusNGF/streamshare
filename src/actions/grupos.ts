@@ -7,6 +7,7 @@ import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PLANS } from "@/config/plans";
 import type { CurrencyCode } from "@/types/currency.types";
+import { criarNotificacao } from "@/actions/notificacoes";
 
 // ============================================
 // CONTEXT HELPER
@@ -177,6 +178,17 @@ export async function createGrupo(data: {
         return novoGrupo;
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "grupo_criado",
+        titulo: `Grupo criado`,
+        descricao: `O grupo "${grupo.nome}" foi criado com ${data.streamingIds.length} streaming(s).`,
+        entidadeId: grupo.id,
+        metadata: {
+            linkConvite: grupo.linkConvite
+        }
+    });
+
     revalidatePath("/grupos");
     return grupo;
 }
@@ -271,6 +283,14 @@ export async function updateGrupo(
         });
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "grupo_editado",
+        titulo: `Grupo atualizado`,
+        descricao: `O grupo "${data.nome}" foi atualizado.`,
+        entidadeId: id
+    });
+
     revalidatePath("/grupos");
 }
 
@@ -280,9 +300,23 @@ export async function updateGrupo(
 export async function deleteGrupo(id: number) {
     const { contaId } = await getContext();
 
+    // Get grupo name before deleting
+    const grupo = await prisma.grupo.findFirst({
+        where: { id, contaId },
+        select: { nome: true }
+    });
+
     await prisma.grupo.updateMany({
         where: { id, contaId },
         data: { isAtivo: false }
+    });
+
+    // Create notification
+    await criarNotificacao({
+        tipo: "grupo_excluido",
+        titulo: `Grupo removido`,
+        descricao: grupo ? `O grupo "${grupo.nome}" foi removido.` : "Um grupo foi removido.",
+        entidadeId: id
     });
 
     revalidatePath("/grupos");

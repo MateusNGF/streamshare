@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { criarNotificacao } from "@/actions/notificacoes";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -62,6 +63,13 @@ export async function updateProfile(data: { nome: string; email: string; whatsap
         },
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "configuracao_alterada",
+        titulo: `Perfil atualizado`,
+        descricao: `As informações do seu perfil foram atualizadas.`
+    });
+
     revalidatePath("/configuracoes");
 }
 
@@ -102,6 +110,13 @@ export async function updateAccount(data: { nome: string; email: string; chavePi
         });
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "configuracao_alterada",
+        titulo: `Conta atualizada`,
+        descricao: `As informações da conta foram atualizadas.`
+    });
+
     revalidatePath("/configuracoes");
 }
 
@@ -119,6 +134,13 @@ export async function updateCurrency(currencyCode: string) {
     await prisma.conta.update({
         where: { id: contaId },
         data: { moedaPreferencia: currencyCode },
+    });
+
+    // Create notification
+    await criarNotificacao({
+        tipo: "configuracao_alterada",
+        titulo: `Moeda atualizada`,
+        descricao: `A moeda preferencial foi alterada para ${currencyCode}.`
     });
 
     revalidatePath('/configuracoes');

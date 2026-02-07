@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { StreamingSchema } from "@/lib/schemas";
 import { PLANS } from "@/config/plans";
-
+import { criarNotificacao } from "@/actions/notificacoes";
 async function getContext() {
     const session = await getCurrentUser();
     if (!session) throw new Error("Não autenticado");
@@ -250,6 +250,14 @@ export async function createStreaming(data: {
         }
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "streaming_criado",
+        titulo: `Streaming adicionado`,
+        descricao: `${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foi adicionado ao sistema.`,
+        entidadeId: streaming.id
+    });
+
     revalidatePath("/streamings");
     return {
         ...streaming,
@@ -336,6 +344,14 @@ export async function updateStreaming(
             }
         });
 
+        // Create notification
+        await criarNotificacao({
+            tipo: "streaming_editado",
+            titulo: `Streaming atualizado`,
+            descricao: `As informações de ${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foram atualizadas.`,
+            entidadeId: streaming.id
+        });
+
         revalidatePath("/streamings");
         revalidatePath("/assinaturas");
         return {
@@ -385,6 +401,14 @@ export async function updateStreaming(
         return { streaming, updatedCount: updated.count };
     });
 
+    // Create notification
+    await criarNotificacao({
+        tipo: "streaming_editado",
+        titulo: `Streaming atualizado`,
+        descricao: `As informações do streaming foram atualizadas${result.updatedCount > 0 ? ` e ${result.updatedCount} assinatura(s) ajustada(s)` : ''}.`,
+        entidadeId: id
+    });
+
     revalidatePath("/streamings");
     revalidatePath("/assinaturas");
     return {
@@ -417,10 +441,38 @@ export async function deleteStreaming(id: number) {
             );
         }
 
+        // Get streaming name before deleting
+        const streaming = await tx.streaming.findUnique({
+            where: { id, contaId },
+            include: { catalogo: true }
+        });
+
+        if (!streaming) {
+            throw new Error("Streaming não encontrado");
+        }
+
         // Delete the streaming
         await tx.streaming.delete({
             where: { id, contaId },
         });
+
+        return `${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''}`;
+    });
+
+    // Create notification
+    const streamingName = await prisma.$transaction(async (tx) => {
+        const s = await tx.streaming.findUnique({
+            where: { id },
+            include: { catalogo: true }
+        });
+        return s ? `${s.catalogo.nome}${s.apelido ? ` (${s.apelido})` : ''}` : null;
+    }).catch(() => null);
+
+    await criarNotificacao({
+        tipo: "streaming_excluido",
+        titulo: `Streaming removido`,
+        descricao: streamingName ? `${streamingName} foi removido do sistema.` : "Um streaming foi removido do sistema.",
+        entidadeId: id
     });
 
     revalidatePath("/streamings");

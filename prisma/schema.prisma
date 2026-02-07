@@ -51,6 +51,41 @@ enum TipoNotificacaoWhatsApp {
   pagamento_confirmado
 }
 
+enum TipoNotificacao {
+  // Participantes
+  participante_criado
+  participante_editado
+  participante_excluido
+
+  // Streamings
+  streaming_criado
+  streaming_editado
+  streaming_excluido
+
+  // Assinaturas
+  assinatura_criada
+  assinatura_editada
+  assinatura_suspensa
+  assinatura_cancelada
+  assinatura_renovada
+
+  // Cobranças
+  cobranca_gerada
+  cobranca_confirmada
+  cobranca_cancelada
+
+  // Grupos
+  grupo_criado
+  grupo_editado
+  grupo_excluido
+
+  // Configurações
+  configuracao_alterada
+
+  // Sistema
+  plano_alterado
+}
+
 //////////////////////////////////////////////////
 // MODELS
 //////////////////////////////////////////////////
@@ -72,6 +107,7 @@ model Conta {
   participantes  Participante[]
   streamings     Streaming[]
   whatsappConfig WhatsAppConfig?
+  notificacoes   Notificacao[]
 
   stripeCustomerId         String? @unique
   stripeSubscriptionId     String? @unique
@@ -97,6 +133,7 @@ model Usuario {
   contas       ContaUsuario[]
   participante Participante?
   admin        UsuarioAdmin?
+  notificacoes Notificacao[]
 
   @@map("usuario")
 }
@@ -312,4 +349,24 @@ model Parametro {
   updatedAt DateTime @updatedAt
 
   @@map("parametro")
+}
+
+model Notificacao {
+  id         Int             @id @default(autoincrement())
+  contaId    Int
+  tipo       TipoNotificacao
+  titulo     String
+  descricao  String?
+  entidadeId Int?
+  usuarioId  Int?
+  metadata   Json?
+  lida       Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+
+  conta   Conta    @relation(fields: [contaId], references: [id])
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@index([contaId, createdAt])
+  @@index([contaId, lida])
+  @@map("notificacao")
 }

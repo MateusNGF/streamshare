@@ -58,7 +58,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby={titleId.current}
-                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[70vh] sm:min-h-0 max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden 
+                    className={`relative bg-white rounded-t-3xl rounded-b-none sm:rounded-3xl shadow-2xl w-full min-h-[70vh] sm:min-h-[60vh] max-h-[90vh] sm:max-h-[90vh] flex flex-col overflow-hidden 
                         animate-slide-in-from-bottom sm:animate-scale-in 
                         [animation-duration:400ms] sm:[animation-duration:300ms]
                         [animation-timing-function:cubic-bezier(0.16,1,0.3,1)] sm:[animation-timing-function:ease-out]
