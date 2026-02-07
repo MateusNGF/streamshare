@@ -51,11 +51,11 @@ export default async function LandingPage() {
       <LandingNavbar session={session} />
 
       {/* Hero Section */}
-      <section className="relative pt-24 md:pt-32 pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white overflow-hidden">
+      <section className="relative pt-32 md:pt-32 pb-12 md:pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white overflow-hidden">
         {/* Interactive Background */}
         <InteractiveBackground />
 
-        <div className="relative z-10 container mx-auto px-6">
+        <div className="relative z-10 container mx-auto px-4 md:px-6">
           <div className="max-w-4xl mx-auto text-center">
             {/* Urgency Badge */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6 animate-fade-in">
@@ -65,17 +65,17 @@ export default async function LandingPage() {
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-slide-in-from-bottom stagger-1">
+            <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight animate-slide-in-from-bottom stagger-1">
               Economize até{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-green-300">
                 80% em streaming
               </span>{" "}
               sem complicação
             </h1>
-            <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto animate-slide-in-from-bottom stagger-2">
+            <p className="text-lg md:text-2xl text-purple-100 mb-6 md:mb-8 max-w-2xl mx-auto animate-slide-in-from-bottom stagger-2">
               Chega de pagar caro sozinho! Compartilhe Netflix, Spotify, Disney+ e mais
-              com seus amigos e familiares. Organize grupos, automatize cobranças e
-              nunca mais se preocupe com contas atrasadas.
+              com seus amigos e familiares. Organize grupos, envie links de convite e
+              automatize cobranças sem dor de cabeça.
             </p>
 
             {/* Value Props */}
@@ -97,11 +97,11 @@ export default async function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in stagger-4">
               <Link
                 href={session ? "/dashboard" : "/login"}
-                className="group px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2">
+                className="group w-full sm:w-auto px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
                 {session ? "Acessar Meu Painel" : "Começar Grátis Agora"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </Link>
-              <button className="px-8 py-4 border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-300">
+              <button className="w-full sm:w-auto px-8 py-4 border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-300">
                 <a href="#como-funciona">Ver Como Funciona</a>
               </button>
             </div>
@@ -127,32 +127,16 @@ export default async function LandingPage() {
 
 
       {/* Stats - Social Proof */}
-      <section className="py-16 bg-gradient-to-r from-primary to-accent">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              { num: "5 min", label: "Para Começar a Usar", icon: Clock },
-              { num: "Até 80%", label: "De Economia Possível", icon: DollarSign },
-              { num: "100%", label: "Automatizado", icon: Zap },
-            ].map((stat, idx) => (
-              <div key={idx} className="text-center text-white animate-scale-in" style={{ animationDelay: `${idx * 100}ms` }}>
-                <stat.icon className="mx-auto mb-3 transition-transform hover:scale-110 duration-300" size={40} />
-                <div className="text-4xl md:text-5xl font-bold mb-2">{stat.num}</div>
-                <div className="text-purple-100 text-lg">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* Pain Points & Solutions */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-12 md:py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
               Conhece esses problemas?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               Você não está sozinho. Milhares de pessoas enfrentam os mesmos desafios
             </p>
           </div>
@@ -204,51 +188,34 @@ export default async function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="recursos" className="py-20 bg-white">
+      <section id="recursos" className="py-12 md:py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
               Por que escolher o StreamShare?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               Todas as ferramentas que você precisa para gerenciar suas assinaturas compartilhadas
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-6 md:gap-8 mb-16 pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-auto md:px-0">
             {[
               {
                 icon: Users,
                 title: "Grupos Organizados",
-                desc: "Crie e gerencie grupos de assinatura compartilhada de forma simples e eficiente.",
+                desc: "Crie grupos para cada serviço, defina regras personalizadas e mantenha tudo organizado.",
               },
               {
                 icon: TrendingUp,
                 title: "Controle Financeiro",
-                desc: "Acompanhe pagamentos, inadimplência e receitas em tempo real com dashboards intuitivos.",
+                desc: "Visualize status de pagamento em tempo real (Pendente, Pago, Atrasado) e receitas futuras.",
               },
               {
                 icon: Shield,
                 title: "Totalmente Seguro",
                 desc: "Seus dados e informações de pagamento protegidos com criptografia de ponta.",
               },
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 group"
-              >
-                <div className="bg-primary/10 p-4 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="text-primary" size={32} />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Additional Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[
               {
                 icon: Bell,
                 title: "Lembretes Automáticos",
@@ -282,6 +249,24 @@ export default async function LandingPage() {
             ].map((feature, idx) => (
               <div
                 key={idx}
+                className="min-w-[85vw] md:min-w-0 snap-center bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 group"
+              >
+                <div className="bg-primary/10 p-4 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <feature.icon className="text-primary" size={32} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Additional Features Grid */}
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {[
+
+            ].map((feature, idx) => (
+              <div
+                key={idx}
                 className="flex items-start gap-4 p-6 bg-gray-50 rounded-xl hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 group"
               >
                 <div className="bg-primary/10 p-3 rounded-lg group-hover:scale-110 transition-transform duration-300">
@@ -293,16 +278,16 @@ export default async function LandingPage() {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="como-funciona" className="py-20 bg-white">
+      <section id="como-funciona" className="py-12 md:py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Como Funciona</h2>
-            <p className="text-xl text-gray-600">Simples e rápido em 3 passos</p>
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Como Funciona</h2>
+            <p className="text-lg md:text-xl text-gray-600">Simples e rápido em 3 passos</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -310,13 +295,13 @@ export default async function LandingPage() {
               { num: "1", title: "Crie sua Conta", desc: "Cadastre-se gratuitamente em minutos" },
               {
                 num: "2",
-                title: "Adicione Streamings",
-                desc: "Configure suas assinaturas e defina vagas",
+                title: "Crie seus Grupos",
+                desc: "Configure os serviços que você já assina e defina o valor por pessoa",
               },
               {
                 num: "3",
-                title: "Convide Participantes",
-                desc: "Compartilhe e gerencie cobranças automaticamente",
+                title: "Envie o Link",
+                desc: "Compartilhe o link de convite via WhatsApp e deixe o cadastro com eles",
               },
             ].map((step, idx) => (
               <div key={idx} className="text-center group">
@@ -332,7 +317,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="planos" className="py-20 bg-gray-50">
+      <section id="planos" className="py-12 md:py-20 bg-gray-50">
         <div className="container mx-auto px-6">
 
 
@@ -341,7 +326,7 @@ export default async function LandingPage() {
           </div>
 
           {/* Comparison note */}
-          <div className="mt-12 text-center">
+          <div className="mt-8 md:mt-12 text-center">
             <p className="text-gray-600 max-w-2xl mx-auto">
               💡 <strong>Dica:</strong> Dividindo uma Netflix Premium (R$ 55,90) entre 4 pessoas, você paga apenas <strong>R$ 13,98/pessoa</strong>. O plano Pro se paga com apenas 1 streaming compartilhado!
             </p>
@@ -350,13 +335,13 @@ export default async function LandingPage() {
       </section>
 
       {/* How It Works Detail */}
-      <section className="py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
               Simples de Usar
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg md:text-xl text-gray-600">
               Configure uma vez e deixe o sistema trabalhar por você
             </p>
           </div>
@@ -404,13 +389,13 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* FAQ */}
-      <section id="faq" className="py-20 bg-white">
+      < section id="faq" className="py-12 md:py-20 bg-white" >
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
               Perguntas Frequentes
             </h2>
           </div>
@@ -419,7 +404,7 @@ export default async function LandingPage() {
             {[
               {
                 q: "Como funciona o pagamento?",
-                a: "O StreamShare organiza e rastreia as cobranças, mas não processa pagamentos diretamente. Os participantes pagam via PIX, transferência ou outro método combinado entre vocês.",
+                a: "O StreamShare é a ferramenta de gestão, não um banco. Você recebe os valores diretamente dos participantes (via PIX, por exemplo) e marca como 'Pago' no sistema para manter o controle.",
               },
               {
                 q: "Quanto eu posso economizar?",
@@ -459,16 +444,16 @@ export default async function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Final CTA */}
-      <section className="py-24 bg-gradient-to-br from-primary via-purple-600 to-indigo-700 text-white">
+      < section className="py-16 md:py-24 bg-gradient-to-br from-primary via-purple-600 to-indigo-700 text-white" >
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-6xl font-bold mb-6">
+            <h2 className="text-3xl md:text-6xl font-bold mb-6">
               Pronto para economizar de verdade?
             </h2>
-            <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-lg md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
               Comece gratuitamente agora e economize até 80% nos seus streamings favoritos.
             </p>
 
@@ -498,10 +483,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      < footer className="bg-gray-900 text-white py-12" >
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
@@ -597,7 +582,7 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 }

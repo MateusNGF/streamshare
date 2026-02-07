@@ -68,7 +68,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                         >
                             <span className="relative z-10 flex items-center gap-2">
                                 Painel
-                                <Image src="/assets/icons/ui/user.svg" width={20} height={20} alt="User" className="opacity-80 group-hover:opacity-100 invert" />
+                                <Image src="/assets/icons/ui/user.svg" width={20} height={20} alt="User" className="opacity-80 group-hover:opacity-100 brightness-0 invert" />
                             </span>
                             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </Link>
