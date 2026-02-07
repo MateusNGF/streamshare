@@ -121,7 +121,13 @@ export async function getDashboardStreamings() {
         include: {
             catalogo: true,
             _count: {
-                select: { assinaturas: true },
+                select: {
+                    assinaturas: {
+                        where: {
+                            status: "ativa"
+                        }
+                    }
+                },
             },
         },
         orderBy: { catalogo: { nome: "asc" } },
