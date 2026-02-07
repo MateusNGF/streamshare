@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { DollarSign, CheckCircle, AlertCircle, MessageCircle, MoreVertical, Check, Search } from "lucide-react";
+import { useState } from "react";
+import { DollarSign, CheckCircle, AlertCircle, MessageCircle, Check, Search, XCircle } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { confirmarPagamento, enviarNotificacaoCobranca } from "@/actions/cobrancas";
-import type { EnviarNotificacaoResult } from "@/types/whatsapp";
+import { confirmarPagamento, enviarNotificacaoCobranca, cancelarCobranca } from "@/actions/cobrancas";
 import { useToast } from "@/hooks/useToast";
 import { useCurrency } from "@/hooks/useCurrency";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { useRouter } from "next/navigation";
+
+import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal";
+import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
 
 interface CobrancasClientProps {
     kpis: {
@@ -26,6 +31,7 @@ interface CobrancasClientProps {
 
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
     const toast = useToast();
+    const router = useRouter(); // Use router for refresh
     const { format } = useCurrency();
 
     // Filters State
@@ -36,19 +42,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
     const [cobrancas, setCobrancas] = useState(cobrancasIniciais);
     const [loading, setLoading] = useState(false);
     const [sendingWhatsApp, setSendingWhatsApp] = useState<number | null>(null);
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
 
-    // Close menu when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setOpenMenuId(null);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // Modal State
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [confirmPaymentModalOpen, setConfirmPaymentModalOpen] = useState(false);
+    const [selectedCobrancaId, setSelectedCobrancaId] = useState<number | null>(null);
 
     const filteredCobrancas = cobrancas.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
@@ -56,15 +54,47 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
         return matchesSearch && matchesStatus;
     });
 
-    const handleConfirmarPagamento = async (id: number) => {
+    const handleConfirmarPagamento = (id: number) => {
+        setSelectedCobrancaId(id);
+        setConfirmPaymentModalOpen(true);
+    };
+
+    const executePaymentConfirmation = async () => {
+        if (!selectedCobrancaId) return;
+
         setLoading(true);
         try {
-            await confirmarPagamento(id);
+            await confirmarPagamento(selectedCobrancaId);
             toast.success("Pagamento confirmado com sucesso!");
-            // Refresh the page to update data
-            window.location.reload();
+            setConfirmPaymentModalOpen(false);
+            router.refresh();
+            // Optimistic update could happen here but refresh is safer for sync
+            setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             toast.error("Erro ao confirmar pagamento");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancelarCobranca = (id: number) => {
+        setSelectedCobrancaId(id);
+        setCancelModalOpen(true);
+    };
+
+    const confirmCancellation = async () => {
+        if (!selectedCobrancaId) return;
+
+        setLoading(true);
+        try {
+            await cancelarCobranca(selectedCobrancaId);
+            toast.success("Cobrança cancelada com sucesso!");
+            setCancelModalOpen(false);
+            router.refresh();
+            setTimeout(() => window.location.reload(), 500);
+        } catch (error: any) {
+            toast.error(error.message || "Erro ao cancelar cobrança");
+        } finally {
             setLoading(false);
         }
     };
@@ -86,6 +116,55 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
         } finally {
             setSendingWhatsApp(null);
         }
+    };
+
+    const formatDate = (date: Date) => {
+        return new Date(date).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    const formatPeriod = (start: Date, end: Date) => {
+        const s = new Date(start);
+        const e = new Date(end);
+        return `${s.getDate()}/${s.getMonth() + 1} - ${e.getDate()}/${e.getMonth() + 1}`;
+    };
+
+    const isOverdue = (date: Date, status: string) => {
+        return status === 'pendente' && new Date() > new Date(date);
+    };
+
+    const getCobrancaOptions = (cobranca: any) => {
+        const options = [];
+
+        if (cobranca.assinatura.participante.whatsappNumero) {
+            options.push({
+                label: "Enviar WhatsApp",
+                icon: <MessageCircle size={16} />,
+                onClick: () => handleEnviarWhatsApp(cobranca.id),
+            });
+        }
+
+        const isPendenteOrAtrasado = cobranca.status === "pendente" || cobranca.status === "atrasado";
+
+        if (isPendenteOrAtrasado) {
+            options.push({
+                label: "Confirmar Pagamento",
+                icon: <Check size={16} />,
+                onClick: () => handleConfirmarPagamento(cobranca.id),
+                variant: "success" as const,
+            });
+            options.push({
+                label: "Cancelar Cobrança",
+                icon: <XCircle size={16} />,
+                onClick: () => handleCancelarCobranca(cobranca.id),
+                variant: "danger" as const,
+            });
+        }
+
+        return options;
     };
 
     return (
@@ -165,147 +244,97 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                         }
                     />
                 ) : (
-                    <div className="overflow-x-scroll min-h-[calc(100vh-20rem)] ">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="text-left p-4 text-sm font-semibold text-gray-700">Participante</th>
-                                    <th className="text-left p-4 text-sm font-semibold text-gray-700">Streaming</th>
-                                    <th className="text-right p-4 text-sm font-semibold text-gray-700">Valor</th>
-                                    <th className="text-left p-4 text-sm font-semibold text-gray-700">Período</th>
-                                    <th className="text-left p-4 text-sm font-semibold text-gray-700">Vencimento</th>
-                                    <th className="text-left p-4 text-sm font-semibold text-gray-700">Status</th>
-                                    <th className="text-center p-4 text-sm font-semibold text-gray-700 w-20">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Participante</TableHead>
+                                    <TableHead>Streaming</TableHead>
+                                    <TableHead>Datas</TableHead>
+                                    <TableHead>Valor</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {filteredCobrancas.map((cobranca: any) => (
-                                    <tr key={cobranca.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                        <td className="p-4">
-                                            <div className="font-medium text-gray-900">
-                                                {cobranca.assinatura.participante.nome}
+                                    <TableRow key={cobranca.id}>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-gray-900">{cobranca.assinatura.participante.nome}</span>
+                                                <span className="text-xs text-gray-500">{cobranca.assinatura.participante.whatsappNumero}</span>
                                             </div>
-                                            <div className="text-xs text-gray-500">
-                                                {cobranca.assinatura.participante.whatsappNumero}
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
+                                        </TableCell>
+                                        <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div
-                                                    className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: cobranca.assinatura.streaming.catalogo.corPrimaria }}
-                                                />
-                                                <span className="text-sm text-gray-700">
-                                                    {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <span className="font-semibold text-gray-900">
-                                                {format(Number(cobranca.valor))}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="text-sm text-gray-600">
-                                                {new Date(cobranca.periodoInicio).toLocaleDateString('pt-BR', {
-                                                    day: '2-digit',
-                                                    month: 'short'
-                                                })} - {new Date(cobranca.periodoFim).toLocaleDateString('pt-BR', {
-                                                    day: '2-digit',
-                                                    month: 'short',
-                                                    year: 'numeric'
-                                                })}
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="text-sm text-gray-900">
-                                                {new Date(cobranca.periodoFim).toLocaleDateString('pt-BR')}
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <StatusBadge status={cobranca.status} />
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex justify-center">
-                                                <div className="relative" ref={openMenuId === cobranca.id ? menuRef : null}>
-                                                    {/* Menu Button */}
-                                                    <button
-                                                        onClick={() => setOpenMenuId(openMenuId === cobranca.id ? null : cobranca.id)}
-                                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                                        title="Ações"
-                                                    >
-                                                        <MoreVertical size={18} className="text-gray-600" />
-                                                    </button>
-
-                                                    {/* Dropdown Menu */}
-                                                    {openMenuId === cobranca.id && (
-                                                        <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
-                                                            <div className="py-2">
-                                                                {/* WhatsApp Option */}
-                                                                {cobranca.assinatura.participante.whatsappNumero && (
-                                                                    <>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                handleEnviarWhatsApp(cobranca.id);
-                                                                                setOpenMenuId(null);
-                                                                            }}
-                                                                            disabled={!whatsappConfigurado || sendingWhatsApp === cobranca.id || cobranca.status === 'cancelado' || cobranca.status === 'pago'}
-                                                                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent flex items-center gap-3 transition-colors"
-                                                                        >
-                                                                            <MessageCircle size={18} className="text-green-600 flex-shrink-0" />
-                                                                            <div className="flex-1">
-                                                                                <div className="font-medium text-gray-900">Enviar WhatsApp</div>
-                                                                                {!whatsappConfigurado && (
-                                                                                    <div className="text-xs text-gray-500 mt-0.5">WhatsApp não configurado</div>
-                                                                                )}
-                                                                                {cobranca.status === 'pago' && whatsappConfigurado && (
-                                                                                    <div className="text-xs text-gray-500 mt-0.5">Cobrança já paga</div>
-                                                                                )}
-                                                                            </div>
-                                                                        </button>
-                                                                        {(cobranca.status === "pendente" || cobranca.status === "atrasado") && (
-                                                                            <div className="border-t border-gray-100 my-1"></div>
-                                                                        )}
-                                                                    </>
-                                                                )}
-
-                                                                {/* Confirm Payment Option */}
-                                                                {(cobranca.status === "pendente" || cobranca.status === "atrasado") && (
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            handleConfirmarPagamento(cobranca.id);
-                                                                            setOpenMenuId(null);
-                                                                        }}
-                                                                        disabled={loading}
-                                                                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 transition-colors"
-                                                                    >
-                                                                        <Check size={18} className="text-primary flex-shrink-0" />
-                                                                        <div className="font-medium text-gray-900">Confirmar Pagamento</div>
-                                                                    </button>
-                                                                )}
-
-                                                                {/* Payment Info */}
-                                                                {cobranca.status === "pago" && cobranca.dataPagamento && (
-                                                                    <div className="px-4 py-2.5 text-sm text-gray-600 bg-gray-50 border-t border-gray-100">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <Check size={16} className="text-green-600" />
-                                                                            <span>Pago em {new Date(cobranca.dataPagamento).toLocaleDateString('pt-BR')}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                                                    style={{ backgroundColor: cobranca.assinatura.streaming.catalogo.corPrimaria || '#6d28d9' }}
+                                                >
+                                                    {cobranca.assinatura.streaming.catalogo.iconeUrl ? (
+                                                        <img
+                                                            src={cobranca.assinatura.streaming.catalogo.iconeUrl}
+                                                            alt=""
+                                                            className="w-full h-full object-contain p-1"
+                                                        />
+                                                    ) : (
+                                                        (cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome).substring(0, 2).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-gray-900">
+                                                        {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                                                    </span>
+                                                    {cobranca.assinatura.streaming.catalogo.nome !== (cobranca.assinatura.streaming.apelido) && (
+                                                        <span className="text-xs text-gray-500">{cobranca.assinatura.streaming.catalogo.nome}</span>
                                                     )}
                                                 </div>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className={`font-medium ${isOverdue(cobranca.periodoFim, cobranca.status) ? 'text-red-600' : 'text-gray-900'}`}>
+                                                    Vence em {formatDate(cobranca.periodoFim)}
+                                                </span>
+                                                <span className="text-xs text-gray-500">
+                                                    Ref: {formatPeriod(cobranca.periodoInicio, cobranca.periodoFim)}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="font-bold text-gray-900">
+                                                {format(Number(cobranca.valor))}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <StatusBadge status={cobranca.status} />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Dropdown options={getCobrancaOptions(cobranca)} />
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     </div>
                 )}
             </div>
+
+            {/* Modal de Cancelamento */}
+            <CancelarCobrancaModal
+                isOpen={cancelModalOpen}
+                onClose={() => setCancelModalOpen(false)}
+                onConfirm={confirmCancellation}
+                loading={loading}
+            />
+
+            {/* Modal de Confirmação de Pagamento */}
+            <ConfirmarPagamentoModal
+                isOpen={confirmPaymentModalOpen}
+                onClose={() => setConfirmPaymentModalOpen(false)}
+                onConfirm={executePaymentConfirmation}
+                loading={loading}
+            />
         </PageContainer>
     );
 }

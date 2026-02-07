@@ -151,6 +151,41 @@ export async function confirmarPagamento(
 }
 
 /**
+ * Cancel a charge
+ */
+export async function cancelarCobranca(cobrancaId: number) {
+    const { contaId } = await getContext();
+
+    // Verify ownership
+    const cobranca = await prisma.cobranca.findFirst({
+        where: {
+            id: cobrancaId,
+            assinatura: {
+                participante: { contaId }
+            }
+        }
+    });
+
+    if (!cobranca) {
+        throw new Error("Cobrança não encontrada");
+    }
+
+    if (cobranca.status === StatusCobranca.pago) {
+        throw new Error("Não é possível cancelar uma cobrança já paga");
+    }
+
+    const updated = await prisma.cobranca.update({
+        where: { id: cobrancaId },
+        data: {
+            status: StatusCobranca.cancelado
+        }
+    });
+
+    revalidatePath("/cobrancas");
+    return updated;
+}
+
+/**
  * Get financial KPIs for dashboard
  */
 export async function getKPIsFinanceiros() {

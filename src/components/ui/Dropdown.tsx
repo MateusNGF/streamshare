@@ -8,7 +8,7 @@ interface DropdownOption {
     label: string;
     icon?: React.ReactNode;
     onClick: () => void;
-    variant?: "default" | "danger";
+    variant?: "default" | "danger" | "success";
 }
 
 interface DropdownProps {
@@ -90,7 +90,7 @@ export function Dropdown({ options }: DropdownProps) {
             {isOpen && createPortal(
                 <div
                     data-dropdown-portal
-                    className="fixed z-[9999] w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-scale-in origin-top-left duration-200"
+                    className="fixed z-[9999] w-50 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-scale-in origin-top-left duration-200"
                     style={{
                         top: position.top,
                         left: position.left,
@@ -103,13 +103,19 @@ export function Dropdown({ options }: DropdownProps) {
                                 option.onClick();
                                 setIsOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-all ${option.variant === "danger"
+                            className={`w-full flex items-center  gap-3 px-4 py-2 text-sm font-medium transition-all ${option.variant === "danger"
                                 ? "text-red-600 hover:bg-red-50"
-                                : "text-gray-700 hover:bg-gray-50"
+                                : option.variant === "success"
+                                    ? "text-green-600 hover:bg-green-50"
+                                    : "text-gray-700 hover:bg-gray-50"
                                 }`}
                         >
-                            {option.icon}
-                            {option.label}
+                            <div>
+                                {option.icon}
+                            </div>
+                            <div className="flex w-full justify-start">
+                                {option.label}
+                            </div>
                         </button>
                     ))}
                 </div>,
