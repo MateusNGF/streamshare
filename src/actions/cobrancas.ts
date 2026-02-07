@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+
 import { StatusCobranca } from "@prisma/client";
 import { criarNotificacao } from "@/actions/notificacoes";
 import {
@@ -13,18 +13,7 @@ import {
 import type { EnviarNotificacaoResult } from "@/types/whatsapp";
 import type { CurrencyCode } from "@/types/currency.types";
 
-async function getContext() {
-    const session = await getCurrentUser();
-    if (!session) throw new Error("Não autenticado");
-
-    const userAccount = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: session.userId, isAtivo: true },
-        select: { contaId: true },
-    });
-
-    if (!userAccount) throw new Error("Conta não encontrada");
-    return { userId: session.userId, contaId: userAccount.contaId };
-}
+import { getContext } from "@/lib/action-context";
 
 /**
  * Get all charges for the current account with optional filters

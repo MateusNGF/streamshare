@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
 import { criarCobrancaInicial } from "./cobrancas";
@@ -12,19 +12,7 @@ import {
 import type { CurrencyCode } from "@/types/currency.types";
 import { criarNotificacao } from "@/actions/notificacoes";
 
-async function getContext() {
-    const session = await getCurrentUser();
-    if (!session) throw new Error("Não autenticado");
-
-    const userAccount = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: session.userId, isAtivo: true },
-        select: { contaId: true },
-    });
-
-    if (!userAccount) throw new Error("Conta não encontrada");
-
-    return { userId: session.userId, contaId: userAccount.contaId };
-}
+import { getContext } from "@/lib/action-context";
 
 export async function getAssinaturas(filters?: {
     status?: string;

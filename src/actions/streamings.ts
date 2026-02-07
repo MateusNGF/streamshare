@@ -1,24 +1,12 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+
 import { revalidatePath } from "next/cache";
 import { StreamingSchema } from "@/lib/schemas";
 import { PLANS } from "@/config/plans";
 import { criarNotificacao } from "@/actions/notificacoes";
-async function getContext() {
-    const session = await getCurrentUser();
-    if (!session) throw new Error("Não autenticado");
-
-    const userAccount = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: session.userId, isAtivo: true },
-        select: { contaId: true, nivelAcesso: true },
-    });
-
-    if (!userAccount) throw new Error("Conta não encontrada");
-
-    return { userId: session.userId, contaId: userAccount.contaId, nivelAcesso: userAccount.nivelAcesso };
-}
+import { getContext } from "@/lib/action-context";
 
 export async function getCatalogos() {
     return prisma.streamingCatalogo.findMany({

@@ -1,31 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getContext } from "@/lib/action-context";
 import { revalidatePath } from "next/cache";
 import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PLANS } from "@/config/plans";
 import type { CurrencyCode } from "@/types/currency.types";
 import { criarNotificacao } from "@/actions/notificacoes";
-
-// ============================================
-// CONTEXT HELPER
-// ============================================
-
-async function getContext() {
-    const session = await getCurrentUser();
-    if (!session) throw new Error("Não autenticado");
-
-    const userAccount = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: session.userId, isAtivo: true },
-        select: { contaId: true },
-    });
-
-    if (!userAccount) throw new Error("Conta não encontrada");
-
-    return { userId: session.userId, contaId: userAccount.contaId };
-}
 
 // ============================================
 // CRUD OPERATIONS

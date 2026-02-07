@@ -3,21 +3,9 @@
 import { prisma } from "@/lib/db";
 import { TipoNotificacao } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth";
 
-async function getContext() {
-    const session = await getCurrentUser();
-    if (!session) throw new Error("Não autenticado");
 
-    const userAccount = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: session.userId, isAtivo: true },
-        select: { contaId: true },
-    });
-
-    if (!userAccount) throw new Error("Conta não encontrada");
-
-    return { userId: session.userId, contaId: userAccount.contaId };
-}
+import { getContext } from "@/lib/action-context";
 
 /**
  * Get notifications for the current account

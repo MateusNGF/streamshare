@@ -5,19 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { criarNotificacao } from "@/actions/notificacoes";
 
-async function getContext() {
-    const session = await getCurrentUser();
-    if (!session) throw new Error("Não autenticado");
-
-    const userAccount = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: session.userId, isAtivo: true },
-        include: { conta: true },
-    });
-
-    if (!userAccount) throw new Error("Conta não encontrada");
-
-    return { userId: session.userId, contaId: userAccount.contaId, conta: userAccount.conta };
-}
+import { getContext } from "@/lib/action-context";
 
 export async function getSettingsData() {
     const session = await getCurrentUser();
