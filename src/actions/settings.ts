@@ -52,29 +52,36 @@ export async function getSettingsData() {
 }
 
 export async function updateProfile(data: { nome: string; email: string; whatsapp?: string }) {
-    const { userId } = await getContext();
+    const { userId, contaId } = await getContext();
 
-    await prisma.usuario.update({
-        where: { id: userId },
-        data: {
-            nome: data.nome,
-            email: data.email,
-            whatsapp: data.whatsapp,
-        },
-    });
+    await prisma.$transaction(async (tx) => {
+        await tx.usuario.update({
+            where: { id: userId },
+            data: {
+                nome: data.nome,
+                email: data.email,
+                whatsapp: data.whatsapp,
+            },
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "configuracao_alterada",
-        titulo: `Perfil atualizado`,
-        descricao: `As informações do seu perfil foram atualizadas.`
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "configuracao_alterada",
+                titulo: `Perfil atualizado`,
+                descricao: `As informações do seu perfil foram atualizadas.`,
+                lida: false
+            }
+        });
     });
 
     revalidatePath("/configuracoes");
 }
 
 export async function updateAccount(data: { nome: string; email: string; chavePix?: string }) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Validar email se fornecido
     if (data.email) {
@@ -108,13 +115,18 @@ export async function updateAccount(data: { nome: string; email: string; chavePi
                 chavePix: data.chavePix,
             },
         });
-    });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "configuracao_alterada",
-        titulo: `Conta atualizada`,
-        descricao: `As informações da conta foram atualizadas.`
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "configuracao_alterada",
+                titulo: `Conta atualizada`,
+                descricao: `As informações da conta foram atualizadas.`,
+                lida: false
+            }
+        });
     });
 
     revalidatePath("/configuracoes");
@@ -123,7 +135,7 @@ export async function updateAccount(data: { nome: string; email: string; chavePi
 import { getSupportedCurrencyCodes } from "@/types/currency.types";
 
 export async function updateCurrency(currencyCode: string) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Validar código de moeda
     const validCurrencies = getSupportedCurrencyCodes();
@@ -131,16 +143,23 @@ export async function updateCurrency(currencyCode: string) {
         throw new Error('Código de moeda inválido');
     }
 
-    await prisma.conta.update({
-        where: { id: contaId },
-        data: { moedaPreferencia: currencyCode },
-    });
+    await prisma.$transaction(async (tx) => {
+        await tx.conta.update({
+            where: { id: contaId },
+            data: { moedaPreferencia: currencyCode },
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "configuracao_alterada",
-        titulo: `Moeda atualizada`,
-        descricao: `A moeda preferencial foi alterada para ${currencyCode}.`
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "configuracao_alterada",
+                titulo: `Moeda atualizada`,
+                descricao: `A moeda preferencial foi alterada para ${currencyCode}.`,
+                lida: false
+            }
+        });
     });
 
     revalidatePath('/configuracoes');

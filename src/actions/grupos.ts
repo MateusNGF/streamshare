@@ -106,7 +106,7 @@ export async function createGrupo(data: {
 
     // ... inside createGrupo ...
 
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // 1. Validate Plan Limits
     const conta = await prisma.conta.findUnique({
@@ -175,18 +175,23 @@ export async function createGrupo(data: {
             }))
         });
 
-        return novoGrupo;
-    });
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "grupo_criado",
+                titulo: `Grupo criado`,
+                descricao: `O grupo "${novoGrupo.nome}" foi criado com ${data.streamingIds.length} streaming(s).`,
+                entidadeId: novoGrupo.id,
+                metadata: {
+                    linkConvite: novoGrupo.linkConvite
+                },
+                lida: false
+            }
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "grupo_criado",
-        titulo: `Grupo criado`,
-        descricao: `O grupo "${grupo.nome}" foi criado com ${data.streamingIds.length} streaming(s).`,
-        entidadeId: grupo.id,
-        metadata: {
-            linkConvite: grupo.linkConvite
-        }
+        return novoGrupo;
     });
 
     revalidatePath("/grupos");
@@ -204,7 +209,7 @@ export async function updateGrupo(
         streamingIds: number[];
     }
 ) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // 1. Validate Plan Limits
     const conta = await prisma.conta.findUnique({
@@ -281,14 +286,19 @@ export async function updateGrupo(
                 isAtivo: true
             }))
         });
-    });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "grupo_editado",
-        titulo: `Grupo atualizado`,
-        descricao: `O grupo "${data.nome}" foi atualizado.`,
-        entidadeId: id
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "grupo_editado",
+                titulo: `Grupo atualizado`,
+                descricao: `O grupo "${data.nome}" foi atualizado.`,
+                entidadeId: id,
+                lida: false
+            }
+        });
     });
 
     revalidatePath("/grupos");
@@ -298,25 +308,37 @@ export async function updateGrupo(
  * Soft delete de um grupo
  */
 export async function deleteGrupo(id: number) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
-    // Get grupo name before deleting
-    const grupo = await prisma.grupo.findFirst({
-        where: { id, contaId },
-        select: { nome: true }
-    });
+    await prisma.$transaction(async (tx) => {
+        // Get grupo name before deleting
+        const grupo = await tx.grupo.findFirst({
+            where: { id, contaId },
+            select: { nome: true }
+        });
 
-    await prisma.grupo.updateMany({
-        where: { id, contaId },
-        data: { isAtivo: false }
-    });
+        if (!grupo) {
+            throw new Error("Grupo não encontrado");
+        }
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "grupo_excluido",
-        titulo: `Grupo removido`,
-        descricao: grupo ? `O grupo "${grupo.nome}" foi removido.` : "Um grupo foi removido.",
-        entidadeId: id
+        // Soft delete
+        await tx.grupo.updateMany({
+            where: { id, contaId },
+            data: { isAtivo: false }
+        });
+
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "grupo_excluido",
+                titulo: `Grupo removido`,
+                descricao: `O grupo "${grupo.nome}" foi removido.`,
+                entidadeId: id,
+                lida: false
+            }
+        });
     });
 
     revalidatePath("/grupos");

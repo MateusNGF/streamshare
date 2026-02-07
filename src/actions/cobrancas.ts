@@ -118,7 +118,7 @@ export async function confirmarPagamento(
     cobrancaId: number,
     comprovanteUrl?: string
 ) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Verify ownership
     const cobranca = await prisma.cobranca.findFirst({
@@ -138,29 +138,38 @@ export async function confirmarPagamento(
         throw new Error("Cobrança já foi confirmada");
     }
 
-    const updated = await prisma.cobranca.update({
-        where: { id: cobrancaId },
-        data: {
-            status: StatusCobranca.pago,
-            dataPagamento: new Date(),
-            comprovanteUrl
-        },
-        include: {
-            assinatura: {
-                include: {
-                    participante: true,
-                    streaming: true
+    const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.cobranca.update({
+            where: { id: cobrancaId },
+            data: {
+                status: StatusCobranca.pago,
+                dataPagamento: new Date(),
+                comprovanteUrl
+            },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: true,
+                        streaming: true
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "cobranca_confirmada",
-        titulo: `Pagamento confirmado`,
-        descricao: `Pagamento de ${updated.assinatura.participante.nome} no valor de ${updated.valor} foi confirmado.`,
-        entidadeId: cobrancaId
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "cobranca_confirmada",
+                titulo: `Pagamento confirmado`,
+                descricao: `Pagamento de ${result.assinatura.participante.nome} no valor de ${result.valor} foi confirmado.`,
+                entidadeId: cobrancaId,
+                lida: false
+            }
+        });
+
+        return result;
     });
 
     revalidatePath("/cobrancas");
@@ -171,7 +180,7 @@ export async function confirmarPagamento(
  * Cancel a charge
  */
 export async function cancelarCobranca(cobrancaId: number) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Verify ownership
     const cobranca = await prisma.cobranca.findFirst({
@@ -191,26 +200,35 @@ export async function cancelarCobranca(cobrancaId: number) {
         throw new Error("Não é possível cancelar uma cobrança já paga");
     }
 
-    const updated = await prisma.cobranca.update({
-        where: { id: cobrancaId },
-        data: {
-            status: StatusCobranca.cancelado
-        },
-        include: {
-            assinatura: {
-                include: {
-                    participante: true
+    const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.cobranca.update({
+            where: { id: cobrancaId },
+            data: {
+                status: StatusCobranca.cancelado
+            },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: true
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "cobranca_cancelada",
-        titulo: `Cobrança cancelada`,
-        descricao: `Cobrança de ${updated.assinatura.participante.nome} foi cancelada.`,
-        entidadeId: cobrancaId
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "cobranca_cancelada",
+                titulo: `Cobrança cancelada`,
+                descricao: `Cobrança de ${result.assinatura.participante.nome} foi cancelada.`,
+                entidadeId: cobrancaId,
+                lida: false
+            }
+        });
+
+        return result;
     });
 
     revalidatePath("/cobrancas");

@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { validateCPF, validatePhone, validateEmail } from "@/lib/validation";
-import { criarNotificacao } from "@/actions/notificacoes";
 
 async function getContext() {
     const session = await getCurrentUser();
@@ -48,7 +47,7 @@ export async function createParticipante(data: {
     cpf?: string;
     email?: string;
 }) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Server-side validation
     if (!data.nome || !data.nome.trim()) {
@@ -67,24 +66,33 @@ export async function createParticipante(data: {
         throw new Error("Email inválido");
     }
 
-    const participante = await prisma.participante.create({
-        data: {
-            ...data,
-            cpf: data.cpf || null,
-            whatsappNumero: data.whatsappNumero || null,
-            contaId,
-        },
-    });
+    const participante = await prisma.$transaction(async (tx) => {
+        const created = await tx.participante.create({
+            data: {
+                ...data,
+                cpf: data.cpf || null,
+                whatsappNumero: data.whatsappNumero || null,
+                contaId,
+            },
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "participante_criado",
-        titulo: `Participante adicionado`,
-        descricao: `${participante.nome} foi adicionado ao sistema.`,
-        entidadeId: participante.id,
-        metadata: {
-            whatsapp: participante.whatsappNumero
-        }
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "participante_criado",
+                titulo: `Participante adicionado`,
+                descricao: `${created.nome} foi adicionado ao sistema.`,
+                entidadeId: created.id,
+                metadata: {
+                    whatsapp: created.whatsappNumero
+                },
+                lida: false
+            }
+        });
+
+        return created;
     });
 
     revalidatePath("/participantes");
@@ -100,7 +108,7 @@ export async function updateParticipante(
         email?: string;
     }
 ) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Server-side validation
     if (!data.nome || !data.nome.trim()) {
@@ -119,21 +127,30 @@ export async function updateParticipante(
         throw new Error("Email inválido");
     }
 
-    const participante = await prisma.participante.update({
-        where: { id, contaId },
-        data: {
-            ...data,
-            cpf: data.cpf || null,
-            whatsappNumero: data.whatsappNumero || null,
-        },
-    });
+    const participante = await prisma.$transaction(async (tx) => {
+        const updated = await tx.participante.update({
+            where: { id, contaId },
+            data: {
+                ...data,
+                cpf: data.cpf || null,
+                whatsappNumero: data.whatsappNumero || null,
+            },
+        });
 
-    // Create notification
-    await criarNotificacao({
-        tipo: "participante_editado",
-        titulo: `Participante atualizado`,
-        descricao: `As informações de ${participante.nome} foram atualizadas.`,
-        entidadeId: participante.id
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "participante_editado",
+                titulo: `Participante atualizado`,
+                descricao: `As informações de ${updated.nome} foram atualizadas.`,
+                entidadeId: updated.id,
+                lida: false
+            }
+        });
+
+        return updated;
     });
 
     revalidatePath("/participantes");
@@ -141,7 +158,7 @@ export async function updateParticipante(
 }
 
 export async function deleteParticipante(id: number) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Use transaction to validate and delete atomically
     await prisma.$transaction(async (tx) => {
@@ -176,24 +193,18 @@ export async function deleteParticipante(id: number) {
             where: { id, contaId },
         });
 
-        // Create notification (outside transaction to avoid rollback issues)
-        return participante.nome;
-    });
-
-    // Create notification
-    const participanteName = await prisma.$transaction(async (tx) => {
-        const p = await tx.participante.findUnique({
-            where: { id },
-            select: { nome: true }
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "participante_excluido",
+                titulo: `Participante removido`,
+                descricao: `${participante.nome} foi removido do sistema.`,
+                entidadeId: id,
+                lida: false
+            }
         });
-        return p?.nome;
-    }).catch(() => null);
-
-    await criarNotificacao({
-        tipo: "participante_excluido",
-        titulo: `Participante removido`,
-        descricao: participanteName ? `${participanteName} foi removido do sistema.` : "Um participante foi removido do sistema.",
-        entidadeId: id
     });
 
     revalidatePath("/participantes");

@@ -86,7 +86,7 @@ export async function createAssinatura(data: {
     dataInicio: string; // ISO Date string
     cobrancaAutomaticaPaga?: boolean;
 }) {
-    const { contaId } = await getContext(); // Validate auth
+    const { contaId, userId } = await getContext(); // Validate auth
 
     // Business validations
     if (!Number.isFinite(data.valor) || data.valor <= 0) {
@@ -196,6 +196,19 @@ export async function createAssinatura(data: {
             select: { nome: true, contaId: true },
         });
 
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "assinatura_criada",
+                titulo: `Nova assinatura criada`,
+                descricao: `Assinatura de ${streaming.catalogo.nome} para ${participante?.nome || 'participante'} foi criada.`,
+                entidadeId: assinatura.id,
+                lida: false
+            }
+        });
+
         return { assinatura, cobranca, participante, streaming };
     });
 
@@ -229,14 +242,6 @@ export async function createAssinatura(data: {
         // Log but don't fail the operation
         console.error("WhatsApp notification failed:", error);
     }
-
-    // Create notification
-    await criarNotificacao({
-        tipo: "assinatura_criada",
-        titulo: `Nova assinatura criada`,
-        descricao: `Assinatura de ${result.streaming.catalogo.nome} para ${result.participante?.nome || 'participante'} foi criada.`,
-        entidadeId: result.assinatura.id
-    });
 
     revalidatePath("/assinaturas");
     revalidatePath("/participantes");
@@ -282,7 +287,7 @@ export async function createBulkAssinaturas(data: {
     dataInicio: string;
     cobrancaAutomaticaPaga?: boolean;
 }) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     if (!data.assinaturas || data.assinaturas.length === 0) {
         throw new Error("Selecione pelo menos um streaming");
@@ -381,6 +386,22 @@ export async function createBulkAssinaturas(data: {
                 });
             }
         }
+
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "assinatura_criada",
+                titulo: `Assinaturas criadas em lote`,
+                descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
+                metadata: {
+                    totalAssinaturas: results.length,
+                    totalParticipantes: data.participanteIds.length
+                },
+                lida: false
+            }
+        });
     });
 
     // Generate charges for all created subscriptions (outside transaction)
@@ -392,17 +413,6 @@ export async function createBulkAssinaturas(data: {
             console.error(`Failed to create charge for subscription ${result.assinaturaId}:`, error);
         }
     }));
-
-    // Create notification
-    await criarNotificacao({
-        tipo: "assinatura_criada",
-        titulo: `Assinaturas criadas em lote`,
-        descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
-        metadata: {
-            totalAssinaturas: results.length,
-            totalParticipantes: data.participanteIds.length
-        }
-    });
 
     revalidatePath("/assinaturas");
     revalidatePath("/cobrancas");
@@ -420,7 +430,7 @@ export async function createBulkAssinaturas(data: {
  * Only active or suspended subscriptions can be cancelled
  */
 export async function cancelarAssinatura(assinaturaId: number) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     // Validate subscription exists and belongs to user's account
     const assinatura = await prisma.assinatura.findUnique({
@@ -459,38 +469,31 @@ export async function cancelarAssinatura(assinaturaId: number) {
         throw new Error("Apenas assinaturas ativas ou suspensas podem ser canceladas");
     }
 
-    // Update subscription status to cancelled
-    const updatedAssinatura = await prisma.assinatura.update({
-        where: { id: assinaturaId },
-        data: {
-            status: StatusAssinatura.cancelada,
-            dataCancelamento: new Date(),
-            updatedAt: new Date()
-        }
-    });
+    // Update subscription status to cancelled and create notification
+    const updatedAssinatura = await prisma.$transaction(async (tx) => {
+        const updated = await tx.assinatura.update({
+            where: { id: assinaturaId },
+            data: {
+                status: StatusAssinatura.cancelada,
+                dataCancelamento: new Date(),
+                updatedAt: new Date()
+            }
+        });
 
-    // Send WhatsApp notification (non-blocking)
-    try {
-        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+        // Create notification inside transaction
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: userId,
+                tipo: "assinatura_cancelada",
+                titulo: `Assinatura cancelada`,
+                descricao: `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
+                entidadeId: assinaturaId,
+                lida: false
+            }
+        });
 
-        const mensagem = `🚫 *Assinatura Cancelada*\n\nOlá ${assinatura.participante.nome},\n\nSua assinatura de *${assinatura.streaming.catalogo.nome}* foi cancelada.\n\nSe você tiver alguma dúvida, entre em contato conosco.`;
-
-        await sendWhatsAppNotification(
-            contaId,
-            "assinatura_suspensa", // Reusing existing type as closest match
-            assinatura.participante.id,
-            mensagem
-        );
-    } catch (error) {
-        console.error("Erro ao enviar notificação WhatsApp:", error);
-    }
-
-    // Create notification
-    await criarNotificacao({
-        tipo: "assinatura_cancelada",
-        titulo: `Assinatura cancelada`,
-        descricao: `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
-        entidadeId: assinaturaId
+        return updated;
     });
 
     // Revalidate all relevant paths
