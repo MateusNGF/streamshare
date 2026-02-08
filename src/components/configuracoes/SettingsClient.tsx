@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare, DollarSign } from "lucide-react";
+import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare, DollarSign, Check, Crown, Zap, BarChart, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
 
@@ -16,11 +16,27 @@ import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import NotificationsTab from "@/components/settings/NotificationsTab";
 import { PhoneInput } from "@/components/ui/PhoneInput";
+import { PLANS } from "@/config/plans";
 
 interface SettingsClientProps {
     initialData: {
         user: { nome: string; email: string; whatsapp?: string | null } | null;
-        conta: { nome: string | null; email: string | null; plano: string; moedaPreferencia?: string; chavePix?: string | null } | null | any;
+        conta: {
+            nome: string | null;
+            email: string | null;
+            plano: string;
+            moedaPreferencia?: string;
+            chavePix?: string | null;
+            stripeSubscriptionStatus?: string | null;
+            createdAt: Date;
+            isAtivo: boolean;
+            limiteGrupos: number;
+            _count?: {
+                grupos: number;
+                streamings: number;
+                participantes: number;
+            };
+        } | null | any;
     };
 }
 
@@ -352,40 +368,111 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
 
                     {/* Sidebar */}
-                    < div className="space-y-6" >
+                    <div className="space-y-6">
                         {/* Plano Atual */}
-                        < section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm" >
-                            <div className="flex items-center gap-3 mb-6">
-                                <CreditCard className="text-primary" size={24} />
-                                <h2 className="text-xl font-bold text-gray-900">Plano Atual</h2>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-center">
-                                    <p className="text-sm text-gray-600 mb-1">Plano Atual</p>
-                                    <p className="text-2xl font-bold text-primary capitalize">
-                                        {initialData.conta?.plano || "basico"}
-                                    </p>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Limite de Grupos</span>
-                                        <span className="font-semibold text-gray-900">
-                                            {initialData.conta?.limiteGrupos || 5}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Participantes</span>
-                                        <span className="font-semibold text-gray-900">Ilimitado</span>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => router.push("/planos")}
-                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-2xl font-bold transition-all mt-4"
-                                >
-                                    Alterar Plano
-                                </button>
-                            </div>
-                        </section >
+                        <section className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden relative">
+                            {(() => {
+                                const currentPlanKey = (initialData.conta?.plano || "basico") as keyof typeof PLANS;
+                                const planDetails = PLANS[currentPlanKey];
+                                const isPro = currentPlanKey === "pro";
+                                const usage = initialData.conta?._count || { grupos: 0, streamings: 0, participantes: 0 };
+                                const limitGroups = initialData.conta?.limiteGrupos || 5;
+                                const usagePercent = (usage.grupos / limitGroups) * 100;
+                                const isActive = initialData.conta?.isAtivo;
+
+                                return (
+                                    <>
+                                        {/* Header */}
+                                        <div className={`p-8 ${isPro ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white' : 'bg-gray-50 text-gray-900 border-b border-gray-100'}`}>
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-2xl ${isPro ? 'bg-white/20 backdrop-blur-sm' : 'bg-white border border-gray-200'}`}>
+                                                        {isPro ? <Crown size={28} className="text-yellow-300" /> : <User size={28} className="text-gray-500" />}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h2 className="text-xl font-bold">Plano {planDetails.label}</h2>
+                                                            {isPro && <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-200 text-[10px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/30">PRO</span>}
+                                                        </div>
+                                                        <div className={`flex items-center gap-2 text-sm mt-1 ${isPro ? 'text-indigo-100' : 'text-gray-500'}`}>
+                                                            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-400' : 'bg-red-400'}`} />
+                                                            {isActive ? 'Assinatura Ativa' : 'Assinatura Inativa'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="p-8 space-y-8">
+                                            {/* Usage Stats */}
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-600 flex items-center gap-2 font-medium">
+                                                        <Building2 size={16} /> Grupos Criados
+                                                    </span>
+                                                    <span className="font-semibold text-gray-900">
+                                                        {usage.grupos} <span className="text-gray-400 font-normal">/ {limitGroups === 9999 ? '∞' : limitGroups}</span>
+                                                    </span>
+                                                </div>
+                                                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-500 ${isPro ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-primary'}`}
+                                                        style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                                {usagePercent >= 80 && limitGroups < 9999 && (
+                                                    <p className="text-xs text-amber-600 flex items-center gap-1">
+                                                        <Zap size={12} /> Você está próximo do limite do seu plano.
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Features Preview */}
+                                            <div className="space-y-3">
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Incluso no plano</p>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {planDetails.features.slice(0, 4).map((feature, idx) => (
+                                                        <div key={idx} className="flex items-start gap-3 text-sm text-gray-600">
+                                                            <div className={`mt-0.5 p-0.5 rounded-full ${isPro ? 'bg-indigo-50 text-indigo-600' : 'bg-green-50 text-green-600'}`}>
+                                                                <Check size={12} strokeWidth={3} />
+                                                            </div>
+                                                            <span className="leading-tight">{feature.text}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Action Button */}
+                                            <div className="pt-2">
+                                                <button
+                                                    onClick={() => router.push("/planos")}
+                                                    className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group
+                                                    ${isPro
+                                                            ? 'bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200'
+                                                            : 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5'
+                                                        }`}
+                                                >
+                                                    {isPro ? (
+                                                        'Gerenciar Assinatura'
+                                                    ) : (
+                                                        <>
+                                                            <Crown size={18} className="text-yellow-300" />
+                                                            <span className="group-hover:tracking-wide transition-all">Fazer Upgrade para PRO</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                                {initialData.conta?.createdAt && (
+                                                    <p className="text-center text-xs text-gray-400 mt-4">
+                                                        Membro desde {new Date(initialData.conta.createdAt).toLocaleDateString('pt-BR')}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </section>
                     </div >
                 </div >
             ),

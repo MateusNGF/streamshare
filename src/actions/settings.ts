@@ -28,6 +28,16 @@ export async function getSettingsData() {
                     limiteGrupos: true,
                     moedaPreferencia: true,
                     chavePix: true,
+                    stripeSubscriptionStatus: true,
+                    createdAt: true,
+                    isAtivo: true,
+                    _count: {
+                        select: {
+                            grupos: true,
+                            streamings: true,
+                            participantes: true,
+                        },
+                    },
                 },
             },
         },
