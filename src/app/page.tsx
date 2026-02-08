@@ -66,16 +66,14 @@ export default async function LandingPage() {
             </div>
 
             <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight animate-slide-in-from-bottom stagger-1">
-              Economize até{" "}
+              Dê um Basta no <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-green-300">
-                80% em streaming
-              </span>{" "}
-              sem complicação
+                Desperdício das Suas Assinaturas
+              </span>
             </h1>
             <p className="text-lg md:text-2xl text-purple-100 mb-6 md:mb-8 max-w-2xl mx-auto animate-slide-in-from-bottom stagger-2">
-              Chega de pagar caro sozinho! Compartilhe Netflix, Spotify, Disney+ e mais
-              com seus amigos e familiares. Organize grupos, envie links de convite e
-              automatize cobranças sem dor de cabeça.
+              Você já paga por Netflix, Spotify e outros. Por que não dividir a conta e colocar
+              <span className="font-bold text-white"> R$ 2.000,00/ano</span> de volta no seu bolso?
             </p>
 
             {/* Value Props */}
@@ -134,33 +132,33 @@ export default async function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-              Conhece esses problemas?
+              Paz Mental ou Caos Financeiro?
             </h2>
             <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-              Você não está sozinho. Milhares de pessoas enfrentam os mesmos desafios
+              Veja a diferença entre gerenciar sozinho e usar o StreamShare
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {[
               {
-                problem: "Gastando muito com várias assinaturas",
-                solution: "Divida custos e economize até 80%",
+                problem: "O 'Amigo' Esquecido",
+                solution: "Cobrança Automática sem Chateação",
                 icon: DollarSign,
               },
               {
-                problem: "Amigos esquecem de pagar",
-                solution: "Lembretes automáticos via WhatsApp",
-                icon: Bell,
-              },
-              {
-                problem: "Difícil controlar quem pagou",
-                solution: "Dashboard completo em tempo real",
+                problem: "A Planilha do Caos",
+                solution: "Painel Visual em Tempo Real",
                 icon: BarChart3,
               },
               {
-                problem: "Muito trabalho manual",
-                solution: "Automação total do processo",
+                problem: "Prejuízo Invisível (Pagar 4 Telas e Usar 1)",
+                solution: "Economia Real de até 80%",
+                icon: TrendingUp,
+              },
+              {
+                problem: "Perda de Tempo com PIX Manual",
+                solution: "Gestão Financeira Descomplicada",
                 icon: Zap,
               },
             ].map((item, idx) => (
@@ -202,49 +200,49 @@ export default async function LandingPage() {
           <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible gap-6 md:gap-8 mb-16 pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-auto md:px-0">
             {[
               {
-                icon: Users,
-                title: "Grupos Organizados",
-                desc: "Crie grupos para cada serviço, defina regras personalizadas e mantenha tudo organizado.",
-              },
-              {
-                icon: TrendingUp,
-                title: "Controle Financeiro",
-                desc: "Visualize status de pagamento em tempo real (Pendente, Pago, Atrasado) e receitas futuras.",
+                icon: HeartHandshake,
+                title: 'Cobrança sem "Climão"',
+                desc: "O sistema cobra seus amigos automaticamente. Você não precisa mais ser o 'chato' que fica pedindo dinheiro no grupo.",
               },
               {
                 icon: Shield,
-                title: "Totalmente Seguro",
-                desc: "Seus dados e informações de pagamento protegidos com criptografia de ponta.",
+                title: "Fim do Calote",
+                desc: "Reduza a inadimplência a zero. Com lembretes programados, ninguém mais 'esquece' de pagar a parte dele.",
               },
               {
-                icon: Bell,
-                title: "Lembretes Automáticos",
-                desc: "Notificações por WhatsApp para cobranças pendentes",
-              },
-              {
-                icon: Smartphone,
-                title: "Acesso Mobile",
-                desc: "Gerencie tudo pelo celular, tablet ou computador",
-              },
-              {
-                icon: BarChart3,
-                title: "Relatórios Detalhados",
-                desc: "Análises completas de pagamentos e participação",
-              },
-              {
-                icon: Zap,
-                title: "Automação Total",
-                desc: "Configure uma vez e deixe o sistema trabalhar por você",
+                icon: TrendingUp,
+                title: "Lucro no Piloto Automático",
+                desc: "Visualize sua economia crescendo enquanto o sistema gerencia tudo sozinho. O dinheiro cai na conta, sem esforço.",
               },
               {
                 icon: Lock,
-                title: "Dados Protegidos",
-                desc: "Criptografia de nível bancário para suas informações",
+                title: "Blindagem de Dados",
+                desc: "Segurança de nível bancário. Seus dados financeiros e de seus amigos são protegidos com criptografia de ponta.",
               },
               {
-                icon: HeartHandshake,
-                title: "Suporte Dedicado",
-                desc: "Time sempre pronto para ajudar quando precisar",
+                icon: Zap,
+                title: "Organização em 1 Clique",
+                desc: "Painel intuitivo para gerenciar Netflix, Spotify e outros em um só lugar. Adeus planilhas confusas e anotações perdidas.",
+              },
+              {
+                icon: Bell,
+                title: "Notificações que Funcionam",
+                desc: "Lembretes enviados onde as pessoas realmente vêem: no WhatsApp. Aumente a taxa de pagamento em até 90%.",
+              },
+              {
+                icon: Smartphone,
+                title: "Controle na Palma da Mão",
+                desc: "Acesse de qualquer lugar. Seu painel de controle otimizado para celular, tablet ou computador.",
+              },
+              {
+                icon: BarChart3,
+                title: "Transparência Total",
+                desc: "Histórico detalhado de quem pagou e quem deve. Acabe com as dúvidas e o 'disse-que-me-disse' nos grupos.",
+              },
+              {
+                icon: Award,
+                title: "Suporte Especializado",
+                desc: "Dúvidas na configuração? Nosso time de especialistas te ajuda a começar em menos de 5 minutos.",
               },
             ].map((feature, idx) => (
               <div
@@ -287,21 +285,21 @@ export default async function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Como Funciona</h2>
-            <p className="text-lg md:text-xl text-gray-600">Simples e rápido em 3 passos</p>
+            <p className="text-lg md:text-xl text-gray-600">Não é trabalho, é mágica. Comece em segundos.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
-              { num: "1", title: "Crie sua Conta", desc: "Cadastre-se gratuitamente em minutos" },
+              { num: "1", title: "Cadastro Relâmpago", desc: "Crie sua conta em menos de 30 segundos." },
               {
                 num: "2",
-                title: "Crie seus Grupos",
-                desc: "Configure os serviços que você já assina e defina o valor por pessoa",
+                title: "Setup Inteligente",
+                desc: "Defina o valor e deixe o sistema organizar os grupos para você.",
               },
               {
                 num: "3",
-                title: "Envie o Link",
-                desc: "Compartilhe o link de convite via WhatsApp e deixe o cadastro com eles",
+                title: "Pix Automático",
+                desc: "O sistema cobra e o dinheiro cai na sua conta. Simples assim.",
               },
             ].map((step, idx) => (
               <div key={idx} className="text-center group">
@@ -312,24 +310,6 @@ export default async function LandingPage() {
                 <p className="text-gray-600">{step.desc}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="planos" className="py-12 md:py-20 bg-gray-50">
-        <div className="container mx-auto px-6">
-
-
-          <div className="max-w-6xl mx-auto">
-            <PlansClient isLoggedIn={!!session} currentPlan={account?.conta.plano || "basico"} />
-          </div>
-
-          {/* Comparison note */}
-          <div className="mt-8 md:mt-12 text-center">
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              💡 <strong>Dica:</strong> Dividindo uma Netflix Premium (R$ 55,90) entre 4 pessoas, você paga apenas <strong>R$ 13,98/pessoa</strong>. O plano Pro se paga com apenas 1 streaming compartilhado!
-            </p>
           </div>
         </div>
       </section>
@@ -391,6 +371,26 @@ export default async function LandingPage() {
         </div>
       </section >
 
+      {/* Pricing */}
+      <section id="planos" className="py-12 md:py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+
+
+          <div className="max-w-6xl mx-auto">
+            <PlansClient isLoggedIn={!!session} currentPlan={account?.conta.plano || "basico"} />
+          </div>
+
+          {/* Comparison note */}
+          <div className="mt-8 md:mt-12 text-center">
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              💡 <strong>Dica:</strong> Dividindo uma Netflix Premium (R$ 55,90) entre 4 pessoas, você paga apenas <strong>R$ 13,98/pessoa</strong>. O plano Pro se paga com apenas 1 streaming compartilhado!
+            </p>
+          </div>
+        </div>
+      </section>
+
+
+
       {/* FAQ */}
       < section id="faq" className="py-12 md:py-20 bg-white" >
         <div className="container mx-auto px-6">
@@ -403,32 +403,24 @@ export default async function LandingPage() {
           <div className="max-w-3xl mx-auto space-y-4">
             {[
               {
-                q: "Como funciona o pagamento?",
-                a: "O StreamShare é a ferramenta de gestão, não um banco. Você recebe os valores diretamente dos participantes (via PIX, por exemplo) e marca como 'Pago' no sistema para manter o controle.",
+                q: "É realmente seguro?",
+                a: "Absolutamente. Utilizamos criptografia de ponta e não tocamos no seu dinheiro. O StreamShare é uma ferramenta de gestão, os pagamentos são feitos diretamente para você.",
               },
               {
-                q: "Quanto eu posso economizar?",
-                a: "Em média, nossos usuários economizam entre 60% a 80% nos custos de streaming. Por exemplo, uma Netflix Premium de R$ 55,90 dividida entre 4 pessoas sai por apenas R$ 13,98 por pessoa!",
+                q: "E se meus amigos não pagarem?",
+                a: "O sistema é o 'policial mau' por você. Ele envia lembretes automáticos e marca inadimplentes, reduzindo o constrangimento e a falta de pagamento.",
               },
               {
-                q: "Posso cancelar a qualquer momento?",
-                a: "Sim! Não há fidelidade. Você pode cancelar seu plano Pro quando quiser sem custos adicionais. O plano Free é sempre gratuito.",
+                q: "Preciso cadastrar cartão de crédito?",
+                a: "Não! Você pode começar com o plano Gratuito sem informar cartão de crédito. Só pediremos dados de pagamento se você decidir fazer o upgrade para o Pro.",
               },
               {
-                q: "Meus dados estão seguros?",
-                a: "Sim! Todas as informações são armazenadas de forma segura e criptografada. Nunca compartilhamos seus dados com terceiros. Você decide quais informações seus participantes podem ver.",
+                q: "Funciona para dividir contas de casa?",
+                a: "Sim! Embora focado em streaming, você pode criar grupos personalizados para dividir internet, aluguel ou qualquer conta recorrente.",
               },
               {
-                q: "Como funcionam os lembretes automáticos?",
-                a: "O sistema envia mensagens automáticas via WhatsApp para os participantes antes da data de vencimento, lembrando sobre o pagamento. Você pode personalizar a frequência e o texto das mensagens.",
-              },
-              {
-                q: "Funciona com qualquer plataforma de streaming?",
-                a: "Sim! Funciona com Netflix, Spotify, Disney+, HBO Max, Amazon Prime, YouTube Premium e qualquer outra plataforma de assinatura que você queira compartilhar.",
-              },
-              {
-                q: "E se alguém não pagar?",
-                a: "Você recebe notificações em tempo real sobre pagamentos pendentes. O sistema marca automaticamente inadimplentes e você pode gerar relatórios completos para acompanhar a situação de cada participante.",
+                q: "Posso cancelar se não gostar?",
+                a: "A qualquer momento, com um clique. Sem letras miúdas, sem fidelidade e sem dor de cabeça.",
               },
             ].map((faq, idx) => (
               <details
@@ -451,10 +443,10 @@ export default async function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-6xl font-bold mb-6">
-              Pronto para economizar de verdade?
+              Não Deixe Dinheiro na Mesa
             </h2>
             <p className="text-lg md:text-2xl text-purple-100 mb-8 max-w-2xl mx-auto">
-              Comece gratuitamente agora e economize até 80% nos seus streamings favoritos.
+              Cada dia sem o StreamShare é um dia perdendo dinheiro. Comece agora.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
