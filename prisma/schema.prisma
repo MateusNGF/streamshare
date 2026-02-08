@@ -112,6 +112,7 @@ model Conta {
   stripeCustomerId         String? @unique
   stripeSubscriptionId     String? @unique
   stripeSubscriptionStatus String?
+  stripeCancelAtPeriodEnd  Boolean @default(false)
 
   @@map("conta")
 }

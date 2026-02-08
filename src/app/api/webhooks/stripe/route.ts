@@ -40,6 +40,7 @@ export async function POST(req: Request) {
                     stripeCustomerId: session.customer as string,
                     stripeSubscriptionId: session.subscription as string,
                     stripeSubscriptionStatus: "active",
+                    stripeCancelAtPeriodEnd: false,
                     plano: plano,
                     limiteGrupos: planConfig?.maxGrupos || 5
                 },
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
                     where: { id: account.id },
                     data: {
                         stripeSubscriptionStatus: subscription.status,
+                        stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
                         ...(planConfig && {
                             plano: planConfig.id
                         })
@@ -103,6 +105,7 @@ export async function POST(req: Request) {
                     where: { id: account.id },
                     data: {
                         stripeSubscriptionStatus: subscription.status,
+                        stripeCancelAtPeriodEnd: false,
                         plano: "basico",
                         limiteGrupos: 5
                     },

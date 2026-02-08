@@ -29,6 +29,7 @@ export async function getSettingsData() {
                     moedaPreferencia: true,
                     chavePix: true,
                     stripeSubscriptionStatus: true,
+                    stripeCancelAtPeriodEnd: true,
                     createdAt: true,
                     isAtivo: true,
                     _count: {

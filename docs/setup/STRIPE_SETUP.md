@@ -2,6 +2,8 @@
 
 Este documento detalha como configurar, testar e manter a integração de pagamentos com Stripe no StreamShare.
 
+> Para detalhes sobre o ciclo de vida das assinaturas (Renovação, Cancelamento, Falhas), consulte: [Fluxos de Assinatura e Cancelamento](../features/ASSINATURAS_CANCELAMENTO.md)
+
 ---
 
 ## 📋 Pré-requisitos
@@ -72,7 +74,7 @@ O StreamShare usa webhooks para sincronizar o status da assinatura com o banco d
 | Evento | Ação no Banco de Dados |
 |--------|------------------------|
 | `checkout.session.completed` | Atualiza usuário com `stripeSubscriptionId` e muda plano. |
-| `customer.subscription.updated` | Atualiza status (`active`, `past_due`, etc.) na tabela `Conta`. |
+| `customer.subscription.updated` | Atualiza status (`active`, `past_due`, etc.) e `cancel_at_period_end` na tabela `Conta`. |
 | `customer.subscription.deleted` | Reverte a conta para o plano `basico`. |
 
 ### Testando Webhooks Localmente (Stripe CLI)
@@ -101,8 +103,7 @@ O StreamShare usa webhooks para sincronizar o status da assinatura com o banco d
 
 ## 🧪 Fluxo de Teste Manual
 
-Para testar o fluxo completo como um usuário:
-
+### Assinatura
 1.  Certifique-se que o projeto está rodando (`pnpm dev`).
 2.  Inicie o listener do Stripe (`stripe listen ...`).
 3.  Acesse `http://localhost:3000/planos`.
@@ -113,6 +114,16 @@ Para testar o fluxo completo como um usuário:
     -   **Validade**: Qualquer data futura
     -   **CVC**: Qualquer 3 dígitos
 7.  Após sucesso, verifique se você foi redirecionado e se o plano mudou no Dashboard.
+
+### Cancelamento
+1.  Acesse `http://localhost:3000/configuracoes` (aba Conta).
+2.  Clique em **Cancelar Assinatura**.
+3.  Confirme a ação no modal.
+4.  Verifique:
+    -   O botão muda para **Reativar Assinatura**.
+    -   Aparece um badge "Cancelada (expira no fim do ciclo)".
+    -   No banco de dados, `stripeCancelAtPeriodEnd` deve ser `true`.
+5.  Para reativar, clique em **Reativar Assinatura** e verifique se o status volta ao normal.
 
 ---
 

@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import NotificationsTab from "@/components/settings/NotificationsTab";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PLANS } from "@/config/plans";
+import { cancelSubscriptionAction, reactivateSubscriptionAction } from "@/actions/stripe";
+import { CancelSubscriptionModal } from "../modals/CancelSubscriptionModal";
 
 interface SettingsClientProps {
     initialData: {
@@ -379,6 +381,45 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                 const limitGroups = initialData.conta?.limiteGrupos || 5;
                                 const usagePercent = (usage.grupos / limitGroups) * 100;
                                 const isActive = initialData.conta?.isAtivo;
+                                const isCanceled = initialData.conta?.stripeCancelAtPeriodEnd;
+
+                                const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+                                const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+
+                                const handleCancelSubscription = async () => {
+                                    setIsLoadingSubscription(true);
+                                    try {
+                                        const result = await cancelSubscriptionAction(initialData.conta.id);
+                                        if (result.success) {
+                                            showToast("Assinatura cancelada com sucesso. O acesso continua até o fim do período.", "success");
+                                            setIsCancelModalOpen(false);
+                                            router.refresh();
+                                        } else {
+                                            showToast(result.error || "Erro ao cancelar assinatura", "error");
+                                        }
+                                    } catch (error) {
+                                        showToast("Erro ao processar solicitação", "error");
+                                    } finally {
+                                        setIsLoadingSubscription(false);
+                                    }
+                                };
+
+                                const handleReactivateSubscription = async () => {
+                                    setIsLoadingSubscription(true);
+                                    try {
+                                        const result = await reactivateSubscriptionAction(initialData.conta.id);
+                                        if (result.success) {
+                                            showToast("Assinatura reativada com sucesso!", "success");
+                                            router.refresh();
+                                        } else {
+                                            showToast(result.error || "Erro ao reativar assinatura", "error");
+                                        }
+                                    } catch (error) {
+                                        showToast("Erro ao processar solicitação", "error");
+                                    } finally {
+                                        setIsLoadingSubscription(false);
+                                    }
+                                };
 
                                 return (
                                     <>
@@ -398,6 +439,11 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                                             <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-400' : 'bg-red-400'}`} />
                                                             {isActive ? 'Assinatura Ativa' : 'Assinatura Inativa'}
                                                         </div>
+                                                        {isCanceled && (
+                                                            <div className="mt-2 text-xs bg-red-500/20 border border-red-500/30 text-white px-2 py-1 rounded-lg">
+                                                                Cancelada (expira no fim do ciclo)
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -444,30 +490,53 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                             </div>
 
                                             {/* Action Button */}
-                                            <div className="pt-2">
-                                                <button
-                                                    onClick={() => router.push("/planos")}
-                                                    className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group
-                                                    ${isPro
-                                                            ? 'bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200'
-                                                            : 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5'
-                                                        }`}
-                                                >
-                                                    {isPro ? (
-                                                        'Gerenciar Assinatura'
-                                                    ) : (
-                                                        <>
-                                                            <Crown size={18} className="text-yellow-300" />
-                                                            <span className="group-hover:tracking-wide transition-all">Fazer Upgrade para PRO</span>
-                                                        </>
-                                                    )}
-                                                </button>
+                                            <div className="pt-2 space-y-3">
+                                                {!isPro ? (
+                                                    <button
+                                                        onClick={() => router.push("/planos")}
+                                                        className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5"
+                                                    >
+                                                        <Crown size={18} className="text-yellow-300" />
+                                                        <span className="group-hover:tracking-wide transition-all">Fazer Upgrade para PRO</span>
+                                                    </button>
+                                                ) : isCanceled ? (
+                                                    <button
+                                                        onClick={handleReactivateSubscription}
+                                                        disabled={isLoadingSubscription}
+                                                        className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                                                    >
+                                                        {isLoadingSubscription ? "Processando..." : "Reativar Assinatura"}
+                                                    </button>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={() => router.push("/planos")}
+                                                            className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
+                                                        >
+                                                            Gerenciar Assinatura
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setIsCancelModalOpen(true)}
+                                                            className="w-full py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                                        >
+                                                            Cancelar Assinatura
+                                                        </button>
+                                                    </>
+                                                )}
+
                                                 {initialData.conta?.createdAt && (
                                                     <p className="text-center text-xs text-gray-400 mt-4">
                                                         Membro desde {new Date(initialData.conta.createdAt).toLocaleDateString('pt-BR')}
                                                     </p>
                                                 )}
                                             </div>
+
+                                            <CancelSubscriptionModal
+                                                isOpen={isCancelModalOpen}
+                                                onClose={() => setIsCancelModalOpen(false)}
+                                                onConfirm={handleCancelSubscription}
+                                                loading={isLoadingSubscription}
+                                            />
                                         </div>
                                     </>
                                 );
