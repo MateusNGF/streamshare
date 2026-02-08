@@ -14,14 +14,21 @@ export async function getNotificacoes(params?: {
     limite?: number;
     offset?: number;
     apenasNaoLidas?: boolean;
+    tipos?: TipoNotificacao[];
+    dataInicio?: Date;
 }) {
     const { contaId } = await getContext();
-    const { limite = 20, offset = 0, apenasNaoLidas = false } = params || {};
+    const { limite = 20, offset = 0, apenasNaoLidas = false, tipos, dataInicio } = params || {};
 
-    const where = {
+    const where: any = {
         contaId,
-        ...(apenasNaoLidas ? { lida: false } : {})
+        ...(apenasNaoLidas ? { lida: false } : {}),
+        ...(dataInicio ? { createdAt: { gte: dataInicio } } : {}),
     };
+
+    if (tipos && tipos.length > 0) {
+        where.tipo = { in: tipos };
+    }
 
     const [notificacoes, total, naoLidas] = await Promise.all([
         prisma.notificacao.findMany({
