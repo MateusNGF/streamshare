@@ -84,51 +84,77 @@ export function NotificationCard({
 
     return (
         <div
-            className={`relative flex gap-4 p-5 rounded-2xl border transition-all duration-200 ${lida
-                ? "bg-white border-gray-100 hover:border-gray-200"
-                : "bg-violet-50/50 border-violet-200 hover:border-violet-300"
-                }`}
+            className={`
+                group relative w-full p-4 rounded-xl border transition-all duration-300 ease-out
+                flex items-start gap-4 /* Flex layout for robust spacing */
+                ${lida
+                    ? "bg-white border-transparent hover:border-gray-200 opacity-75 hover:opacity-100"
+                    : "bg-white border-l-4 border-l-primary shadow-sm shadow-primary/5 hover:shadow-md hover:shadow-primary/10"
+                }
+            `}
         >
-            {/* Unread Indicator Dot */}
-            {!lida && (
-                <div className="absolute top-5 left-5 w-2 h-2 bg-primary rounded-full" />
-            )}
-
-            {/* Icon */}
-            <div className={`shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass}`}>
-                <Icon size={20} />
+            {/* Icon - Flex Item (Safe from overlap) */}
+            <div className={`
+                shrink-0 w-10 h-10 rounded-xl flex items-center justify-center 
+                transition-transform duration-300 group-hover:scale-110
+                z-10 /* Ensure above any decorative elements */
+                ${colorClass}
+            `}>
+                <Icon size={20} strokeWidth={2.5} />
             </div>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-3">
-                    <h4 className={`text-sm text-gray-900 ${!lida ? "font-bold" : "font-semibold"}`}>
+            {/* Content Wrapper */}
+            <div className="flex-1 flex flex-col gap-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                    <h4 className={`text-sm leading-tight transition-colors duration-200 break-words ${!lida ? "font-bold text-gray-900" : "font-medium text-gray-600"}`}>
                         {titulo}
                     </h4>
-                    {!lida && (
-                        <button
-                            onClick={() => onMarkAsRead(id)}
-                            className="shrink-0 text-xs text-primary hover:text-primary/80 font-medium px-3 py-1.5 rounded-full hover:bg-primary/10 transition-all duration-200"
-                        >
-                            Marcar como lida
-                        </button>
-                    )}
+
+                    {/* Time */}
+                    <span className="shrink-0 text-[10px] font-medium text-gray-400 whitespace-nowrap pt-0.5">
+                        {timeAgo}
+                    </span>
                 </div>
 
                 {descricao && (
-                    <p className="text-xs text-gray-600 mt-1.5 line-clamp-2 leading-relaxed">
+                    <p className={`text-xs leading-relaxed transition-colors duration-200 break-words ${!lida ? "text-gray-600" : "text-gray-400"}`}>
                         {descricao}
                     </p>
                 )}
 
-                <div className="flex items-center gap-2 mt-2.5 text-xs text-gray-500">
-                    {usuario && (
-                        <>
-                            <span className="font-medium">{usuario.nome}</span>
-                            <span>•</span>
-                        </>
+                {/* Footer Meta */}
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        {usuario && (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-100 max-w-full">
+                                <Users size={10} className="text-gray-400 shrink-0" />
+                                <span className="text-[10px] font-medium text-gray-600 truncate">
+                                    {usuario.nome}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mark as read button */}
+                    {!lida && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onMarkAsRead(id);
+                            }}
+                            className="
+                                flex items-center gap-1.5 px-3 py-1 -mr-2 text-[10px] font-semibold tracking-wide uppercase
+                                text-primary bg-primary/5 hover:bg-primary/10 rounded-md 
+                                transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100
+                                sm:opacity-0 /* Hidden by default on desktop until hover */
+                                opacity-100 /* Always visible on mobile if unread */
+                            "
+                            aria-label="Marcar como lida"
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            Lida
+                        </button>
                     )}
-                    <span>{timeAgo}</span>
                 </div>
             </div>
         </div>
