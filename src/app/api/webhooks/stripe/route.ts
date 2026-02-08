@@ -31,34 +31,63 @@ export async function POST(req: Request) {
 
         const contaId = parseInt(session.metadata.contaId);
         const plano = session.metadata.plano as PlanoConta;
-
-        // Find plan details to set limits
         const planConfig = PLANS_LIST.find(p => p.id === plano);
 
-        await prisma.conta.update({
-            where: { id: contaId },
-            data: {
-                stripeCustomerId: session.customer as string,
-                stripeSubscriptionId: session.subscription as string,
-                stripeSubscriptionStatus: "active",
-                plano: plano,
-                limiteGrupos: planConfig?.maxGrupos || 5
-            },
+        await prisma.$transaction(async (tx) => {
+            await tx.conta.update({
+                where: { id: contaId },
+                data: {
+                    stripeCustomerId: session.customer as string,
+                    stripeSubscriptionId: session.subscription as string,
+                    stripeSubscriptionStatus: "active",
+                    plano: plano,
+                    limiteGrupos: planConfig?.maxGrupos || 5
+                },
+            });
+
+            await tx.notificacao.create({
+                data: {
+                    contaId: contaId,
+                    tipo: "plano_alterado",
+                    titulo: "Assinatura Confirmada",
+                    descricao: `Parabéns! Sua assinatura do plano ${planConfig?.label || plano} foi confirmada.`,
+                    metadata: { plano, session: session.id }
+                }
+            });
         });
     }
 
     if (event.type === "customer.subscription.updated") {
-        // Find account by stripeSubscriptionId
         const account = await prisma.conta.findFirst({
             where: { stripeSubscriptionId: subscription.id },
         });
 
         if (account) {
-            await prisma.conta.update({
-                where: { id: account.id },
-                data: {
-                    stripeSubscriptionStatus: subscription.status,
-                },
+            const priceId = subscription.items.data[0]?.price.id;
+            const planConfig = PLANS_LIST.find(p => p.stripePriceId === priceId);
+
+            await prisma.$transaction(async (tx) => {
+                await tx.conta.update({
+                    where: { id: account.id },
+                    data: {
+                        stripeSubscriptionStatus: subscription.status,
+                        ...(planConfig && {
+                            plano: planConfig.id
+                        })
+                    },
+                });
+
+                if (planConfig) {
+                    await tx.notificacao.create({
+                        data: {
+                            contaId: account.id,
+                            tipo: "plano_alterado",
+                            titulo: "Plano Atualizado",
+                            descricao: `Seu plano foi atualizado para ${planConfig.label}.`,
+                            metadata: { plano: planConfig.id, subscriptionId: subscription.id }
+                        }
+                    });
+                }
             });
         }
     }
@@ -69,14 +98,25 @@ export async function POST(req: Request) {
         });
 
         if (account) {
-            // Downgrade to Basic
-            await prisma.conta.update({
-                where: { id: account.id },
-                data: {
-                    stripeSubscriptionStatus: subscription.status,
-                    plano: "basico",
-                    limiteGrupos: 5
-                },
+            await prisma.$transaction(async (tx) => {
+                await tx.conta.update({
+                    where: { id: account.id },
+                    data: {
+                        stripeSubscriptionStatus: subscription.status,
+                        plano: "basico",
+                        limiteGrupos: 5
+                    },
+                });
+
+                await tx.notificacao.create({
+                    data: {
+                        contaId: account.id,
+                        tipo: "plano_alterado",
+                        titulo: "Assinatura Cancelada",
+                        descricao: "Sua assinatura foi cancelada e sua conta retornou ao plano Básico.",
+                        metadata: { transition: "pro_to_basico", reason: "subscription_deleted" }
+                    }
+                });
             });
         }
     }
