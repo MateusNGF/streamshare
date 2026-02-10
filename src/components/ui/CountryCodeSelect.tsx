@@ -43,7 +43,7 @@ export function CountryCodeSelect({ value, onChange, disabled }: CountryCodeSele
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
                 className={`
-                    group flex items-center gap-2 px-3.5 py-2.5 
+                    group flex items-center gap-2 px-3 h-full 
                     border border-gray-200 rounded-l-xl 
                     bg-gradient-to-b from-white to-gray-50/50
                     hover:from-gray-50 hover:to-gray-100/50
