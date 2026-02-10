@@ -368,6 +368,6 @@ model Notificacao {
   usuario Usuario? @relation(fields: [usuarioId], references: [id])
 
   @@index([contaId, createdAt])
-  @@index([contaId, lida])
+  @@index([usuarioId, createdAt])
   @@map("notificacao")
 }
