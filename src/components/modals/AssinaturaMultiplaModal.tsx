@@ -819,8 +819,9 @@ export function AssinaturaMultiplaModal({
 
     // Footer Render
     const renderFooter = () => (
-        <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4 md:gap-0">
-            <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-6 sm:gap-0">
+            {/* Step Indicators - Always visible, top on mobile, left on desktop */}
+            <div className="flex gap-2 mb-2 sm:mb-0">
                 {[1, 2, 3, 4].map(s => (
                     <div
                         key={s}
@@ -828,31 +829,32 @@ export function AssinaturaMultiplaModal({
                     />
                 ))}
             </div>
-            <div className="flex gap-3 w-full md:w-auto">
+
+            {/* Action Buttons Container */}
+            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
                 {step > ModalStep.STREAMING && (
                     <button
                         onClick={handleBack}
-                        className="flex-1 md:flex-none px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                         disabled={loading}
                     >
                         <ChevronLeft size={18} />
-                        <span className="hidden md:inline">Voltar</span>
+                        <span>Voltar</span>
                     </button>
                 )}
                 {step < ModalStep.SUMMARY ? (
                     <button
                         onClick={handleNext}
                         disabled={!canNext()}
-                        className="flex-1 md:flex-none px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         Próximo
-                        <ChevronRight size={18} />
                     </button>
                 ) : (
                     <button
                         onClick={handleSubmit}
                         disabled={selectedParticipanteIds.size === 0 || loading || isOverloaded}
-                        className="flex-1 md:flex-none px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <>
@@ -875,7 +877,7 @@ export function AssinaturaMultiplaModal({
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title={`Criar Assinaturas em Massa - Passo ${step}/4`}
+            title={`Criar Assinaturas `}
             className="sm:max-w-4xl"
             footer={renderFooter()}
         >
