@@ -110,6 +110,19 @@ export async function getStreamings() {
     }));
 }
 
+export async function getNextStreamingNumber(catalogoId: number) {
+    const { contaId } = await getContext();
+
+    const count = await prisma.streaming.count({
+        where: {
+            contaId,
+            streamingCatalogoId: catalogoId
+        }
+    });
+
+    return count + 1;
+}
+
 /**
  * Get the count of active subscriptions for a streaming
  */

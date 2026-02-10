@@ -103,23 +103,26 @@ Para garantir uma experiência fluida em todos os dispositivos, especialmente em
 Em dispositivos móveis, os botões de ação devem seguir estas regras:
 1.  **Posicionamento**: Sempre na parte inferior (bottom) do modal.
 2.  **Largura**: Botões devem ocupar **100% da largura** (`w-full`) para facilitar a interação por toque.
-3.  **Layout**: Empilhar botões verticalmente usando `flex-col` (ou `flex-col-reverse` para colocar a ação primária no topo).
+3.  **Ordem de Empilhamento**:
+    - **Ação Secundária (Ex: Voltar)**: Deve ficar no **TOPO**.
+    - **Ação Primária (Ex: Confirmar/Próximo)**: Deve ficar na **BASE**.
+4.  **Layout**: Utilize `flex-col` para empilhar.
 
 ### Guia de Implementação
 
 #### Para Modal Simples (Componente `Modal`)
-O container de rodapé padrão do componente `Modal` força um layout horizontal (`flex-row`). Para atingir o layout vertical no mobile, você **deve envolver seus botões em uma `div` container** que gerencie a lógica responsiva e passar esse container para a prop `footer`.
+O container de rodapé deve controlar o layout responsivo.
 
 **NÃO** passe um fragmento de botões diretamente se desejar empilhamento vertical no mobile.
 
 ```tsx
-// ✅ Padrão CORRETO
+// ✅ Padrão CORRETO (Mobile: Voltar encima, Confirmar embaixo)
 <Modal
   // ... props
   footer={
-    <div className="flex flex-col-reverse sm:flex-row w-full sm:justify-end gap-3">
-      <button className="w-full sm:w-auto px-4 py-2 ...">
-        Cancelar
+    <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+      <button className="w-full sm:w-auto sm:mr-auto px-4 py-2 ...">
+        Voltar/Cancelar
       </button>
       <button className="w-full sm:w-auto px-4 py-2 bg-primary ...">
         Confirmar

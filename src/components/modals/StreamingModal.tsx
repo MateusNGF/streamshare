@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { StreamingSchema } from "@/lib/schemas";
 import { ZodIssue } from "zod";
 import { useCurrency } from "@/hooks/useCurrency";
+import { getNextStreamingNumber } from "@/actions/streamings";
 
 interface StreamingModalProps {
     isOpen: boolean;
@@ -42,10 +43,11 @@ export function StreamingModal({
         streaming || {
             catalogoId: "",
             apelido: "",
-            valorIntegral: 0,
-            limiteParticipantes: "",
+            valorIntegral: "", // Empty string by default
+            limiteParticipantes: "1",
         }
     );
+    const [loadingCatalog, setLoadingCatalog] = useState(false);
     const [updateExistingSubscriptions, setUpdateExistingSubscriptions] = useState(false);
     const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
     const { currencyInfo } = useCurrency();
@@ -95,13 +97,26 @@ export function StreamingModal({
             setFormData(prev => ({
                 ...prev,
                 apelido: "",
-                valorIntegral: 0,
-                limiteParticipantes: "",
+                valorIntegral: "", // Empty string by default
+                limiteParticipantes: "1",
             }));
         }
     }, [streaming, isOpen]);
 
     const selectedCatalogo = catalogos.find(c => String(c.id) === formData.catalogoId);
+
+    const handleNextStep = async () => {
+        if (step === 1 && !formData.apelido && selectedCatalogo) {
+            try {
+                // Auto-fill apelido with count logic from server
+                const nextNumber = await getNextStreamingNumber(Number(formData.catalogoId));
+                setFormData(prev => ({ ...prev, apelido: `${selectedCatalogo.nome} ${nextNumber}` }));
+            } catch (error) {
+                console.error("Error fetching next streaming number:", error);
+            }
+        }
+        setStep(2);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,29 +139,23 @@ export function StreamingModal({
             onClose={onClose}
             title={streaming ? "Editar Streaming" : "Novo Streaming"}
             footer={
-                <>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                     {step === 2 && !streaming && (
                         <button
                             type="button"
                             onClick={() => setStep(1)}
-                            className="mr-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base"
+                            disabled={loading}
+                            className="w-full sm:w-auto sm:mr-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Voltar
                         </button>
                     )}
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base"
-                    >
-                        Cancelar
-                    </button>
                     {step === 1 ? (
                         <button
                             type="button"
-                            onClick={() => setStep(2)}
+                            onClick={handleNextStep}
                             disabled={!formData.catalogoId}
-                            className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 text-sm sm:text-base"
+                            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 text-sm sm:text-base ml-auto"
                         >
                             Próximo
                         </button>
@@ -155,13 +164,13 @@ export function StreamingModal({
                             type="button"
                             onClick={handleSubmit}
                             disabled={loading || catalogos.length === 0}
-                            className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center gap-2"
+                            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center justify-center gap-2 ml-auto"
                         >
                             {loading && <Spinner size="sm" color="white" />}
                             {loading ? "Processando..." : streaming ? "Salvar" : "Criar"}
                         </button>
                     )}
-                </>
+                </div>
             }
         >
             <div className="mb-8 flex items-center gap-4 max-w-xs mx-auto">
@@ -180,20 +189,41 @@ export function StreamingModal({
                 </div>
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
+
                 {step === 1 ? (
                     <div className="animate-in fade-in slide-in-from-left-4 duration-300">
                         <label className="block text-sm font-medium text-gray-700 mb-4">
                             Selecione o Serviço do Catálogo
                         </label>
-                        <CatalogoPicker
-                            items={catalogos}
-                            value={formData.catalogoId}
-                            onChange={(val) => {
-                                handleChange("catalogoId", val);
-                                setTimeout(() => setStep(2), 300); // Slight delay for better UX
-                            }}
-                            disabled={!!streaming}
-                        />
+                        {loadingCatalog ? (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <div key={i} className="aspect-square rounded-2xl bg-gray-100 animate-pulse" />
+                                ))}
+                            </div>
+                        ) : (
+                            <CatalogoPicker
+                                items={catalogos}
+                                value={formData.catalogoId}
+                                onChange={async (val) => {
+                                    handleChange("catalogoId", val);
+
+                                    // Auto-fill name logic from server for the auto-advance interaction
+                                    const selectedCat = catalogos.find(c => String(c.id) === val);
+                                    if (selectedCat) {
+                                        try {
+                                            const nextNumber = await getNextStreamingNumber(Number(val));
+                                            setFormData(prev => ({ ...prev, apelido: `${selectedCat.nome} ${nextNumber}` }));
+                                        } catch (e) {
+                                            console.error(e);
+                                        }
+                                    }
+
+                                    setTimeout(() => setStep(2), 100); // Slight delay for better UX
+                                }}
+                                disabled={!!streaming}
+                            />
+                        )}
                     </div>
                 ) : (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
@@ -219,7 +249,7 @@ export function StreamingModal({
                         <Input
                             label="Nome do Streaming"
                             type="text"
-                            value={formData.apelido || selectedCatalogo?.nome}
+                            value={formData.apelido}
                             onChange={(e) => handleChange("apelido", e.target.value)}
                             placeholder={selectedCatalogo?.nome || "Ex: Netflix Família"}
                             error={errors.apelido}
@@ -230,8 +260,8 @@ export function StreamingModal({
                         <div className="grid grid-cols-2 gap-4">
                             <CurrencyInput
                                 label="Valor Integral (Mensal)"
-                                value={typeof formData.valorIntegral === 'number' ? formData.valorIntegral : parseFloat(formData.valorIntegral) || 0}
-                                onValueChange={(val) => handleChange("valorIntegral", String(val || 0))}
+                                value={formData.valorIntegral}
+                                onValueChange={(val) => handleChange("valorIntegral", val === undefined ? "" : String(val))}
                                 placeholder="R$ 0,00"
                                 error={errors.valorIntegral}
                                 required
