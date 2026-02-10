@@ -48,6 +48,8 @@ const changelogData = [
         id: "2026-02-10",
         date: "10/02/2026",
         changes: [
+            { category: "Recursos", description: "Implementação de engine de física Matter.js (Seek/Flee/Wander/Wall Avoidance) para o componente InsectInteractive, substituindo vetores manuais por simulação realista de forças e colisões." },
+            { category: "Visual", description: "Novos assets SVG para os estados interativos do inseto: loop 'Confuso' com interrogação flutuante e estado 'Esmagado' (Splat) com animação de expansão (Matter.js + CSS)." },
             { category: "Visual", description: "Redesign da Hero Section: nova identidade visual com gradientes imersivos, back-button integrado e otimização de espaçamentos para maior impacto." },
             { category: "Engenharia", description: "Refatoração do componente Tooltip para utilizar primitivas Radix UI (@radix-ui/react-tooltip), garantindo acessibilidade (A11y) e posicionamento inteligente." },
             { category: "Funcionalidade", description: "Implementação de deep linking no Histórico de Atualizações: suporte a IDs de sessão únicos e botão de cópia rápida para compartilhamento direto de releases." },
