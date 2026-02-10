@@ -91,7 +91,7 @@ export default async function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in stagger-4">
               <Link
-                href={session ? "/dashboard" : "/login"}
+                href={session ? "/dashboard" : "/login?mode=signup"}
                 className="group w-full sm:w-auto px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
                 {session ? "Acessar Meu Painel" : "Começar Grátis Agora"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
@@ -389,7 +389,7 @@ export default async function LandingPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
               <Link
-                href={session ? "/dashboard" : "/login"}
+                href={session ? "/dashboard" : "/login?mode=signup"}
                 className="group px-10 py-5 bg-white text-primary font-bold text-lg rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2"
               >
                 {session ? "Ir para o Painel" : "Começar Agora - É Grátis"}

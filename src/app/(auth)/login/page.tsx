@@ -12,7 +12,10 @@ type AuthTab = "login" | "signup";
 export default function AuthPage() {
     const searchParams = useSearchParams();
     const hasPlan = searchParams.get("plan");
-    const [activeTab, setActiveTab] = useState<AuthTab>(hasPlan ? "signup" : "login");
+    const mode = searchParams.get("mode");
+    const [activeTab, setActiveTab] = useState<AuthTab>(
+        hasPlan || mode === "signup" ? "signup" : "login"
+    );
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-gray-900 px-0 py-8 md:p-4">

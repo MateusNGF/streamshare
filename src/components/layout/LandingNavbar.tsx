@@ -82,7 +82,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                                 Entrar
                             </Link>
                             <Link
-                                href="/login"
+                                href="/login?mode=signup"
                                 className="group relative px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-500/20 transition-all duration-300 hover:shadow-purple-500/40 hover:-translate-y-0.5 whitespace-nowrap overflow-hidden"
                             >
                                 <span className="relative z-10 flex items-center gap-2">
@@ -158,7 +158,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
                                     Entrar
                                 </Link>
                                 <Link
-                                    href="/register"
+                                    href="/login?mode=signup"
                                     className="w-full text-center px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-900/50 transition-all text-lg"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
