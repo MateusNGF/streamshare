@@ -50,5 +50,6 @@ export interface SubscriptionWithCharges {
     participante: {
         contaId: number;
         nome: string;
+        userId?: number | null;
     };
 }

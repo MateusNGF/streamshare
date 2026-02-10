@@ -22,7 +22,8 @@ export const billingService = {
                 participante: {
                     select: {
                         contaId: true,
-                        nome: true
+                        nome: true,
+                        userId: true
                     }
                 },
                 cobrancas: { orderBy: { periodoFim: "desc" }, take: 1 }
@@ -149,7 +150,7 @@ async function executeBillingTransaction(
                     await tx.notificacao.create({
                         data: {
                             contaId: ass.participante.contaId,
-                            usuarioId: null, // System notification
+                            usuarioId: ass.participante.userId || null,
                             tipo: "assinatura_cancelada",
                             titulo: "Assinatura encerrada",
                             descricao: `O período pago da assinatura de ${ass.participante.nome} terminou e o acesso foi revogado.`,

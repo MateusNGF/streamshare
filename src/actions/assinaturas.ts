@@ -105,14 +105,15 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
 
         const participante = await tx.participante.findUnique({
             where: { id: data.participanteId },
-            select: { nome: true, contaId: true },
+            select: { nome: true, contaId: true, userId: true },
         });
 
         // System Notification
+        // User requested: Notifications must refer to the user (subscription owner)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: participante?.userId || userId, // Target participant if linked, otherwise creator/admin
                 tipo: "assinatura_criada",
                 titulo: `Nova assinatura criada`,
                 descricao: `Assinatura de ${streaming.catalogo.nome} para ${participante?.nome || 'participante'} foi criada.`,
@@ -260,8 +261,8 @@ export async function cancelarAssinatura(assinaturaId: number) {
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
                 tipo: "assinatura_cancelada",
+                usuarioId: assinatura.participante.userId || userId,
                 titulo: agendado ? "Cancelamento agendado" : "Assinatura cancelada",
                 descricao: agendado
                     ? `O cancelamento da assinatura de ${assinatura.participante.nome} foi agendado. O acesso continua liberado até ${dataFim}.`
