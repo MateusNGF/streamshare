@@ -1,30 +1,24 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   Users,
   TrendingUp,
   Shield,
-  CheckCircle2,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  ArrowRight,
+  CheckCircle2, ArrowRight,
   Star,
   DollarSign,
   Zap,
   Award,
   BarChart3,
-  Bell,
+  Bell
 } from "lucide-react";
 
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { PlansClient } from "@/components/planos/PlansClient";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
-import { InteractiveBackground } from "@/components/landing/InteractiveBackground";
 import { FeaturesCarousel } from "@/components/landing/FeaturesCarousel";
 import { Footer } from "@/components/layout/Footer";
+import { InteractiveMesh } from "@/components/backgrounds/InteractiveMesh";
 
 export default async function LandingPage() {
   const session = await getCurrentUser();
@@ -50,8 +44,8 @@ export default async function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-32 md:pt-32 pb-12 md:pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white overflow-hidden">
-        {/* Interactive Background */}
-        <InteractiveBackground />
+        {/* Interactive Mesh */}
+        <InteractiveMesh />
 
         <div className="relative z-10 container mx-auto px-4 md:px-6">
           <div className="max-w-4xl mx-auto text-center">

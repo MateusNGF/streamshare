@@ -21,7 +21,7 @@ interface Config {
     friction: number;
 }
 
-export function InteractiveBackground() {
+export function InteractiveMesh() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const pointsRef = useRef<Point[]>([]);
     const mouseRef = useRef({ x: -1000, y: -1000 });
