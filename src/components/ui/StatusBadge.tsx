@@ -1,11 +1,5 @@
 import { cn } from "@/lib/utils";
 
-interface StatusBadgeProps {
-    status: string;
-    label?: string;
-    className?: string;
-}
-
 const statusStyles: Record<string, { color: string; label: string }> = {
     // Green / Success
     pago: { color: "bg-green-100 text-green-700 border-green-200", label: "Pago" },
@@ -27,13 +21,29 @@ const statusStyles: Record<string, { color: string; label: string }> = {
     // Gray / Neutral
     cancelado: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelado" },
     cancelada: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelada" },
+
+    // Purple / Scheduled
+    cancelamento_agendado: { color: "bg-purple-100 text-purple-700 border-purple-200", label: "Cancelamento Agendado" },
 };
 
-export function StatusBadge({ status, label, className }: StatusBadgeProps) {
-    const normalizedStatus = status.toLowerCase();
+interface StatusBadgeProps {
+    status: string;
+    label?: string;
+    className?: string;
+    dataCancelamento?: Date | string | null;
+}
+
+export function StatusBadge({ status, label, className, dataCancelamento }: StatusBadgeProps) {
+    let normalizedStatus = status.toLowerCase();
+
+    // Override status if active but has cancellation date
+    if (normalizedStatus === 'ativa' && dataCancelamento) {
+        normalizedStatus = 'cancelamento_agendado';
+    }
+
     const config = statusStyles[normalizedStatus] || {
         color: "bg-gray-100 text-gray-700 border-gray-200",
-        label: status
+        label: label || status
     };
 
     return (

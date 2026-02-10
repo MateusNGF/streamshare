@@ -216,7 +216,10 @@ export default function AssinaturasClient({
                                             <TableCell>{format(Number(sub.valor))}</TableCell>
                                             <TableCell className="capitalize">{sub.frequencia}</TableCell>
                                             <TableCell>
-                                                <StatusBadge status={sub.status} />
+                                                <StatusBadge
+                                                    status={sub.status}
+                                                    dataCancelamento={sub.dataCancelamento}
+                                                />
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <Dropdown

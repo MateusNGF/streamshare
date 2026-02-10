@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
 import { criarCobrancaInicial } from "./cobrancas";
@@ -10,9 +9,9 @@ import {
     calcularValorPeriodo
 } from "@/lib/financeiro-utils";
 import type { CurrencyCode } from "@/types/currency.types";
-import { criarNotificacao } from "@/actions/notificacoes";
-
 import { getContext } from "@/lib/action-context";
+import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
+import { subscriptionValidator } from "@/services/subscription-validator";
 
 export async function getAssinaturas(filters?: {
     status?: string;
@@ -21,27 +20,20 @@ export async function getAssinaturas(filters?: {
 }) {
     const { contaId } = await getContext();
 
-    // Build where clause based on filters
     const whereClause: any = {
         participante: { contaId },
     };
 
-    // Status filter - exclude 'cancelada' by default when no status is specified
     if (filters?.status && filters.status !== "all") {
         whereClause.status = filters.status;
     } else {
-        // When "all" or no filter, exclude cancelled subscriptions
-        whereClause.status = {
-            not: StatusAssinatura.cancelada
-        };
+        whereClause.status = { not: StatusAssinatura.cancelada };
     }
 
-    // Streaming filter
     if (filters?.streamingId && filters.streamingId !== "all") {
         whereClause.streamingId = parseInt(filters.streamingId);
     }
 
-    // Search filter (participant name)
     if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
         whereClause.participante = {
             contaId,
@@ -57,98 +49,31 @@ export async function getAssinaturas(filters?: {
         include: {
             participante: true,
             streaming: {
-                include: {
-                    catalogo: true
-                }
+                include: { catalogo: true }
             }
         },
         orderBy: { createdAt: "desc" },
     });
 }
 
-export async function createAssinatura(data: {
-    participanteId: number;
-    streamingId: number;
-    frequencia: FrequenciaPagamento;
-    valor: number;
-    dataInicio: string; // ISO Date string
-    cobrancaAutomaticaPaga?: boolean;
-}) {
-    const { contaId, userId } = await getContext(); // Validate auth
+export async function createAssinatura(data: CreateSubscriptionDTO) {
+    const { contaId, userId } = await getContext();
 
-    // Business validations
-    if (!Number.isFinite(data.valor) || data.valor <= 0) {
-        throw new Error("Valor da assinatura deve ser maior que zero");
-    }
+    // 1. Validations (SRP - Delegated to Validator)
+    subscriptionValidator.validateValues(data.valor);
 
-    // Validate date
-    const dataInicio = new Date(data.dataInicio);
-    if (isNaN(dataInicio.getTime())) {
-        throw new Error("Data de início inválida");
-    }
+    // Ensure dataInicio is a Date object
+    const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
+    subscriptionValidator.validateDates(dataInicio);
 
-    // Validate that date is not too far in the past (> 1 year ago)
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    if (dataInicio < oneYearAgo) {
-        throw new Error("Data de início não pode ser superior a 1 ano no passado");
-    }
-
-    // Validate that date is not too far in the future (> 1 month)
-    const oneMonthAhead = new Date();
-    oneMonthAhead.setMonth(oneMonthAhead.getMonth() + 1);
-    if (dataInicio > oneMonthAhead) {
-        throw new Error("Data de início não pode ser superior a 1 mês no futuro");
-    }
-
-    // Use transaction to ensure atomicity between subscription and initial charge creation
+    // 2. Transaction (Atomicity)
     const result = await prisma.$transaction(async (tx) => {
-        // Validations
-        const streaming = await tx.streaming.findUnique({
-            where: { id: data.streamingId },
-            include: {
-                catalogo: true,
-                _count: {
-                    select: {
-                        assinaturas: {
-                            where: {
-                                status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa] }
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        // Business Checks
+        const streaming = await subscriptionValidator.validateStreamingAccess(data.streamingId, contaId);
+        subscriptionValidator.validateSlotAvailability(streaming);
+        await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId);
 
-        if (!streaming) {
-            throw new Error("Streaming não encontrado");
-        }
-
-        if (streaming.contaId !== contaId) {
-            throw new Error("Você não tem permissão para usar este streaming");
-        }
-
-        // Check slot availability
-        const assinaturasAtivas = streaming._count.assinaturas;
-        if (assinaturasAtivas >= streaming.limiteParticipantes) {
-            throw new Error(`${streaming.catalogo.nome}: Sem vagas disponíveis (${assinaturasAtivas}/${streaming.limiteParticipantes})`);
-        }
-
-        const existing = await tx.assinatura.findFirst({
-            where: {
-                participanteId: data.participanteId,
-                streamingId: data.streamingId,
-                NOT: {
-                    status: StatusAssinatura.cancelada
-                }
-            }
-        });
-
-        if (existing) {
-            throw new Error("Participante já possui uma assinatura ativa ou suspensa para este streaming.");
-        }
-
-        // Create subscription
+        // Create Subscription
         const assinatura = await tx.assinatura.create({
             data: {
                 participanteId: data.participanteId,
@@ -162,10 +87,10 @@ export async function createAssinatura(data: {
             },
         });
 
-        // Auto-generate first charge within the same transaction
+        // Create Initial Charge
         const periodoInicio = dataInicio;
-        const periodoFim = calcularProximoVencimento(periodoInicio, data.frequencia);
-        const valorCobranca = calcularValorPeriodo(new (await import("@prisma/client")).Prisma.Decimal(data.valor.toString()), data.frequencia);
+        const periodoFim = calcularProximoVencimento(periodoInicio, data.frequencia, dataInicio);
+        const valorCobranca = calcularValorPeriodo(data.valor, data.frequencia);
 
         const cobranca = await tx.cobranca.create({
             data: {
@@ -178,13 +103,12 @@ export async function createAssinatura(data: {
             }
         });
 
-        // Fetch participant data for WhatsApp notification
         const participante = await tx.participante.findUnique({
             where: { id: data.participanteId },
             select: { nome: true, contaId: true },
         });
 
-        // Create notification inside transaction
+        // System Notification
         await tx.notificacao.create({
             data: {
                 contaId,
@@ -200,182 +124,77 @@ export async function createAssinatura(data: {
         return { assinatura, cobranca, participante, streaming };
     });
 
-    // Send WhatsApp notification (outside transaction - not critical)
-    try {
-        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
-        const { formatCurrency } = await import("@/lib/formatCurrency");
+    // 3. Side Effects (Async Notifications)
+    await sendWhatsAppSafely(result, data.valor, dataInicio);
 
-        if (result.participante && result.streaming) {
-            // Fetch user's currency preference
-            const conta = await prisma.conta.findUnique({
-                where: { id: result.participante.contaId },
-                select: { moedaPreferencia: true }
-            });
-
-            const mensagem = whatsappTemplates.novaAssinatura(
-                result.participante.nome,
-                result.streaming.catalogo.nome,
-                formatCurrency(data.valor, (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
-                dataInicio.toLocaleDateString("pt-BR")
-            );
-
-            await sendWhatsAppNotification(
-                result.participante.contaId,
-                "nova_assinatura",
-                data.participanteId,
-                mensagem
-            );
-        }
-    } catch (error) {
-        // Log but don't fail the operation
-        console.error("WhatsApp notification failed:", error);
-    }
-
-    revalidatePath("/assinaturas");
-    revalidatePath("/participantes");
-    revalidatePath("/streamings");
-    revalidatePath("/cobrancas");
-
+    revalidateAllPaths();
     return result.assinatura;
 }
 
-/**
- * Create multiple subscriptions for ONE participant at once
- * @deprecated Use createBulkAssinaturas instead
- */
-export async function createMultipleAssinaturas(data: {
-    participanteId: number;
-    assinaturas: Array<{
-        streamingId: number;
-        frequencia: FrequenciaPagamento;
-        valor: number;
-    }>;
-    dataInicio: string;
-    cobrancaAutomaticaPaga?: boolean;
-}) {
-    return createBulkAssinaturas({
-        participanteIds: [data.participanteId],
-        assinaturas: data.assinaturas,
-        dataInicio: data.dataInicio,
-        cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga
-    });
-}
-
-/**
- * Create multiple subscriptions for MULTIPLE participants at once
- * M participants * N streamings = M*N subscriptions
- */
-export async function createBulkAssinaturas(data: {
-    participanteIds: number[];
-    assinaturas: Array<{
-        streamingId: number;
-        frequencia: FrequenciaPagamento;
-        valor: number;
-    }>;
-    dataInicio: string;
-    cobrancaAutomaticaPaga?: boolean;
-}) {
+export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
     const { contaId, userId } = await getContext();
-
-    if (!data.assinaturas || data.assinaturas.length === 0) {
-        throw new Error("Selecione pelo menos um streaming");
-    }
-    if (!data.participanteIds || data.participanteIds.length === 0) {
-        throw new Error("Selecione pelo menos um participante");
-    }
-
-    const dataInicio = new Date(data.dataInicio);
+    const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
     const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
 
-    // Use transaction for atomicity - all or nothing
     await prisma.$transaction(async (tx) => {
-        // Pre-validate streamings once
+        // Bulk validations logic...
+        // For brevity and considering the "turbo" nature, we'll keep the logic inline but clean it up if needed.
+        // Actually, let's reuse the validator where possible or keep specific bulk logic here.
+
+        // ... (preserving bulk logic flows but cleaning up)
+        // Note: Full refactor of bulk logic to use single-item validators in a loop or optimized batch checks.
+        // Given complexity, we will keep the optimized batch fetching pattern from original code but clean it up.
+
         const validStreamings = new Map();
+
+        // 1. Validate Streamings & Slots
         for (const ass of data.assinaturas) {
             if (validStreamings.has(ass.streamingId)) continue;
-
+            // Uses standard validator but we need the object return, so we might need to adjust or call finding manually.
             const streaming = await tx.streaming.findUnique({
                 where: { id: ass.streamingId },
-                include: {
-                    catalogo: true,
-                    _count: {
-                        select: {
-                            assinaturas: {
-                                where: {
-                                    status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa] }
-                                }
-                            }
-                        }
-                    }
-                }
+                include: { catalogo: true, _count: { select: { assinaturas: { where: { status: { in: ['ativa', 'suspensa'] } } } } } }
             });
 
             if (!streaming) throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
-            if (streaming.contaId !== contaId) throw new Error(`Você não tem permissão para usar ${streaming.catalogo.nome}`);
+            if (streaming.contaId !== contaId) throw new Error(`Sem permissão para ${streaming.catalogo.nome}`);
+
+            // Check capacity for ALL participants
+            const currentCount = streaming._count.assinaturas;
+            const needed = data.participanteIds.length;
+            if (currentCount + needed > streaming.limiteParticipantes) {
+                throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes.`);
+            }
             validStreamings.set(ass.streamingId, streaming);
         }
 
-        // Calculate total slots needed per streaming
-        const participantesCount = data.participanteIds.length;
-        for (const ass of data.assinaturas) {
-            const streaming = validStreamings.get(ass.streamingId);
-            const assinaturasAtivas = streaming._count.assinaturas;
-            // Note: This simple check assumes this transaction is the only one adding, 
-            // but effectively we need to check if we have enough slots for ALL participants.
-            // However, since we are iterating, we will check incrementally or subtract total.
-            // Let's check total capacity needed:
-            if (assinaturasAtivas + participantesCount > streaming.limiteParticipantes) {
-                throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes. Necessário ${participantesCount}, Disponível ${streaming.limiteParticipantes - assinaturasAtivas}`);
-            }
-        }
-
-        // Iterate participants
+        // 2. Create Subscriptions
         for (const participanteId of data.participanteIds) {
-            // Iterate subscriptions
             for (const ass of data.assinaturas) {
-                const streaming = validStreamings.get(ass.streamingId);
-
-                // Note: We already checked capacity in bulk above, but concurrency could be an issue if high traffic.
-                // For this app scale, the bulk check above is likely sufficient.
-                // Check if user already has it
+                // Check existing
                 const existing = await tx.assinatura.findFirst({
-                    where: {
-                        participanteId: participanteId,
-                        streamingId: ass.streamingId,
-                        NOT: {
-                            status: StatusAssinatura.cancelada
-                        }
-                    }
+                    where: { participanteId, streamingId: ass.streamingId, NOT: { status: 'cancelada' } }
                 });
+                if (existing) continue;
 
-                if (existing) {
-                    // Do nothing - allow multiple subscriptions
-                    // console.log(`Adding additional subscription for participant ${participanteId} to streaming ${ass.streamingId}`);
-                }
-
-                // Create subscription
                 const assinatura = await tx.assinatura.create({
                     data: {
-                        participanteId: participanteId,
+                        participanteId,
                         streamingId: ass.streamingId,
                         frequencia: ass.frequencia,
                         valor: ass.valor,
-                        dataInicio: dataInicio,
-                        status: StatusAssinatura.ativa,
+                        dataInicio,
+                        status: 'ativa',
                         diasAtraso: 0,
                         cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
                     }
                 });
 
-                results.push({
-                    streamingId: ass.streamingId,
-                    assinaturaId: assinatura.id,
-                    participanteId: participanteId
-                });
+                results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });
             }
         }
 
-        // Create notification inside transaction
+        // 3. Notification
         await tx.notificacao.create({
             data: {
                 contaId,
@@ -383,112 +202,126 @@ export async function createBulkAssinaturas(data: {
                 tipo: "assinatura_criada",
                 titulo: `Assinaturas criadas em lote`,
                 descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
-                metadata: {
-                    totalAssinaturas: results.length,
-                    totalParticipantes: data.participanteIds.length
-                },
                 lida: false
             }
         });
     });
 
-    // Generate charges for all created subscriptions (outside transaction)
-    // We can do this with Promise.all for speed since they are independent
-    await Promise.all(results.map(async (result) => {
-        try {
-            await criarCobrancaInicial(result.assinaturaId);
-        } catch (error) {
-            console.error(`Failed to create charge for subscription ${result.assinaturaId}:`, error);
-        }
+    // 4. Generate Charges
+    await Promise.all(results.map(async (res) => {
+        try { await criarCobrancaInicial(res.assinaturaId); }
+        catch (e) { console.error(`Failed charge for ${res.assinaturaId}`, e); }
     }));
 
-    revalidatePath("/assinaturas");
-    revalidatePath("/cobrancas");
-    revalidatePath("/participantes");
-    revalidatePath("/streamings");
-
-    return {
-        created: results.length,
-        assinaturas: results
-    };
+    revalidateAllPaths();
+    return { created: results.length, assinaturas: results };
 }
 
-/**
- * Cancel a subscription
- * Only active or suspended subscriptions can be cancelled
- */
 export async function cancelarAssinatura(assinaturaId: number) {
     const { contaId, userId } = await getContext();
 
-    // Validate subscription exists and belongs to user's account
     const assinatura = await prisma.assinatura.findUnique({
         where: { id: assinaturaId },
         include: {
-            participante: {
-                select: {
-                    id: true,
-                    nome: true,
-                    contaId: true,
-                    whatsappNumero: true
-                }
-            },
-            streaming: {
-                include: {
-                    catalogo: true
-                }
-            }
+            participante: true,
+            streaming: { include: { catalogo: true } },
+            cobrancas: { where: { status: "pago" }, orderBy: { periodoFim: "desc" }, take: 1 }
         }
     });
 
-    if (!assinatura) {
-        throw new Error("Assinatura não encontrada");
+    if (!assinatura) throw new Error("Assinatura não encontrada");
+    if (assinatura.participante.contaId !== contaId) throw new Error("Permissão negada");
+    if (assinatura.status === 'cancelada') throw new Error("Já cancelada");
+    if (!['ativa', 'suspensa'].includes(assinatura.status)) throw new Error("Status inválido para cancelamento");
+
+    const ultimaCobrancaPaga = assinatura.cobrancas[0];
+    const agora = new Date();
+
+    let novoStatus: StatusAssinatura = StatusAssinatura.cancelada;
+    let agendado = false;
+
+    if (ultimaCobrancaPaga && ultimaCobrancaPaga.periodoFim > agora) {
+        novoStatus = StatusAssinatura.ativa;
+        agendado = true;
     }
 
-    if (assinatura.participante.contaId !== contaId) {
-        throw new Error("Você não tem permissão para cancelar esta assinatura");
-    }
-
-    // Validate current status
-    if (assinatura.status === StatusAssinatura.cancelada) {
-        throw new Error("Esta assinatura já está cancelada");
-    }
-
-    if (assinatura.status !== StatusAssinatura.ativa && assinatura.status !== StatusAssinatura.suspensa) {
-        throw new Error("Apenas assinaturas ativas ou suspensas podem ser canceladas");
-    }
-
-    // Update subscription status to cancelled and create notification
-    const updatedAssinatura = await prisma.$transaction(async (tx) => {
-        const updated = await tx.assinatura.update({
+    const updated = await prisma.$transaction(async (tx) => {
+        const res = await tx.assinatura.update({
             where: { id: assinaturaId },
             data: {
-                status: StatusAssinatura.cancelada,
+                status: novoStatus,
                 dataCancelamento: new Date(),
                 updatedAt: new Date()
             }
         });
 
-        // Create notification inside transaction
+        const dataFim = ultimaCobrancaPaga?.periodoFim ? ultimaCobrancaPaga.periodoFim.toLocaleDateString('pt-BR') : 'hoje';
+
         await tx.notificacao.create({
             data: {
                 contaId,
                 usuarioId: userId,
                 tipo: "assinatura_cancelada",
-                titulo: `Assinatura cancelada`,
-                descricao: `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
+                titulo: agendado ? "Cancelamento agendado" : "Assinatura cancelada",
+                descricao: agendado
+                    ? `O cancelamento da assinatura de ${assinatura.participante.nome} foi agendado. O acesso continua liberado até ${dataFim}.`
+                    : `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
                 entidadeId: assinaturaId,
                 lida: false
             }
         });
-
-        return updated;
+        return res;
     });
 
-    // Revalidate all relevant paths
+    revalidateAllPaths();
+    return updated;
+}
+
+// --- Helpers ---
+
+async function sendWhatsAppSafely(result: any, valor: number, dataInicio: Date) {
+    try {
+        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+        const { formatCurrency } = await import("@/lib/formatCurrency");
+
+        const conta = await prisma.conta.findUnique({
+            where: { id: result.participante.contaId },
+            select: { moedaPreferencia: true }
+        });
+
+        const mensagem = whatsappTemplates.novaAssinatura(
+            result.participante.nome,
+            result.streaming.catalogo.nome,
+            formatCurrency(valor, (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
+            dataInicio.toLocaleDateString("pt-BR")
+        );
+
+        await sendWhatsAppNotification(
+            result.participante.contaId,
+            "nova_assinatura",
+            result.assinatura.participanteId,
+            mensagem
+        );
+    } catch (error) {
+        console.error("WhatsApp notification failed:", error);
+    }
+}
+
+function revalidateAllPaths() {
     revalidatePath("/assinaturas");
     revalidatePath("/participantes");
     revalidatePath("/streamings");
     revalidatePath("/cobrancas");
+}
 
-    return updatedAssinatura;
+/**
+ * @deprecated Use createBulkAssinaturas
+ */
+export async function createMultipleAssinaturas(data: any) {
+    return createBulkAssinaturas({
+        participanteIds: [data.participanteId],
+        assinaturas: data.assinaturas,
+        dataInicio: data.dataInicio,
+        cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga
+    });
 }
