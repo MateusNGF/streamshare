@@ -47,6 +47,9 @@ const changelogData = [
         id: "2026-02-10",
         date: "10/02/2026",
         changes: [
+            { category: "Visual", description: "Redesign da Hero Section: nova identidade visual com gradientes imersivos, back-button integrado e otimização de espaçamentos para maior impacto." },
+            { category: "Engenharia", description: "Refatoração do componente Tooltip para utilizar primitivas Radix UI (@radix-ui/react-tooltip), garantindo acessibilidade (A11y) e posicionamento inteligente." },
+            { category: "Funcionalidade", description: "Implementação de deep linking no Histórico de Atualizações: suporte a IDs de sessão únicos e botão de cópia rápida para compartilhamento direto de releases." },
             { category: "Finanças", description: "Lançamento da transparência financeira: indicadores de custo base e lucro mensal nos modais de faturamento." },
             { category: "UX", description: "Implementação de resumos de ciclo dinâmicos e prevenção de erros em cobranças não-mensais." },
             { category: "Interface", description: "Reorganização lógica dos formulários de assinatura para melhor legibilidade no desktop e mobile." },
@@ -143,10 +146,10 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
         <div className="min-h-screen  w-full bg-white font-inter relative">
 
             <LandingNavbar session={session} />
-            <BackButton />
 
             {/* Hero Section */}
-            <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white">
+            <section className="relative pt-40 pb-40 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white">
+                <BackButton />
                 <div className="container mx-auto h-full px-3 md:px-6 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
                         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/10">
@@ -164,7 +167,7 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
                 </div>
 
                 {/* Decorative background element */}
-                <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent"></div>
+                <div className="absolute bottom-0 left-0 w-full h-64 md:h-96 bg-gradient-to-t from-white via-white/20 to-transparent backdrop-blur-[2px]"></div>
             </section>
 
             {/* Status Section */}
