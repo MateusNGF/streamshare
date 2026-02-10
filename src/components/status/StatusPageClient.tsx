@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCircle2, Server, Database, Bell, Shield, ArrowRight, Zap, RefreshCw } from "lucide-react";
+import { CheckCircle2, Server, Database, Bell, Shield, ArrowRight, Zap, RefreshCw, ChevronLeft } from "lucide-react";
+import { Footer } from "@/components/layout/Footer";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
 import Link from "next/link";
 import Image from "next/image";
@@ -44,6 +45,10 @@ const changelogData = [
     {
         date: "10/02/2026",
         changes: [
+            { category: "Navegação", description: "Adição de botão 'Voltar para Home' na página de Status para facilitar a transição entre áreas informativas e promocionais." },
+            { category: "Interface", description: "Padronização do rodapé institucional através de novo componente Footer compartilhado entre Landing Page e Status Page." },
+            { category: "Arquitetura", description: "Integração de variáveis de ambiente (NEXT_PUBLIC_URL) em links globais para garantir roteamento absoluto consistente em toda a plataforma." },
+            { category: "Fluxo", description: "Otimização de conversão na Landing Page: botões 'Começar Agora' agora redirecionam dinamicamente para a aba de cadastro direto via query parameters (?mode=signup)." },
             { category: "Interface", description: "Lançamento da central de Status e Histórico de Atualizações (StatusPageClient) com monitoramento visual de disponibilidade e timeline de progresso técnico." },
             { category: "Navegação", description: "Refatoração de arquitetura nos Sidebars (User/Admin) e LandingNavbar: Logotipos agora encapsulados em componentes Next/Link para navegação root instantânea." },
             { category: "UX", description: "Padronização de interatividade em CTAs: aplicação de classes cursor-pointer e micro-interações de zoom/rotação via Framer Motion e Tailwind para melhor feedback tátil." },
@@ -97,10 +102,28 @@ const changelogData = [
     },
 ];
 
+function BackButton() {
+    return (
+        <div className="absolute top-24 left-4 md:top-28 md:left-8 z-30">
+            <Link
+                href="/"
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors group p-2"
+            >
+                <div className="p-2 rounded-xl bg-white/10 border border-white/10 group-hover:border-white/30 transition-all backdrop-blur-md">
+                    <ChevronLeft size={20} />
+                </div>
+                <span className="font-medium hidden md:inline text-sm">Voltar para home</span>
+            </Link>
+        </div>
+    );
+}
+
 export function StatusPageClient({ session }: StatusPageClientProps) {
     return (
-        <div className="min-h-screen w-full bg-white font-inter">
+        <div className="min-h-screen  w-full bg-white font-inter relative">
+
             <LandingNavbar session={session} />
+            <BackButton />
 
             {/* Hero Section */}
             <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white">
@@ -238,18 +261,8 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
                 </div>
             </section>
 
-            {/* Minimal Footer */}
-            <footer className="py-12 border-t border-gray-100 bg-gray-50/30">
-                <div className="container mx-auto px-4 md:px-6 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-6">
-                        <Image src="/assets/logo-branca.jpg" alt="Logo" width={32} height={32} className="rounded-lg grayscale opacity-50" />
-                        <span className="font-bold text-gray-400">StreamShare</span>
-                    </div>
-                    <p className="text-gray-500 text-sm">
-                        © 2026 StreamShare. Monitoramento ativo: todos os serviços operam em conformidade.
-                    </p>
-                </div>
-            </footer>
+            {/* Footer */}
+            <Footer />
         </div>
     );
 }
