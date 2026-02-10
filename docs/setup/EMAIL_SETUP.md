@@ -36,7 +36,7 @@ RESEND_API_KEY="re_sua_chave_aqui"
 
 # Email Sender (use onboarding@resend.dev para testes)
 EMAIL_FROM="StreamShare <onboarding@resend.dev>"
-EMAIL_REPLY_TO="suporte@streamshare.com"
+EMAIL_REPLY_TO="atendimento@streamshare.com.br"
 
 # Application URL
 NEXT_PUBLIC_URL="http://localhost:3000"

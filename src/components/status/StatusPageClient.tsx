@@ -220,7 +220,7 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
                                 <a
-                                    href="mailto:mateus.n.gomes.f@gmail.com"
+                                    href="mailto:atendimento@streamshare.com.br"
                                     className="px-8 py-4 bg-white text-purple-600 font-bold rounded-2xl hover:scale-105 transition-all w-full sm:w-auto text-sm md:text-base"
                                 >
                                     Falar com Suporte

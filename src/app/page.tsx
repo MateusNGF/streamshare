@@ -484,7 +484,7 @@ export default async function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:contato@streamshare.com.br" className="hover:text-white">
+                  <a href="mailto:atendimento@streamshare.com.br" className="hover:text-white">
                     Contato
                   </a>
                 </li>

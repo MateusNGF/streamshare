@@ -863,7 +863,7 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${process.env.NEXT_PUBLIC_URL}/redefinir-senha/${token}`;
   
   await resend.emails.send({
-    from: 'StreamShare <noreply@streamshare.com>',
+    from: 'StreamShare <atendimento@streamshare.com.br>',
     to: email,
     subject: 'Redefinir sua senha - StreamShare',
     html: `

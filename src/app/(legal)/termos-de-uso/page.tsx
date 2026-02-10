@@ -152,7 +152,7 @@ export default function TermosDeUsoPage() {
                             Dúvidas jurídicas ou sobre os termos? Entre em contato conosco:
                         </p>
                         <p className="mt-2 text-blue-600 font-medium">
-                            suporte@streamshare.com.br
+                            atendimento@streamshare.com.br
                         </p>
                     </section>
                 </div>

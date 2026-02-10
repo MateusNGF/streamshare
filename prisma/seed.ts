@@ -85,7 +85,7 @@ async function main() {
     const conta1 = await prisma.conta.create({
         data: {
             nome: "StreamShare",
-            email: "suporte@streamshare.com.br",
+            email: "atendimento@streamshare.com.br",
             plano: PlanoConta.pro,
             limiteGrupos: 20,
             isAtivo: true,
@@ -99,7 +99,7 @@ async function main() {
 
     const usuario1 = await prisma.usuario.create({
         data: {
-            email: "admin@streamshare.com.br",
+            email: "atendimento@streamshare.com.br",
             nome: "Admin StreamShare",
             senhaHash,
             provider: ProviderAuth.local,

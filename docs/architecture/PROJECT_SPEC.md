@@ -1084,7 +1084,7 @@ xl: 1280px  /* Desktops médios */
 ```bash
 RESEND_API_KEY="re_sua_chave_aqui"
 EMAIL_FROM="StreamShare <onboarding@resend.dev>"
-EMAIL_REPLY_TO="suporte@streamshare.com"
+EMAIL_REPLY_TO="atendimento@streamshare.com.br"
 ```
 
 **Vantagens**:
@@ -1243,7 +1243,7 @@ NEXT_PUBLIC_URL="http://localhost:3000"
 # Email (Resend)
 RESEND_API_KEY="re_..."
 EMAIL_FROM="StreamShare <onboarding@resend.dev>"
-EMAIL_REPLY_TO="suporte@streamshare.com"
+EMAIL_REPLY_TO="atendimento@streamshare.com.br"
 
 # Email (SMTP - Opcional)
 SMTP_HOST="smtp.gmail.com"

@@ -141,7 +141,7 @@ SMTP_PASS="abcd efgh ijkl mnop"
 
 # Email Configuration
 EMAIL_FROM="StreamShare <streamshare.dev@gmail.com>"
-EMAIL_REPLY_TO="suporte@streamshare.com"
+EMAIL_REPLY_TO="atendimento@streamshare.com.br"
 ```
 
 ## 🧪 Testando o Envio de Emails

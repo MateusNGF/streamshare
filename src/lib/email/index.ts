@@ -10,8 +10,8 @@ import { getWelcomeTemplate } from "./templates/welcome";
 
 // Configurações de email
 const EMAIL_CONFIG = {
-    from: process.env.EMAIL_FROM || "StreamShare <noreply@streamshare.com>",
-    replyTo: process.env.EMAIL_REPLY_TO || "suporte@streamshare.com",
+    from: process.env.EMAIL_FROM || "StreamShare <atendimento@streamshare.com.br>",
+    replyTo: process.env.EMAIL_REPLY_TO || "atendimento@streamshare.com.br",
 };
 
 /**
