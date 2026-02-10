@@ -81,13 +81,15 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                         isOpen={isMobileMenuOpen}
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     />
-                    <Image
-                        src="/assets/logo-branca.jpg"
-                        alt="StreamShare"
-                        width={45}
-                        height={45}
-                        className="rounded-lg"
-                    />
+                    <Link href="/" className="transition-transform hover:scale-105 duration-300 cursor-pointer">
+                        <Image
+                            src="/assets/logo-branca.jpg"
+                            alt="StreamShare"
+                            width={45}
+                            height={45}
+                            className="rounded-lg"
+                        />
+                    </Link>
                 </div>
                 <div className="flex items-center gap-3">
                     <NotificationBell
@@ -114,16 +116,16 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 )}
             >
                 <div className="p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <Link href="/" className="flex items-center gap-3 group/logo cursor-pointer">
                         <Image
                             src="/assets/logo-branca.jpg"
                             alt="StreamShare"
                             width={40}
                             height={40}
-                            className="rounded-lg transition-transform hover:scale-110 duration-300"
+                            className="rounded-lg transition-transform group-hover/logo:scale-110 duration-300"
                         />
-                        <span className="text-xl font-bold text-gray-900">StreamShare</span>
-                    </div>
+                        <span className="text-xl font-bold text-gray-900 group-hover/logo:text-primary transition-colors">StreamShare</span>
+                    </Link>
                 </div>
 
                 <nav className="flex-1 px-4 mt-2" aria-label="Menu principal">
@@ -138,7 +140,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                                         aria-label={item.label}
                                         aria-current={isActive ? "page" : undefined}
                                         className={cn(
-                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 touch-manipulation group",
+                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 touch-manipulation group cursor-pointer",
                                             isActive
                                                 ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
                                                 : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1"

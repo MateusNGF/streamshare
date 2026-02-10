@@ -55,16 +55,16 @@ export function AdminSidebar() {
                         isOpen={isMobileMenuOpen}
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     />
-                    <div className="flex items-center gap-2">
+                    <Link href="/" className="flex items-center gap-2 group/logo cursor-pointer">
                         <Image
                             src="/assets/logo-branca.jpg"
                             alt="StreamShare"
                             width={32}
                             height={32}
-                            className="rounded-lg"
+                            className="rounded-lg transition-transform group-hover/logo:scale-110 duration-300"
                         />
-                        <span className="text-sm font-bold text-gray-900">Painel - StreamShare </span>
-                    </div>
+                        <span className="text-sm font-bold text-gray-900 group-hover/logo:text-primary transition-colors">Painel - StreamShare </span>
+                    </Link>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -94,19 +94,19 @@ export function AdminSidebar() {
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
             >
-                <div className="p-6 flex items-center gap-3 border-b">
+                <Link href="/" className="p-6 flex items-center gap-3 border-b group/logo cursor-pointer">
                     <Image
                         src="/assets/logo-branca.jpg"
                         alt="StreamShare"
                         width={40}
                         height={40}
-                        className="rounded-lg transition-transform hover:scale-110 duration-300"
+                        className="rounded-lg transition-transform group-hover/logo:scale-110 duration-300"
                     />
                     <div className="flex flex-col">
-                        <span className="text-xl font-bold text-gray-900">StreamShare</span>
+                        <span className="text-xl font-bold text-gray-900 group-hover/logo:text-primary transition-colors">StreamShare</span>
                         <span className="text-xs text-gray-500 font-medium">Administração</span>
                     </div>
-                </div>
+                </Link>
 
                 <nav className="flex-1 px-4 mt-6" aria-label="Menu administrativo">
                     <ul className="space-y-2">
@@ -141,7 +141,7 @@ export function AdminSidebar() {
                 <div className="p-4 border-t border-gray-100">
                     <Link
                         href="/dashboard"
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1 transition-all duration-200 touch-manipulation mb-2 group"
+                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1 transition-all duration-200 touch-manipulation mb-2 group cursor-pointer"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform duration-200">
                             <path d="m12 19-7-7 7-7" />

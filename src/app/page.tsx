@@ -474,6 +474,11 @@ export default async function LandingPage() {
               <h4 className="font-bold mb-4">Suporte</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
+                  <Link href="/status" className="hover:text-white">
+                    Histórico de Atualizações
+                  </Link>
+                </li>
+                <li>
                   <a href="#faq" className="hover:text-white">
                     Central de Ajuda
                   </a>
