@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckCircle2, Server, Database, Bell, Shield, ArrowRight, Zap, RefreshCw, ChevronLeft } from "lucide-react";
+import { CheckCircle2, Server, Database, Bell, Shield, ArrowRight, Zap, RefreshCw, ChevronLeft, Copy } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
+import { Tooltip } from "@/components/ui/Tooltip";
 import Link from "next/link";
-import Image from "next/image";
+import { useState } from "react";
 
 interface StatusPageClientProps {
     session: any;
@@ -43,6 +44,7 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-10",
         date: "10/02/2026",
         changes: [
             { category: "Finanças", description: "Lançamento da transparência financeira: indicadores de custo base e lucro mensal nos modais de faturamento." },
@@ -61,6 +63,7 @@ const changelogData = [
         ],
     },
     {
+        id: "2026-02-07",
         date: "07/02/2026",
         changes: [
             { category: "Configurações", description: "Expansão da entidade PerfilAdministrador com a inclusão de campos para integração via API do WhatsApp em fluxos de notificação." },
@@ -73,6 +76,7 @@ const changelogData = [
         ],
     },
     {
+        id: "2026-02-06",
         date: "06/02/2026",
         changes: [
             { category: "Regras", description: "Atualização de schema: Campo WhatsApp passa a ser opcional (nullable), permitindo fluxos flexíveis de onboarding para novos participantes." },
@@ -82,14 +86,16 @@ const changelogData = [
         ],
     },
     {
+        id: "2026-02-05",
         date: "05/02/2026",
         changes: [
             { category: "Mobile", description: "Refatoração estrutural da LandingNavbar para dispositivos móveis: implementação de menu hambúrguer com animação e controle de foco (A11y)." },
             { category: "Design", description: "Migração para novo sistema de ativos SVG otimizados: redução de 40% no bundle visual da página inicial através da vetorização de ícones." },
-            { category: "UX", description: "Limpeza da Dashboard: análise de uso e remoção de botões de ações rápidas legados para melhorar a densidade de informação útil." },
+            { category: "UX", description: "Limpeza da Dashboard: análise de uso e remoção de botões de ações rápida legados para melhorar a densidade de informação útil." },
         ],
     },
     {
+        id: "2026-02-04",
         date: "04/02/2026",
         changes: [
             { category: "Correção", description: "Resolução de bug lógico na validação de CPF: agora é permitido o cadastro de participantes sem CPF quando vinculados como dependentes." },
@@ -123,6 +129,16 @@ function BackButton() {
 }
 
 export function StatusPageClient({ session }: StatusPageClientProps) {
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const handleCopy = (id: string) => {
+        const url = new URL(window.location.href);
+        url.hash = id;
+        navigator.clipboard.writeText(url.toString());
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
     return (
         <div className="min-h-screen  w-full bg-white font-inter relative">
 
@@ -131,7 +147,7 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
 
             {/* Hero Section */}
             <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white">
-                <div className="container mx-auto px-3 md:px-6 relative z-10">
+                <div className="container mx-auto h-full px-3 md:px-6 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
                         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/10">
                             <RefreshCw className="text-green-400 animate-spin-slow" size={16} />
@@ -152,7 +168,7 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
             </section>
 
             {/* Status Section */}
-            <section className="py-8 md:py-12 -mt-10 relative z-20">
+            <section className="py-10 md:py-12 -mt-10 relative z-20">
                 <div className="container mx-auto px-3 md:px-6">
                     <div className="max-w-5xl mx-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -188,17 +204,34 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
 
                         <div className="space-y-8 md:space-y-12">
                             {changelogData.map((log, logIdx) => (
-                                <div key={logIdx} className="relative pl-6 md:pl-12">
+                                <div key={logIdx} id={log.id} className="relative pl-6 md:pl-12 scroll-mt-24">
                                     {/* Timeline line */}
                                     <div className="absolute left-0 top-0 bottom-0 w-px bg-purple-200"></div>
 
                                     {/* Timeline Dot */}
                                     <div className="absolute left-[-6px] top-2 w-3 h-3 rounded-full bg-purple-600 shadow-[0_0_0_4px_rgba(147,51,234,0.1)]"></div>
 
-                                    <div className="bg-white p-5 md:p-8 rounded-[24px] md:rounded-[32px] shadow-sm border border-gray-100">
+                                    <div className="bg-white p-5 md:p-8 rounded-[24px] md:rounded-[32px] shadow-sm border border-gray-100 transition-all hover:bg-gray-50/30">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 group/date">
                                                 <h3 className="text-xl md:text-2xl font-bold text-gray-900">{log.date}</h3>
+                                                <Tooltip
+                                                    content="Copiado!"
+                                                    isVisible={copiedId === log.id}
+                                                    position="right"
+                                                >
+                                                    <button
+                                                        onClick={() => handleCopy(log.id)}
+                                                        className="p-1.5 rounded-lg bg-gray-50 text-gray-400 opacity-0 group-hover/date:opacity-100 hover:text-purple-600 hover:bg-purple-50 transition-all cursor-pointer"
+                                                        title="Copiar link desta sessão"
+                                                    >
+                                                        {copiedId === log.id ? (
+                                                            <CheckCircle2 size={14} className="text-green-500" />
+                                                        ) : (
+                                                            <Copy size={14} />
+                                                        )}
+                                                    </button>
+                                                </Tooltip>
                                             </div>
                                             <div className="w-24 justify-center align-center flex bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
                                                 UPDATE

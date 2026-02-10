@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ToastContainer } from "@/components/ui/ToastContainer";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 import "@/cron/init"; // Initialize cron jobs
 
 const inter = Inter({ subsets: ["latin"] });
@@ -75,8 +76,10 @@ export default async function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className} antialiased justify-center w-full flex bg-gray-50/50`}>
         <ToastProvider>
-          {children}
-          <ToastContainer />
+          <TooltipProvider>
+            {children}
+            <ToastContainer />
+          </TooltipProvider>
         </ToastProvider>
       </body>
     </html>
