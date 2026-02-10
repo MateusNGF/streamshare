@@ -8,11 +8,11 @@ const statusStyles: Record<string, { color: string; label: string }> = {
 
     // Amber / Warning / Pending
     pendente: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Pendente" },
-    suspensa: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Suspensa" },
     aguardando: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Aguardando" },
 
     // Red / Error / Overdue
     atrasado: { color: "bg-red-100 text-red-700 border-red-200", label: "Atrasado" },
+    suspensa: { color: "bg-red-100 text-red-700 border-red-200", label: "Suspensa" },
     past_due: { color: "bg-red-100 text-red-700 border-red-200", label: "Em Atraso" },
     unpaid: { color: "bg-red-100 text-red-700 border-red-200", label: "Não Pago" },
     inativo: { color: "bg-red-100 text-red-700 border-red-200", label: "Inativo" },

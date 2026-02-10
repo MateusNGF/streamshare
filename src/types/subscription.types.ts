@@ -30,6 +30,7 @@ export interface ChargeCreationData {
 export type BillingDecision =
     | { action: 'NONE' }
     | { action: 'CANCEL_SCHEDULED' }
+    | { action: 'SUSPEND' }
     | { action: 'CREATE_CHARGE'; data: ChargeCreationData };
 
 export interface SubscriptionWithCharges {

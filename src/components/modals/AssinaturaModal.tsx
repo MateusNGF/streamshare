@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -10,8 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
 import { createAssinatura } from "@/actions/assinaturas";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Calculator } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from "@/lib/financeiro-utils";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
+import { useBillingCalculations } from "@/hooks/useBillingCalculations";
 
 interface AssinaturaModalProps {
     isOpen: boolean;
@@ -36,6 +40,19 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
         cobrancaAutomaticaPaga: false,
     });
     const { currencyInfo } = useCurrency();
+
+    // SOLID Refactor: Hook to encapsulate financial logic
+    const selectedStreaming = useMemo(() =>
+        streamings.find(s => s.id.toString() === formData.streamingId),
+        [streamings, formData.streamingId]
+    );
+
+    const billing = useBillingCalculations({
+        valorIntegral: Number(selectedStreaming?.valorIntegral || 0),
+        limiteParticipantes: selectedStreaming?.limiteParticipantes || 0,
+        valorAtual: formData.valor,
+        frequencia: formData.frequencia as any
+    });
 
     useEffect(() => {
         if (isOpen) {
@@ -66,17 +83,16 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
             setError("Erro ao carregar dados.");
         }
     };
-
     const handleStreamingSelect = (streamingId: string) => {
         const streaming = streamings.find(s => s.id.toString() === streamingId);
         if (streaming) {
-            // Calculate suggested value per participant
-            const suggestedValue = (Number(streaming.valorIntegral) / streaming.limiteParticipantes).toFixed(2);
+            // Use centralized utility for consistent rounding
+            const suggestedValue = calcularCustoBase(Number(streaming.valorIntegral), streaming.limiteParticipantes);
 
             setFormData(prev => ({
                 ...prev,
                 streamingId,
-                valor: suggestedValue
+                valor: suggestedValue.toFixed(2)
             }));
         }
     };
@@ -190,17 +206,35 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                                     <SelectItem value="anual">Anual</SelectItem>
                                 </SelectContent>
                             </Select>
+                            {formData.valor && formData.frequencia !== 'mensal' && (
+                                <div className="mt-2 text-[10px] text-blue-600 font-bold bg-blue-50/50 px-2 py-1 rounded border border-blue-100/50 flex items-center gap-1.5 ring-1 ring-blue-200/50">
+                                    <Calculator size={10} className="shrink-0" />
+                                    <span>Ciclo: {formatCurrency(billing.totalCiclo)}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="grid gap-2">
-                            <Label>Valor ({currencyInfo.symbol})</Label>
-                            <Input
-                                type="number"
-                                step="0.01"
+                            <Label className="flex justify-between items-center gap-2 flex-wrap mb-1">
+                                <span className="shrink-0">Valor Mensal ({currencyInfo.symbol})</span>
+                                {billing.temLucro && (
+                                    <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                                        Lucro: +{formatCurrency(billing.lucroMensal)}/mês
+                                    </span>
+                                )}
+                            </Label>
+                            <CurrencyInput
                                 value={formData.valor}
-                                onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                                onValueChange={(val) => setFormData(prev => ({ ...prev, valor: val?.toString() || "" }))}
+                                placeholder="0,00"
                             />
+                            {selectedStreaming && (
+                                <p className="text-[9px] text-gray-400 font-medium mt-1.5 text-right">
+                                    Custo base: {formatCurrency(billing.custoBase)}
+                                </p>
+                            )}
                         </div>
                     </div>
+
 
                     <div className="grid gap-2">
                         <Label>Data Início</Label>

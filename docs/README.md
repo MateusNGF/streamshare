@@ -23,6 +23,7 @@ Bem-vindo à documentação oficial do projeto StreamShare.
 - **[Sistema de Autenticação](./AUTHENTICATION_SYSTEM.md)**: Documentação do sistema de autenticação.
 - **[Estrutura de Rotas](./ROUTE_STRUCTURE.md)**: Organização e estrutura de rotas do projeto.
 - **[Criação de Assinaturas](./SUBSCRIPTION_CREATION.md)**: Fluxo de criação de assinaturas.
+- **[Sistema de Faturamento (Frontend)](./frontend/BILLING_SYSTEM.md)**: Componentes, hooks e lógica financeira do frontend.
 
 ### Referência
 - **[Especificação do Projeto](./PROJECT_SPEC.md)**: Especificação completa do projeto.

@@ -5,11 +5,12 @@ import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
-import { INTERVALOS_MESES } from "@/lib/financeiro-utils";
+import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from "@/lib/financeiro-utils";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Check, ChevronRight, ChevronLeft, Search, Users, X, Calendar, Wallet, Plus, Minus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
+import { useBillingCalculations } from "@/hooks/useBillingCalculations";
 
 // --- Types ---
 
@@ -174,85 +175,117 @@ function StepConfiguration({
     configurations: Map<number, SelectedStreaming>;
     onUpdate: (id: number, field: keyof SelectedStreaming, value: any) => void;
 }) {
-    const { format, currencyInfo } = useCurrency();
     return (
         <div className="space-y-4">
             <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Configure os Valores</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                    Defina a frequência e o valor para cada streaming selecionado
+                    Defina o valor base <strong>mensal</strong> e a frequência de faturamento.
                 </p>
             </div>
 
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                {selectedStreamings.map(streaming => {
-                    const config = configurations.get(streaming.id);
-                    if (!config) return null;
+                {selectedStreamings.map(streaming => (
+                    <StreamingConfigItem
+                        key={streaming.id}
+                        streaming={streaming}
+                        config={configurations.get(streaming.id)}
+                        onUpdate={onUpdate}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
 
-                    return (
-                        <div key={streaming.id} className="border-2 border-gray-200 rounded-2xl p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold overflow-hidden shadow-sm"
-                                    style={{ backgroundColor: streaming.cor }}
-                                >
-                                    {streaming.iconeUrl ? (
-                                        <img
-                                            src={streaming.iconeUrl}
-                                            alt={streaming.nome}
-                                            className="w-6 h-6 object-contain brightness-0 invert"
-                                        />
-                                    ) : (
-                                        streaming.nome.charAt(0)
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-gray-900">
-                                        {streaming.apelido || streaming.nome}
-                                    </h4>
-                                    {streaming.apelido && (
-                                        <p className="text-xs text-muted-foreground">{streaming.catalogoNome}</p>
-                                    )}
-                                </div>
-                            </div>
+function StreamingConfigItem({
+    streaming,
+    config,
+    onUpdate
+}: {
+    streaming: StreamingOption;
+    config?: SelectedStreaming;
+    onUpdate: (id: number, field: keyof SelectedStreaming, value: any) => void;
+}) {
+    const { format, currencyInfo } = useCurrency();
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                        Frequência
-                                    </label>
-                                    <Select
-                                        value={config.frequencia}
-                                        onValueChange={(value) => onUpdate(streaming.id, 'frequencia', value as FrequenciaPagamento)}
-                                    >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Selecione..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value={FrequenciaPagamento.mensal}>Mensal</SelectItem>
-                                            <SelectItem value={FrequenciaPagamento.trimestral}>Trimestral</SelectItem>
-                                            <SelectItem value={FrequenciaPagamento.semestral}>Semestral</SelectItem>
-                                            <SelectItem value={FrequenciaPagamento.anual}>Anual</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                        Valor ({currencyInfo.symbol})
-                                    </label>
-                                    <CurrencyInput
-                                        value={parseFloat(config.valor)}
-                                        onChange={(val) => onUpdate(streaming.id, 'valor', val.toString())}
-                                        placeholder={(streaming.valorIntegral / streaming.limiteParticipantes).toFixed(2)}
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Valor mensal sugerido: {format(streaming.valorIntegral / streaming.limiteParticipantes)}/mês
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+    const billing = useBillingCalculations({
+        valorIntegral: streaming.valorIntegral,
+        limiteParticipantes: streaming.limiteParticipantes,
+        valorAtual: config?.valor || 0,
+        frequencia: config?.frequencia || FrequenciaPagamento.mensal
+    });
+
+    if (!config) return null;
+
+    return (
+        <div className="border-2 border-gray-200 rounded-2xl p-4">
+            <div className="flex items-center gap-3 mb-4">
+                <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold overflow-hidden shadow-sm"
+                    style={{ backgroundColor: streaming.cor }}
+                >
+                    {streaming.iconeUrl ? (
+                        <img
+                            src={streaming.iconeUrl}
+                            alt={streaming.nome}
+                            className="w-6 h-6 object-contain brightness-0 invert"
+                        />
+                    ) : (
+                        streaming.nome.charAt(0)
+                    )}
+                </div>
+                <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">
+                        {streaming.apelido || streaming.nome}
+                    </h4>
+                    {streaming.apelido && (
+                        <p className="text-xs text-muted-foreground">{streaming.catalogoNome}</p>
+                    )}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Frequência
+                    </label>
+                    <Select
+                        value={config.frequencia}
+                        onValueChange={(value) => onUpdate(streaming.id, 'frequencia', value as FrequenciaPagamento)}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value={FrequenciaPagamento.mensal}>Mensal</SelectItem>
+                            <SelectItem value={FrequenciaPagamento.trimestral}>Trimestral</SelectItem>
+                            <SelectItem value={FrequenciaPagamento.semestral}>Semestral</SelectItem>
+                            <SelectItem value={FrequenciaPagamento.anual}>Anual</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    {config.frequencia !== 'mensal' && (
+                        <p className="text-[10px] text-blue-600 font-bold bg-blue-50/50 px-2 py-0.5 rounded border border-blue-100/50 w-fit mt-1.5">
+                            Ciclo: {format(billing.totalCiclo)} a cada {INTERVALOS_MESES[config.frequencia]} meses
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1 flex justify-between items-center gap-2 flex-wrap">
+                        <span className="shrink-0">Valor Mensal ({currencyInfo.symbol})</span>
+                        {billing.temLucro && (
+                            <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded-full border border-green-100">
+                                +{format(billing.lucroMensal)}/mês
+                            </span>
+                        )}
+                    </label>
+                    <CurrencyInput
+                        value={config.valor}
+                        onValueChange={(val) => onUpdate(streaming.id, 'valor', val?.toString() || '')}
+                        placeholder={billing.custoBase.toFixed(2)}
+                    />
+                    <p className="text-[9px] text-gray-400 font-medium mt-1.5 text-right">Custo base: {format(billing.custoBase)}</p>
+                </div>
             </div>
         </div>
     );
@@ -634,7 +667,7 @@ export function AssinaturaMultiplaModal({
             const streaming = streamings.find(s => s.id === streamingId);
             if (streaming) {
                 const newConfigs = new Map(configurations);
-                const valorPadrao = streaming.valorIntegral / streaming.limiteParticipantes;
+                const valorPadrao = calcularCustoBase(streaming.valorIntegral, streaming.limiteParticipantes);
                 newConfigs.set(streamingId, {
                     streamingId,
                     frequencia: FrequenciaPagamento.mensal,
@@ -716,19 +749,8 @@ export function AssinaturaMultiplaModal({
 
         if (current) {
             let updates = { [field]: value };
-            if (field === 'frequencia') {
-                const streaming = streamings.find(s => s.id === streamingId);
-                if (streaming) {
-                    const novaFrequencia = value as FrequenciaPagamento;
-                    const valorMensal = streaming.valorIntegral / streaming.limiteParticipantes;
-                    const novoValor = valorMensal * INTERVALOS_MESES[novaFrequencia];
-
-                    updates = {
-                        ...updates,
-                        valor: novoValor.toFixed(2)
-                    };
-                }
-            }
+            // QA Fix: If frequency changes, we DO NOT multiply the monthly value in the field.
+            // The monthly value is the base. The total is calculated only for display.
             newConfigs.set(streamingId, { ...current, ...updates });
             setConfigurations(newConfigs);
         }

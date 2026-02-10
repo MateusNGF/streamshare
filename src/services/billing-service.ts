@@ -35,6 +35,7 @@ export const billingService = {
 
         const cobrancasParaCriar: Array<ChargeCreationData> = [];
         const assinaturasParaCancelar: number[] = [];
+        const assinaturasParaSuspender: number[] = [];
         const agora = new Date();
 
         // 1. Evaluate each subscription
@@ -45,6 +46,8 @@ export const billingService = {
                 cobrancasParaCriar.push(decision.data);
             } else if (decision.action === 'CANCEL_SCHEDULED') {
                 assinaturasParaCancelar.push(assinatura.id);
+            } else if (decision.action === 'SUSPEND') {
+                assinaturasParaSuspender.push(assinatura.id);
             }
         }
 
@@ -52,6 +55,7 @@ export const billingService = {
         return executeBillingTransaction(
             cobrancasParaCriar,
             assinaturasParaCancelar,
+            assinaturasParaSuspender,
             assinaturasTyped
         );
     }
@@ -71,14 +75,32 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
         return { action: 'NONE' };
     }
 
-    // Check renewal
-    // Using date-fns differenceInDays for more robust calculation (handles DST etc)
+    // --- Inadimplência Check (Anti-Dívida Infinita) ---
+    // Se houver cobranças pendentes já vencidas (passou do periodoFim)
+    const cobrancasVencidas = assinatura.cobrancas.filter(c =>
+        c.status === "pendente" && isBefore(c.periodoFim, agora)
+    );
+
+    if (cobrancasVencidas.length > 0) {
+        // Se a cobrança mais antiga pendente venceu há mais de 3 dias, suspender acesso
+        const maisAntigaVencida = cobrancasVencidas.sort((a, b) =>
+            a.periodoFim.getTime() - b.periodoFim.getTime()
+        )[0];
+
+        if (differenceInDays(agora, maisAntigaVencida.periodoFim) >= 3) {
+            return { action: 'SUSPEND' };
+        }
+
+        // Se está vencida mas em período de graça (< 3 dias), 
+        // apenas não gera nova cobrança (Idempotência temporal)
+        return { action: 'NONE' };
+    }
+
+    // --- Renewal Logic ---
     const diasParaVencimento = differenceInDays(ultimaCobranca.periodoFim, agora);
 
-    // QA Fix: Allow catch-up for past dates (dias <= 5). 
     if (diasParaVencimento <= 5) {
         const periodoInicio = ultimaCobranca.periodoFim;
-        // QA Fix: Use Anchor Date logic to prevent drift
         const periodoFim = calcularProximoVencimento(
             periodoInicio,
             assinatura.frequencia,
@@ -103,13 +125,43 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
 async function executeBillingTransaction(
     cobrancas: ChargeCreationData[],
     cancelamentos: number[],
+    suspensoes: number[],
     assinaturasSource: SubscriptionWithCharges[]
 ) {
     let renovadas = 0;
     let canceladas = 0;
+    let suspensas = 0;
 
     await prisma.$transaction(async (tx) => {
-        // Process Charges
+        // 1. Process Suspensions (Higher priority to stop access)
+        if (suspensoes.length > 0) {
+            for (const id of suspensoes) {
+                await tx.assinatura.update({
+                    where: { id },
+                    data: {
+                        status: "suspensa",
+                        motivoSuspensao: "Inadimplência (Faturas pendentes há mais de 3 dias)"
+                    }
+                });
+
+                const ass = assinaturasSource.find(a => a.id === id);
+                if (ass) {
+                    await tx.notificacao.create({
+                        data: {
+                            contaId: ass.participante.contaId,
+                            usuarioId: ass.participante.userId || null,
+                            tipo: "assinatura_suspensa",
+                            titulo: "Assinatura Suspensa",
+                            descricao: `A assinatura de ${ass.participante.nome} foi suspensa por falta de pagamento.`,
+                            entidadeId: id,
+                        }
+                    });
+                }
+                suspensas++;
+            }
+        }
+
+        // 2. Process Charges
         for (const data of cobrancas) {
             // Idempotency check: Ensure no charge exists for this subscription starting on this date
             const existingCharge = await tx.cobranca.findFirst({
@@ -137,7 +189,7 @@ async function executeBillingTransaction(
             renovadas++;
         }
 
-        // Process Cancellations
+        // 3. Process Cancellations
         if (cancelamentos.length > 0) {
             for (const id of cancelamentos) {
                 await tx.assinatura.update({
@@ -155,7 +207,6 @@ async function executeBillingTransaction(
                             titulo: "Assinatura encerrada",
                             descricao: `O período pago da assinatura de ${ass.participante.nome} terminou e o acesso foi revogado.`,
                             entidadeId: id,
-                            lida: false
                         }
                     });
                 }
@@ -164,5 +215,5 @@ async function executeBillingTransaction(
         }
     });
 
-    return { renovadas, canceladas, totalProcessado: assinaturasSource.length };
+    return { renovadas, canceladas, suspensas, totalProcessado: assinaturasSource.length };
 }

@@ -48,9 +48,9 @@ export function calcularProximoVencimento(
 /**
  * Calculates the total charge value for a specific period based on frequency.
  * 
- * @param valorMensal - The monthly value of the subscription
- * @param frequencia - Payment frequency
- * @returns The total value as Prisma.Decimal
+ * @param valorMensal - The monthly base value of the subscription (e.g., 9.00)
+ * @param frequencia - Payment frequency (e.g., trimestral)
+ * @returns The total value for the period (e.g., 27.00) as Prisma.Decimal
  */
 export function calcularValorPeriodo(
     valorMensal: Prisma.Decimal | number,
@@ -58,7 +58,9 @@ export function calcularValorPeriodo(
 ): Prisma.Decimal {
     const multiplier = INTERVALOS_MESES[frequencia];
     const valorDecimal = new Prisma.Decimal(valorMensal.toString());
-    return valorDecimal.mul(multiplier);
+
+    // Round to 2 decimal places to ensure financial consistency
+    return valorDecimal.mul(multiplier).toDecimalPlaces(2);
 }
 
 /**
@@ -69,4 +71,35 @@ export function calcularValorPeriodo(
  */
 export function estaAtrasado(dataVencimento: Date): boolean {
     return isAfter(new Date(), dataVencimento);
+}
+
+/**
+ * Rounds a number to exactly 2 decimal places using standard mathematical rounding.
+ * Essential for monetary consistency between UI and Backend.
+ */
+export function arredondarMoeda(valor: number): number {
+    return Math.round(valor * 100) / 100;
+}
+
+/**
+ * Calculates the base cost per participant for a streaming service.
+ */
+export function calcularCustoBase(valorIntegral: number, limiteParticipantes: number): number {
+    if (limiteParticipantes <= 0) return 0;
+    return arredondarMoeda(valorIntegral / limiteParticipantes);
+}
+
+/**
+ * Calculates the monthly profit based on current value and base cost.
+ */
+export function calcularLucroMensal(valorAtual: number, custoBase: number): number {
+    return arredondarMoeda(valorAtual - custoBase);
+}
+
+/**
+ * Calculates the total value for a billing cycle (multiple months).
+ */
+export function calcularTotalCiclo(valorMensal: number | string, frequencia: FrequenciaPagamento): number {
+    const valor = typeof valorMensal === 'string' ? parseFloat(valorMensal) || 0 : valorMensal;
+    return arredondarMoeda(valor * INTERVALOS_MESES[frequencia]);
 }

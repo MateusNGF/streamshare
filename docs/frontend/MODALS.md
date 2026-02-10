@@ -80,7 +80,7 @@ function MyComplexModal({ isOpen, onClose }) {
 ```
 
 ### Quando usar
-- Formulários complexos (ex: `AssinaturaModal`).
+- Formulários complexos (ex: `AssinaturaModal`, veja [Sistema de Faturamento](./BILLING_SYSTEM.md)).
 - Modais que exigem estilização ou layout customizado que foge do padrão do componente `Modal`.
 - Quando é necessário controle granular sobre o comportamento e acessibilidade do diálogo.
 

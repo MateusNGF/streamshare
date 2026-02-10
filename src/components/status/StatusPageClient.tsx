@@ -45,6 +45,10 @@ const changelogData = [
     {
         date: "10/02/2026",
         changes: [
+            { category: "Finanças", description: "Lançamento da transparência financeira: indicadores de custo base e lucro mensal nos modais de faturamento." },
+            { category: "UX", description: "Implementação de resumos de ciclo dinâmicos e prevenção de erros em cobranças não-mensais." },
+            { category: "Interface", description: "Reorganização lógica dos formulários de assinatura para melhor legibilidade no desktop e mobile." },
+            { category: "Faturamento", description: "Blindagem de renovações contra deriva de datas (Anchor Date) e padronização de unidade de valor mensal." },
             { category: "Navegação", description: "Adição de botão 'Voltar para Home' na página de Status para facilitar a transição entre áreas informativas e promocionais." },
             { category: "Interface", description: "Padronização do rodapé institucional através de novo componente Footer compartilhado entre Landing Page e Status Page." },
             { category: "Arquitetura", description: "Integração de variáveis de ambiente (NEXT_PUBLIC_URL) em links globais para garantir roteamento absoluto consistente em toda a plataforma." },

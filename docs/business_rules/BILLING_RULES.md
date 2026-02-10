@@ -101,12 +101,21 @@ Para evitar cobranças duplicadas (ex: Cron rodando 2x, ou clique duplo no botã
 - Antes de criar qualquer cobrança, o sistema faz uma consulta `findFirst` buscando exatamente essa combinação.
 - Se encontrar, o processo é abortado silenciosamente (log de warning), garantindo que nunca haverá duas cobranças para o mesmo mês de referência.
 
-## 5. Regras de "Catch-up" (Recuperação)
+- **Loop Único**: Em cada execução do processo de cobrança, ele gera **apenas uma** nova cobrança por assinatura.
+- **Prevenção de Inadimplência**: Se uma assinatura possuir cobranças `pendentes` cujo `periodoFim` já passou, o sistema **não gerará** a próxima renovação até que a pendência seja resolvida. Isso evita o acúmulo de dívida infinita.
+- **Suspensão Automática**: Se uma cobrança `pendente` estiver vencida há mais de **3 dias**, a assinatura é movida automaticamente para o status `suspensa`.
+- **Catch-up**: Se uma assinatura estiver com status `ativa` mas atrasada (sem cobrança gerada para o período atual), o sistema gerará a cobrança retroativa na primeira oportunidade, desde que não haja impedimento por inadimplência.
 
-O sistema permite processar renovações atrasadas ("Catch-up"), mas com proteções:
+- **Valor na Base**: O campo `valor` na tabela `Assinatura` deve ser interpretado sempre como o **VALOR MENSAL** base, independente da frequência.
+- **Cálculo de Ciclo**: O valor final da cobrança é calculado como `valorMensal * multiplicadorFrequencia`. 
+- **Transparência Financeira (Markup)**: A interface deve sempre exibir o "Custo Base" (Valor Integral / Limite de Vagas) para auxiliar o administrador na definição da margem de lucro.
+- **Previsão de Ciclo**: Sempre que a frequência for diferente de 'mensal', a interface deve exibir explicitamente o valor total que será cobrado no ciclo (ex: Valor Mensal de R$ 27,00 em ciclo Trimestral = Cobrança de R$ 81,00).
 
-- **Loop Único**: Em cada execução do processo de cobrança, ele gera **apenas uma** nova cobrança por assinatura, mesmo que ela esteja atrasada há 3 meses.
-- **Efeito**: Se uma assinatura está 3 meses atrasada, levará 3 execuções do Cron (3 dias, se rodar diário) para gerar as 3 cobranças pendentes, ou uma execução manual forçada. Isso evita loops infinitos e picos de processamento.
+## 7. Validação de UI e Reatividade
+
+- **Inputs Monetários**: Utilizar o componente `CurrencyInput` para garantir máscaras de moeda consistentes.
+- **Fallback de Valor**: O sistema deve permitir campos de valor vazios durante a edição (estado temporário) sem resetar automaticamente para zero, garantindo fluidez no uso do backspace.
+- **Cálculo em Tempo Real**: Toda alteração no `valor` ou `frequencia` deve disparar o recálculo imediato dos indicadores de lucro e resumos de ciclo.
 
 ---
 
@@ -116,5 +125,5 @@ O sistema permite processar renovações atrasadas ("Catch-up"), mas com proteç
 | :--- | :--- | :--- | :--- |
 | `ativa` | Assinatura regular vigente. | SIM | SIM |
 | `ativa` (c/ dataCancelamento) | Cancelamento solicitado ("Cancelamento Agendado"). | SIM | NÃO |
-| `suspensa` | Pagamento pendente/atrasado. | NÃO | NÃO |
+| `suspensa` | Pagamento pendente/atrasado (> 3 dias). | NÃO | NÃO |
 | `cancelada` | Vínculo encerrado definitivamente. | NÃO | NÃO |
