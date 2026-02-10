@@ -6,6 +6,7 @@ import { LandingNavbar } from "@/components/layout/LandingNavbar";
 import { Tooltip } from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useState } from "react";
+import { InsectInteractive } from "../backgrounds/InsectInteractive";
 
 interface StatusPageClientProps {
     session: any;
@@ -146,6 +147,8 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
         <div className="min-h-screen  w-full bg-white font-inter relative">
 
             <LandingNavbar session={session} />
+            <InsectInteractive />
+
 
             {/* Hero Section */}
             <section className="relative pt-40 pb-40 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white">
