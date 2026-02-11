@@ -105,7 +105,8 @@ export async function criarCobrancaInicial(assinaturaId: number) {
             periodoInicio,
             periodoFim,
             status: assinatura.cobrancaAutomaticaPaga ? "pago" : "pendente",
-            dataPagamento: assinatura.cobrancaAutomaticaPaga ? new Date() : null
+            dataPagamento: assinatura.cobrancaAutomaticaPaga ? new Date() : null,
+            dataVencimento: periodoInicio
         }
     });
 
@@ -237,7 +238,8 @@ export async function cancelarCobranca(cobrancaId: number) {
         const result = await tx.cobranca.update({
             where: { id: cobrancaId },
             data: {
-                status: StatusCobranca.cancelado
+                status: StatusCobranca.cancelado,
+                deletedAt: new Date()
             },
             include: {
                 assinatura: {

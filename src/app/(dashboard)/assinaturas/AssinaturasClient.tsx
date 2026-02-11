@@ -13,6 +13,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { createBulkAssinaturas, cancelarAssinatura } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
 import { CancelarAssinaturaModal } from "@/components/modals/CancelarAssinaturaModal";
+import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -36,6 +37,7 @@ export default function AssinaturasClient({
     const [loading, setLoading] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [cancelling, setCancelling] = useState(false);
 
     // Get current filter values from URL
@@ -100,12 +102,12 @@ export default function AssinaturasClient({
         }
     };
 
-    const handleCancelAssinatura = async () => {
+    const handleCancelAssinatura = async (reason: string) => {
         if (!selectedAssinatura) return;
 
         setCancelling(true);
         try {
-            await cancelarAssinatura(selectedAssinatura.id);
+            await cancelarAssinatura(selectedAssinatura.id, reason);
             toast.success('Assinatura cancelada com sucesso');
             setCancelModalOpen(false);
             setSelectedAssinatura(null);
@@ -228,8 +230,8 @@ export default function AssinaturasClient({
                                                             label: "Detalhes",
                                                             icon: <Eye size={16} />,
                                                             onClick: () => {
-                                                                // TODO: Implement details view
-                                                                toast.info("Detalhes em breve");
+                                                                setSelectedAssinatura(sub);
+                                                                setDetailsModalOpen(true);
                                                             }
                                                         },
                                                         ...(sub.status !== "cancelada" ? [
@@ -286,6 +288,15 @@ export default function AssinaturasClient({
                 onConfirm={handleCancelAssinatura}
                 assinatura={selectedAssinatura}
                 loading={cancelling}
+            />
+
+            <DetalhesAssinaturaModal
+                isOpen={detailsModalOpen}
+                onClose={() => {
+                    setDetailsModalOpen(false);
+                    setSelectedAssinatura(null);
+                }}
+                assinatura={selectedAssinatura}
             />
         </PageContainer>
     );

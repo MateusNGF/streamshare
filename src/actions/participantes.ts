@@ -176,9 +176,12 @@ export async function deleteParticipante(id: number) {
             throw new Error("Participante não encontrado");
         }
 
-        // Delete the participant
-        await tx.participante.delete({
+        // Soft delete the participant
+        await tx.participante.update({
             where: { id, contaId },
+            data: {
+                deletedAt: new Date()
+            }
         });
 
         // Create notification inside transaction

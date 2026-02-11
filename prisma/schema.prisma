@@ -131,10 +131,11 @@ model Usuario {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  contas       ContaUsuario[]
-  participante Participante?
-  admin        UsuarioAdmin?
-  notificacoes Notificacao[]
+  contas                ContaUsuario[]
+  participante          Participante?
+  admin                 UsuarioAdmin?
+  notificacoes          Notificacao[]
+  assinaturasCanceladas Assinatura[]   @relation("CanceladoPor")
 
   @@map("usuario")
 }
@@ -186,18 +187,19 @@ model StreamingCatalogo {
 }
 
 model Streaming {
-  id                     Int      @id @default(autoincrement())
+  id                     Int       @id @default(autoincrement())
   contaId                Int
   streamingCatalogoId    Int
-  apelido                String?  @default("")
+  apelido                String?   @default("")
   valorIntegral          Decimal
   limiteParticipantes    Int
   credenciaisLogin       String?
   credenciaisSenha       String?
-  frequenciasHabilitadas String   @default("mensal,trimestral,semestral,anual")
-  isAtivo                Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  frequenciasHabilitadas String    @default("mensal,trimestral,semestral,anual")
+  isAtivo                Boolean   @default(true)
+  deletedAt              DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   conta       Conta             @relation(fields: [contaId], references: [id])
   catalogo    StreamingCatalogo @relation(fields: [streamingCatalogoId], references: [id])
@@ -229,8 +231,9 @@ model Participante {
   email          String?
   userId         Int?    @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   conta        Conta         @relation(fields: [contaId], references: [id])
   usuario      Usuario?      @relation(fields: [userId], references: [id])
@@ -253,28 +256,38 @@ model Assinatura {
   dataSuspensao          DateTime?
   motivoSuspensao        String?
   dataCancelamento       DateTime?
+  motivoCancelamento     String?
+  canceladoPorId         Int?
   cobrancaAutomaticaPaga Boolean             @default(false)
+  deletedAt              DateTime?
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 
   participante Participante @relation(fields: [participanteId], references: [id])
   streaming    Streaming    @relation(fields: [streamingId], references: [id])
+  canceladoPor Usuario?     @relation("CanceladoPor", fields: [canceladoPorId], references: [id])
   cobrancas    Cobranca[]
 
   @@map("assinatura")
 }
 
 model Cobranca {
-  id             Int            @id @default(autoincrement())
-  assinaturaId   Int
-  valor          Decimal
-  periodoInicio  DateTime
-  periodoFim     DateTime
-  dataPagamento  DateTime?
-  status         StatusCobranca @default(pendente)
-  comprovanteUrl String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id                   Int            @id @default(autoincrement())
+  assinaturaId         Int
+  valor                Decimal
+  periodoInicio        DateTime
+  periodoFim           DateTime
+  dataPagamento        DateTime?
+  status               StatusCobranca @default(pendente)
+  dataVencimento       DateTime?
+  comprovanteUrl       String?
+  gatewayTransactionId String?
+  gatewayProvider      String?
+  tentativas           Int            @default(0)
+  metadataJson         Json?
+  deletedAt            DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
   assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
 

@@ -144,7 +144,8 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
                 assinaturaId: assinatura.id,
                 valor,
                 periodoInicio,
-                periodoFim
+                periodoFim,
+                dataVencimento: periodoInicio
             }
         };
     }
@@ -215,7 +216,8 @@ async function executeBillingTransactionWithTx(
             data: {
                 ...data,
                 status: shouldAutoPay ? "pago" : "pendente",
-                dataPagamento: shouldAutoPay ? new Date() : null
+                dataPagamento: shouldAutoPay ? new Date() : null,
+                dataVencimento: data.dataVencimento || data.periodoInicio
             }
         });
         renovadas++;

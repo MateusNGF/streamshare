@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
@@ -7,7 +8,7 @@ import { AlertTriangle } from "lucide-react";
 interface CancelarAssinaturaModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: (motivo: string) => void;
     assinatura: {
         id: number;
         participante: {
@@ -34,7 +35,13 @@ export function CancelarAssinaturaModal({
     assinatura,
     loading
 }: CancelarAssinaturaModalProps) {
+    const [motivo, setMotivo] = useState("");
+
     if (!assinatura) return null;
+
+    const handleConfirm = () => {
+        onConfirm(motivo);
+    };
 
     return (
         <Modal
@@ -53,7 +60,7 @@ export function CancelarAssinaturaModal({
                     </Button>
                     <Button
                         variant="destructive"
-                        onClick={onConfirm}
+                        onClick={handleConfirm}
                         disabled={loading}
                         className="w-full sm:w-auto"
                     >
@@ -119,6 +126,21 @@ export function CancelarAssinaturaModal({
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {/* Reasoning Field */}
+                <div className="pt-2">
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        Motivo do Cancelamento (Opcional)
+                    </label>
+                    <textarea
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all disabled:bg-gray-50 bg-white text-gray-900"
+                        placeholder="Ex: Não pagou a mensalidade, Solicitou via chat..."
+                        rows={3}
+                        value={motivo}
+                        onChange={(e) => setMotivo(e.target.value)}
+                        disabled={loading}
+                    />
                 </div>
 
                 {/* Consequences */}

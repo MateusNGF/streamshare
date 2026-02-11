@@ -21,6 +21,7 @@ const statusStyles: Record<string, { color: string; label: string }> = {
     // Gray / Neutral
     cancelado: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelado" },
     cancelada: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelada" },
+    excluido: { color: "bg-gray-200 text-gray-800 border-gray-300", label: "Excluído" },
 
     // Purple / Scheduled
     cancelamento_agendado: { color: "bg-purple-100 text-purple-700 border-purple-200", label: "Cancelamento Agendado" },
@@ -31,13 +32,18 @@ interface StatusBadgeProps {
     label?: string;
     className?: string;
     dataCancelamento?: Date | string | null;
+    deletedAt?: Date | string | null;
 }
 
-export function StatusBadge({ status, label, className, dataCancelamento }: StatusBadgeProps) {
+export function StatusBadge({ status, label, className, dataCancelamento, deletedAt }: StatusBadgeProps) {
     let normalizedStatus = status.toLowerCase();
 
+    // Override status if soft deleted
+    if (deletedAt) {
+        normalizedStatus = 'excluido';
+    }
     // Override status if active but has cancellation date
-    if (normalizedStatus === 'ativa' && dataCancelamento) {
+    else if (normalizedStatus === 'ativa' && dataCancelamento) {
         normalizedStatus = 'cancelamento_agendado';
     }
 

@@ -25,6 +25,7 @@ export interface ChargeCreationData {
     valor: Prisma.Decimal;
     periodoInicio: Date;
     periodoFim: Date;
+    dataVencimento: Date;
 }
 
 export type BillingDecision =
@@ -43,14 +44,43 @@ export interface SubscriptionWithCharges {
     dataCancelamento: Date | null;
     status: StatusAssinatura;
     cobrancaAutomaticaPaga: boolean;
+    motivoCancelamento: string | null;
+    canceladoPorId: number | null;
+    createdAt: Date;
+    updatedAt: Date;
     cobrancas: {
         id: number;
+        assinaturaId: number;
+        valor: Prisma.Decimal;
+        periodoInicio: Date;
         periodoFim: Date;
         status: string;
+        dataVencimento: Date | null;
+        gatewayTransactionId: string | null;
+        gatewayProvider: string | null;
+        tentativas: number;
+        metadataJson: any | null;
+        deletedAt: Date | null;
     }[];
     participante: {
+        id: number;
         contaId: number;
         nome: string;
+        whatsappNumero: string | null;
         userId?: number | null;
     };
+    streaming: {
+        id: number;
+        apelido: string | null;
+        catalogo: {
+            nome: string;
+            iconeUrl: string | null;
+            corPrimaria: string | null;
+        };
+    };
+    canceladoPor?: {
+        id: number;
+        name: string | null;
+        email: string | null;
+    } | null;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, CheckCircle, AlertCircle, MessageCircle, Check, Search, XCircle } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, MessageCircle, Check, Search, XCircle, Eye } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GenericFilter } from "@/components/ui/GenericFilter";
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 
 import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal";
 import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
+import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
 
 interface CobrancasClientProps {
     kpis: {
@@ -47,6 +48,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [confirmPaymentModalOpen, setConfirmPaymentModalOpen] = useState(false);
     const [selectedCobrancaId, setSelectedCobrancaId] = useState<number | null>(null);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
     const filteredCobrancas = cobrancas.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
@@ -138,6 +140,15 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
 
     const getCobrancaOptions = (cobranca: any) => {
         const options = [];
+
+        options.push({
+            label: "Detalhes",
+            icon: <Eye size={16} />,
+            onClick: () => {
+                setSelectedCobrancaId(cobranca.id);
+                setDetailsModalOpen(true);
+            },
+        });
 
         if (cobranca.assinatura.participante.whatsappNumero) {
             options.push({
@@ -334,6 +345,16 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 onClose={() => setConfirmPaymentModalOpen(false)}
                 onConfirm={executePaymentConfirmation}
                 loading={loading}
+            />
+
+            {/* Modal de Detalhes */}
+            <DetalhesCobrancaModal
+                isOpen={detailsModalOpen}
+                onClose={() => {
+                    setDetailsModalOpen(false);
+                    setSelectedCobrancaId(null);
+                }}
+                cobranca={cobrancas.find(c => c.id === selectedCobrancaId)}
             />
         </PageContainer>
     );

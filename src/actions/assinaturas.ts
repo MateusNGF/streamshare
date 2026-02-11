@@ -50,6 +50,16 @@ export async function getAssinaturas(filters?: {
             participante: true,
             streaming: {
                 include: { catalogo: true }
+            },
+            cobrancas: {
+                orderBy: { periodoFim: "desc" }
+            },
+            canceladoPor: {
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true
+                }
             }
         },
         orderBy: { createdAt: "desc" },
@@ -229,7 +239,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
     return { created: results.length, assinaturas: results };
 }
 
-export async function cancelarAssinatura(assinaturaId: number) {
+export async function cancelarAssinatura(assinaturaId: number, motivo?: string) {
     const { contaId, userId } = await getContext();
 
     const assinatura = await prisma.assinatura.findUnique({
@@ -263,6 +273,8 @@ export async function cancelarAssinatura(assinaturaId: number) {
             data: {
                 status: novoStatus,
                 dataCancelamento: new Date(),
+                motivoCancelamento: motivo || "Não informado.",
+                canceladoPorId: userId,
                 updatedAt: new Date()
             }
         });

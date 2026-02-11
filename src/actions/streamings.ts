@@ -452,9 +452,13 @@ export async function deleteStreaming(id: number) {
             throw new Error("Streaming não encontrado");
         }
 
-        // Delete the streaming
-        await tx.streaming.delete({
+        // Soft delete the streaming
+        await tx.streaming.update({
             where: { id, contaId },
+            data: {
+                isAtivo: false,
+                deletedAt: new Date()
+            }
         });
 
         return `${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''}`;
