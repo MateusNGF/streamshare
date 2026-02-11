@@ -13,60 +13,81 @@ export const billingService = {
      * @param contaId Optional. If provided, processes only for that account. If null, processes all active subscriptions (Cron mode).
      */
     processarRenovacoes: async (contaId?: number) => {
-        const whereClause: any = { status: "ativa" };
-        if (contaId) whereClause.participante = { contaId };
+        // Use a unique lock key for billing.
+        // We use hashtext to convert a stable string into a 32-bit integer for Postgres advisory locks.
+        const lockKey = contaId ? `billing:renewal:${contaId}` : 'billing:renewal:global';
 
-        const assinaturasAtivas = await prisma.assinatura.findMany({
-            where: whereClause,
-            include: {
-                participante: {
-                    select: {
-                        contaId: true,
-                        nome: true,
-                        userId: true
-                    }
+        return await prisma.$transaction(async (tx) => {
+            // 1. Acquire advisory lock (session-level lock released at end of transaction)
+            // pg_try_advisory_xact_lock returns true if lock acquired, false otherwise.
+            const [{ lock_acquired }] = await tx.$queryRawUnsafe<any>(
+                `SELECT pg_try_advisory_xact_lock(hashtext($1)) as lock_acquired`,
+                lockKey
+            );
+
+            if (!lock_acquired) {
+                console.warn(`[BILLING] Process already running for ${contaId ? `account ${contaId}` : 'all accounts'}. Skipping.`);
+                return { renovadas: 0, canceladas: 0, suspensas: 0, totalProcessado: 0, skipped: true };
+            }
+
+            const whereClause: any = { status: "ativa" };
+            if (contaId) whereClause.participante = { contaId };
+
+            const assinaturasAtivas = await tx.assinatura.findMany({
+                where: whereClause,
+                include: {
+                    participante: {
+                        select: {
+                            contaId: true,
+                            nome: true,
+                            userId: true
+                        }
+                    },
+                    cobrancas: { orderBy: { periodoFim: "desc" }, take: 1 }
+                }
+            });
+
+            // Cast to our strictly typed interface
+            const assinaturasTyped = assinaturasAtivas as unknown as SubscriptionWithCharges[];
+
+            const cobrancasParaCriar: Array<ChargeCreationData> = [];
+            const assinaturasParaCancelar: number[] = [];
+            const assinaturasParaSuspender: number[] = [];
+            const agora = new Date();
+
+            // 2. Mark pending charges with periodoFim < agora as "atrasado"
+            await tx.cobranca.updateMany({
+                where: {
+                    status: "pendente",
+                    periodoFim: { lt: agora }
                 },
-                cobrancas: { orderBy: { periodoFim: "desc" }, take: 1 }
+                data: { status: "atrasado" }
+            });
+
+            // 3. Evaluate each subscription
+            for (const assinatura of assinaturasTyped) {
+                const decision = evaluateSubscriptionRenewal(assinatura, agora);
+
+                if (decision.action === 'CREATE_CHARGE' && decision.data) {
+                    cobrancasParaCriar.push(decision.data);
+                } else if (decision.action === 'CANCEL_SCHEDULED') {
+                    assinaturasParaCancelar.push(assinatura.id);
+                } else if (decision.action === 'SUSPEND') {
+                    assinaturasParaSuspender.push(assinatura.id);
+                }
             }
+
+            // 4. Execute Updates (passing tx to reuse the transaction)
+            return executeBillingTransactionWithTx(
+                tx,
+                cobrancasParaCriar,
+                assinaturasParaCancelar,
+                assinaturasParaSuspender,
+                assinaturasTyped
+            );
+        }, {
+            timeout: 30000 // Increase timeout for bulk processing
         });
-
-        // Cast to our strictly typed interface
-        const assinaturasTyped = assinaturasAtivas as unknown as SubscriptionWithCharges[];
-
-        const cobrancasParaCriar: Array<ChargeCreationData> = [];
-        const assinaturasParaCancelar: number[] = [];
-        const assinaturasParaSuspender: number[] = [];
-        const agora = new Date();
-
-        // 1. Mark pending charges with periodoFim < agora as "atrasado"
-        await prisma.cobranca.updateMany({
-            where: {
-                status: "pendente",
-                periodoFim: { lt: agora }
-            },
-            data: { status: "atrasado" }
-        });
-
-        // 2. Evaluate each subscription
-        for (const assinatura of assinaturasTyped) {
-            const decision = evaluateSubscriptionRenewal(assinatura, agora);
-
-            if (decision.action === 'CREATE_CHARGE' && decision.data) {
-                cobrancasParaCriar.push(decision.data);
-            } else if (decision.action === 'CANCEL_SCHEDULED') {
-                assinaturasParaCancelar.push(assinatura.id);
-            } else if (decision.action === 'SUSPEND') {
-                assinaturasParaSuspender.push(assinatura.id);
-            }
-        }
-
-        // 2. Execute Updates
-        return executeBillingTransaction(
-            cobrancasParaCriar,
-            assinaturasParaCancelar,
-            assinaturasParaSuspender,
-            assinaturasTyped
-        );
     }
 };
 
@@ -131,7 +152,9 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
     return { action: 'NONE' };
 }
 
-async function executeBillingTransaction(
+// Refactored to accept transaction object
+async function executeBillingTransactionWithTx(
+    tx: any,
     cobrancas: ChargeCreationData[],
     cancelamentos: number[],
     suspensoes: number[],
@@ -141,89 +164,87 @@ async function executeBillingTransaction(
     let canceladas = 0;
     let suspensas = 0;
 
-    await prisma.$transaction(async (tx) => {
-        // 1. Process Suspensions (Higher priority to stop access)
-        if (suspensoes.length > 0) {
-            for (const id of suspensoes) {
-                await tx.assinatura.update({
-                    where: { id },
+    // 1. Process Suspensions (Higher priority to stop access)
+    if (suspensoes.length > 0) {
+        for (const id of suspensoes) {
+            await tx.assinatura.update({
+                where: { id },
+                data: {
+                    status: "suspensa",
+                    motivoSuspensao: "Inadimplência (Faturas pendentes há mais de 3 dias)",
+                    dataSuspensao: new Date()
+                }
+            });
+
+            const ass = assinaturasSource.find(a => a.id === id);
+            if (ass) {
+                await tx.notificacao.create({
                     data: {
-                        status: "suspensa",
-                        motivoSuspensao: "Inadimplência (Faturas pendentes há mais de 3 dias)",
-                        dataSuspensao: new Date()
+                        contaId: ass.participante.contaId,
+                        usuarioId: ass.participante.userId || null,
+                        tipo: "assinatura_suspensa",
+                        titulo: "Assinatura Suspensa",
+                        descricao: `A assinatura de ${ass.participante.nome} foi suspensa por falta de pagamento.`,
+                        entidadeId: id,
                     }
                 });
-
-                const ass = assinaturasSource.find(a => a.id === id);
-                if (ass) {
-                    await tx.notificacao.create({
-                        data: {
-                            contaId: ass.participante.contaId,
-                            usuarioId: ass.participante.userId || null,
-                            tipo: "assinatura_suspensa",
-                            titulo: "Assinatura Suspensa",
-                            descricao: `A assinatura de ${ass.participante.nome} foi suspensa por falta de pagamento.`,
-                            entidadeId: id,
-                        }
-                    });
-                }
-                suspensas++;
             }
+            suspensas++;
+        }
+    }
+
+    // 2. Process Charges
+    for (const data of cobrancas) {
+        // Idempotency check: Ensure no charge exists for this subscription starting on this date
+        const existingCharge = await tx.cobranca.findFirst({
+            where: {
+                assinaturaId: data.assinaturaId,
+                periodoInicio: data.periodoInicio
+            }
+        });
+
+        if (existingCharge) {
+            console.warn(`[BILLING] Skipping duplicate charge for subscription ${data.assinaturaId} (Start: ${data.periodoInicio})`);
+            continue;
         }
 
-        // 2. Process Charges
-        for (const data of cobrancas) {
-            // Idempotency check: Ensure no charge exists for this subscription starting on this date
-            const existingCharge = await tx.cobranca.findFirst({
-                where: {
-                    assinaturaId: data.assinaturaId,
-                    periodoInicio: data.periodoInicio
-                }
-            });
+        const assinatura = assinaturasSource.find(a => a.id === data.assinaturaId);
+        const shouldAutoPay = assinatura?.cobrancaAutomaticaPaga ?? false;
 
-            if (existingCharge) {
-                console.warn(`[BILLING] Skipping duplicate charge for subscription ${data.assinaturaId} (Start: ${data.periodoInicio})`);
-                continue;
+        await tx.cobranca.create({
+            data: {
+                ...data,
+                status: shouldAutoPay ? "pago" : "pendente",
+                dataPagamento: shouldAutoPay ? new Date() : null
             }
+        });
+        renovadas++;
+    }
 
-            const assinatura = assinaturasSource.find(a => a.id === data.assinaturaId);
-            const shouldAutoPay = assinatura?.cobrancaAutomaticaPaga ?? false;
-
-            await tx.cobranca.create({
-                data: {
-                    ...data,
-                    status: shouldAutoPay ? "pago" : "pendente",
-                    dataPagamento: shouldAutoPay ? new Date() : null
-                }
+    // 3. Process Cancellations
+    if (cancelamentos.length > 0) {
+        for (const id of cancelamentos) {
+            await tx.assinatura.update({
+                where: { id },
+                data: { status: "cancelada" }
             });
-            renovadas++;
-        }
 
-        // 3. Process Cancellations
-        if (cancelamentos.length > 0) {
-            for (const id of cancelamentos) {
-                await tx.assinatura.update({
-                    where: { id },
-                    data: { status: "cancelada" }
+            const ass = assinaturasSource.find(a => a.id === id);
+            if (ass) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId: ass.participante.contaId,
+                        usuarioId: ass.participante.userId || null,
+                        tipo: "assinatura_cancelada",
+                        titulo: "Assinatura encerrada",
+                        descricao: `O período pago da assinatura de ${ass.participante.nome} terminou e o acesso foi revogado.`,
+                        entidadeId: id,
+                    }
                 });
-
-                const ass = assinaturasSource.find(a => a.id === id);
-                if (ass) {
-                    await tx.notificacao.create({
-                        data: {
-                            contaId: ass.participante.contaId,
-                            usuarioId: ass.participante.userId || null,
-                            tipo: "assinatura_cancelada",
-                            titulo: "Assinatura encerrada",
-                            descricao: `O período pago da assinatura de ${ass.participante.nome} terminou e o acesso foi revogado.`,
-                            entidadeId: id,
-                        }
-                    });
-                }
-                canceladas++;
             }
+            canceladas++;
         }
-    });
+    }
 
     return { renovadas, canceladas, suspensas, totalProcessado: assinaturasSource.length };
 }
