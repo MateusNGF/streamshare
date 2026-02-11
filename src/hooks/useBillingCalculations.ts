@@ -23,17 +23,17 @@ export function useBillingCalculations({
 }: UseBillingCalculationsProps) {
 
     return useMemo(() => {
-        const custoBase = calcularCustoBase(valorIntegral, limiteParticipantes);
+        const custoBaseDecimal = calcularCustoBase(valorIntegral, limiteParticipantes);
         const valorNumerico = typeof valorAtual === 'string' ? parseFloat(valorAtual) || 0 : valorAtual;
 
-        const lucroMensal = calcularLucroMensal(valorNumerico, custoBase);
-        const totalCiclo = calcularTotalCiclo(valorNumerico, frequencia);
+        const lucroMensalDecimal = calcularLucroMensal(valorNumerico, custoBaseDecimal);
+        const totalCicloDecimal = calcularTotalCiclo(valorNumerico, frequencia);
 
         return {
-            custoBase,
-            lucroMensal,
-            totalCiclo,
-            temLucro: lucroMensal > 0
+            custoBase: custoBaseDecimal.toNumber(),
+            lucroMensal: lucroMensalDecimal.toNumber(),
+            totalCiclo: totalCicloDecimal.toNumber(),
+            temLucro: lucroMensalDecimal.gt(0)
         };
     }, [valorIntegral, limiteParticipantes, valorAtual, frequencia]);
 }

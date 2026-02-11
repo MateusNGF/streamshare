@@ -74,32 +74,36 @@ export function estaAtrasado(dataVencimento: Date): boolean {
 }
 
 /**
- * Rounds a number to exactly 2 decimal places using standard mathematical rounding.
+ * Rounds a value to exactly 2 decimal places using Prisma.Decimal.
  * Essential for monetary consistency between UI and Backend.
  */
-export function arredondarMoeda(valor: number): number {
-    return Math.round(valor * 100) / 100;
+export function arredondarMoeda(valor: Prisma.Decimal | number | string): Prisma.Decimal {
+    return new Prisma.Decimal(valor.toString()).toDecimalPlaces(2);
 }
 
 /**
  * Calculates the base cost per participant for a streaming service.
  */
-export function calcularCustoBase(valorIntegral: number, limiteParticipantes: number): number {
-    if (limiteParticipantes <= 0) return 0;
-    return arredondarMoeda(valorIntegral / limiteParticipantes);
+export function calcularCustoBase(valorIntegral: Prisma.Decimal | number | string, limiteParticipantes: number): Prisma.Decimal {
+    if (limiteParticipantes <= 0) return new Prisma.Decimal(0);
+    const total = new Prisma.Decimal(valorIntegral.toString());
+    return arredondarMoeda(total.div(limiteParticipantes));
 }
 
 /**
  * Calculates the monthly profit based on current value and base cost.
  */
-export function calcularLucroMensal(valorAtual: number, custoBase: number): number {
-    return arredondarMoeda(valorAtual - custoBase);
+export function calcularLucroMensal(valorAtual: Prisma.Decimal | number | string, custoBase: Prisma.Decimal | number | string): Prisma.Decimal {
+    const atual = new Prisma.Decimal(valorAtual.toString());
+    const custo = new Prisma.Decimal(custoBase.toString());
+    return arredondarMoeda(atual.minus(custo));
 }
 
 /**
  * Calculates the total value for a billing cycle (multiple months).
  */
-export function calcularTotalCiclo(valorMensal: number | string, frequencia: FrequenciaPagamento): number {
-    const valor = typeof valorMensal === 'string' ? parseFloat(valorMensal) || 0 : valorMensal;
-    return arredondarMoeda(valor * INTERVALOS_MESES[frequencia]);
+export function calcularTotalCiclo(valorMensal: Prisma.Decimal | number | string, frequencia: FrequenciaPagamento): Prisma.Decimal {
+    const valor = new Prisma.Decimal(valorMensal.toString());
+    const multiplier = INTERVALOS_MESES[frequencia];
+    return arredondarMoeda(valor.mul(multiplier));
 }
