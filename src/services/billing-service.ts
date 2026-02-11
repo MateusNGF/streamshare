@@ -140,7 +140,8 @@ async function executeBillingTransaction(
                     where: { id },
                     data: {
                         status: "suspensa",
-                        motivoSuspensao: "Inadimplência (Faturas pendentes há mais de 3 dias)"
+                        motivoSuspensao: "Inadimplência (Faturas pendentes há mais de 3 dias)",
+                        dataSuspensao: new Date()
                     }
                 });
 
