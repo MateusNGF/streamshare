@@ -54,6 +54,7 @@ const changelogData = [
             { category: "Automação", description: "Processos automáticos para transição de status (Ativo/Atrasado/Suspenso) e reativação imediata após confirmação de pagamento." },
             { category: "Dashboard", description: "Refinamento dos KPIs e métricas do painel administrativo com cálculos otimizados baseados no histórico real de cobranças." },
             { category: "Experiência", description: "Tooltips contextuais e melhorias na criação em massa de assinaturas com processamento isolado para maior controle." },
+            { category: "Interface", description: "Padronização da exibição de ícones de streaming em toda a plataforma, garantindo aparência visual consistente em cards, tabelas e modais." },
         ],
     },
     {
