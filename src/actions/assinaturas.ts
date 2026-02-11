@@ -189,11 +189,29 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                     }
                 });
 
+                // 3. Create Initial Charge (Atomicity Improvement D-08)
+                const periodoInicio = dataInicio;
+                const periodoFim = calcularProximoVencimento(periodoInicio, ass.frequencia, dataInicio);
+                const valorCobranca = calcularValorPeriodo(ass.valor, ass.frequencia);
+
+                const isCobrancaPaga = data?.cobrancaAutomaticaPaga ?? false;
+
+                await tx.cobranca.create({
+                    data: {
+                        assinaturaId: assinatura.id,
+                        valor: valorCobranca,
+                        periodoInicio,
+                        periodoFim,
+                        status: isCobrancaPaga ? "pago" : "pendente",
+                        dataPagamento: isCobrancaPaga ? new Date() : null,
+                    }
+                });
+
                 results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });
             }
         }
 
-        // 3. Notification
+        // 4. Notification
         await tx.notificacao.create({
             data: {
                 contaId,
@@ -206,12 +224,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
         });
     });
 
-    // 4. Generate Charges
-    await Promise.all(results.map(async (res) => {
-        try { await criarCobrancaInicial(res.assinaturaId); }
-        catch (e) { console.error(`Failed charge for ${res.assinaturaId}`, e); }
-    }));
-
+    // Removal of post-transaction charge generation (D-08)
     revalidateAllPaths();
     return { created: results.length, assinaturas: results };
 }
