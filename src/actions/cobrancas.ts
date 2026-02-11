@@ -260,32 +260,57 @@ export async function cancelarCobranca(cobrancaId: number) {
  */
 export async function getKPIsFinanceiros() {
     const { contaId } = await getContext();
+    const agora = new Date();
 
-    const todasCobrancas = await prisma.cobranca.findMany({
+    // 1. Group by status to get counts and sums
+    const statsByStatus = await prisma.cobranca.groupBy({
+        by: ["status"],
         where: {
             assinatura: {
                 participante: { contaId }
             }
+        },
+        _sum: {
+            valor: true
+        },
+        _count: {
+            _all: true
         }
     });
 
-    const totalPendente = todasCobrancas
-        .filter(c => c.status === StatusCobranca.pendente)
-        .reduce((sum, c) => sum + Number(c.valor), 0);
+    // 2. Specialized aggregate for "em atraso" (pendente/atrasado and expired)
+    const overdueStats = await prisma.cobranca.aggregate({
+        where: {
+            assinatura: {
+                participante: { contaId }
+            },
+            status: { in: [StatusCobranca.pendente, StatusCobranca.atrasado] },
+            periodoFim: { lt: agora }
+        },
+        _sum: {
+            valor: true
+        }
+    });
 
-    const receitaConfirmada = todasCobrancas
-        .filter(c => c.status === StatusCobranca.pago)
-        .reduce((sum, c) => sum + Number(c.valor), 0);
+    // Map results
+    const statusMap = statsByStatus.reduce((acc, curr) => {
+        acc[curr.status] = {
+            sum: curr._sum.valor?.toNumber() || 0,
+            count: curr._count._all
+        };
+        return acc;
+    }, {} as Record<StatusCobranca, { sum: number, count: number }>);
 
-    const emAtraso = todasCobrancas
-        .filter(c => c.status === StatusCobranca.pendente && estaAtrasado(c.periodoFim))
-        .reduce((sum, c) => sum + Number(c.valor), 0);
+    const receitaConfirmada = statusMap[StatusCobranca.pago]?.sum || 0;
+    const totalPendente = statusMap[StatusCobranca.pendente]?.sum || 0;
+    const emAtraso = overdueStats._sum.valor?.toNumber() || 0;
+    const totalCobrancas = statsByStatus.reduce((sum, curr) => sum + curr._count._all, 0);
 
     return {
         totalPendente,
         receitaConfirmada,
         emAtraso,
-        totalCobrancas: todasCobrancas.length
+        totalCobrancas
     };
 }
 
