@@ -82,6 +82,19 @@ export async function criarCobrancaInicial(assinaturaId: number) {
     }
 
     const periodoInicio = assinatura.dataInicio;
+
+    // Check for existing charge (Idempotency)
+    const existing = await prisma.cobranca.findFirst({
+        where: {
+            assinaturaId,
+            periodoInicio
+        }
+    });
+
+    if (existing) {
+        return existing;
+    }
+
     const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia);
     const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
 
