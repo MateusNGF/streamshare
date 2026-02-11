@@ -5,9 +5,10 @@ import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
-import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from "@/lib/financeiro-utils";
+import { INTERVALOS_MESES, calcularCustoBase, calcularTotalCiclo, arredondarMoeda } from "@/lib/financeiro-utils";
+import { Prisma } from "@prisma/client";
 import { useCurrency } from "@/hooks/useCurrency";
-import { Check, ChevronRight, ChevronLeft, Search, Users, X, Calendar, Wallet, Plus, Minus } from "lucide-react";
+import { Check, ChevronLeft, Search, Users, X, Calendar, Wallet, Plus, Minus, ChevronDown, ChevronUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { useBillingCalculations } from "@/hooks/useBillingCalculations";
@@ -258,10 +259,19 @@ function StreamingConfigItem({
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value={FrequenciaPagamento.mensal}>Mensal</SelectItem>
-                            <SelectItem value={FrequenciaPagamento.trimestral}>Trimestral</SelectItem>
-                            <SelectItem value={FrequenciaPagamento.semestral}>Semestral</SelectItem>
-                            <SelectItem value={FrequenciaPagamento.anual}>Anual</SelectItem>
+                            {/* Filter enabled frequencies (Bug I3 - Fixed) */}
+                            {(!streaming.frequenciasHabilitadas || streaming.frequenciasHabilitadas.includes('mensal')) && (
+                                <SelectItem value={FrequenciaPagamento.mensal}>Mensal</SelectItem>
+                            )}
+                            {streaming.frequenciasHabilitadas?.includes('trimestral') && (
+                                <SelectItem value={FrequenciaPagamento.trimestral}>Trimestral</SelectItem>
+                            )}
+                            {streaming.frequenciasHabilitadas?.includes('semestral') && (
+                                <SelectItem value={FrequenciaPagamento.semestral}>Semestral</SelectItem>
+                            )}
+                            {streaming.frequenciasHabilitadas?.includes('anual') && (
+                                <SelectItem value={FrequenciaPagamento.anual}>Anual</SelectItem>
+                            )}
                         </SelectContent>
                     </Select>
                     {config.frequencia !== 'mensal' && (
@@ -289,6 +299,11 @@ function StreamingConfigItem({
             </div>
         </div>
     );
+}
+
+// Custom hook to centralize slot counting (Improvement M1)
+function useTotalSlots(quantities: Map<number, number>) {
+    return useMemo(() => Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0), [quantities]);
 }
 
 function StepParticipants({
@@ -378,7 +393,9 @@ function StepParticipants({
                                 <span className="font-bold mr-1">
                                     {capacityInfo.isOverloaded ? "Excedido!" : "Limite:"}
                                 </span>
-                                Max {capacityInfo.minSlots} vagas no streaming mais cheio.
+                                {capacityInfo.isOverloaded
+                                    ? `Sobrecarga em alguns streamings.`
+                                    : `Max ${capacityInfo.minSlots} vagas no streaming com menos disponibilidade.`}
                             </div>
                         </div>
                     )}
@@ -471,10 +488,34 @@ function StepSummary({
 }) {
     const { format } = useCurrency();
     const isOverloaded = overloadedStreamings.length > 0;
-    const totalSlots = selectedParticipants.reduce((sum, p) => sum + (p.quantidade || 1), 0);
+
+    // Bug P2 - Fixed safe total calculations
+    const totalSlots = useMemo(() => {
+        return selectedParticipants.reduce((sum, p) => sum + (p.quantidade || 0), 0);
+    }, [selectedParticipants]);
+
     const totalAssinaturas = configurations.size * totalSlots;
-    const totalUnitario = Array.from(configurations.values()).reduce((sum, c) => sum + parseFloat(c.valor || "0"), 0);
-    const totalGeral = totalUnitario * totalSlots;
+
+    const totalUnitario = useMemo(() => {
+        const total = Array.from(configurations.values()).reduce((sum, c) => {
+            const val = parseFloat(c.valor) || 0;
+            return sum.plus(new Prisma.Decimal(val));
+        }, new Prisma.Decimal(0));
+        return arredondarMoeda(total).toNumber();
+    }, [configurations]);
+
+    const totalGeral = useMemo(() => {
+        const total = new Prisma.Decimal(totalUnitario).mul(totalSlots);
+        return arredondarMoeda(total).toNumber();
+    }, [totalUnitario, totalSlots]);
+
+    const totalCobrancaGeral = useMemo(() => {
+        const total = Array.from(configurations.values()).reduce((sum, c) => {
+            const cycleTotal = calcularTotalCiclo(c.valor, c.frequencia as FrequenciaPagamento);
+            return sum.plus(cycleTotal.mul(totalSlots));
+        }, new Prisma.Decimal(0));
+        return arredondarMoeda(total).toNumber();
+    }, [configurations, totalSlots]);
 
     return (
         <div className="space-y-4">
@@ -600,29 +641,45 @@ function StepSummary({
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="font-bold text-sm text-gray-700">
-                                            {format(parseFloat(config.valor))}
+                                            {format(parseFloat(config.valor))}<span className="text-[10px] font-normal text-gray-400 ml-0.5">/mês</span>
                                         </p>
+                                        {config.frequencia !== 'mensal' && (
+                                            <p className="text-[10px] text-primary/70">
+                                                Cobrança: {format(calcularTotalCiclo(config.valor, config.frequencia as FrequenciaPagamento).toNumber())}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    <div className="mt-auto pt-4 border-t-2 border-gray-100 space-y-3 bg-gray-50/50 p-3 rounded-xl">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-500">Valor por Pessoa:</span>
+                    <div className="mt-auto pt-4 border-t-2 border-gray-100 space-y-2 bg-gray-50/50 p-3 rounded-xl">
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-500 font-medium">Custo Mensal p/ Pessoa:</span>
                             <span className="font-bold text-gray-700">
-                                {format(totalUnitario)}
+                                {format(totalUnitario)}<span className="font-normal text-gray-400 ml-0.5">/mês</span>
                             </span>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-bold text-gray-900">Total Geral:</span>
-                            <div className="text-right">
-                                <p className="text-xl font-bold text-primary">
-                                    {format(totalGeral)}
-                                </p>
+                        <div className="flex justify-between items-center text-xs border-b border-gray-200/50 pb-2 mb-1">
+                            <span className="text-gray-500 font-medium">Receita Mensal Estimada:</span>
+                            <span className="font-bold text-primary">
+                                {format(totalGeral)}<span className="font-normal text-primary/60 ml-0.5">/mês</span>
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1">
+                            <div className="space-y-0.5">
+                                <span className="font-bold text-gray-900 text-sm block">Total Próxima Cobrança:</span>
                                 <p className="text-[10px] text-gray-400 font-normal">
                                     {totalAssinaturas} novas assinaturas
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-lg font-black text-gray-900">
+                                    {format(totalCobrancaGeral)}
+                                </p>
+                                <p className="text-[9px] text-gray-400 leading-tight">
+                                    Soma dos ciclos iniciais
                                 </p>
                             </div>
                         </div>
@@ -633,7 +690,101 @@ function StepSummary({
     );
 }
 
+
+function CreationSummary({
+    isOpen,
+    onToggle,
+    selectedStreamingIds,
+    selectedStreamings,
+    configurations,
+    totalSlots,
+    selectedParticipanteIds,
+    participantes,
+    quantities
+}: {
+    isOpen: boolean;
+    onToggle: () => void;
+    selectedStreamingIds: Set<number>;
+    selectedStreamings: StreamingOption[];
+    configurations: Map<number, SelectedStreaming>;
+    totalSlots: number;
+    selectedParticipanteIds: Set<number>;
+    participantes: ParticipanteOption[];
+    quantities: Map<number, number>;
+}) {
+    const { format } = useCurrency();
+    if (selectedStreamingIds.size === 0) return null;
+
+    return (
+        <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/50 transition-all">
+            <button
+                onClick={onToggle}
+                className="w-full px-4 py-2 flex items-center justify-between text-xs font-bold text-gray-500 hover:bg-gray-100 transition-colors"
+            >
+                <div className="flex items-center gap-2">
+                    <Wallet size={14} className="text-primary" />
+                    <span>Veja o que está sendo criado</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        {configurations.size} streamings • {totalSlots} vagas
+                    </span>
+                    {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </div>
+            </button>
+
+            {isOpen && (
+                <div className="px-4 pb-3 pt-1 border-t border-gray-100 animate-in slide-in-from-top-1 duration-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                        <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Streamings</p>
+                            {selectedStreamings.map(s => {
+                                const config = configurations.get(s.id);
+                                const val = parseFloat(config?.valor || "0");
+                                const mult = INTERVALOS_MESES[config?.frequencia as FrequenciaPagamento] || 1;
+                                return (
+                                    <div key={s.id} className="flex items-center justify-between text-[11px] border-b border-gray-100/50 pb-1 last:border-0 last:pb-0">
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-700 font-medium truncate max-w-[150px]">{s.nome}</span>
+                                            <span className="text-[9px] text-gray-400 uppercase tracking-tight">{config?.frequencia}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-gray-600 block">{format(val)}/mês</span>
+                                            {mult > 1 && (
+                                                <span className="text-[9px] text-primary/60 block">
+                                                    Cobrança: {format(calcularTotalCiclo(val, config?.frequencia as FrequenciaPagamento).toNumber())}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1">Participantes</p>
+                            <div className="flex flex-wrap gap-1">
+                                {Array.from(selectedParticipanteIds).slice(0, 5).map(id => (
+                                    <span key={id} className="bg-white border border-gray-200 px-1.5 py-0.5 rounded text-[10px] text-gray-600">
+                                        {participantes.find(p => p.id === id)?.nome.split(' ')[0]}
+                                        {(quantities.get(id) || 1) > 1 && ` (x${quantities.get(id)})`}
+                                    </span>
+                                ))}
+                                {selectedParticipanteIds.size > 5 && (
+                                    <span className="text-[10px] text-gray-400 self-center">
+                                        + {selectedParticipanteIds.size - 5} outros
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // --- Main Component ---
+
 
 export function AssinaturaMultiplaModal({
     isOpen,
@@ -652,6 +803,7 @@ export function AssinaturaMultiplaModal({
     const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
     const [searchTerm, setSearchTerm] = useState("");
     const [participanteSearchTerm, setParticipanteSearchTerm] = useState("");
+    const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
     // --- Actions ---
 
@@ -705,12 +857,10 @@ export function AssinaturaMultiplaModal({
         });
 
         // Check if new quantity exceeds limit for ANY selected streaming
-        // We need to check against the TIGHTEST constraint among selected streamings
+        // We need to check against the TIGHTEST constraint among selected streamings (Bug P3 - Fixed)
         const minAvailable = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
 
-        if (totalUsed + newQty <= minAvailable + 50) { // Allow going over (validation is done elsewhere), but maybe cap reasonably? 
-            // Actually, the requirement says "Validação: A soma das assinaturas informadas não pode ultrapassar o limiteMaximo de vagas do grupo."
-            // Let's rely on the global validation `isOverloaded` for blocking next step, but here we update state.
+        if (totalUsed + newQty <= minAvailable) {
             const newQuantities = new Map(quantities);
             newQuantities.set(id, newQty);
             setQuantities(newQuantities);
@@ -718,9 +868,6 @@ export function AssinaturaMultiplaModal({
     };
 
     const handleSelectAllParticipantes = () => {
-        // We need to know current filtered list to toggle correctly
-        // But since this is inside the main component, we should probably check against filteredParticipantes
-        // Re-calculating filtering here for logic correctness
         const filtered = !participanteSearchTerm
             ? participantes
             : participantes.filter(p => p.nome.toLowerCase().includes(participanteSearchTerm.toLowerCase()) || p.whatsappNumero.includes(participanteSearchTerm));
@@ -729,15 +876,22 @@ export function AssinaturaMultiplaModal({
             setSelectedParticipanteIds(new Set());
             setQuantities(new Map());
         } else {
+            // Respect capacity limit when selecting all (Bug P5 - Fixed)
+            const minAvailable = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
+
             const newSet = new Set(selectedParticipanteIds);
             const newQuantities = new Map(quantities);
 
+            let currentTotal = Array.from(newQuantities.values()).reduce((a, b) => a + b, 0);
+
             filtered.forEach(p => {
-                newSet.add(p.id);
-                if (!newQuantities.has(p.id)) {
+                if (!newSet.has(p.id) && currentTotal < minAvailable) {
+                    newSet.add(p.id);
                     newQuantities.set(p.id, 1);
+                    currentTotal++;
                 }
             });
+
             setSelectedParticipanteIds(newSet);
             setQuantities(newQuantities);
         }
@@ -771,18 +925,19 @@ export function AssinaturaMultiplaModal({
 
     // --- Computed ---
 
+    const totalSlots = useTotalSlots(quantities);
+
     const selectedStreamings = useMemo(() => Array.from(selectedStreamingIds)
         .map(id => streamings.find(s => s.id === id))
         .filter(Boolean) as StreamingOption[], [selectedStreamingIds, streamings]);
 
-    // Calculate overloaded streamings
+    // Calculate overloaded streamings (Bug P4 - Fixed dependencies)
     const overloadedStreamings = useMemo(() => {
-        const totalSlotsNeeded = Array.from(quantities.values()).reduce((a, b) => a + b, 0);
         return selectedStreamings.filter(s => {
             const available = s.limiteParticipantes - s.ocupados;
-            return totalSlotsNeeded > available;
+            return totalSlots > available;
         });
-    }, [selectedStreamings, quantities, streamings]);
+    }, [selectedStreamings, totalSlots]);
 
     const isOverloaded = overloadedStreamings.length > 0;
 
@@ -801,7 +956,7 @@ export function AssinaturaMultiplaModal({
         switch (step) {
             case ModalStep.STREAMING: return selectedStreamingIds.size > 0;
             case ModalStep.VALUES: return true;
-            case ModalStep.PARTICIPANTS: return selectedParticipanteIds.size > 0 && !isOverloaded;
+            case ModalStep.PARTICIPANTS: return totalSlots > 0 && !isOverloaded; // Bug P6 - Fixed
             default: return false;
         }
     };
@@ -841,56 +996,70 @@ export function AssinaturaMultiplaModal({
 
     // Footer Render
     const renderFooter = () => (
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-6 sm:gap-0">
-            {/* Step Indicators - Always visible, top on mobile, left on desktop */}
-            <div className="flex gap-2 mb-2 sm:mb-0">
-                {[1, 2, 3, 4].map(s => (
-                    <div
-                        key={s}
-                        className={`h-2 w-12 rounded-full transition-all ${s <= step ? 'bg-primary' : 'bg-gray-200'}`}
-                    />
-                ))}
-            </div>
+        <div className="w-full space-y-4">
+            <CreationSummary
+                isOpen={isSummaryOpen}
+                onToggle={() => setIsSummaryOpen(!isSummaryOpen)}
+                selectedStreamingIds={selectedStreamingIds}
+                selectedStreamings={selectedStreamings}
+                configurations={configurations}
+                totalSlots={totalSlots}
+                selectedParticipanteIds={selectedParticipanteIds}
+                participantes={participantes}
+                quantities={quantities}
+            />
 
-            {/* Action Buttons Container */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
-                {step > ModalStep.STREAMING && (
-                    <button
-                        onClick={handleBack}
-                        className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                        disabled={loading}
-                    >
-                        <ChevronLeft size={18} />
-                        <span>Voltar</span>
-                    </button>
-                )}
-                {step < ModalStep.SUMMARY ? (
-                    <button
-                        onClick={handleNext}
-                        disabled={!canNext()}
-                        className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        Próximo
-                    </button>
-                ) : (
-                    <button
-                        onClick={handleSubmit}
-                        disabled={selectedParticipanteIds.size === 0 || loading || isOverloaded}
-                        className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {loading ? (
-                            <>
-                                <Spinner size="sm" color="white" />
-                                Criando...
-                            </>
-                        ) : (
-                            <>
-                                <Check size={18} />
-                                Confirmar ( {configurations.size * selectedParticipanteIds.size} )
-                            </>
-                        )}
-                    </button>
-                )}
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-6 sm:gap-0">
+                {/* Step Indicators - Always visible, top on mobile, left on desktop */}
+                <div className="flex gap-2 mb-2 sm:mb-0">
+                    {[1, 2, 3, 4].map(s => (
+                        <div
+                            key={s}
+                            className={`h-2 w-12 rounded-full transition-all ${s <= step ? 'bg-primary' : 'bg-gray-200'}`}
+                        />
+                    ))}
+                </div>
+
+                {/* Action Buttons Container */}
+                <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
+                    {step > ModalStep.STREAMING && (
+                        <button
+                            onClick={handleBack}
+                            className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                            disabled={loading}
+                        >
+                            <ChevronLeft size={18} />
+                            <span>Voltar</span>
+                        </button>
+                    )}
+                    {step < ModalStep.SUMMARY ? (
+                        <button
+                            onClick={handleNext}
+                            disabled={!canNext()}
+                            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            Próximo
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={selectedParticipanteIds.size === 0 || loading || isOverloaded}
+                            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <Spinner size="sm" color="white" />
+                                    Criando...
+                                </>
+                            ) : (
+                                <>
+                                    <Check size={18} />
+                                    Confirmar Assinaturas
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

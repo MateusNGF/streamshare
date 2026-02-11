@@ -181,12 +181,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
         // 2. Create Subscriptions
         for (const participanteId of data.participanteIds) {
             for (const ass of data.assinaturas) {
-                // Check existing
-                const existing = await tx.assinatura.findFirst({
-                    where: { participanteId, streamingId: ass.streamingId, NOT: { status: 'cancelada' } }
-                });
-                if (existing) continue;
-
+                // Removed findFirst check to allow multiple subscriptions for same participant/streaming pairing (e.g. Marina x2)
                 const assinatura = await tx.assinatura.create({
                     data: {
                         participanteId,
@@ -229,12 +224,15 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                 tipo: "assinatura_criada",
                 titulo: `Assinaturas criadas em lote`,
                 descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
-                lida: false
+                lida: false,
+                metadata: {
+                    assinaturasIds: results.map((a) => a.assinaturaId),
+                    participantesIds: data.participanteIds,
+                }
             }
         });
     });
 
-    // Removal of post-transaction charge generation (D-08)
     revalidateAllPaths();
     return { created: results.length, assinaturas: results };
 }
