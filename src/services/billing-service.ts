@@ -38,7 +38,16 @@ export const billingService = {
         const assinaturasParaSuspender: number[] = [];
         const agora = new Date();
 
-        // 1. Evaluate each subscription
+        // 1. Mark pending charges with periodoFim < agora as "atrasado"
+        await prisma.cobranca.updateMany({
+            where: {
+                status: "pendente",
+                periodoFim: { lt: agora }
+            },
+            data: { status: "atrasado" }
+        });
+
+        // 2. Evaluate each subscription
         for (const assinatura of assinaturasTyped) {
             const decision = evaluateSubscriptionRenewal(assinatura, agora);
 
@@ -76,9 +85,9 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
     }
 
     // --- Inadimplência Check (Anti-Dívida Infinita) ---
-    // Se houver cobranças pendentes já vencidas (passou do periodoFim)
+    // Se houver cobranças pendentes ou atrasadas já vencidas (passou do periodoFim)
     const cobrancasVencidas = assinatura.cobrancas.filter(c =>
-        c.status === "pendente" && isBefore(c.periodoFim, agora)
+        (c.status === "pendente" || c.status === "atrasado") && isBefore(c.periodoFim, agora)
     );
 
     if (cobrancasVencidas.length > 0) {

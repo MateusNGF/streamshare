@@ -8,8 +8,8 @@ import { billingService } from "@/services/billing-service";
  * Unlike the manual action, this runs for ALL accounts in the system.
  */
 export function startSubscriptionRenewalCron() {
-    // Schedule: Weekly (Monday) at 8:00 AM
-    cron.schedule('0 8 * * 1', async () => {
+    // Schedule: Daily at 8:00 AM
+    cron.schedule('0 4 * * *', async () => {
         console.log('[CRON] Iniciando renovação automática de assinaturas...');
         try {
             const result = await billingService.processarRenovacoes();
@@ -23,5 +23,5 @@ export function startSubscriptionRenewalCron() {
         }
     });
 
-    console.log('✅ Subscription renewal cron job initialized (runs weekly on Mondays at 8:00 AM)');
+    console.log('✅ Subscription renewal cron job initialized (runs weekly on Mondays at 4:00 AM)');
 }

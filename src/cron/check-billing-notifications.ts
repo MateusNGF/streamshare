@@ -10,8 +10,8 @@ import type { CurrencyCode } from "@/types/currency.types";
  * Executa semanalmente (segundas-feiras) às 9h da manhã
  */
 export function startBillingNotificationCron() {
-    // Executar semanalmente (segunda-feira) às 9h
-    cron.schedule('0 9 * * 1', async () => {
+    // Executar diariamente às 9h
+    cron.schedule('0 4 * * *', async () => {
         console.log('[CRON] Iniciando verificação de cobranças...');
         try {
             await checkAndNotifyPendingBillings();
@@ -22,7 +22,7 @@ export function startBillingNotificationCron() {
         }
     });
 
-    console.log('✅ Billing notification cron job initialized (runs weekly on Mondays at 9:00 AM)');
+    console.log('✅ Billing notification cron job initialized (runs daily at 4:00 AM)');
 }
 
 /**
