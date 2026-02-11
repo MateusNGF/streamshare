@@ -279,6 +279,7 @@ model Cobranca {
 
   assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
 
+  @@unique([assinaturaId, periodoInicio])
   @@map("cobranca")
 }
 
