@@ -250,7 +250,6 @@ model Assinatura {
   status                 StatusAssinatura    @default(ativa)
   dataInicio             DateTime
   valor                  Decimal
-  diasAtraso             Int                 @default(0)
   dataSuspensao          DateTime?
   motivoSuspensao        String?
   dataCancelamento       DateTime?

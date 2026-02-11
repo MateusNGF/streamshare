@@ -23,20 +23,39 @@ export async function getPaymentsData() {
                     },
                 },
             },
+            cobrancas: {
+                orderBy: { periodoFim: "desc" }
+            }
         },
         orderBy: { dataInicio: "asc" },
     });
 
+    const agora = new Date();
+
     // Calculate billing stats
     const totalToReceive = assinaturas.reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
+
+    // received: subscriptions where the latest charge is paid and covers 'today'
     const received = assinaturas
-        .filter((sub) => sub.status === "ativa" && sub.diasAtraso === 0)
-        .reduce((sum, sub) => sum + sub.valor.toNumber(), 0); // Simplified: assuming active/no delay means paid for this month
-    const pending = assinaturas
-        .filter((sub) => sub.status === "ativa" && sub.diasAtraso === 0) // Placeholder logic for pending
+        .filter((sub) =>
+            sub.status === "ativa" &&
+            sub.cobrancas.some(c => c.status === "pago" && c.periodoInicio <= agora && c.periodoFim >= agora)
+        )
         .reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
+
+    // pending: active subscriptions with a pending charge that hasn't expired yet
+    const pending = assinaturas
+        .filter((sub) =>
+            sub.status === "ativa" &&
+            sub.cobrancas.some(c => c.status === "pendente" && c.periodoFim >= agora)
+        )
+        .reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
+
+    // overdue: any subscription with at least one pending or overdue charge past its due date
     const overdue = assinaturas
-        .filter((sub) => sub.diasAtraso > 0)
+        .filter((sub) =>
+            sub.cobrancas.some(c => (c.status === "pendente" || c.status === "atrasado") && c.periodoFim < agora)
+        )
         .reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
 
     return {

@@ -82,7 +82,6 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 valor: data.valor,
                 dataInicio: dataInicio,
                 status: StatusAssinatura.ativa,
-                diasAtraso: 0,
                 cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
             },
         });
@@ -186,7 +185,6 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                         valor: ass.valor,
                         dataInicio,
                         status: 'ativa',
-                        diasAtraso: 0,
                         cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
                     }
                 });

@@ -50,15 +50,21 @@ export async function getDashboardStats() {
 
     const occupationRate = totalSlots > 0 ? (occupiedSlots / totalSlots) * 100 : 0;
 
-    // 4. Inadimplência (Percentage of subscriptions with diasAtraso > 0)
+    // 4. Inadimplência (Percentage of subscriptions with overdue charges)
     const totalAssinaturas = await prisma.assinatura.count({
         where: { streaming: { contaId } },
     });
 
+    const agora = new Date();
     const overdueAssinaturas = await prisma.assinatura.count({
         where: {
             streaming: { contaId },
-            diasAtraso: { gt: 0 },
+            cobrancas: {
+                some: {
+                    status: { in: ["pendente", "atrasado"] },
+                    periodoFim: { lt: agora }
+                }
+            }
         },
     });
 
