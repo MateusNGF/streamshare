@@ -16,6 +16,7 @@ import { formatCurrency } from "@/lib/formatCurrency";
 import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from "@/lib/financeiro-utils";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { useBillingCalculations } from "@/hooks/useBillingCalculations";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface AssinaturaModalProps {
     isOpen: boolean;
@@ -170,13 +171,12 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                                     return (
                                         <SelectItem key={s.id} value={s.id.toString()} disabled={available <= 0}>
                                             <div className="flex items-center gap-2">
-                                                {s.catalogo.iconeUrl && (
-                                                    <img
-                                                        src={s.catalogo.iconeUrl}
-                                                        alt={s.catalogo.nome}
-                                                        className="w-5 h-5 object-contain"
-                                                    />
-                                                )}
+                                                <StreamingLogo
+                                                    name={s.catalogo.nome}
+                                                    iconeUrl={s.catalogo.iconeUrl}
+                                                    size="xs"
+                                                    rounded="md"
+                                                />
                                                 {s.apelido || s.catalogo.nome}
                                                 <span className="text-xs text-muted-foreground">
                                                     ({available} vagas)

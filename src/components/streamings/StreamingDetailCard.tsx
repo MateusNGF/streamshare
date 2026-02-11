@@ -1,5 +1,6 @@
 import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface StreamingDetailCardProps {
     id: number;
@@ -36,16 +37,14 @@ export function StreamingDetailCard({
         <div className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all group">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                    <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg"
-                        style={{ backgroundColor: color }}
-                    >
-                        {iconeUrl ? (
-                            <img src={iconeUrl} alt={name} className="w-10 h-10 object-contain brightness-0 invert" />
-                        ) : (
-                            initial
-                        )}
-                    </div>
+                    <StreamingLogo
+                        name={name}
+                        color={color}
+                        iconeUrl={iconeUrl}
+                        size="lg"
+                        rounded="2xl"
+                        className="w-14 h-14 text-2xl shadow-lg"
+                    />
                     <div>
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-gray-900 text-base md:text-lg">{name}</h3>

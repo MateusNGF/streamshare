@@ -17,6 +17,7 @@ import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaM
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -201,17 +202,12 @@ export default function AssinaturasClient({
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    {sub.streaming.catalogo.iconeUrl ? (
-                                                        <img
-                                                            src={sub.streaming.catalogo.iconeUrl}
-                                                            alt=""
-                                                            className="w-6 h-6 object-contain rounded-md bg-white p-0.5"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-xs">
-                                                            {sub.streaming.catalogo.nome[0]}
-                                                        </div>
-                                                    )}
+                                                    <StreamingLogo
+                                                        name={sub.streaming.catalogo.nome}
+                                                        iconeUrl={sub.streaming.catalogo.iconeUrl}
+                                                        size="xs"
+                                                        rounded="md"
+                                                    />
                                                     <span>{sub.streaming.apelido || sub.streaming.catalogo.nome}</span>
                                                 </div>
                                             </TableCell>

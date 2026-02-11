@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Calendar, User, Info, AlertTriangle, Clock } from "lucide-react";
 import { SubscriptionWithCharges } from "@/types/subscription.types";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface DetalhesAssinaturaModalProps {
     isOpen: boolean;
@@ -49,22 +50,12 @@ export function DetalhesAssinaturaModal({
                 {/* Header Info */}
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                        <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
-                            style={{ backgroundColor: assinatura.streaming.catalogo.corPrimaria || '#6d28d9' }}
-                        >
-                            {assinatura.streaming.catalogo.iconeUrl ? (
-                                <img
-                                    src={assinatura.streaming.catalogo.iconeUrl}
-                                    alt=""
-                                    className="w-8 h-8 object-contain p-1"
-                                />
-                            ) : (
-                                <span className="text-lg font-bold">
-                                    {assinatura.streaming.catalogo.nome[0]}
-                                </span>
-                            )}
-                        </div>
+                        <StreamingLogo
+                            name={assinatura.streaming.catalogo.nome}
+                            color={assinatura.streaming.catalogo.corPrimaria || '#6d28d9'}
+                            iconeUrl={assinatura.streaming.catalogo.iconeUrl}
+                            size="lg"
+                        />
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 leading-tight">
                                 {assinatura.streaming.apelido || assinatura.streaming.catalogo.nome}

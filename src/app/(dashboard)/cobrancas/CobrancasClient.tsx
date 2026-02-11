@@ -14,6 +14,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useRouter } from "next/navigation";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal";
 import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
@@ -278,20 +279,13 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
-                                                    style={{ backgroundColor: cobranca.assinatura.streaming.catalogo.corPrimaria || '#6d28d9' }}
-                                                >
-                                                    {cobranca.assinatura.streaming.catalogo.iconeUrl ? (
-                                                        <img
-                                                            src={cobranca.assinatura.streaming.catalogo.iconeUrl}
-                                                            alt=""
-                                                            className="w-full h-full object-contain p-1"
-                                                        />
-                                                    ) : (
-                                                        (cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome).substring(0, 2).toUpperCase()
-                                                    )}
-                                                </div>
+                                                <StreamingLogo
+                                                    name={cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                                                    color={cobranca.assinatura.streaming.catalogo.corPrimaria || '#6d28d9'}
+                                                    iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
+                                                    size="sm"
+                                                    rounded="lg"
+                                                />
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-medium text-gray-900">
                                                         {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}

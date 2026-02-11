@@ -13,6 +13,7 @@ import { StreamingSchema } from "@/lib/schemas";
 import { ZodIssue } from "zod";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getNextStreamingNumber } from "@/actions/streamings";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface StreamingModalProps {
     isOpen: boolean;
@@ -229,16 +230,12 @@ export function StreamingModal({
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                         {selectedCatalogo && (
                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-6">
-                                <div
-                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-sm"
-                                    style={{ backgroundColor: selectedCatalogo.corPrimaria }}
-                                >
-                                    {selectedCatalogo.iconeUrl ? (
-                                        <img src={selectedCatalogo.iconeUrl} alt={selectedCatalogo.nome} className="w-8 h-8 object-contain brightness-0 invert" />
-                                    ) : (
-                                        selectedCatalogo.nome.charAt(0).toUpperCase()
-                                    )}
-                                </div>
+                                <StreamingLogo
+                                    name={selectedCatalogo.nome}
+                                    color={selectedCatalogo.corPrimaria}
+                                    iconeUrl={selectedCatalogo.iconeUrl}
+                                    size="lg"
+                                />
                                 <div>
                                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Serviço Selecionado</p>
                                     <p className="text-gray-900 font-bold">{selectedCatalogo.nome}</p>

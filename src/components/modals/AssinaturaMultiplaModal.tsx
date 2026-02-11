@@ -12,6 +12,7 @@ import { Check, ChevronLeft, Search, Users, X, Calendar, Wallet, Plus, Minus, Ch
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { useBillingCalculations } from "@/hooks/useBillingCalculations";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 // --- Types ---
 
@@ -137,20 +138,13 @@ function StepStreamings({
                                     <Check size={14} className="text-white" />
                                 </div>
                             )}
-                            <div
-                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold mb-2 overflow-hidden shadow-sm"
-                                style={{ backgroundColor: streaming.cor }}
-                            >
-                                {streaming.iconeUrl ? (
-                                    <img
-                                        src={streaming.iconeUrl}
-                                        alt={streaming.nome}
-                                        className="w-8 h-8 object-contain brightness-0 invert"
-                                    />
-                                ) : (
-                                    streaming.nome.charAt(0)
-                                )}
-                            </div>
+                            <StreamingLogo
+                                name={streaming.nome}
+                                color={streaming.cor}
+                                iconeUrl={streaming.iconeUrl}
+                                size="lg"
+                                className="shadow-sm"
+                            />
                             <h4 className="font-bold text-gray-900 text-sm mb-1">{streaming.nome}</h4>
                             <p className="text-xs text-gray-500">
                                 {streaming.ocupados}/{streaming.limiteParticipantes} vagas
@@ -222,20 +216,12 @@ function StreamingConfigItem({
     return (
         <div className="border-2 border-gray-200 rounded-2xl p-4">
             <div className="flex items-center gap-3 mb-4">
-                <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold overflow-hidden shadow-sm"
-                    style={{ backgroundColor: streaming.cor }}
-                >
-                    {streaming.iconeUrl ? (
-                        <img
-                            src={streaming.iconeUrl}
-                            alt={streaming.nome}
-                            className="w-6 h-6 object-contain brightness-0 invert"
-                        />
-                    ) : (
-                        streaming.nome.charAt(0)
-                    )}
-                </div>
+                <StreamingLogo
+                    name={streaming.nome}
+                    color={streaming.cor}
+                    iconeUrl={streaming.iconeUrl}
+                    size="md"
+                />
                 <div className="flex-1">
                     <h4 className="font-bold text-gray-900">
                         {streaming.apelido || streaming.nome}
@@ -624,12 +610,12 @@ function StepSummary({
                             return (
                                 <div key={streaming.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                                     <div className="flex items-center gap-2 overflow-hidden">
-                                        <div
-                                            className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
-                                            style={{ backgroundColor: streaming.cor }}
-                                        >
-                                            {streaming.nome.charAt(0)}
-                                        </div>
+                                        <StreamingLogo
+                                            name={streaming.nome}
+                                            color={streaming.cor}
+                                            size="xs"
+                                            rounded="md"
+                                        />
                                         <div className="truncate">
                                             <p className="font-medium text-sm text-gray-900 truncate">
                                                 {streaming.nome}

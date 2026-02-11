@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface CancelarAssinaturaModalProps {
     isOpen: boolean;
@@ -96,13 +97,12 @@ export function CancelarAssinaturaModal({
                     <div>
                         <label className="text-sm font-medium text-gray-500">Streaming</label>
                         <div className="mt-1 flex items-center gap-2">
-                            {assinatura.streaming.catalogo.iconeUrl && (
-                                <img
-                                    src={assinatura.streaming.catalogo.iconeUrl}
-                                    alt=""
-                                    className="w-6 h-6 object-contain rounded-md bg-white p-0.5"
-                                />
-                            )}
+                            <StreamingLogo
+                                name={assinatura.streaming.catalogo.nome}
+                                iconeUrl={assinatura.streaming.catalogo.iconeUrl}
+                                size="xs"
+                                rounded="md"
+                            />
                             <p className="text-base font-medium text-gray-900">
                                 {assinatura.streaming.apelido || assinatura.streaming.catalogo.nome}
                             </p>

@@ -8,6 +8,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { createCatalogoItem, updateCatalogoItem, deleteCatalogoItem } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface CatalogoItem {
     id: number;
@@ -122,16 +123,14 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                         className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col group"
                     >
                         <div className="flex items-start justify-between mb-4">
-                            <div
-                                className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold overflow-hidden shadow-inner"
-                                style={{ backgroundColor: item.corPrimaria }}
-                            >
-                                {item.iconeUrl ? (
-                                    <img src={item.iconeUrl} alt={item.nome} className="w-10 h-10 object-contain brightness-0 invert" />
-                                ) : (
-                                    item.nome.charAt(0).toUpperCase()
-                                )}
-                            </div>
+                            <StreamingLogo
+                                name={item.nome}
+                                color={item.corPrimaria}
+                                iconeUrl={item.iconeUrl}
+                                size="lg"
+                                rounded="2xl"
+                                className="w-16 h-16 text-2xl shadow-inner"
+                            />
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => {
@@ -227,16 +226,14 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                         </div>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center">
-                        <div
-                            className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg"
-                            style={{ backgroundColor: formData.corPrimaria }}
-                        >
-                            {formData.iconeUrl ? (
-                                <img src={formData.iconeUrl} alt="Preview" className="w-12 h-12 object-contain brightness-0 invert" />
-                            ) : (
-                                formData.nome ? formData.nome.charAt(0).toUpperCase() : "?"
-                            )}
-                        </div>
+                        <StreamingLogo
+                            name={formData.nome || "?"}
+                            color={formData.corPrimaria}
+                            iconeUrl={formData.iconeUrl || null}
+                            size="lg"
+                            rounded="2xl"
+                            className="w-20 h-20 text-3xl shadow-lg"
+                        />
                     </div>
                 </form>
             </Modal>

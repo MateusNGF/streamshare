@@ -9,6 +9,7 @@ import { createGrupo, updateGrupo, getStreamingsParaGrupo, getGrupoById } from "
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/hooks/useCurrency";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 type Streaming = {
     id: number;
@@ -213,20 +214,13 @@ export function GrupoFormModal({
                                                 : "border-gray-100 hover:border-gray-200"
                                         )}
                                     >
-                                        <div
-                                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden shadow-sm"
-                                            style={{ backgroundColor: streaming.catalogo.corPrimaria }}
-                                        >
-                                            {streaming.catalogo.iconeUrl ? (
-                                                <img
-                                                    src={streaming.catalogo.iconeUrl}
-                                                    alt={streaming.catalogo.nome}
-                                                    className="w-6 h-6 object-contain brightness-0 invert"
-                                                />
-                                            ) : (
-                                                streaming.catalogo.nome.charAt(0).toUpperCase()
-                                            )}
-                                        </div>
+                                        <StreamingLogo
+                                            name={streaming.catalogo.nome}
+                                            color={streaming.catalogo.corPrimaria}
+                                            iconeUrl={streaming.catalogo.iconeUrl}
+                                            size="md"
+                                            rounded="lg"
+                                        />
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium text-gray-900 text-sm truncate">
                                                 {streaming.apelido || streaming.catalogo.nome}

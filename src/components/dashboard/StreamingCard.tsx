@@ -2,6 +2,7 @@
 
 import { MoreVertical } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface StreamingCardProps {
     name: string;
@@ -19,16 +20,14 @@ export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: 
     return (
         <div className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
             <div className="flex items-center gap-4">
-                <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg"
-                    style={{ backgroundColor: color }}
-                >
-                    {iconeUrl ? (
-                        <img src={iconeUrl} alt={name} className="w-8 h-8 object-contain brightness-0 invert" />
-                    ) : (
-                        initial
-                    )}
-                </div>
+                <StreamingLogo
+                    name={name}
+                    color={color}
+                    iconeUrl={iconeUrl}
+                    size="lg"
+                    rounded="2xl"
+                    className="shadow-lg"
+                />
                 <div>
                     <h4 className="font-semibold text-gray-900">{name}</h4>
                     <p className="text-sm text-gray-500">{slots.occupied}/{slots.total} vagas • {format(value)}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface CatalogoItem {
     id: number;
@@ -34,16 +35,13 @@ export function CatalogoPicker({ items, value, onChange, disabled }: CatalogoPic
                             disabled && "opacity-50 cursor-not-allowed"
                         )}
                     >
-                        <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-md"
-                            style={{ backgroundColor: item.corPrimaria }}
-                        >
-                            {item.iconeUrl ? (
-                                <img src={item.iconeUrl} alt={item.nome} className="w-8 h-8 object-contain brightness-0 invert" />
-                            ) : (
-                                item.nome.charAt(0).toUpperCase()
-                            )}
-                        </div>
+                        <StreamingLogo
+                            name={item.nome}
+                            color={item.corPrimaria}
+                            iconeUrl={item.iconeUrl}
+                            size="lg"
+                            className="shadow-md"
+                        />
                         <span className={cn(
                             "text-xs font-bold truncate w-full text-center",
                             isActive ? "text-primary" : "text-gray-600"
