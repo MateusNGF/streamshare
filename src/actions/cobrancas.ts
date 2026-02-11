@@ -145,7 +145,38 @@ export async function confirmarPagamento(
             }
         });
 
-        // Create notification inside transaction
+        const agora = new Date();
+        const assinatura = result.assinatura;
+
+        // Check for reactivation (D-07)
+        // Criteria: Suspended AND charge covers the current date
+        const isSuspended = assinatura.status === "suspensa";
+        const coversCurrentDate = agora >= result.periodoInicio && agora <= result.periodoFim;
+
+        if (isSuspended && coversCurrentDate) {
+            await tx.assinatura.update({
+                where: { id: assinatura.id },
+                data: {
+                    status: "ativa",
+                    dataSuspensao: null,
+                    motivoSuspensao: null
+                }
+            });
+
+            // Re-activation notification
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: userId,
+                    tipo: "assinatura_editada",
+                    titulo: "Assinatura Reativada",
+                    descricao: `A assinatura de ${assinatura.participante.nome} foi reativada automaticamente após o pagamento da cobrança atual.`,
+                    entidadeId: assinatura.id,
+                }
+            });
+        }
+
+        // Create notification inside transaction for the payment itself
         await tx.notificacao.create({
             data: {
                 contaId,
