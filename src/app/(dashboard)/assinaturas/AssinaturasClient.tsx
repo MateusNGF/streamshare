@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Plus, Search, Eye, XCircle, Trash } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { AssinaturaCard } from "@/components/assinaturas/AssinaturaCard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -178,88 +178,42 @@ export default function AssinaturasClient({
                         }}
                     />
 
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Participante</TableHead>
-                                    <TableHead>Streaming</TableHead>
-                                    <TableHead>Valor</TableHead>
-                                    <TableHead>Frequência</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {initialSubscriptions.length > 0 ? (
-                                    initialSubscriptions.map((sub) => (
-                                        <TableRow key={sub.id}>
-                                            <TableCell className="font-medium">
-                                                <div className="flex flex-col">
-                                                    <span>{sub.participante.nome}</span>
-                                                    <span className="text-xs text-muted-foreground">{sub.participante.whatsappNumero}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <StreamingLogo
-                                                        name={sub.streaming.catalogo.nome}
-                                                        iconeUrl={sub.streaming.catalogo.iconeUrl}
-                                                        size="xs"
-                                                        rounded="md"
-                                                    />
-                                                    <span>{sub.streaming.apelido || sub.streaming.catalogo.nome}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{format(Number(sub.valor))}</TableCell>
-                                            <TableCell className="capitalize">{sub.frequencia}</TableCell>
-                                            <TableCell>
-                                                <StatusBadge
-                                                    status={sub.status}
-                                                    dataCancelamento={sub.dataCancelamento}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Dropdown
-                                                    options={[
-                                                        {
-                                                            label: "Detalhes",
-                                                            icon: <Eye size={16} />,
-                                                            onClick: () => {
-                                                                setSelectedAssinatura(sub);
-                                                                setDetailsModalOpen(true);
-                                                            }
-                                                        },
-                                                        ...(sub.status !== "cancelada" ? [
-                                                            {
-                                                                label: "Cancelar",
-                                                                icon: <Trash size={16} />,
-                                                                onClick: () => {
-                                                                    setSelectedAssinatura(sub);
-                                                                    setCancelModalOpen(true);
-                                                                },
-                                                                variant: "danger" as const
-                                                            }
-                                                        ] : [])
-                                                    ]}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={6}>
-                                            <EmptyState
-                                                title="Nenhuma assinatura encontrada"
-                                                description="Não encontramos nenhuma assinatura com os filtros selecionados."
-                                                icon={Search}
-                                                className="border-0 shadow-none py-8 my-4"
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                    <div className="flex flex-col gap-3">
+                        {/* Header da Lista - Desktop Only */}
+                        <div className="hidden lg:flex items-center gap-4 px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 bg-gray-50/30 rounded-t-lg">
+                            <div className="min-w-[240px]">Participante / WhatsApp</div>
+                            <div className="min-w-[120px]">Serviço</div>
+                            <div className="min-w-[120px]">Criada em</div>
+                            <div className="flex-1">Custo Mensal / Ciclo</div>
+                            <div className="min-w-[100px]">Status</div>
+                            <div className="ml-auto w-12 text-right px-2">Ações</div>
+                        </div>
+
+                        {initialSubscriptions.length > 0 ? (
+                            initialSubscriptions.map((sub) => (
+                                <AssinaturaCard
+                                    key={sub.id}
+                                    sub={sub}
+                                    onViewDetails={() => {
+                                        setSelectedAssinatura(sub);
+                                        setDetailsModalOpen(true);
+                                    }}
+                                    onCancel={() => {
+                                        setSelectedAssinatura(sub);
+                                        setCancelModalOpen(true);
+                                    }}
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-full">
+                                <EmptyState
+                                    title="Nenhuma assinatura encontrada"
+                                    description="Não encontramos nenhuma assinatura com os filtros selecionados."
+                                    icon={Search}
+                                    className="border-0 shadow-none py-12"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

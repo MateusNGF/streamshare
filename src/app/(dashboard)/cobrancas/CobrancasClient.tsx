@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { confirmarPagamento, enviarNotificacaoCobranca, cancelarCobranca } from "@/actions/cobrancas";
 import { useToast } from "@/hooks/useToast";
 import { useCurrency } from "@/hooks/useCurrency";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useRouter } from "next/navigation";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
@@ -244,84 +244,36 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
             </div>
 
             {/* Charges Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex flex-col gap-3">
                 {filteredCobrancas.length === 0 ? (
-                    <EmptyState
-                        icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
-                        title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Nenhuma cobrança registrada"}
-                        description={
-                            searchTerm || statusFilter !== 'all'
-                                ? "Não encontramos nenhuma cobrança com os filtros selecionados."
-                                : "Crie assinaturas para participantes e as cobranças serão geradas automaticamente."
-                        }
-                    />
-                ) : (
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Participante</TableHead>
-                                    <TableHead>Streaming</TableHead>
-                                    <TableHead>Datas</TableHead>
-                                    <TableHead>Valor</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredCobrancas.map((cobranca: any) => (
-                                    <TableRow key={cobranca.id}>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="font-semibold text-gray-900">{cobranca.assinatura.participante.nome}</span>
-                                                <span className="text-xs text-gray-500">{cobranca.assinatura.participante.whatsappNumero}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <StreamingLogo
-                                                    name={cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                                                    color={cobranca.assinatura.streaming.catalogo.corPrimaria || '#6d28d9'}
-                                                    iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
-                                                    size="sm"
-                                                    rounded="lg"
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-gray-900">
-                                                        {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                                                    </span>
-                                                    {cobranca.assinatura.streaming.catalogo.nome !== (cobranca.assinatura.streaming.apelido) && (
-                                                        <span className="text-xs text-gray-500">{cobranca.assinatura.streaming.catalogo.nome}</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className={`font-medium ${isOverdue(cobranca.periodoFim, cobranca.status) ? 'text-red-600' : 'text-gray-900'}`}>
-                                                    Vence em {formatDate(cobranca.periodoFim)}
-                                                </span>
-                                                <span className="text-xs text-gray-500">
-                                                    Ref: {formatPeriod(cobranca.periodoInicio, cobranca.periodoFim)}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="font-bold text-gray-900">
-                                                {format(Number(cobranca.valor))}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <StatusBadge status={cobranca.status} />
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Dropdown options={getCobrancaOptions(cobranca)} />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                    <div className="col-span-full">
+                        <EmptyState
+                            icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
+                            title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Nenhuma cobrança registrada"}
+                            description={
+                                searchTerm || statusFilter !== 'all'
+                                    ? "Não encontramos nenhuma cobrança com os filtros selecionados."
+                                    : "Crie assinaturas para participantes e as cobranças serão geradas automaticamente."
+                            }
+                        />
                     </div>
+                ) : (
+                    filteredCobrancas.map((cobranca: any) => (
+                        <CobrancaCard
+                            key={cobranca.id}
+                            cobranca={cobranca}
+                            isOverdue={isOverdue(cobranca.periodoFim, cobranca.status)}
+                            formatDate={formatDate}
+                            formatPeriod={formatPeriod}
+                            onViewDetails={() => {
+                                setSelectedCobrancaId(cobranca.id);
+                                setDetailsModalOpen(true);
+                            }}
+                            onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
+                            onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
+                            onCancel={() => handleCancelarCobranca(cobranca.id)}
+                        />
+                    ))
                 )}
             </div>
 

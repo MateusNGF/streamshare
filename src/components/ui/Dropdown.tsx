@@ -3,46 +3,32 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DropdownOption {
-    label: string;
+    label?: string;
     icon?: React.ReactNode;
-    onClick: () => void;
+    onClick?: () => void;
     variant?: "default" | "danger" | "success";
+    type?: "item" | "separator";
 }
 
 interface DropdownProps {
     options: DropdownOption[];
+    trigger?: React.ReactNode;
+    align?: "left" | "right";
 }
 
-export function Dropdown({ options }: DropdownProps) {
+export function Dropdown({ options, trigger, align = "right" }: DropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [position, setPosition] = useState({ top: 0, left: 0 });
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-                // If checking against the dropdown content is needed, we'd need a ref for content too
-                // But since logic is: click anything else -> close
-                // We just need to check if we didn't click the portal content
-                // Getting ref to portal content is tricky across portal.
-                // Simpler approach: Check if target is not button.
-                // But if we click inside the dropdown, we handle it in option click.
-                // We need to ensure we don't close immediately if clicking inside menu.
-                // Using a specific class or check might be needed.
-            }
-        };
-
-        // Better approach for Portal outside click:
-        // Identify the dropdown menu element by ID or ref passed through.
-
         const closeMenu = (e: MouseEvent) => {
-            // We will check if the click was inside the button
             if (buttonRef.current?.contains(e.target as Node)) {
                 return;
             }
-            // For the menu content, we can use a ref or check closest
             const target = e.target as Element;
             if (target.closest('[data-dropdown-portal]')) {
                 return;
@@ -66,13 +52,20 @@ export function Dropdown({ options }: DropdownProps) {
     const toggleDropdown = () => {
         if (!isOpen && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
-            // Align right edge of menu with right edge of button
-            // w-48 is 12rem = 192px
-            const MENU_WIDTH = 192;
-            setPosition({
-                top: rect.bottom + window.scrollY + 8, // 8px gap
-                left: rect.right + window.scrollX - MENU_WIDTH
-            });
+            const MENU_WIDTH = 220; // Aumentado para mais respiro
+
+            const top = rect.bottom + window.scrollY + 8;
+            let left = align === "right"
+                ? rect.right + window.scrollX - MENU_WIDTH
+                : rect.left + window.scrollX;
+
+            // Ajuste básico de bordas da tela
+            if (left < 10) left = 10;
+            if (left + MENU_WIDTH > window.innerWidth - 10) {
+                left = window.innerWidth - MENU_WIDTH - 10;
+            }
+
+            setPosition({ top, left });
         }
         setIsOpen(!isOpen);
     };
@@ -82,42 +75,70 @@ export function Dropdown({ options }: DropdownProps) {
             <button
                 ref={buttonRef}
                 onClick={toggleDropdown}
-                className="p-2 hover:bg-gray-100 rounded-full transition-all"
+                className={cn(
+                    "p-2 rounded-xl transition-all duration-200 active:scale-90",
+                    isOpen
+                        ? "bg-primary/10 text-primary shadow-inner"
+                        : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                )}
             >
-                <MoreVertical size={20} className="text-gray-500" />
+                {trigger || <MoreVertical size={20} />}
             </button>
 
             {isOpen && createPortal(
                 <div
                     data-dropdown-portal
-                    className="fixed z-[9999] w-50 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-scale-in origin-top-left duration-200"
+                    className={cn(
+                        "fixed z-[9999] w-[220px] rounded-2xl shadow-2xl border border-white/20 py-2",
+                        "glass animate-scale-in origin-top duration-200 overflow-hidden"
+                    )}
                     style={{
                         top: position.top,
                         left: position.left,
                     }}
                 >
-                    {options.map((option, index) => (
-                        <button
-                            key={index}
-                            onClick={() => {
-                                option.onClick();
-                                setIsOpen(false);
-                            }}
-                            className={`w-full flex items-center  gap-3 px-4 py-2 text-sm font-medium transition-all ${option.variant === "danger"
-                                ? "text-red-600 hover:bg-red-50"
-                                : option.variant === "success"
-                                    ? "text-green-600 hover:bg-green-50"
-                                    : "text-gray-700 hover:bg-gray-50"
-                                }`}
-                        >
-                            <div>
-                                {option.icon}
-                            </div>
-                            <div className="flex w-full justify-start">
-                                {option.label}
-                            </div>
-                        </button>
-                    ))}
+                    <div className="flex flex-col gap-0.5 px-1.5">
+                        {options.map((option, index) => {
+                            if (option.type === "separator") {
+                                return (
+                                    <div
+                                        key={`sep-${index}`}
+                                        className="h-px bg-gray-100/50 my-1 mx-2"
+                                    />
+                                );
+                            }
+
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        option.onClick?.();
+                                        setIsOpen(false);
+                                    }}
+                                    className={cn(
+                                        "w-full flex items-center gap-3 px-3 py-2.5 text-[13px] font-bold transition-all rounded-xl group",
+                                        option.variant === "danger"
+                                            ? "text-red-500 hover:bg-red-50 hover:text-red-600"
+                                            : option.variant === "success"
+                                                ? "text-green-600 hover:bg-green-50"
+                                                : "text-gray-600 hover:bg-gray-50 hover:text-primary hover:translate-x-1"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "flex-shrink-0 transition-transform group-hover:scale-110",
+                                        option.variant === "danger" ? "text-red-400 group-hover:text-red-500" :
+                                            option.variant === "success" ? "text-green-400 group-hover:text-green-500" :
+                                                "text-gray-400 group-hover:text-primary"
+                                    )}>
+                                        {option.icon}
+                                    </div>
+                                    <span className="truncate">
+                                        {option.label}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>,
                 document.body
             )}

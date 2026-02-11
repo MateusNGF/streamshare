@@ -105,7 +105,8 @@ export function StreamingDetailCard({
 
                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>{format(typeof price === 'string' ? parseFloat(price) : price)}</span>
+                        <span className="font-bold text-gray-900">{format(typeof price === 'string' ? parseFloat(price) : price)}</span>
+                        <span className="text-gray-400">/mês</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600 justify-end">
                         <Calendar size={16} className="text-gray-400" />
