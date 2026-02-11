@@ -21,10 +21,9 @@ export async function POST(req: Request) {
         return new Response(`Webhook Error: ${error.message}`, { status: 400 });
     }
 
-    const session = event.data.object as Stripe.Checkout.Session;
-    const subscription = event.data.object as Stripe.Subscription;
 
     if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
         if (!session.metadata?.contaId) {
             return new Response(null, { status: 200 });
         }
@@ -59,6 +58,7 @@ export async function POST(req: Request) {
     }
 
     if (event.type === "customer.subscription.updated") {
+        const subscription = event.data.object as Stripe.Subscription;
         const account = await prisma.conta.findFirst({
             where: { stripeSubscriptionId: subscription.id },
         });
@@ -95,6 +95,7 @@ export async function POST(req: Request) {
     }
 
     if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object as Stripe.Subscription;
         const account = await prisma.conta.findFirst({
             where: { stripeSubscriptionId: subscription.id },
         });
