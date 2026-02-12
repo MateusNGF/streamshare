@@ -203,9 +203,14 @@ export function CobrancasTable({
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <span className="font-black text-gray-900 text-sm">
-                                            {format(Number(cobranca.valor))}
-                                        </span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-black text-gray-900 text-sm leading-tight">
+                                                {format(Number(cobranca.valor))}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-medium">
+                                                {format(Number(cobranca.assinatura.valor))} / mês
+                                            </span>
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <div className="flex flex-col items-center gap-0.5">

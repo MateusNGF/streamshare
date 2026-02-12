@@ -152,15 +152,8 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex flex-col items-end">
-                                            <div className="font-black text-sm text-gray-900">
-                                                {isNonMonthly ? (
-                                                    <div className="flex flex-col items-end leading-tight">
-                                                        <span className="text-[8px] uppercase text-primary font-black">Ciclo</span>
-                                                        <span>{format(Number(valorCiclo))}</span>
-                                                    </div>
-                                                ) : (
-                                                    format(Number(sub.valor))
-                                                )}
+                                            <div className="font-black text-sm text-gray-900 leading-tight">
+                                                {format(Number(valorCiclo || sub.valor))}
                                             </div>
                                             <div className="text-[10px] text-gray-400 font-medium">
                                                 {format(Number(sub.valor))} / mês

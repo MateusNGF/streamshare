@@ -55,8 +55,15 @@ export function ChargesHistoryTable({ charges }: ChargesHistoryTableProps) {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 font-black text-gray-900 text-right text-sm">
-                                            {format(Number(cob.valor))}
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-black text-gray-900 text-sm leading-tight">
+                                                    {format(Number(cob.valor))}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400 font-medium">
+                                                    {format(Number(cob.valorMensal || (Number(cob.valor) / (cob.frequencia === 'trimestral' ? 3 : cob.frequencia === 'semestral' ? 6 : cob.frequencia === 'anual' ? 12 : 1))))} / mês
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <div className="flex justify-center">

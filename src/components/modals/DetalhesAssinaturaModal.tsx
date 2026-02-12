@@ -76,8 +76,9 @@ export function DetalhesAssinaturaModal({
                     </div>
                     {/* Valor em Destaque no Header (Desktop) */}
                     <div className="hidden sm:block text-right">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mensalidade</p>
-                        <p className="text-2xl font-black text-gray-900">{format(Number(assinatura.valor))}</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Valor do Ciclo</p>
+                        <p className="text-2xl font-black text-gray-900">{format(Number(valorCiclo))}</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight -mt-1">{format(Number(assinatura.valor))} / mês</p>
                     </div>
                 </div>
 
@@ -110,17 +111,18 @@ export function DetalhesAssinaturaModal({
                             <div className="flex justify-between items-center bg-gray-50 -mx-4 -mb-4 p-4 rounded-b-xl border-t border-gray-100">
                                 <div>
                                     <p className="text-[10px] font-black text-primary uppercase">Valor do Próximo Ciclo</p>
-                                    <p className="text-xs text-gray-500 font-medium">Cobrança total recorrente</p>
+                                    <p className="text-xs text-gray-500 font-medium whitespace-nowrap">Recorrência total do plano</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-lg font-black text-gray-900">{format(Number(valorCiclo))}</p>
+                                    <p className="text-xl font-black text-gray-900 leading-tight">{format(Number(valorCiclo))}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{format(Number(assinatura.valor))} / mês</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Área de Status Crítico (Se Cancelado) */}
+                {/* 3. Área de Status Crítico (Se Cancelado ou Cancelamento Agendado) */}
                 {isCancelled && (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 animate-in fade-in slide-in-from-bottom-2">
                         <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -129,8 +131,49 @@ export function DetalhesAssinaturaModal({
                             <p className="text-xs text-red-800 mt-1 italic">
                                 "{assinatura.motivoCancelamento || "Motivo não informado"}"
                             </p>
-                            <p className="text-[10px] font-bold text-red-500 mt-2 uppercase tracking-wide">
-                                Encerrado em {formatDate(assinatura.dataCancelamento, true)}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                                <p className="text-[10px] font-bold text-red-500 uppercase tracking-wide">
+                                    Encerrado em {formatDate(assinatura.dataCancelamento, true)}
+                                </p>
+                                {assinatura.canceladoPor && (
+                                    <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide">
+                                        Por: {assinatura.canceladoPor.name || assinatura.canceladoPor.email}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {!isCancelled && assinatura.dataCancelamento && (
+                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex gap-3 animate-in fade-in slide-in-from-bottom-2">
+                        <AlertTriangle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-black text-purple-900 uppercase tracking-tight">Cancelamento Agendado</h4>
+                                <span className="bg-purple-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">
+                                    Ainda Ativa
+                                </span>
+                            </div>
+                            <p className="text-xs text-purple-800 mt-1 italic">
+                                "{assinatura.motivoCancelamento || "Cancelamento solicitado pelo cliente"}"
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 pt-3 border-t border-purple-100/50">
+                                <div>
+                                    <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Data de Término</p>
+                                    <p className="text-sm font-black text-purple-700">{formatDate(assinatura.dataCancelamento)}</p>
+                                </div>
+                                {assinatura.canceladoPor && (
+                                    <div>
+                                        <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Solicitado via Painel por</p>
+                                        <p className="text-sm font-black text-purple-700 truncate">{assinatura.canceladoPor.name || assinatura.canceladoPor.email}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <p className="text-[10px] font-medium text-purple-500 mt-3 leading-relaxed">
+                                <span className="font-bold">Nota:</span> O acesso do cliente e as cobranças recorrentes permanecerão ativos até a data de término informada acima.
                             </p>
                         </div>
                     </div>
