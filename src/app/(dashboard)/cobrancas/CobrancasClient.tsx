@@ -9,8 +9,23 @@ import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { confirmarPagamento, enviarNotificacaoCobranca, cancelarCobranca } from "@/actions/cobrancas";
 import { useToast } from "@/hooks/useToast";
-import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
 import { useRouter } from "next/navigation";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { MessageCircle, Check, Eye, Trash, Clock } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
+import { format as formatFN } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal";
 import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
@@ -30,6 +45,7 @@ interface CobrancasClientProps {
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
     const toast = useToast();
     const router = useRouter();
+    const { format } = useCurrency();
 
     // Filters State
     const [searchTerm, setSearchTerm] = useState("");
@@ -133,7 +149,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
             />
 
             {/* KPIs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 <KPIFinanceiroCard
                     titulo="Total a Receber"
                     valor={kpis.totalPendente}
@@ -189,42 +205,124 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 />
             </div>
 
-            {/* Header da Tabela - Desktop */}
-            <div className="hidden md:grid grid-cols-[240px_120px_120px_100px_100px_auto] gap-5 px-8 pt-4 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
-                <div>Participante</div>
-                <div className="text-center">Vencimento</div>
-                <div className="text-center">Pagamento</div>
-                <div className="text-right">Valor</div>
-                <div className="text-center">Status</div>
-                <div className="text-right pr-2">Ações</div>
-            </div>
-
-            {/* Lista de Cobranças */}
-            <div className="flex flex-col gap-3 pb-20">
+            {/* Table Content */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {filteredCobrancas.length === 0 ? (
                     <EmptyState
                         icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
                         title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Tudo limpo!"}
                         description="Nenhuma cobrança corresponde aos critérios atuais."
-                        className="bg-gray-50/50 border-dashed py-12"
+                        className="bg-transparent border-none py-12"
                     />
                 ) : (
-                    filteredCobrancas.map((cobranca: any) => (
-                        <CobrancaCard
-                            key={cobranca.id}
-                            cobranca={cobranca}
-                            isOverdue={isOverdue(cobranca.dataVencimento, cobranca.status)}
-                            formatDate={formatDate}
-                            formatPeriod={formatPeriod}
-                            onViewDetails={() => {
-                                setSelectedCobrancaId(cobranca.id);
-                                setDetailsModalOpen(true);
-                            }}
-                            onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
-                            onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
-                            onCancel={() => handleCancelarCobranca(cobranca.id)}
-                        />
-                    ))
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-50/50">
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead>Participante</TableHead>
+                                    <TableHead className="text-center">Vencimento</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                    <TableHead className="text-center">Pagamento</TableHead>
+                                    <TableHead className="text-right">Valor</TableHead>
+                                    <TableHead className="w-[50px] text-center font-black">#</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredCobrancas.map((cobranca: any) => {
+                                    const isPaid = cobranca.status === 'pago';
+                                    const isCancelled = cobranca.status === 'cancelado';
+                                    const vencimentoDate = new Date(cobranca.dataVencimento);
+                                    const atrasada = isOverdue(cobranca.dataVencimento, cobranca.status);
+
+                                    const options = [
+                                        {
+                                            label: "Ver Detalhes",
+                                            icon: <Eye size={16} />,
+                                            onClick: () => {
+                                                setSelectedCobrancaId(cobranca.id);
+                                                setDetailsModalOpen(true);
+                                            }
+                                        },
+                                        ...(!isPaid && !isCancelled ? [
+                                            { type: "separator" as const },
+                                            {
+                                                label: "Confirmar Pagamento",
+                                                icon: <Check size={16} />,
+                                                onClick: () => handleConfirmarPagamento(cobranca.id)
+                                            },
+                                            {
+                                                label: "Enviar WhatsApp",
+                                                icon: <MessageCircle size={16} />,
+                                                onClick: () => handleEnviarWhatsApp(cobranca.id)
+                                            },
+                                            {
+                                                label: "Cancelar Cobrança",
+                                                icon: <Trash size={16} />,
+                                                onClick: () => handleCancelarCobranca(cobranca.id),
+                                                variant: "danger" as const
+                                            }
+                                        ] : [])
+                                    ];
+
+                                    return (
+                                        <TableRow key={cobranca.id} className={cn(isCancelled && "opacity-60")}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <StreamingLogo
+                                                        name={cobranca.assinatura.streaming.catalogo.nome}
+                                                        iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
+                                                        color={cobranca.assinatura.streaming.catalogo.corPrimaria}
+                                                        size="sm"
+                                                        rounded="md"
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-900 leading-tight">
+                                                            {cobranca.assinatura.participante.nome}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400 font-medium truncate max-w-[120px]">
+                                                            {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex flex-col items-center">
+                                                    <span className={cn(
+                                                        "text-sm font-medium",
+                                                        atrasada ? "text-red-600 font-bold" : "text-gray-700"
+                                                    )}>
+                                                        {formatDate(cobranca.dataVencimento)}
+                                                    </span>
+                                                    {atrasada && (
+                                                        <div className="flex items-center gap-1 text-[9px] text-red-500 font-black uppercase tracking-tighter">
+                                                            <Clock size={8} />
+                                                            ATRASADA
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <StatusBadge status={cobranca.status} className="scale-90" />
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento) : "-"}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <span className="font-black text-gray-900">
+                                                    {format(Number(cobranca.valor))}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Dropdown options={options} />
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
                 )}
             </div>
 

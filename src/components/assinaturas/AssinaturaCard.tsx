@@ -1,12 +1,14 @@
 "use client";
 
-import { Eye, Trash, CreditCard, MoreVertical, Smartphone, User } from "lucide-react";
+import { Eye, Trash, CreditCard, User, AlertCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { calcularTotalCiclo } from "@/lib/financeiro-utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface AssinaturaCardProps {
     sub: any;
@@ -17,8 +19,13 @@ interface AssinaturaCardProps {
 export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardProps) {
     const { format } = useCurrency();
 
-    const isActive = sub.status === 'ativo';
+    const isActive = sub.status === 'ativa';
+    const isSuspended = sub.status === 'suspensa';
     const isCancelled = sub.status === 'cancelada';
+
+    // Cycle context for non-monthly frequencies
+    const isNonMonthly = sub.frequencia !== 'mensal';
+    const valorCiclo = isNonMonthly ? calcularTotalCiclo(sub.valor, sub.frequencia) : null;
 
     const menuOptions = [
         {
@@ -46,12 +53,22 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
             {/* Indicador lateral de status (Visual Cue) */}
             <div className={cn(
                 "absolute left-0 top-0 bottom-0 w-1",
-                isActive ? "bg-green-500" : isCancelled ? "bg-gray-300" : "bg-yellow-400"
+                isActive ? "bg-green-600" : isSuspended ? "bg-amber-500" : isCancelled ? "bg-gray-300" : "bg-gray-200"
             )} />
 
-            <div className="flex flex-col md:grid md:grid-cols-[240px_1fr_100px_120px_120px_auto] md:items-center p-4 pl-5 gap-4">
+            <div className="flex flex-col md:grid md:grid-cols-[40px_240px_1fr_100px_auto] md:items-center p-4 pl-5 gap-4">
+                {/* 0. Ações (Dropdown) - Deslocado para o início */}
+                <div className="flex items-center justify-between md:justify-start">
+                    <div className="md:h-8 h-11 flex items-center">
+                        <Dropdown options={menuOptions} />
+                    </div>
+                    {/* Status Dot apenas Mobile */}
+                    <div className={cn(
+                        "w-3.5 h-3.5 border-2 border-white rounded-full md:hidden",
+                        isActive ? "bg-green-600" : isSuspended ? "bg-amber-500" : isCancelled ? "bg-gray-400" : "bg-gray-200"
+                    )} />
+                </div>
 
-                {/* 1. Participante & Serviço (Combinado para Mobile, Separado visualmente no Desktop) */}
                 <div className="flex items-start md:items-center gap-3 w-full">
                     <div className="relative">
                         <StreamingLogo
@@ -62,11 +79,6 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
                             rounded="lg"
                             className="shadow-sm"
                         />
-                        {/* Status Dot apenas Mobile */}
-                        <div className={cn(
-                            "absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-white rounded-full md:hidden",
-                            isActive ? "bg-green-500" : isCancelled ? "bg-gray-400" : "bg-yellow-400"
-                        )} />
                     </div>
 
                     <div className="flex flex-col min-w-0 flex-1">
@@ -94,7 +106,7 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
                     </span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                         <CreditCard size={10} className="text-gray-400" />
-                        <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                        <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">
                             {sub.frequencia}
                         </span>
                     </div>
@@ -108,18 +120,30 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
                 {/* 4. Valor (Layout Híbrido) */}
                 <div className="flex items-center justify-between md:flex-col md:items-end md:justify-center border-t border-gray-100 pt-3 md:pt-0 md:border-0">
                     <div className="flex flex-col md:hidden">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Mensalidade</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Custo Mensal</span>
                         <StatusBadge status={sub.status} className="scale-75 origin-left -ml-1 mt-1" />
                     </div>
 
                     <div className="flex flex-col items-end">
                         <span className={cn(
-                            "text-sm font-bold",
+                            "text-sm font-black",
                             isCancelled ? "text-gray-400 line-through" : "text-gray-900"
                         )}>
-                            {format(Number(sub.valor))}
+                            {format(Number(sub.valor))} <span className="text-[10px] font-medium text-gray-500">/ mês</span>
                         </span>
-                        <span className="text-[10px] text-gray-400 hidden md:block">por pessoa</span>
+
+                        {isNonMonthly && valorCiclo && (
+                            <Tooltip
+                                content={`Valor total cobrado a cada ciclo ${sub.frequencia}: ${format(Number(valorCiclo))}`}
+                                position="bottom"
+                            >
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-primary cursor-help">
+                                    <AlertCircle size={8} />
+                                    <span>CICLO: {format(Number(valorCiclo))}</span>
+                                </div>
+                            </Tooltip>
+                        )}
+                        {!isNonMonthly && <span className="text-[10px] text-gray-400 hidden md:block">por pessoa</span>}
                     </div>
                 </div>
 
@@ -131,18 +155,7 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
                     <span className="text-[9px] text-gray-400 uppercase">Total Grupo</span>
                 </div>
 
-                {/* 6. Ações */}
-                <div className="flex justify-end gap-2 md:pl-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-primary md:hidden"
-                        onClick={onViewDetails}
-                    >
-                        <Eye size={18} />
-                    </Button>
-                    <Dropdown options={menuOptions} />
-                </div>
+                {/* 5. Ações (Removidas daqui) */}
             </div>
         </div>
     );

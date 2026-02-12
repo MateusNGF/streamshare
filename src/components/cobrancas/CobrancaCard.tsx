@@ -40,10 +40,10 @@ export function CobrancaCard({
     // Lógica visual de urgência
     const getBorderColor = () => {
         if (isCancelled) return "border-l-gray-300";
-        if (isPaid) return "border-l-green-500";
+        if (isPaid) return "border-l-green-600";
         if (isOverdue) return "border-l-red-500";
-        if (isToday(vencimentoDate)) return "border-l-orange-500";
-        return "border-l-blue-500";
+        if (isToday(vencimentoDate)) return "border-l-amber-500";
+        return "border-l-primary/30";
     };
 
     const getBgColor = () => {
@@ -100,9 +100,9 @@ export function CobrancaCard({
                             {vencimentoDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                         </span>
                         {!isPaid && !isCancelled && (
-                            <span className="text-[9px] font-bold uppercase tracking-tighter">
+                            <span className="text-[9px] font-black uppercase tracking-widest">
                                 {isToday(vencimentoDate) ? (
-                                    <span className="text-orange-600">Hoje</span>
+                                    <span className="text-amber-600">Hoje</span>
                                 ) : daysUntil < 0 ? (
                                     <span className="text-red-600">{Math.abs(daysUntil)}d atraso</span>
                                 ) : (
@@ -142,39 +142,46 @@ export function CobrancaCard({
                 </div>
 
                 {/* 6. Ações */}
-                <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100 md:mt-0 md:pt-0 md:border-0">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-end gap-2 mt-4 pt-4 border-t border-gray-100 md:mt-0 md:pt-0 md:border-0">
                     {/* Status Badge (Mobile) */}
-                    <div className="md:hidden">
-                        <StatusBadge status={cobranca.status} className="scale-[0.7] origin-right" />
+                    <div className="md:hidden flex justify-between items-center mb-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Status</span>
+                        <StatusBadge status={cobranca.status} className="scale-90" />
                     </div>
 
-                    {/* Botão de WhatsApp Rápido (Sempre visível se tiver número) */}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isPaid || isCancelled || !cobranca.assinatura.participante.whatsappNumero}
-                        className="h-8 gap-2 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 flex-1 md:flex-none md:w-9 md:px-0"
-                        onClick={onSendWhatsApp}
-                    >
-                        <MessageCircle size={16} />
-                        <span className="md:hidden text-xs">Cobrar</span>
-                    </Button>
-
-                    {/* Botão Pagar Rápido (Mobile) */}
-                    {!isPaid && !isCancelled && (
+                    <div className="flex gap-2">
+                        {/* Botão de WhatsApp Rápido */}
                         <Button
                             variant="outline"
-                            disabled={isPaid || isCancelled}
                             size="sm"
-                            className="h-8 gap-2 text-blue-700 border-blue-200 hover:bg-blue-50 md:hidden flex-1"
-                            onClick={onConfirmPayment}
+                            disabled={isPaid || isCancelled || !cobranca.assinatura.participante.whatsappNumero}
+                            className="h-11 md:h-8 gap-2 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 flex-1 md:flex-none md:w-9 md:px-0"
+                            onClick={onSendWhatsApp}
                         >
-                            <Check size={16} />
-                            <span className="text-xs">Pagar</span>
+                            <MessageCircle size={18} className="md:w-4 md:h-4" />
+                            <span className="md:hidden text-xs font-bold">Cobrar WhatsApp</span>
                         </Button>
-                    )}
 
-                    <div className="ml-1">
+                        {/* Botão Pagar Rápido (Mobile) */}
+                        {!isPaid && !isCancelled && (
+                            <Button
+                                variant="outline"
+                                disabled={isPaid || isCancelled}
+                                size="sm"
+                                className="h-11 md:h-8 gap-2 text-blue-700 border-blue-200 hover:bg-blue-50 md:hidden flex-1"
+                                onClick={onConfirmPayment}
+                            >
+                                <Check size={18} />
+                                <span className="text-xs font-bold">Pagar</span>
+                            </Button>
+                        )}
+
+                        <div className="md:hidden flex items-center justify-center border border-gray-200 rounded-md px-2 h-11">
+                            <Dropdown options={options} align="right" />
+                        </div>
+                    </div>
+
+                    <div className="hidden md:block ml-1">
                         <Dropdown options={options} align="right" />
                     </div>
                 </div>

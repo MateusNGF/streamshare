@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Plus, Search, XCircle, Users, Activity, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { AssinaturaCard } from "@/components/assinaturas/AssinaturaCard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useToast } from "@/hooks/useToast";
@@ -15,6 +14,22 @@ import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaM
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { Eye, Trash, CreditCard, AlertCircle } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
+import { calcularTotalCiclo } from "@/lib/financeiro-utils";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { cn } from "@/lib/utils";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -37,6 +52,7 @@ export default function AssinaturasClient({
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
+    const { format } = useCurrency();
 
     // States
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
@@ -153,7 +169,7 @@ export default function AssinaturasClient({
             />
 
             {/* KPIs Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 <KPIFinanceiroCard
                     titulo="Receita Estimada"
                     valor={kpis.receitaMensalEstimada}
@@ -181,7 +197,7 @@ export default function AssinaturasClient({
             </div>
 
             {/* Main Content Area */}
-            <div className="space-y-6">
+            <div className="space-y-10">
 
                 {/* Filters */}
                 <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
@@ -193,39 +209,114 @@ export default function AssinaturasClient({
                     />
                 </div>
 
-                {/* List Header (Desktop Only) */}
-                <div className="hidden md:grid grid-cols-[240px_1fr_100px_120px_120px_auto] gap-4 px-6 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                    <div>Participante</div>
-                    <div className="pl-4">Serviço</div>
-                    <div className="text-center">Status</div>
-                    <div className="text-right pr-4">Valor</div>
-                    <div className="text-right pr-4">Total Grupo</div>
-                    <div className="text-right">Ações</div>
-                </div>
-
-                {/* List Items */}
-                <div className="flex flex-col gap-3">
+                {/* Table Content */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     {initialSubscriptions.length > 0 ? (
-                        initialSubscriptions.map((sub) => (
-                            <AssinaturaCard
-                                key={sub.id}
-                                sub={sub}
-                                onViewDetails={() => {
-                                    setSelectedAssinatura(sub);
-                                    setDetailsModalOpen(true);
-                                }}
-                                onCancel={() => {
-                                    setSelectedAssinatura(sub);
-                                    setCancelModalOpen(true);
-                                }}
-                            />
-                        ))
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader className="bg-gray-50/50">
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableHead>Participante</TableHead>
+                                        <TableHead>Serviço</TableHead>
+                                        <TableHead className="text-center">Status</TableHead>
+                                        <TableHead className="text-right">Valores (Vigente / Ref.)</TableHead>
+                                        <TableHead className="w-[50px] text-center font-black">#</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {initialSubscriptions.map((sub) => {
+                                        const isActive = sub.status === 'ativa';
+                                        const isSuspended = sub.status === 'suspensa';
+                                        const isCancelled = sub.status === 'cancelada';
+                                        const isNonMonthly = sub.frequencia !== 'mensal';
+                                        const valorCiclo = isNonMonthly ? calcularTotalCiclo(sub.valor, sub.frequencia) : null;
+
+                                        const menuOptions = [
+                                            {
+                                                label: "Ver Detalhes",
+                                                icon: <Eye size={16} />,
+                                                onClick: () => {
+                                                    setSelectedAssinatura(sub);
+                                                    setDetailsModalOpen(true);
+                                                }
+                                            },
+                                            ...(!isCancelled ? [
+                                                { type: "separator" as const },
+                                                {
+                                                    label: "Cancelar Assinatura",
+                                                    icon: <Trash size={16} />,
+                                                    onClick: () => {
+                                                        setSelectedAssinatura(sub);
+                                                        setCancelModalOpen(true);
+                                                    },
+                                                    variant: "danger" as const
+                                                }
+                                            ] : [])
+                                        ];
+
+                                        return (
+                                            <TableRow key={sub.id} className={cn(isCancelled && "opacity-60")}>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-900">{sub.participante.nome}</span>
+                                                        <span className="text-[11px] text-gray-500 truncate max-w-[150px]">{sub.participante.email}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <StreamingLogo
+                                                            name={sub.streaming.catalogo.nome}
+                                                            iconeUrl={sub.streaming.catalogo.iconeUrl}
+                                                            color={sub.streaming.catalogo.corPrimaria}
+                                                            size="sm"
+                                                            rounded="md"
+                                                        />
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium text-gray-700 text-sm">
+                                                                {sub.streaming.apelido || sub.streaming.catalogo.nome}
+                                                            </span>
+                                                            <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-bold">
+                                                                <CreditCard size={10} />
+                                                                {sub.frequencia}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <StatusBadge status={sub.status} className="scale-90" />
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex flex-col items-end">
+                                                        <div className="font-black text-sm text-gray-900">
+                                                            {isNonMonthly ? (
+                                                                <div className="flex flex-col items-end">
+                                                                    <span className="text-[9px] uppercase text-primary font-bold">Total {sub.frequencia}</span>
+                                                                    <span>{format(Number(valorCiclo))}</span>
+                                                                </div>
+                                                            ) : (
+                                                                format(Number(sub.valor))
+                                                            )}
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400 font-medium">
+                                                            {format(Number(sub.valor))} / mês
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Dropdown options={menuOptions} />
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
                     ) : (
                         <EmptyState
                             title="Nenhuma assinatura encontrada"
                             description="Tente ajustar os filtros ou crie uma nova assinatura."
                             icon={Search}
-                            className="bg-gray-50/50 border-dashed"
+                            className="bg-transparent border-none"
                         />
                     )}
                 </div>

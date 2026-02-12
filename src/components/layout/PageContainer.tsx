@@ -1,13 +1,12 @@
 import { ReactNode } from "react";
 
-interface PageContainerProps {
-    children: ReactNode;
-}
 
-export function PageContainer({ children }: PageContainerProps) {
+export function PageContainer({ children }: { children: React.ReactNode }) {
     return (
-        <div className="p-2 animate-fade-in">
-            {children}
-        </div>
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50/50">
+            <div className="max-w-7xl mx-auto">
+                {children}
+            </div>
+        </main>
     );
 }
