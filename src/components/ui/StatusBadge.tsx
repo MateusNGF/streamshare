@@ -55,7 +55,7 @@ export function StatusBadge({ status, label, className, dataCancelamento, delete
     return (
         <span
             className={cn(
-                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap",
+                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap transition-all duration-300 animate-in fade-in zoom-in-95",
                 config.color,
                 className
             )}

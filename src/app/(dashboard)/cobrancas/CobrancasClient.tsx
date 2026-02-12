@@ -52,18 +52,21 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                     valor={kpis.totalPendente}
                     icone={DollarSign}
                     cor="primary"
+                    index={0}
                 />
                 <KPIFinanceiroCard
                     titulo="Receita Confirmada"
                     valor={kpis.receitaConfirmada}
                     icone={CheckCircle}
                     cor="green"
+                    index={1}
                 />
                 <KPIFinanceiroCard
                     titulo="Em Atraso"
                     valor={kpis.emAtraso}
                     icone={AlertCircle}
                     cor="red"
+                    index={2}
                 />
             </div>
 

@@ -9,6 +9,7 @@ interface KPIFinanceiroCardProps {
     icone: LucideIcon;
     cor: "primary" | "green" | "red";
     isMoeda?: boolean;
+    index?: number;
 }
 
 const corConfig: Record<"primary" | "green" | "red", { iconBg: string; shadow: string; icon: string }> = {
@@ -29,13 +30,16 @@ const corConfig: Record<"primary" | "green" | "red", { iconBg: string; shadow: s
     }
 };
 
-export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = true }: KPIFinanceiroCardProps) {
+export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = true, index = 0 }: KPIFinanceiroCardProps) {
     const { format } = useCurrency();
     const config = corConfig[cor];
 
     return (
-        <div className={`bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-xl ${config.shadow} hover:-translate-y-1 transition-all duration-300 group`}>
-            <div className={`inline-flex p-3 rounded-2xl ${config.iconBg} ${config.icon} mb-4 transition-transform group-hover:scale-110 duration-300 shadow-inner`}>
+        <div
+            className={`bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-xl ${config.shadow} hover:-translate-y-1 transition-all duration-500 group animate-in fade-in zoom-in-95 fill-mode-both`}
+            style={{ animationDelay: `${index * 100}ms` }}
+        >
+            <div className={`inline-flex p-3 rounded-2xl ${config.iconBg} ${config.icon} mb-4 transition-transform group-hover:scale-110 duration-500 shadow-inner`}>
                 <Icon className="w-6 h-6" />
             </div>
             <div className="text-3xl font-black text-gray-900 mb-1 tracking-tight">

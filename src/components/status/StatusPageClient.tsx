@@ -48,11 +48,13 @@ const changelogData = [
         id: "2026-02-12",
         date: "12/02/2026",
         changes: [
-            { category: "Integridade", description: "Obrigatoriedade do campo de vencimento no banco de dados e migração de registros antigos para consistência absoluta." },
-            { category: "Design", description: "Modernização completa das páginas de faturamento com estética premium, glassmorphism e micro-interações." },
-            { category: "Dashboard", description: "Novos painéis de indicadores dinâmicos para acompanhamento em tempo real de receita e volume de assinaturas." },
-            { category: "Mobile", description: "Otimização total da interface para dispositivos móveis com layouts de grid resilientes e melhor legibilidade." },
-            { category: "Experiência", description: "Ações rápidas no desktop para notificações via WhatsApp e sistemas de filtragem aprimorados com suporte a modal." },
+            { category: "Interface", description: "Transição para visualização em tabelas de alta densidade, otimizando o espaço e a leitura de dados com componentes reutilizáveis." },
+            { category: "Faturamento", description: "Novo sistema de destaque financeiro que prioriza o valor total do ciclo com referência mensal secundária em todas as listagens." },
+            { category: "Experiência", description: "Modais de detalhes aprimorados com histórico de faturamento unificado, contato rápido e cronômetros de vencimento." },
+            { category: "Gestão", description: "Implementação de fluxos de cancelamento agendado, incluindo motivos, datas de término e identificação do solicitante para melhor controle." },
+            { category: "Precisão", description: "Padronização dos períodos de vigência e datas de vencimento, garantindo consistência visual absoluta e integridade de dados no banco." },
+            { category: "Dashboard", description: "Atualização dos indicadores financeiros (KPIs) com suporte a métricas dinâmicas e transições suaves de estado." },
+            { category: "Mobile", description: "Otimização da interface para dispositivos móveis com layouts resilientes e melhor legibilidade em tabelas complexas." },
         ],
     },
     {
@@ -220,7 +222,12 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
 
                         <div className="space-y-8 md:space-y-12">
                             {changelogData.map((log, logIdx) => (
-                                <div key={logIdx} id={log.id} className="relative pl-6 md:pl-12 scroll-mt-24">
+                                <div
+                                    key={logIdx}
+                                    id={log.id}
+                                    className="relative pl-6 md:pl-12 scroll-mt-24 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
+                                    style={{ animationDelay: `${logIdx * 150}ms` }}
+                                >
                                     {/* Timeline line */}
                                     <div className="absolute left-0 top-0 bottom-0 w-px bg-purple-200"></div>
 

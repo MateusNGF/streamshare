@@ -95,6 +95,7 @@ export default function AssinaturasClient({
                     valor={kpis.receitaMensalEstimada}
                     icone={TrendingUp}
                     cor="primary"
+                    index={0}
                 />
                 <KPIFinanceiroCard
                     titulo="Assinaturas Ativas"
@@ -102,13 +103,15 @@ export default function AssinaturasClient({
                     icone={Activity}
                     cor="green"
                     isMoeda={false}
+                    index={1}
                 />
                 <KPIFinanceiroCard
                     titulo="Suspensas"
                     valor={kpis.totalSuspensas}
-                    icone={Users} // Changed icon to match typical suspension/alert
+                    icone={Users}
                     cor="red"
                     isMoeda={false}
+                    index={2}
                 />
                 <KPIFinanceiroCard
                     titulo="Total Histórico"
@@ -116,6 +119,7 @@ export default function AssinaturasClient({
                     icone={Users}
                     cor="primary"
                     isMoeda={false}
+                    index={3}
                 />
             </div>
 

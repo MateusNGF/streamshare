@@ -86,7 +86,7 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {subscriptions.map((sub) => {
+                        {subscriptions.map((sub, index) => {
                             const isCancelled = sub.status === 'cancelada';
                             const isNonMonthly = sub.frequencia !== 'mensal';
                             const valorCiclo = isNonMonthly ? calcularTotalCiclo(sub.valor, sub.frequencia) : null;
@@ -109,7 +109,14 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                             ];
 
                             return (
-                                <TableRow key={sub.id} className={cn(isCancelled && "opacity-60")}>
+                                <TableRow
+                                    key={sub.id}
+                                    className={cn(
+                                        isCancelled && "opacity-60",
+                                        "animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both"
+                                    )}
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
                                     <TableCell>
                                         <div className="flex flex-col">
                                             <span className="font-bold text-gray-900 leading-tight">{sub.participante.nome}</span>

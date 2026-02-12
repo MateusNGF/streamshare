@@ -128,7 +128,7 @@ export function CobrancasTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {cobrancas.slice(0, isCompact ? 5 : undefined).map((cobranca: any) => {
+                        {cobrancas.slice(0, isCompact ? 5 : undefined).map((cobranca: any, index: number) => {
                             const isPaid = cobranca.status === 'pago';
                             const isCancelled = cobranca.status === 'cancelado';
 
@@ -160,7 +160,14 @@ export function CobrancasTable({
                             ];
 
                             return (
-                                <TableRow key={cobranca.id} className={cn(isCancelled && "opacity-60", "group")}>
+                                <TableRow
+                                    key={cobranca.id}
+                                    className={cn(
+                                        isCancelled && "opacity-60",
+                                        "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both"
+                                    )}
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
                                     {!isCompact && (
                                         <TableCell>
                                             <div className="flex items-center gap-3">
