@@ -141,11 +141,7 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
                     >
                         <Eye size={18} />
                     </Button>
-                    <Dropdown options={menuOptions}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical size={16} className="text-gray-500" />
-                        </Button>
-                    </Dropdown>
+                    <Dropdown options={menuOptions} />
                 </div>
             </div>
         </div>
