@@ -13,7 +13,7 @@ export function Skeleton({
     variant = "rectangular",
     width,
     height,
-    animation = "pulse",
+    animation = "wave",
 }: SkeletonProps) {
     const baseClasses = "bg-gray-200";
 
@@ -25,7 +25,7 @@ export function Skeleton({
 
     const animationClasses = {
         pulse: "animate-pulse",
-        wave: "animate-shimmer",
+        wave: "animate-wave",
         none: "",
     };
 
