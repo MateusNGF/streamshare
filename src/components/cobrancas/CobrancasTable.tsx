@@ -8,14 +8,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search } from "lucide-react";
+import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import { useCurrency } from "@/hooks/useCurrency";
-import { differenceInDays, startOfDay, isToday } from "date-fns";
+import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "./shared/BillingTableCells";
 
 interface CobrancasTableProps {
     cobrancas: any[];
@@ -23,8 +22,10 @@ interface CobrancasTableProps {
     onConfirmPayment: (id: number) => void;
     onSendWhatsApp: (id: number) => void;
     onCancel: (id: number) => void;
-    searchTerm: string;
-    statusFilter: string;
+    searchTerm?: string;
+    statusFilter?: string;
+    variant?: "default" | "compact";
+    fallbackValorMensal?: number | string;
 }
 
 export function CobrancasTable({
@@ -33,17 +34,15 @@ export function CobrancasTable({
     onConfirmPayment,
     onSendWhatsApp,
     onCancel,
-    searchTerm,
-    statusFilter
+    searchTerm = "",
+    statusFilter = "all",
+    variant = "default",
+    fallbackValorMensal
 }: CobrancasTableProps) {
-    const { format } = useCurrency();
+    const isCompact = variant === "compact";
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    };
-
-    const isOverdue = (date: Date, status: string) => {
-        return (status === 'pendente' || status === "atrasado") && new Date() > new Date(date);
     };
 
     if (cobrancas.length === 0) {
@@ -60,52 +59,78 @@ export function CobrancasTable({
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className={cn(
+            "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden",
+            isCompact && "rounded-xl shadow-none border-gray-100/50"
+        )}>
             <div className="overflow-x-auto">
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                <div className="flex items-center gap-2">
-                                    <User size={12} className="text-gray-400" />
-                                    Participante
-                                </div>
-                            </TableHead>
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                <div className="flex items-center justify-center gap-2">
-                                    <TrendingUp size={12} className="text-gray-400" />
-                                    Emissão
-                                </div>
-                            </TableHead>
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            {!isCompact && (
+                                <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                    <div className="flex items-center gap-2">
+                                        <User size={12} className="text-gray-400" />
+                                        Participante
+                                    </div>
+                                </TableHead>
+                            )}
+
+                            {isCompact && (
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <History size={12} className="text-gray-400" />
+                                        Período
+                                    </div>
+                                </TableHead>
+                            )}
+
+                            {!isCompact && (
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <TrendingUp size={12} className="text-gray-400" />
+                                        Emissão
+                                    </div>
+                                </TableHead>
+                            )}
+
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
                                 <div className="flex items-center justify-center gap-2">
                                     <Calendar size={12} className="text-gray-400" />
                                     Vencimento
                                 </div>
                             </TableHead>
+
                             <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
                                 Status
                             </TableHead>
-                            <TableHead className="text-center text-[10px) font-black text-gray-500 uppercase tracking-wider">
-                                Pagamento
-                            </TableHead>
-                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+
+                            {!isCompact && (
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                    Pagamento
+                                </TableHead>
+                            )}
+
+                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
                                 <div className="flex items-center justify-end gap-2">
                                     <DollarSign size={12} className="text-gray-400" />
                                     Valor
                                 </div>
                             </TableHead>
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                Transação
-                            </TableHead>
+
+                            {!isCompact && (
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                    Transação
+                                </TableHead>
+                            )}
+
                             <TableHead className="w-[50px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {cobrancas.map((cobranca: any) => {
+                        {cobrancas.slice(0, isCompact ? 5 : undefined).map((cobranca: any) => {
                             const isPaid = cobranca.status === 'pago';
                             const isCancelled = cobranca.status === 'cancelado';
-                            const atrasada = isOverdue(cobranca.dataVencimento, cobranca.status);
 
                             const options = [
                                 {
@@ -135,95 +160,77 @@ export function CobrancasTable({
                             ];
 
                             return (
-                                <TableRow key={cobranca.id} className={cn(isCancelled && "opacity-60")}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <StreamingLogo
-                                                name={cobranca.assinatura.streaming.catalogo.nome}
-                                                iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
-                                                color={cobranca.assinatura.streaming.catalogo.corPrimaria}
-                                                size="sm"
-                                                rounded="md"
-                                            />
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-gray-900 leading-tight">
-                                                    {cobranca.assinatura.participante.nome}
-                                                </span>
-                                                <span className="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">
-                                                    {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className="text-xs font-medium">
-                                            {formatDate(cobranca.createdAt).split(',')[0]}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex flex-col items-center">
-                                            <span className={cn(
-                                                "text-xs font-medium",
-                                                atrasada ? "text-red-600 font-bold" : "text-gray-700"
-                                            )}>
-                                                {formatDate(cobranca.dataVencimento)}
-                                            </span>
-                                            {atrasada && (
-                                                <div className="flex items-center gap-1 text-[9px] text-red-500 font-black uppercase tracking-tighter leading-none mt-0.5">
-                                                    <Clock size={8} />
-                                                    ATRASADA
+                                <TableRow key={cobranca.id} className={cn(isCancelled && "opacity-60", "group")}>
+                                    {!isCompact && (
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <StreamingLogo
+                                                    name={cobranca.assinatura.streaming.catalogo.nome}
+                                                    iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
+                                                    color={cobranca.assinatura.streaming.catalogo.corPrimaria}
+                                                    size="sm"
+                                                    rounded="md"
+                                                />
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-900 leading-tight">
+                                                        {cobranca.assinatura.participante.nome}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">
+                                                        {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                                                    </span>
                                                 </div>
-                                            )}
-                                            {!atrasada && cobranca.status === 'pendente' && (
-                                                <>
-                                                    {isToday(new Date(cobranca.dataVencimento)) ? (
-                                                        <div className="flex items-center gap-1 text-[9px] text-orange-500 font-black uppercase tracking-tighter leading-none mt-0.5">
-                                                            <Clock size={8} />
-                                                            VENCE HOJE
-                                                        </div>
-                                                    ) : (() => {
-                                                        const dias = differenceInDays(startOfDay(new Date(cobranca.dataVencimento)), startOfDay(new Date()));
-                                                        return dias > 0 ? (
-                                                            <div className="flex items-center gap-1 text-[9px] text-blue-500 font-black uppercase tracking-tighter leading-none mt-0.5">
-                                                                <Clock size={8} />
-                                                                FALTAM {dias} DIAS
-                                                            </div>
-                                                        ) : null;
-                                                    })()}
-                                                </>
-                                            )}
-                                        </div>
+                                            </div>
+                                        </TableCell>
+                                    )}
+
+                                    {isCompact && (
+                                        <TableCell className="px-4 py-3">
+                                            <BillingPeriodCell inicio={cobranca.periodoInicio} fim={cobranca.periodoFim} />
+                                        </TableCell>
+                                    )}
+
+                                    {!isCompact && (
+                                        <TableCell className="text-center font-medium text-xs text-gray-500">
+                                            {formatDate(cobranca.createdAt).split(',')[0]}
+                                        </TableCell>
+                                    )}
+
+                                    <TableCell className="px-4 py-3">
+                                        <BillingDueDateCell data={cobranca.dataVencimento} status={cobranca.status} />
                                     </TableCell>
+
                                     <TableCell className="text-center">
                                         <StatusBadge status={cobranca.status} className="scale-75" />
                                     </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className="text-sm font-black text-gray-700">
+
+                                    {!isCompact && (
+                                        <TableCell className="text-center text-sm font-black text-gray-700">
                                             {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento).split(',')[0] : "-"}
-                                        </span>
+                                        </TableCell>
+                                    )}
+
+                                    <TableCell className="px-4 py-3">
+                                        <BillingValueCell
+                                            valor={cobranca.valor}
+                                            valorMensal={cobranca.assinatura?.valor || fallbackValorMensal}
+                                        />
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-black text-gray-900 text-sm leading-tight">
-                                                {format(Number(cobranca.valor))}
-                                            </span>
-                                            <span className="text-[10px] text-gray-400 font-medium">
-                                                {format(Number(cobranca.assinatura.valor))} / mês
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex flex-col items-center gap-0.5">
-                                            <span className="text-[9px] font-black uppercase text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-100">
-                                                {cobranca.gatewayProvider || "Manual"}
-                                            </span>
-                                            {cobranca.gatewayTransactionId && (
-                                                <span className="text-[9px] text-gray-400 font-mono truncate max-w-[60px]" title={cobranca.gatewayTransactionId}>
-                                                    ID:{cobranca.gatewayTransactionId.slice(-6)}
+
+                                    {!isCompact && (
+                                        <TableCell className="text-center">
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className="text-[9px] font-black uppercase text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-100">
+                                                    {cobranca.gatewayProvider || "Manual"}
                                                 </span>
-                                            )}
-                                        </div>
-                                    </TableCell>
+                                                {cobranca.gatewayTransactionId && (
+                                                    <span className="text-[9px] text-gray-400 font-mono truncate max-w-[60px]" title={cobranca.gatewayTransactionId}>
+                                                        ID:{cobranca.gatewayTransactionId.slice(-6)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    )}
+
                                     <TableCell className="text-center">
                                         <Dropdown options={options} />
                                     </TableCell>

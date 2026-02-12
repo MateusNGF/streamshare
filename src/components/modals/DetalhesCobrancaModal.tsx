@@ -56,12 +56,16 @@ export function DetalhesCobrancaModal({
                             {format(Number(cobranca.valor)).replace('R$', '').trim()}
                         </h2>
                         <div className="flex flex-col items-center gap-2 mt-4">
-                            <p className="text-xs font-bold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-2">
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
                                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                Referência: {new Date(cobranca.periodoInicio).toLocaleString('pt-BR', { month: 'long' })}
-                                {new Date(cobranca.periodoInicio).getFullYear() !== new Date().getFullYear() && ` ${new Date(cobranca.periodoInicio).getFullYear()}`}
-                            </p>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Período:</span>
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-700 uppercase">
+                                    <span>{new Date(cobranca.periodoInicio).toLocaleString('pt-BR', { month: 'short', year: '2-digit' })}</span>
+                                    <span className="text-gray-300">|</span>
+                                    <span>{new Date(cobranca.periodoFim).toLocaleString('pt-BR', { month: 'short', year: '2-digit' })}</span>
+                                </div>
+                            </div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mt-1">
                                 ({format(Number(cobranca.assinatura.valor))} / mês)
                             </p>
                         </div>

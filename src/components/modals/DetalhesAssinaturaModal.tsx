@@ -6,11 +6,12 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useModalDetails } from "@/hooks/useModalDetails";
 import { ParticipantSection } from "./shared/ParticipantSection";
-import { ChargesHistoryTable } from "./shared/ChargesHistoryTable";
+import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
 import { cn } from "@/lib/utils";
 import {
     CreditCard,
-    AlertTriangle
+    AlertTriangle,
+    History
 } from "lucide-react";
 import { SubscriptionWithCharges } from "@/types/subscription.types";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
@@ -179,8 +180,21 @@ export function DetalhesAssinaturaModal({
                     </div>
                 )}
 
-                {/* 4. Histórico de Cobranças */}
-                <ChargesHistoryTable charges={assinatura.cobrancas} />
+                {/* 4. Histórico de Cobranças (Reuso de Tabela) */}
+                <div className="space-y-3 pt-2">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-2">
+                        <History size={12} /> Histórico Recente
+                    </h4>
+                    <CobrancasTable
+                        cobrancas={assinatura.cobrancas}
+                        variant="compact"
+                        fallbackValorMensal={Number(assinatura.valor)}
+                        onViewDetails={() => { }}
+                        onConfirmPayment={() => { }}
+                        onSendWhatsApp={() => { }}
+                        onCancel={() => { }}
+                    />
+                </div>
 
                 {/* Footer de Ação (Close) */}
                 <div className="flex justify-end pt-2 border-t border-gray-50">
