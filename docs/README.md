@@ -1,34 +1,37 @@
-# Documentação StreamShare
+# 📖 Central de Documentação StreamShare
 
-Bem-vindo à documentação oficial do projeto StreamShare.
+Esta central organiza todo o conhecimento técnico e de negócio do ecossistema StreamShare.
 
-## Índice de Documentos
+## 🏗️ Core & Arquitetura
 
-### Configuração e Setup
-- **[Guia de Instalação e Execução](./COMO_RODAR.md)**: Passo-a-passo para configurar o ambiente e rodar o projeto.
-- **[Banco de Dados](./DATABASE.md)**: Documentação do schema e relacionamentos.
+Portal técnico para desenvolvedores.
 
-### Integrações
-- **[WhatsApp Integration](./WHATSAPP_INTEGRATION.md)**: Documentação completa da integração WhatsApp/Twilio com fluxos, diagramas e API reference.
-- **[Email Configuration](./EMAIL_CONFIGURATION.md)**: Configuração de envio de emails.
-- **[Email Setup](./EMAIL_SETUP.md)**: Setup detalhado de serviços de email.
+- **[Guia de Setup](./setup/COMO_RODAR.md)**: Comece por aqui para rodar o projeto localmente.
+- **[Auditoria & Viabilidade](./AUDITORIA_E_DOCUMENTACAO.md)**: Análise profunda de arquitetura, fluxos e regras de negócio.
+- **[Modelo de Dados](./DATABASE.md)**: Schema Prisma, relacionamentos e isolamento multi-tenant.
+- **[Changelog Guidelines](./CHANGELOG_GUIDELINES.md)**: Padrões para escrita de atualizações públicas e internas.
 
-### Design e UI/UX
-- **[Design System](./DESIGN_SYSTEM.md)**: Guia completo de UI/UX, cores, tipografia, componentes e padrões de layout.
-- **[Componentes Reutilizáveis](./REUSABLE_COMPONENTS.md)**: PageContainer, PageHeader e componentes de loading.
-- **[Loading States](./LOADING_STATES.md)**: Guia completo de estados de carregamento, Skeleton, Spinner e loading.tsx.
-- **[Responsividade e Acessibilidade](./RESPONSIVENESS_ACCESSIBILITY.md)**: Diretrizes de design responsivo e acessível.
+## 🎨 Design System & Frontend
 
-### Funcionalidades
-- **[Sistema de Autenticação](./AUTHENTICATION_SYSTEM.md)**: Documentação do sistema de autenticação.
-- **[Estrutura de Rotas](./ROUTE_STRUCTURE.md)**: Organização e estrutura de rotas do projeto.
-- **[Criação de Assinaturas](./SUBSCRIPTION_CREATION.md)**: Fluxo de criação de assinaturas.
-- **[Sistema de Faturamento (Frontend)](./frontend/BILLING_SYSTEM.md)**: Componentes, hooks e lógica financeira do frontend.
+Diretrizes visuais para manter a experiência premium.
 
-### Referência
-- **[Especificação do Projeto](./PROJECT_SPEC.md)**: Especificação completa do projeto.
-- **[Orientação de Domínio](./orientação.txt)**: (Arquivo original) Resumo consolidado das regras de negócio e entidades.
+- **[Design System](./frontend/DESIGN_SYSTEM.md)**: Cores, tipografia e tokens visuais.
+- **[Padrões Financeiros UI](./frontend/PADROES_FINANCEIROS_UI.md)**: Como exibir moedas, períodos e tabelas financeiras.
+- **[Componentes Reutilizáveis](./frontend/REUSABLE_COMPONENTS.md)**: Biblioteca de componentes core (Layout, Cards, Tables).
+- **[Estados de Carregamento](./frontend/LOADING_STATES.md)**: Implementação de Skeletons e Spinners.
 
-## Visão Rápida
+## ⚙️ Funcionalidades & Integrações
 
-O StreamShare é um sistema para gestão de grupos de assinatura compartilhada. Este repositório contém o código fonte completo, organizado em monorepo.
+- **[Integração WhatsApp](./WHATSAPP_INTEGRATION.md)**: Fluxos automáticos via Twilio e manuais via API Link.
+- **[Sistema de Faturamento](./frontend/BILLING_SYSTEM.md)**: Lógica de geração de cobranças e conciliação.
+- **[Configuração de Email](./EMAIL_CONFIGURATION.md)**: Setup de provedores e templates.
+
+## 💼 Regras de Negócio
+
+- **[Dicionário de Regras](./business_rules/BUSINESS_RULES.md)**: Limites de vagas, cálculos de lucro e ciclos de faturamento.
+- **[Casos de Uso](./AUDITORIA_E_DOCUMENTACAO.md#22-mapeamento-de-casos-de-uso-uc)**: Fluxos principais da aplicação.
+
+---
+
+> [!TIP]
+> **Consistência é chave.** Antes de criar um novo componente financeiro, revise os [Padrões de UI](./frontend/PADROES_FINANCEIROS_UI.md) para garantir que ícones e tipografia seguem o padrão dashboard premium.

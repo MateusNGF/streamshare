@@ -51,8 +51,34 @@ const { format } = useCurrency();
 return <span>{format(valor)} / mês</span>;
 ```
 
-## 4. Checklist de UI para Novos Componentes
+## 4. Padrões de Tabelas (Grids)
+
+As tabelas de Assinaturas e Cobranças foram padronizadas para oferecer uma densidade de informação alta com clareza visual.
+
+### 4.1. Cabeçalhos Iconizados
+Cada coluna deve possuir um ícone representativo (`lucide-react`, size 12) ao lado do título para facilitar o escaneamento visual.
+- **Tipografia**: `text-[10px]`, `font-black`, `uppercase`, `tracking-wider`.
+- **Cores**: Texto `gray-500`, Ícones `gray-400`.
+
+### 4.2. Estrutura de Colunas (Assinaturas)
+1. **Participante**: Nome e e-mail.
+2. **Status**: Badge logo após o participante para visibilidade imediata.
+3. **Serviço**: Logo do streaming + Apelido/Nome.
+4. **Frequência**: Badge estilizada.
+5. **Vigência**: Período em linha (`MMM/yy | MMM/yy`) com `whitespace-nowrap`.
+6. **Valores**: Valor do ciclo e valor mensal (sub-texto).
+
+### 4.3. Estrutura de Colunas (Cobranças)
+1. **Ações**: Início da tabela para acesso rápido.
+2. **Participante**: Identificação.
+3. **Emissão**: Data de criação do registro.
+4. **Período**: Datas de início e fim da vigência.
+5. **Vencimento**: Data limite.
+6. **Status**: Situação do pagamento.
+7. **Valor**: Valor total da cobrança.
+
+## 5. Checklist de UI para Novos Componentes
 - [ ] O valor principal tem o sufixo `/ mês`?
-- [ ] Se o plano não for mensal, o valor total da cobrança está visível ou acessível (ex: badge ou sub-texto)?
-- [ ] Os labels seguem a terminologia "Custo Mensal" e "Valor do Ciclo"?
+- [ ] Os cabeçalhos de tabela possuem ícones de 12px e tipografia uppercase?
+- [ ] A coluna de Status está posicionada estrategicamente?
 - [ ] Os cálculos foram validados com `financeiro-utils.ts`?

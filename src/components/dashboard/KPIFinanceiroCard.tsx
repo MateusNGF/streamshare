@@ -8,6 +8,7 @@ interface KPIFinanceiroCardProps {
     valor: number;
     icone: LucideIcon;
     cor: "primary" | "green" | "red";
+    isMoeda?: boolean;
 }
 
 const corConfig: Record<"primary" | "green" | "red", { iconBg: string; shadow: string; icon: string }> = {
@@ -28,7 +29,7 @@ const corConfig: Record<"primary" | "green" | "red", { iconBg: string; shadow: s
     }
 };
 
-export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor }: KPIFinanceiroCardProps) {
+export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = true }: KPIFinanceiroCardProps) {
     const { format } = useCurrency();
     const config = corConfig[cor];
 
@@ -38,7 +39,7 @@ export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor }: KPIFinanc
                 <Icon className="w-6 h-6" />
             </div>
             <div className="text-3xl font-black text-gray-900 mb-1 tracking-tight">
-                {format(valor)}
+                {isMoeda ? format(valor) : valor.toLocaleString('pt-BR')}
             </div>
             <div className="text-gray-400 text-xs font-bold uppercase tracking-widest">{titulo}</div>
         </div>

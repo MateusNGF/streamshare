@@ -183,18 +183,21 @@ export default function AssinaturasClient({
                     valor={kpis.totalAtivas}
                     icone={Activity}
                     cor="green"
+                    isMoeda={false}
                 />
                 <KPIFinanceiroCard
                     titulo="Suspensas"
                     valor={kpis.totalSuspensas}
                     icone={XCircle}
                     cor="red"
+                    isMoeda={false}
                 />
                 <KPIFinanceiroCard
                     titulo="Total Histórico"
                     valor={kpis.totalAssinaturas}
                     icone={Users}
                     cor="primary"
+                    isMoeda={false}
                 />
             </div>
 
