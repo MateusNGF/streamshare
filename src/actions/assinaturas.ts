@@ -48,6 +48,10 @@ export async function getAssinaturas(filters?: {
     status?: string;
     streamingId?: string;
     searchTerm?: string;
+    dataInicioRange?: string; // JSON string with from/to
+    valorMin?: number;
+    valorMax?: number;
+    hasWhatsapp?: boolean;
 }) {
     const { contaId } = await getContext();
 
@@ -67,12 +71,38 @@ export async function getAssinaturas(filters?: {
 
     if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
         whereClause.participante = {
-            contaId,
+            ...whereClause.participante,
             nome: {
                 contains: filters.searchTerm,
                 mode: 'insensitive'
             }
         };
+    }
+
+    if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
+        whereClause.valor = {};
+        if (filters.valorMin !== undefined) whereClause.valor.gte = filters.valorMin;
+        if (filters.valorMax !== undefined) whereClause.valor.lte = filters.valorMax;
+    }
+
+    if (filters?.hasWhatsapp !== undefined) {
+        whereClause.participante = {
+            ...whereClause.participante,
+            whatsappNumero: filters.hasWhatsapp ? { not: null } : null
+        };
+    }
+
+    if (filters?.dataInicioRange) {
+        try {
+            const range = JSON.parse(filters.dataInicioRange);
+            if (range.from || range.to) {
+                whereClause.dataInicio = {};
+                if (range.from) whereClause.dataInicio.gte = new Date(range.from);
+                if (range.to) whereClause.dataInicio.lte = new Date(range.to);
+            }
+        } catch (e) {
+            console.error("Error parsing dataInicioRange", e);
+        }
     }
 
     return prisma.assinatura.findMany({

@@ -1,16 +1,25 @@
 import { getKPIsFinanceiros, getCobrancas } from "@/actions/cobrancas";
+import { getStreamings } from "@/actions/streamings";
 import { CobrancasClient } from "./CobrancasClient";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export default async function CobrancasPage() {
-    const [kpis, cobrancas, whatsappConfig] = await Promise.all([
+    const [kpis, cobrancas, whatsappConfig, streamings] = await Promise.all([
         getKPIsFinanceiros(),
         getCobrancas(),
-        checkWhatsAppConfig()
+        checkWhatsAppConfig(),
+        getStreamings()
     ]);
 
-    return <CobrancasClient kpis={kpis} cobrancasIniciais={cobrancas} whatsappConfigurado={whatsappConfig} />;
+    return (
+        <CobrancasClient
+            kpis={kpis}
+            cobrancasIniciais={cobrancas}
+            whatsappConfigurado={whatsappConfig}
+            streamings={streamings}
+        />
+    );
 }
 
 async function checkWhatsAppConfig(): Promise<boolean> {

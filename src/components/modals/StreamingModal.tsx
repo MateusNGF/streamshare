@@ -14,6 +14,7 @@ import { ZodIssue } from "zod";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getNextStreamingNumber } from "@/actions/streamings";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { QuantityInput } from "@/components/ui/QuantityInput";
 
 interface StreamingModalProps {
     isOpen: boolean;
@@ -263,14 +264,14 @@ export function StreamingModal({
                                 error={errors.valorIntegral}
                                 required
                             />
-                            <Input
+                            <QuantityInput
                                 label="Limite de Vagas"
-                                type="number"
                                 value={formData.limiteParticipantes}
-                                onChange={(e) => handleChange("limiteParticipantes", e.target.value)}
-                                placeholder="5"
+                                onValueChange={(val) => handleChange("limiteParticipantes", String(val))}
                                 error={errors.limiteParticipantes}
-                                required
+                                min={1}
+                                max={10} // Just as a safe default for common shared accounts
+                                className="w-full"
                             />
                         </div>
 

@@ -18,9 +18,10 @@ interface CobrancasClientProps {
     };
     cobrancasIniciais: any[];
     whatsappConfigurado: boolean;
+    streamings: any[];
 }
 
-export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
+export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings }: CobrancasClientProps) {
     const {
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
@@ -29,6 +30,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
         confirmPaymentModalOpen, setConfirmPaymentModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedCobranca,
+        vencimentoRange, setVencimentoRange,
+        pagamentoRange, setPagamentoRange,
+        valorRange, setValorRange,
+        hasWhatsappFilter, setHasWhatsappFilter,
         filteredCobrancas,
         handleConfirmarPagamento,
         executePaymentConfirmation,
@@ -83,19 +88,66 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                             key: "status",
                             type: "select",
                             label: "Status",
-                            className: "w-full md:w-[200px]",
+                            className: "w-full md:w-[150px]",
                             options: [
                                 { label: "Pendente", value: "pendente" },
                                 { label: "Pago", value: "pago" },
                                 { label: "Atrasado", value: "atrasado" },
                                 { label: "Cancelado", value: "cancelado" }
                             ]
+                        },
+                        {
+                            key: "streaming",
+                            type: "select",
+                            label: "Streaming",
+                            className: "w-full md:w-[200px]",
+                            options: streamings.map(s => ({
+                                label: s.apelido || s.catalogo.nome,
+                                value: s.id.toString(),
+                                icon: s.catalogo.iconeUrl,
+                                color: s.catalogo.corPrimaria
+                            }))
+                        },
+                        {
+                            key: "vencimento",
+                            type: "dateRange",
+                            label: "Data de Vencimento",
+                            placeholder: "Filtrar vencimento"
+                        },
+                        {
+                            key: "pagamento",
+                            type: "dateRange",
+                            label: "Data de Pagamento",
+                            placeholder: "Filtrar pagamento"
+                        },
+                        {
+                            key: "valor",
+                            type: "numberRange",
+                            label: "Intervalo de Valor",
+                            placeholder: "Valor entre..."
+                        },
+                        {
+                            key: "hasWhatsapp",
+                            type: "switch",
+                            label: "Apenas com WhatsApp",
+                            className: "md:w-auto"
                         }
                     ]}
-                    values={{ search: searchTerm, status: statusFilter }}
+                    values={{
+                        search: searchTerm,
+                        status: statusFilter,
+                        vencimento: vencimentoRange,
+                        pagamento: pagamentoRange,
+                        valor: valorRange,
+                        hasWhatsapp: hasWhatsappFilter
+                    }}
                     onChange={(key: string, value: string) => {
                         if (key === "search") setSearchTerm(value);
                         if (key === "status") setStatusFilter(value);
+                        if (key === "vencimento") setVencimentoRange(value);
+                        if (key === "pagamento") setPagamentoRange(value);
+                        if (key === "valor") setValorRange(value);
+                        if (key === "hasWhatsapp") setHasWhatsappFilter(value);
                     }}
                     onClear={handleClearFilters}
                 />

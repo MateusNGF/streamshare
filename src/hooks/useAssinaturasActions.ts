@@ -22,6 +22,9 @@ export function useAssinaturasActions(streamings: any[]) {
     const searchTerm = searchParams.get("search") || "";
     const statusFilter = searchParams.get("status") || "all";
     const streamingFilter = searchParams.get("streaming") || "all";
+    const criacaoRange = searchParams.get("criacao") || "";
+    const valorRange = searchParams.get("valor") || "";
+    const hasWhatsappFilter = searchParams.get("hasWhatsapp") || "false";
 
     const handleFilterChange = (key: string, value: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -90,7 +93,7 @@ export function useAssinaturasActions(streamings: any[]) {
         loading, cancelling,
 
         // Filters
-        filters: { searchTerm, statusFilter, streamingFilter },
+        filters: { searchTerm, statusFilter, streamingFilter, criacaoRange, valorRange, hasWhatsappFilter },
         handleFilterChange,
         handleClearFilters,
 

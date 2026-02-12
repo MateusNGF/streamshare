@@ -67,8 +67,28 @@ export default function AssinaturasClient({
             className: "w-full md:w-[200px]",
             options: streamings.map(s => ({
                 label: s.apelido || s.catalogo.nome,
-                value: s.id.toString()
+                value: s.id.toString(),
+                icon: s.catalogo.iconeUrl,
+                color: s.catalogo.corPrimaria
             }))
+        },
+        {
+            key: "criacao",
+            type: "dateRange",
+            label: "Data de Início",
+            placeholder: "Filtrar por data"
+        },
+        {
+            key: "valor",
+            type: "numberRange",
+            label: "Intervalo de Valor",
+            placeholder: "Valor entre..."
+        },
+        {
+            key: "hasWhatsapp",
+            type: "switch",
+            label: "Apenas com WhatsApp",
+            className: "md:w-auto"
         }
     ];
 
@@ -130,7 +150,10 @@ export default function AssinaturasClient({
                         values={{
                             search: filterValues.searchTerm,
                             status: filterValues.statusFilter,
-                            streaming: filterValues.streamingFilter
+                            streaming: filterValues.streamingFilter,
+                            criacao: filterValues.criacaoRange || "",
+                            valor: filterValues.valorRange || "",
+                            hasWhatsapp: filterValues.hasWhatsappFilter || "false"
                         }}
                         onChange={handleFilterChange}
                         onClear={handleClearFilters}

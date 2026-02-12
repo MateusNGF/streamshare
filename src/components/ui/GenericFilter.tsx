@@ -5,16 +5,22 @@ import { Input } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { Switch } from "@/components/ui/switch";
 import { Modal } from "@/components/ui/Modal";
+import { DateRangePicker } from "@/components/ui/DateRangePicker";
+import { DateRange } from "react-day-picker";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { cn } from "@/lib/utils";
 
 export interface FilterOption {
     label: string;
     value: string;
+    icon?: string | null;
+    color?: string;
 }
 
 export interface FilterConfig {
     key: string;
-    type: "text" | "select" | "switch";
+    type: "text" | "select" | "switch" | "dateRange" | "numberRange";
     label?: string; // Placeholder for inputs, Label for selects
     placeholder?: string;
     options?: FilterOption[]; // For select
@@ -130,14 +136,25 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                         value={localValues[filter.key] || "all"}
                         onValueChange={(val) => setLocalValues(filter.key, val)}
                     >
-                        <SelectTrigger className="bg-gray-50/50 border-gray-100 rounded-xl hover:border-gray-200 transition-all">
+                        <SelectTrigger className="bg-gray-50/50 border-gray-100 rounded-xl hover:border-gray-200 transition-all h-auto py-2">
                             <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"} />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
                             <SelectItem value="all">Todos</SelectItem>
                             {filter.options?.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
+                                    <div className="flex items-center gap-3">
+                                        {(opt.icon || opt.color) && (
+                                            <StreamingLogo
+                                                name={opt.label}
+                                                iconeUrl={opt.icon}
+                                                color={opt.color || "#ccc"}
+                                                size="xs"
+                                                rounded="md"
+                                            />
+                                        )}
+                                        <span className="font-medium">{opt.label}</span>
+                                    </div>
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -159,6 +176,64 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                     >
                         {filter.label}
                     </label>
+                </div>
+            );
+        }
+        if (filter.type === "dateRange") {
+            let range: DateRange | undefined = undefined;
+            try {
+                if (localValues[filter.key]) {
+                    const parsed = JSON.parse(localValues[filter.key]);
+                    range = {
+                        from: parsed.from ? new Date(parsed.from) : undefined,
+                        to: parsed.to ? new Date(parsed.to) : undefined
+                    };
+                }
+            } catch (e) {
+                console.error("Error parsing date range", e);
+            }
+
+            return (
+                <div key={filter.key} className={cn("w-full", filter.className)}>
+                    <DateRangePicker
+                        value={range}
+                        onChange={(newRange) => {
+                            setLocalValues(filter.key, newRange ? JSON.stringify(newRange) : "");
+                        }}
+                        placeholder={filter.label || filter.placeholder}
+                    />
+                </div>
+            );
+        }
+
+        if (filter.type === "numberRange") {
+            let minVal = 0;
+            let maxVal = 200; // Safe default for values
+            let currentVal: [number, number] = [0, 200];
+
+            try {
+                if (localValues[filter.key]) {
+                    const parsed = JSON.parse(localValues[filter.key]);
+                    currentVal = [
+                        parsed.min !== undefined ? Number(parsed.min) : 0,
+                        parsed.max !== undefined ? Number(parsed.max) : 200
+                    ];
+                }
+            } catch (e) { }
+
+            return (
+                <div key={filter.key} className={cn("px-2 pt-2 pb-6", filter.className)}>
+                    <RangeSlider
+                        min={0}
+                        max={500}
+                        step={5}
+                        value={currentVal}
+                        onValueChange={(vals) => {
+                            const newRange = { min: vals[0], max: vals[1] };
+                            setLocalValues(filter.key, JSON.stringify(newRange));
+                        }}
+                        formatValue={(v) => `R$ ${v}`}
+                    />
                 </div>
             );
         }

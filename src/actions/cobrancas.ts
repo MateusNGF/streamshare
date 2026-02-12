@@ -21,6 +21,9 @@ export async function getCobrancas(filters?: {
     participanteId?: number;
     mes?: number;
     ano?: number;
+    valorMin?: number;
+    valorMax?: number;
+    hasWhatsapp?: boolean;
 }) {
     const { contaId } = await getContext();
 
@@ -45,6 +48,22 @@ export async function getCobrancas(filters?: {
         const startDate = new Date(filters.ano, filters.mes - 1, 1);
         const endDate = new Date(filters.ano, filters.mes, 0, 23, 59, 59);
         where.periodoFim = { gte: startDate, lte: endDate };
+    }
+
+    if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
+        where.valor = {};
+        if (filters.valorMin !== undefined) where.valor.gte = filters.valorMin;
+        if (filters.valorMax !== undefined) where.valor.lte = filters.valorMax;
+    }
+
+    if (filters?.hasWhatsapp !== undefined) {
+        where.assinatura = {
+            ...where.assinatura,
+            participante: {
+                ...where.assinatura?.participante,
+                whatsappNumero: filters.hasWhatsapp ? { not: null } : null
+            }
+        };
     }
 
     const cobrancas = await prisma.cobranca.findMany({

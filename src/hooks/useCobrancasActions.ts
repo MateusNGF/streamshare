@@ -12,6 +12,10 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     // Filters State
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [vencimentoRange, setVencimentoRange] = useState("");
+    const [pagamentoRange, setPagamentoRange] = useState("");
+    const [valorRange, setValorRange] = useState("");
+    const [hasWhatsappFilter, setHasWhatsappFilter] = useState("false");
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -25,7 +29,45 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const filteredCobrancas = cobrancasIniciais.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-        return matchesSearch && matchesStatus;
+
+        let matchesVencimento = true;
+        if (vencimentoRange) {
+            try {
+                const range = JSON.parse(vencimentoRange);
+                const date = new Date(c.dataVencimento);
+                if (range.from && date < new Date(range.from)) matchesVencimento = false;
+                if (range.to && date > new Date(range.to)) matchesVencimento = false;
+            } catch (e) { }
+        }
+
+        let matchesPagamento = true;
+        if (pagamentoRange && c.dataPagamento) {
+            try {
+                const range = JSON.parse(pagamentoRange);
+                const date = new Date(c.dataPagamento);
+                if (range.from && date < new Date(range.from)) matchesPagamento = false;
+                if (range.to && date > new Date(range.to)) matchesPagamento = false;
+            } catch (e) { }
+        } else if (pagamentoRange && !c.dataPagamento) {
+            matchesPagamento = false;
+        }
+
+        let matchesValor = true;
+        if (valorRange) {
+            try {
+                const range = JSON.parse(valorRange);
+                const valor = Number(c.valor);
+                if (range.min && valor < Number(range.min)) matchesValor = false;
+                if (range.max && valor > Number(range.max)) matchesValor = false;
+            } catch (e) { }
+        }
+
+        let matchesWhatsapp = true;
+        if (hasWhatsappFilter === "true") {
+            matchesWhatsapp = !!c.assinatura.participante.whatsappNumero;
+        }
+
+        return matchesSearch && matchesStatus && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
     });
 
     const handleConfirmarPagamento = (id: number) => {
@@ -87,12 +129,20 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const handleClearFilters = () => {
         setSearchTerm("");
         setStatusFilter("all");
+        setVencimentoRange("");
+        setPagamentoRange("");
+        setValorRange("");
+        setHasWhatsappFilter("false");
     };
 
     return {
         // States
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
+        vencimentoRange, setVencimentoRange,
+        pagamentoRange, setPagamentoRange,
+        valorRange, setValorRange,
+        hasWhatsappFilter, setHasWhatsappFilter,
         loading,
 
         // Modal States
