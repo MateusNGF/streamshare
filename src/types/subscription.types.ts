@@ -55,7 +55,7 @@ export interface SubscriptionWithCharges {
         periodoInicio: Date;
         periodoFim: Date;
         status: string;
-        dataVencimento: Date | null;
+        dataVencimento: Date;
         gatewayTransactionId: string | null;
         gatewayProvider: string | null;
         tentativas: number;

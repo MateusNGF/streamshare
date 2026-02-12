@@ -1,5 +1,5 @@
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { addMonths, lastDayOfMonth, isAfter, getDate, setDate } from "date-fns";
+import { addMonths, lastDayOfMonth, isAfter, getDate, setDate, addDays } from "date-fns";
 
 export const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
     mensal: 1,
@@ -14,6 +14,8 @@ export const FREQUENCIA_MULTIPLICADORES: Record<FrequenciaPagamento, number> = {
     semestral: 1 / INTERVALOS_MESES.semestral,
     anual: 1 / INTERVALOS_MESES.anual,
 };
+
+export const PRAZO_VENCIMENTO_PADRAO_DIAS = 5;
 
 /**
  * Calculates the next due date based on the payment frequency.
@@ -66,8 +68,8 @@ export function calcularValorPeriodo(
 /**
  * Checks if a charge is overdue.
  * 
- * @param dataVencimento - The due date
- * @returns true if the current date is past the due date
+ * @param dataVencimento - The due date (usually the start of the period for prepaid)
+ * @returns true if the current date is strictly past the due date
  */
 export function estaAtrasado(dataVencimento: Date): boolean {
     return isAfter(new Date(), dataVencimento);
@@ -106,4 +108,13 @@ export function calcularTotalCiclo(valorMensal: Prisma.Decimal | number | string
     const valor = new Prisma.Decimal(valorMensal.toString());
     const multiplier = INTERVALOS_MESES[frequencia];
     return arredondarMoeda(valor.mul(multiplier));
+}
+/**
+ * Calculates the standard due date for a new charge (5 days after emission).
+ * 
+ * @param dataEmissao - The charge creation date (defaults to now)
+ * @returns The standard due date
+ */
+export function calcularDataVencimentoPadrao(dataEmissao: Date = new Date()): Date {
+    return addDays(dataEmissao, PRAZO_VENCIMENTO_PADRAO_DIAS);
 }

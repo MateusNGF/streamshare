@@ -4,11 +4,9 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 
 import { StatusCobranca } from "@prisma/client";
-import { criarNotificacao } from "@/actions/notificacoes";
 import {
     calcularProximoVencimento,
-    calcularValorPeriodo,
-    estaAtrasado
+    calcularValorPeriodo, calcularDataVencimentoPadrao
 } from "@/lib/financeiro-utils";
 import type { EnviarNotificacaoResult } from "@/types/whatsapp";
 import type { CurrencyCode } from "@/types/currency.types";
@@ -61,7 +59,7 @@ export async function getCobrancas(filters?: {
                 }
             }
         },
-        orderBy: { periodoFim: "desc" }
+        orderBy: { dataVencimento: "desc" }
     });
 
     return cobrancas;
@@ -106,7 +104,7 @@ export async function criarCobrancaInicial(assinaturaId: number) {
             periodoFim,
             status: assinatura.cobrancaAutomaticaPaga ? "pago" : "pendente",
             dataPagamento: assinatura.cobrancaAutomaticaPaga ? new Date() : null,
-            dataVencimento: periodoInicio
+            dataVencimento: calcularDataVencimentoPadrao()
         }
     });
 
@@ -300,7 +298,7 @@ export async function getKPIsFinanceiros() {
                 participante: { contaId }
             },
             status: { in: [StatusCobranca.pendente, StatusCobranca.atrasado] },
-            periodoFim: { lt: agora }
+            dataVencimento: { lt: agora }
         },
         _sum: {
             valor: true
@@ -409,14 +407,14 @@ export async function enviarNotificacaoCobranca(
 
     switch (cobranca.status) {
         case 'pendente': {
-            const diasRestantes = differenceInDays(new Date(cobranca.periodoFim), new Date());
+            const diasRestantes = differenceInDays(cobranca.dataVencimento, new Date());
             tipo = 'cobranca_vencendo' as any;
             mensagem = whatsappTemplates.cobrancaVencendo(participante, streaming, valor, diasRestantes);
             break;
         }
 
         case 'atrasado': {
-            const diasAtraso = differenceInDays(new Date(), new Date(cobranca.periodoFim));
+            const diasAtraso = differenceInDays(new Date(), cobranca.dataVencimento);
             tipo = 'cobranca_atrasada' as any;
             mensagem = whatsappTemplates.cobrancaAtrasada(participante, streaming, valor, diasAtraso);
             break;

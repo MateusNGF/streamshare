@@ -45,6 +45,16 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-12",
+        date: "12/02/2026",
+        changes: [
+            { category: "Faturamento", description: "Unificação da lógica de vencimento padrão (D+5) e integração total com o sistema de assinaturas e renovações." },
+            { category: "Integridade", description: "Obrigatoriedade do campo de vencimento no banco de dados, garantindo consistência absoluta em todos os registros financeiros." },
+            { category: "Arquitetura", description: "Refatoração do serviço de faturamento seguindo princípios de design sólido, aumentando a robustez contra falhas." },
+            { category: "Interface", description: "Aprimoramento do acompanhamento de faturas com indicadores claros de prazos, atrasos e status em tempo real." },
+        ],
+    },
+    {
         id: "2026-02-11",
         date: "11/02/2026",
         changes: [

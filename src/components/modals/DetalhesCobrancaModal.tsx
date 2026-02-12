@@ -106,7 +106,7 @@ export function DetalhesCobrancaModal({
                                     <span className="text-xs font-semibold">Vencimento</span>
                                 </div>
                                 <span className="text-sm font-bold text-gray-900">
-                                    {formatDate(cobranca.periodoFim)}
+                                    {formatDate(cobranca.dataVencimento)}
                                 </span>
                             </div>
                             <div className="w-full h-px bg-gray-50" />

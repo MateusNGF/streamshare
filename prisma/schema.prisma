@@ -279,7 +279,7 @@ model Cobranca {
   periodoFim           DateTime
   dataPagamento        DateTime?
   status               StatusCobranca @default(pendente)
-  dataVencimento       DateTime?
+  dataVencimento       DateTime
   comprovanteUrl       String?
   gatewayTransactionId String?
   gatewayProvider      String?

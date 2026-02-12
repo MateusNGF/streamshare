@@ -6,7 +6,8 @@ import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
 import { criarCobrancaInicial } from "./cobrancas";
 import {
     calcularProximoVencimento,
-    calcularValorPeriodo
+    calcularValorPeriodo,
+    calcularDataVencimentoPadrao
 } from "@/lib/financeiro-utils";
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
@@ -109,6 +110,7 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 periodoFim,
                 status: data.cobrancaAutomaticaPaga ? "pago" : "pendente",
                 dataPagamento: data.cobrancaAutomaticaPaga ? new Date() : null,
+                dataVencimento: calcularDataVencimentoPadrao()
             }
         });
 
@@ -209,6 +211,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                         periodoFim,
                         status: isCobrancaPaga ? "pago" : "pendente",
                         dataPagamento: isCobrancaPaga ? new Date() : null,
+                        dataVencimento: calcularDataVencimentoPadrao()
                     }
                 });
 

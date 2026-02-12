@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { calcularProximoVencimento, calcularValorPeriodo } from "@/lib/financeiro-utils";
+import { calcularProximoVencimento, calcularValorPeriodo, calcularDataVencimentoPadrao } from "@/lib/financeiro-utils";
 import { BillingDecision, ChargeCreationData, SubscriptionWithCharges } from "@/types/subscription.types";
 import { isBefore, differenceInDays } from "date-fns";
 
@@ -55,11 +55,11 @@ export const billingService = {
             const assinaturasParaSuspender: number[] = [];
             const agora = new Date();
 
-            // 2. Mark pending charges with periodoFim < agora as "atrasado"
+            // 2. Mark pending charges with dataVencimento < agora as "atrasado"
             await tx.cobranca.updateMany({
                 where: {
                     status: "pendente",
-                    periodoFim: { lt: agora }
+                    dataVencimento: { lt: agora }
                 },
                 data: { status: "atrasado" }
             });
@@ -91,51 +91,76 @@ export const billingService = {
     }
 };
 
-// --- Helper Functions ---
+// --- Helper Functions (SOLID) ---
 
+/**
+ * Main switch-board for subscription decisions
+ */
 function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora: Date): BillingDecision {
     const ultimaCobranca = assinatura.cobrancas[0];
     if (!ultimaCobranca) return { action: 'NONE' };
 
-    // Check scheduled cancellation
+    // 1. Check for specific exit conditions (Cancellations)
     if (assinatura.dataCancelamento) {
-        if (isBefore(ultimaCobranca.periodoFim, agora)) {
-            return { action: 'CANCEL_SCHEDULED' };
-        }
-        return { action: 'NONE' };
+        return checkScheduledCancellation(ultimaCobranca, agora);
     }
 
-    // --- Inadimplência Check (Anti-Dívida Infinita) ---
-    // Se houver cobranças pendentes ou atrasadas já vencidas (passou do periodoFim)
+    // 2. Check for overdue issues (Inadimplência)
+    const inadimplenciaDecision = checkInadimplencia(assinatura, agora);
+    if (inadimplenciaDecision.action !== 'NONE') {
+        return inadimplenciaDecision;
+    }
+
+    // 3. Check if it's time to generate a new charge (Renewal)
+    return checkRenewalOpportunity(assinatura, ultimaCobranca, agora);
+}
+
+/**
+ * SRP: Decide if subscription should be cancelled today based on end of paid period
+ */
+function checkScheduledCancellation(ultimaCobranca: any, agora: Date): BillingDecision {
+    if (isBefore(ultimaCobranca.periodoFim, agora)) {
+        return { action: 'CANCEL_SCHEDULED' };
+    }
+    return { action: 'NONE' };
+}
+
+/**
+ * SRP: Decide if subscription should be suspended due to debt (Anti-Infinite Debt)
+ */
+function checkInadimplencia(assinatura: SubscriptionWithCharges, agora: Date): BillingDecision {
     const cobrancasVencidas = assinatura.cobrancas.filter(c =>
-        (c.status === "pendente" || c.status === "atrasado") && isBefore(c.periodoFim, agora)
+        (c.status === "pendente" || c.status === "atrasado") && isBefore(c.dataVencimento, agora)
     );
 
     if (cobrancasVencidas.length > 0) {
-        // Se a cobrança mais antiga pendente venceu há mais de 3 dias, suspender acesso
-        const maisAntigaVencida = cobrancasVencidas.sort((a, b) =>
-            a.periodoFim.getTime() - b.periodoFim.getTime()
+        // Sort to find the oldest one
+        const maisAntigaVencida = [...cobrancasVencidas].sort((a, b) =>
+            a.dataVencimento.getTime() - b.dataVencimento.getTime()
         )[0];
 
-        if (differenceInDays(agora, maisAntigaVencida.periodoFim) >= 3) {
+        // Grace period: Suspend after 3 days of ACTUAL overdue (from dataVencimento)
+        if (differenceInDays(agora, maisAntigaVencida.dataVencimento) >= 3) {
             return { action: 'SUSPEND' };
         }
 
-        // Se está vencida mas em período de graça (< 3 dias), 
-        // apenas não gera nova cobrança (Idempotência temporal)
+        // Within grace period: Wait, don't generate new charges
         return { action: 'NONE' };
     }
 
-    // --- Renewal Logic ---
-    const diasParaVencimento = differenceInDays(ultimaCobranca.periodoFim, agora);
+    return { action: 'NONE' };
+}
 
-    if (diasParaVencimento <= 5) {
+/**
+ * SRP: Decide if it's time to create a new charge for the next cycle
+ */
+function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobranca: any, agora: Date): BillingDecision {
+    const diasParaFimPeriodo = differenceInDays(ultimaCobranca.periodoFim, agora);
+
+    // Renew 5 days before the PREVIOUS period ends
+    if (diasParaFimPeriodo <= 5) {
         const periodoInicio = ultimaCobranca.periodoFim;
-        const periodoFim = calcularProximoVencimento(
-            periodoInicio,
-            assinatura.frequencia,
-            assinatura.dataInicio
-        );
+        const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia, assinatura.dataInicio);
         const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
 
         return {
@@ -145,7 +170,7 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
                 valor,
                 periodoInicio,
                 periodoFim,
-                dataVencimento: periodoInicio
+                dataVencimento: calcularDataVencimentoPadrao(agora) // 5 days from emission (agora)
             }
         };
     }
@@ -217,7 +242,7 @@ async function executeBillingTransactionWithTx(
                 ...data,
                 status: shouldAutoPay ? "pago" : "pendente",
                 dataPagamento: shouldAutoPay ? new Date() : null,
-                dataVencimento: data.dataVencimento || data.periodoInicio
+                dataVencimento: data.dataVencimento
             }
         });
         renovadas++;

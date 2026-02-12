@@ -136,7 +136,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
     };
 
     const isOverdue = (date: Date, status: string) => {
-        return status === 'pendente' && new Date() > new Date(date);
+        return (status === 'pendente' || status === "atrasado") && new Date() > new Date(date);
     };
 
     const getCobrancaOptions = (cobranca: any) => {
@@ -262,7 +262,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                         <CobrancaCard
                             key={cobranca.id}
                             cobranca={cobranca}
-                            isOverdue={isOverdue(cobranca.periodoFim, cobranca.status)}
+                            isOverdue={isOverdue(cobranca.dataVencimento, cobranca.status)}
                             formatDate={formatDate}
                             formatPeriod={formatPeriod}
                             onViewDetails={() => {
