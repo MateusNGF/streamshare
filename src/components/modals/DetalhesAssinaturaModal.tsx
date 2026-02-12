@@ -4,19 +4,13 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useModalDetails } from "@/hooks/useModalDetails";
+import { ParticipantSection } from "./shared/ParticipantSection";
+import { ChargesHistoryTable } from "./shared/ChargesHistoryTable";
 import { cn } from "@/lib/utils";
 import {
-    Calendar,
-    User,
     CreditCard,
-    AlertTriangle,
-    Clock,
-    History,
-    CheckCircle2,
-    XCircle,
-    Mail,
-    MessageCircle,
-    ExternalLink
+    AlertTriangle
 } from "lucide-react";
 import { SubscriptionWithCharges } from "@/types/subscription.types";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
@@ -34,22 +28,12 @@ export function DetalhesAssinaturaModal({
     assinatura
 }: DetalhesAssinaturaModalProps) {
     const { format } = useCurrency();
+    const { formatDate } = useModalDetails();
 
     if (!assinatura) return null;
 
-    const formatDate = (date: Date | string | null, includeTime = false) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            ...(includeTime && { hour: '2-digit', minute: '2-digit' })
-        });
-    };
-
     // Cálculo de valor do ciclo
     const valorCiclo = calcularTotalCiclo(assinatura.valor, assinatura.frequencia);
-    const isNonMonthly = assinatura.frequencia !== 'mensal';
     const isCancelled = assinatura.status === 'cancelada';
 
     return (
@@ -101,48 +85,10 @@ export function DetalhesAssinaturaModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* Bloco A: Participante & Contato */}
-                    <div className="space-y-3">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-2">
-                            <User size={12} /> Dados do Cliente
-                        </h4>
-                        <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-primary shadow-sm flex-shrink-0">
-                                    <User size={20} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-gray-900 truncate">{assinatura.participante.nome}</p>
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                        <Mail size={12} />
-                                        <span className="truncate">{assinatura.participante.email || "Sem e-mail"}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <a
-                                    href={assinatura.participante.whatsappNumero ? `https://wa.me/55${assinatura.participante.whatsappNumero.replace(/\D/g, '')}` : "#"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={cn(
-                                        "flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all",
-                                        assinatura.participante.whatsappNumero
-                                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    )}
-                                >
-                                    <MessageCircle size={14} />
-                                    WhatsApp
-                                </a>
-                                <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 flex flex-col justify-center">
-                                    <p className="text-[9px] font-bold text-gray-400 uppercase leading-none">Número</p>
-                                    <p className="text-[11px] font-bold text-gray-700 font-mono mt-1">
-                                        {assinatura.participante.whatsappNumero || "N/A"}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <ParticipantSection
+                        participant={assinatura.participante}
+                        className="bg-slate-50 border border-slate-100 p-4 rounded-xl"
+                    />
 
                     {/* Bloco B: Dados Financeiros do Ciclo */}
                     <div className="space-y-3">
@@ -190,72 +136,8 @@ export function DetalhesAssinaturaModal({
                     </div>
                 )}
 
-                {/* 4. Histórico de Cobranças (Tabela Limpa) */}
-                <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between px-1">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1 flex items-center gap-2">
-                            <History size={12} /> Histórico Recente
-                        </h4>
-                    </div>
-
-                    <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm bg-white">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead className="bg-gray-50 border-b border-gray-100">
-                                    <tr>
-                                        <th className="px-4 py-3 font-bold text-gray-400 uppercase tracking-wider">Período</th>
-                                        <th className="px-4 py-3 font-bold text-gray-400 uppercase tracking-wider">Vencimento</th>
-                                        <th className="px-4 py-3 font-bold text-gray-400 uppercase tracking-wider text-right">Valor</th>
-                                        <th className="px-4 py-3 font-bold text-gray-400 uppercase tracking-wider text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {assinatura.cobrancas?.slice(0, 5).map((cob) => {
-                                        const isPaid = cob.status === 'pago';
-                                        const isOverdue = cob.status === 'atrasado'; // ou logica de data
-
-                                        return (
-                                            <tr key={cob.id} className="hover:bg-blue-50/30 transition-colors group">
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-gray-700">
-                                                            {new Date(cob.periodoInicio).toLocaleString('pt-BR', { month: 'short' }).toUpperCase()}
-                                                            - {new Date(cob.periodoFim).toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).toUpperCase()}
-                                                        </span>
-                                                        <span className="text-[10px] text-gray-400 font-medium">Ref. {new Date(cob.periodoInicio).getFullYear()}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <Calendar size={12} className="text-gray-300" />
-                                                        <span className={cn("font-bold text-sm", isOverdue && !isPaid ? "text-red-500" : "text-gray-700")}>
-                                                            {new Date(cob.dataVencimento).toLocaleDateString('pt-BR')}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 font-black text-gray-900 text-right text-sm">
-                                                    {format(Number(cob.valor))}
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <div className="flex justify-center">
-                                                        <StatusBadge status={cob.status} className="scale-75" />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {(!assinatura.cobrancas || assinatura.cobrancas.length === 0) && (
-                                        <tr>
-                                            <td colSpan={4} className="px-4 py-8 text-center text-gray-400 italic">
-                                                Nenhum registro encontrado.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                {/* 4. Histórico de Cobranças */}
+                <ChargesHistoryTable charges={assinatura.cobrancas} />
 
                 {/* Footer de Ação (Close) */}
                 <div className="flex justify-end pt-2 border-t border-gray-50">

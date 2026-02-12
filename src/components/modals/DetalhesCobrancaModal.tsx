@@ -1,25 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useModalDetails } from "@/hooks/useModalDetails";
+import { ParticipantSection } from "./shared/ParticipantSection";
 import { cn } from "@/lib/utils";
 import {
-    Calendar,
-    CreditCard,
     Hash,
-    Copy,
     CheckCircle2,
     Globe,
     AlertOctagon,
     Clock,
-    User,
-    Mail,
-    MessageCircle,
     Receipt,
-    Wallet
+    Wallet,
+    Copy
 } from "lucide-react";
 
 interface DetalhesCobrancaModalProps {
@@ -34,27 +30,9 @@ export function DetalhesCobrancaModal({
     cobranca
 }: DetalhesCobrancaModalProps) {
     const { format } = useCurrency();
-    const [copied, setCopied] = useState(false);
+    const { copied, handleCopy, formatDate } = useModalDetails();
 
     if (!cobranca) return null;
-
-    const formatDate = (date: Date | string | null, includeTime = false) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            ...(includeTime && { hour: '2-digit', minute: '2-digit' })
-        });
-    };
-
-    const handleCopyId = () => {
-        if (cobranca.gatewayTransactionId) {
-            navigator.clipboard.writeText(cobranca.gatewayTransactionId);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
 
     return (
         <Modal
@@ -65,7 +43,7 @@ export function DetalhesCobrancaModal({
         >
             <div className="space-y-6">
 
-                {/* 1. HERO SECTION: Valor e Status (Foco na Clareza) */}
+                {/* 1. HERO SECTION: Valor e Status */}
                 <div className="flex flex-col items-center justify-center py-8 border-b border-gray-50 relative">
                     <StatusBadge status={cobranca.status} className="mb-4 shadow-sm" />
 
@@ -90,35 +68,11 @@ export function DetalhesCobrancaModal({
                     </div>
                 </div>
 
-                {/* 2. Participante & Contato (Humanização) */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-gray-100 shadow-sm text-primary">
-                            <User size={20} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-wider">Cliente</p>
-                            <h3 className="font-bold text-gray-900 truncate">{cobranca.assinatura.participante.nome}</h3>
-                            <p className="text-xs text-gray-500 truncate font-medium">
-                                {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                            </p>
-                        </div>
-                        <a
-                            href={cobranca.assinatura.participante.whatsappNumero ? `https://wa.me/55${cobranca.assinatura.participante.whatsappNumero.replace(/\D/g, '')}` : "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                                "flex items-center justify-center gap-2 p-2.5 rounded-xl transition-all shadow-sm",
-                                cobranca.assinatura.participante.whatsappNumero
-                                    ? "bg-green-500 text-white hover:bg-green-600"
-                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            )}
-                            title="Conversar no WhatsApp"
-                        >
-                            <MessageCircle size={20} />
-                        </a>
-                    </div>
-                </div>
+                {/* 2. Participante & Contato */}
+                <ParticipantSection
+                    participant={cobranca.assinatura.participante}
+                    streamingInfo={cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                />
 
                 {/* 3. Grid de Informações Técnicas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -171,7 +125,7 @@ export function DetalhesCobrancaModal({
 
                                 {cobranca.gatewayTransactionId ? (
                                     <button
-                                        onClick={handleCopyId}
+                                        onClick={() => handleCopy(cobranca.gatewayTransactionId)}
                                         className="flex items-center gap-1.5 text-[11px] text-gray-600 hover:text-primary transition-colors bg-gray-50 hover:bg-blue-50 px-2 py-0.5 rounded border border-gray-100 group max-w-[120px]"
                                         title="Copiar ID"
                                     >
@@ -186,7 +140,7 @@ export function DetalhesCobrancaModal({
                     </div>
                 </div>
 
-                {/* 4. Taxas e Líquido (Se disponível em metadata) */}
+                {/* 4. Taxas e Líquido */}
                 {cobranca.metadataJson && (cobranca.metadataJson.fee || cobranca.metadataJson.net) && (
                     <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 grid grid-cols-2 gap-4">
                         <div className="flex items-center gap-3">
@@ -210,7 +164,7 @@ export function DetalhesCobrancaModal({
                     </div>
                 )}
 
-                {/* 4. Footer de Alerta (Somente se necessário) */}
+                {/* 4. Footer de Alerta */}
                 {cobranca.deletedAt && (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 animate-in fade-in slide-in-from-bottom-2">
                         <AlertOctagon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -228,7 +182,6 @@ export function DetalhesCobrancaModal({
                     <Button onClick={onClose} variant="outline" className="w-full">
                         Fechar
                     </Button>
-                    {/* Espaço para botões de ação futura (Ex: Reenviar recibo) */}
                 </div>
             </div>
         </Modal>
