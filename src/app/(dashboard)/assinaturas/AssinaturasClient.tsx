@@ -1,39 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Eye, XCircle, Trash } from "lucide-react";
+import { Plus, Search, XCircle, Users, Activity, TrendingUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AssinaturaCard } from "@/components/assinaturas/AssinaturaCard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useToast } from "@/hooks/useToast";
-import { useCurrency } from "@/hooks/useCurrency";
 import { createBulkAssinaturas, cancelarAssinatura } from "@/actions/assinaturas";
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
 import { CancelarAssinaturaModal } from "@/components/modals/CancelarAssinaturaModal";
 import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
+import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
-import { Dropdown } from "@/components/ui/Dropdown";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
     participantes: any[];
     streamings: any[];
+    kpis: {
+        totalAtivas: number;
+        totalSuspensas: number;
+        receitaMensalEstimada: number;
+        totalAssinaturas: number;
+    };
 }
 
 export default function AssinaturasClient({
     initialSubscriptions,
     participantes,
-    streamings
+    streamings,
+    kpis
 }: AssinaturasClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
-    const { format } = useCurrency();
+
+    // States
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -41,7 +46,7 @@ export default function AssinaturasClient({
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [cancelling, setCancelling] = useState(false);
 
-    // Get current filter values from URL
+    // Filters
     const searchTerm = searchParams.get("search") || "";
     const statusFilter = searchParams.get("status") || "all";
     const streamingFilter = searchParams.get("streaming") || "all";
@@ -78,13 +83,11 @@ export default function AssinaturasClient({
 
     const handleFilterChange = (key: string, value: string) => {
         const params = new URLSearchParams(searchParams.toString());
-
         if (value === "" || value === "all") {
             params.delete(key);
         } else {
             params.set(key, value);
         }
-
         router.push(`/assinaturas?${params.toString()}`);
     };
 
@@ -105,7 +108,6 @@ export default function AssinaturasClient({
 
     const handleCancelAssinatura = async (reason: string) => {
         if (!selectedAssinatura) return;
-
         setCancelling(true);
         try {
             await cancelarAssinatura(selectedAssinatura.id, reason);
@@ -120,7 +122,6 @@ export default function AssinaturasClient({
         }
     };
 
-    // Prepare streamings data for the multiple modal
     const streamingsWithOcupados = streamings.map(s => ({
         id: s.id,
         nome: s.apelido || s.catalogo.nome,
@@ -131,95 +132,106 @@ export default function AssinaturasClient({
         ocupados: s._count?.assinaturas || 0,
         cor: s.catalogo.corPrimaria,
         iconeUrl: s.catalogo.iconeUrl,
-        frequenciasHabilitadas: s.frequenciasHabilitadas || "mensal,trimestral,semestral,anual"
+        frequenciasHabilitadas: s.frequenciasHabilitadas
     }));
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case "ativa": return "Ativa";
-            case "suspensa": return "Suspensa";
-            case "cancelada": return "Cancelada";
-            default: return status;
-        }
-    };
 
     return (
         <PageContainer>
             <PageHeader
                 title="Assinaturas"
-                description="Gerencie as assinaturas dos participantes."
+                description="Gerencie as assinaturas dos participantes e monitore a receita."
                 action={
-                    <div className="flex gap-3">
-                        <Button
-                            onClick={() => setIsMultipleModalOpen(true)}
-                            className="gap-2 bg-primary text-white shadow-lg shadow-primary/25"
-                        >
-                            <Plus size={20} />
-                            <span className="hidden sm:inline">Nova Assinatura</span>
-                            <span className="sm:hidden">Nova</span>
-                        </Button>
-                    </div>
+                    <Button
+                        onClick={() => setIsMultipleModalOpen(true)}
+                        className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all"
+                    >
+                        <Plus size={20} />
+                        <span className="hidden sm:inline">Nova Assinatura</span>
+                        <span className="sm:hidden">Nova</span>
+                    </Button>
                 }
             />
 
+            {/* KPIs Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <KPIFinanceiroCard
+                    titulo="Receita Estimada"
+                    valor={kpis.receitaMensalEstimada}
+                    icone={TrendingUp}
+                    cor="primary"
+                />
+                <KPIFinanceiroCard
+                    titulo="Assinaturas Ativas"
+                    valor={kpis.totalAtivas}
+                    icone={Activity}
+                    cor="green"
+                />
+                <KPIFinanceiroCard
+                    titulo="Suspensas"
+                    valor={kpis.totalSuspensas}
+                    icone={XCircle}
+                    cor="red"
+                />
+                <KPIFinanceiroCard
+                    titulo="Total Histórico"
+                    valor={kpis.totalAssinaturas}
+                    icone={Users}
+                    cor="primary"
+                />
+            </div>
 
-            <div className="bg-card text-card-foreground shadow-sm">
-                <div className="space-y-4">
+            {/* Main Content Area */}
+            <div className="space-y-6">
+
+                {/* Filters */}
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                     <GenericFilter
                         filters={filters}
-                        values={{
-                            search: searchTerm,
-                            status: statusFilter,
-                            streaming: streamingFilter
-                        }}
+                        values={{ search: searchTerm, status: statusFilter, streaming: streamingFilter }}
                         onChange={handleFilterChange}
-                        onClear={() => {
-                            router.push('/assinaturas');
-                        }}
+                        onClear={() => router.push('/assinaturas')}
                     />
+                </div>
 
-                    <div className="flex flex-col gap-3">
-                        {/* Header da Lista - Desktop Only */}
-                        <div className="hidden lg:flex items-center gap-4 px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 bg-gray-50/30 rounded-t-lg">
-                            <div className="min-w-[240px]">Participante / WhatsApp</div>
-                            <div className="min-w-[120px]">Serviço</div>
-                            <div className="min-w-[120px]">Criada em</div>
-                            <div className="flex-1">Custo Mensal / Ciclo</div>
-                            <div className="min-w-[100px]">Status</div>
-                            <div className="ml-auto w-12 text-right px-2">Ações</div>
-                        </div>
+                {/* List Header (Desktop Only) */}
+                <div className="hidden md:grid grid-cols-[240px_1fr_100px_120px_120px_auto] gap-4 px-6 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    <div>Participante</div>
+                    <div className="pl-4">Serviço</div>
+                    <div className="text-center">Status</div>
+                    <div className="text-right pr-4">Valor</div>
+                    <div className="text-right pr-4">Total Grupo</div>
+                    <div className="text-right">Ações</div>
+                </div>
 
-                        {initialSubscriptions.length > 0 ? (
-                            initialSubscriptions.map((sub) => (
-                                <AssinaturaCard
-                                    key={sub.id}
-                                    sub={sub}
-                                    onViewDetails={() => {
-                                        setSelectedAssinatura(sub);
-                                        setDetailsModalOpen(true);
-                                    }}
-                                    onCancel={() => {
-                                        setSelectedAssinatura(sub);
-                                        setCancelModalOpen(true);
-                                    }}
-                                />
-                            ))
-                        ) : (
-                            <div className="col-span-full">
-                                <EmptyState
-                                    title="Nenhuma assinatura encontrada"
-                                    description="Não encontramos nenhuma assinatura com os filtros selecionados."
-                                    icon={Search}
-                                    className="border-0 shadow-none py-12"
-                                />
-                            </div>
-                        )}
-                    </div>
+                {/* List Items */}
+                <div className="flex flex-col gap-3">
+                    {initialSubscriptions.length > 0 ? (
+                        initialSubscriptions.map((sub) => (
+                            <AssinaturaCard
+                                key={sub.id}
+                                sub={sub}
+                                onViewDetails={() => {
+                                    setSelectedAssinatura(sub);
+                                    setDetailsModalOpen(true);
+                                }}
+                                onCancel={() => {
+                                    setSelectedAssinatura(sub);
+                                    setCancelModalOpen(true);
+                                }}
+                            />
+                        ))
+                    ) : (
+                        <EmptyState
+                            title="Nenhuma assinatura encontrada"
+                            description="Tente ajustar os filtros ou crie uma nova assinatura."
+                            icon={Search}
+                            className="bg-gray-50/50 border-dashed"
+                        />
+                    )}
                 </div>
             </div>
 
-
-
+            {/* Modals */}
             <AssinaturaMultiplaModal
                 isOpen={isMultipleModalOpen}
                 onClose={() => setIsMultipleModalOpen(false)}

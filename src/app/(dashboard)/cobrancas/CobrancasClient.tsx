@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, CheckCircle, AlertCircle, MessageCircle, Check, Search, XCircle, Eye } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, Search } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { confirmarPagamento, enviarNotificacaoCobranca, cancelarCobranca } from "@/actions/cobrancas";
 import { useToast } from "@/hooks/useToast";
-import { useCurrency } from "@/hooks/useCurrency";
 import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
-import { Dropdown } from "@/components/ui/Dropdown";
 import { useRouter } from "next/navigation";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal";
 import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
@@ -33,17 +29,15 @@ interface CobrancasClientProps {
 
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }: CobrancasClientProps) {
     const toast = useToast();
-    const router = useRouter(); // Use router for refresh
-    const { format } = useCurrency();
+    const router = useRouter();
 
     // Filters State
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
-    // Data & UI State
+    // UI State
     const [cobrancas, setCobrancas] = useState(cobrancasIniciais);
     const [loading, setLoading] = useState(false);
-    const [sendingWhatsApp, setSendingWhatsApp] = useState<number | null>(null);
 
     // Modal State
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -57,6 +51,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
         return matchesSearch && matchesStatus;
     });
 
+    // --- Actions ---
+
     const handleConfirmarPagamento = (id: number) => {
         setSelectedCobrancaId(id);
         setConfirmPaymentModalOpen(true);
@@ -64,14 +60,12 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
 
     const executePaymentConfirmation = async () => {
         if (!selectedCobrancaId) return;
-
         setLoading(true);
         try {
             await confirmarPagamento(selectedCobrancaId);
             toast.success("Pagamento confirmado com sucesso!");
             setConfirmPaymentModalOpen(false);
             router.refresh();
-            // Optimistic update could happen here but refresh is safer for sync
             setTimeout(() => window.location.reload(), 500);
         } catch (error) {
             toast.error("Erro ao confirmar pagamento");
@@ -87,7 +81,6 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
 
     const confirmCancellation = async () => {
         if (!selectedCobrancaId) return;
-
         setLoading(true);
         try {
             await cancelarCobranca(selectedCobrancaId);
@@ -103,11 +96,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
     };
 
     const handleEnviarWhatsApp = async (cobrancaId: number) => {
-        setSendingWhatsApp(cobrancaId);
         try {
             const result = await enviarNotificacaoCobranca(cobrancaId);
-
-            // Se retornou link manual, abrir em nova aba
             if (result.manualLink) {
                 window.open(result.manualLink, '_blank');
                 toast.info("Link do WhatsApp aberto! Envie a mensagem manualmente.");
@@ -116,17 +106,13 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
             }
         } catch (error: any) {
             toast.error(error.message || "Erro ao enviar notificação");
-        } finally {
-            setSendingWhatsApp(null);
         }
     };
 
+    // --- Helpers ---
+
     const formatDate = (date: Date) => {
-        return new Date(date).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
     const formatPeriod = (start: Date, end: Date) => {
@@ -139,55 +125,15 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
         return (status === 'pendente' || status === "atrasado") && new Date() > new Date(date);
     };
 
-    const getCobrancaOptions = (cobranca: any) => {
-        const options = [];
-
-        options.push({
-            label: "Detalhes",
-            icon: <Eye size={16} />,
-            onClick: () => {
-                setSelectedCobrancaId(cobranca.id);
-                setDetailsModalOpen(true);
-            },
-        });
-
-        if (cobranca.assinatura.participante.whatsappNumero) {
-            options.push({
-                label: "Enviar WhatsApp",
-                icon: <MessageCircle size={16} />,
-                onClick: () => handleEnviarWhatsApp(cobranca.id),
-            });
-        }
-
-        const isPendenteOrAtrasado = cobranca.status === "pendente" || cobranca.status === "atrasado";
-
-        if (isPendenteOrAtrasado) {
-            options.push({
-                label: "Confirmar Pagamento",
-                icon: <Check size={16} />,
-                onClick: () => handleConfirmarPagamento(cobranca.id),
-                variant: "success" as const,
-            });
-            options.push({
-                label: "Cancelar Cobrança",
-                icon: <XCircle size={16} />,
-                onClick: () => handleCancelarCobranca(cobranca.id),
-                variant: "danger" as const,
-            });
-        }
-
-        return options;
-    };
-
     return (
         <PageContainer>
             <PageHeader
                 title="Cobranças"
-                description="Gestão financeira de pagamentos"
+                description="Controle de pagamentos e envios de cobrança."
             />
 
-            {/* KPIs Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* KPIs Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <KPIFinanceiroCard
                     titulo="Total a Receber"
                     valor={kpis.totalPendente}
@@ -209,7 +155,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6">
                 <GenericFilter
                     filters={[
                         {
@@ -243,20 +189,25 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 />
             </div>
 
-            {/* Charges Table */}
-            <div className="flex flex-col gap-3">
+            {/* Header da Tabela - Desktop */}
+            <div className="hidden md:grid grid-cols-[240px_120px_120px_100px_100px_auto] gap-5 px-8 pt-4 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                <div>Participante</div>
+                <div className="text-center">Vencimento</div>
+                <div className="text-center">Pagamento</div>
+                <div className="text-right">Valor</div>
+                <div className="text-center">Status</div>
+                <div className="text-right pr-2">Ações</div>
+            </div>
+
+            {/* Lista de Cobranças */}
+            <div className="flex flex-col gap-3 pb-20">
                 {filteredCobrancas.length === 0 ? (
-                    <div className="col-span-full">
-                        <EmptyState
-                            icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
-                            title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Nenhuma cobrança registrada"}
-                            description={
-                                searchTerm || statusFilter !== 'all'
-                                    ? "Não encontramos nenhuma cobrança com os filtros selecionados."
-                                    : "Crie assinaturas para participantes e as cobranças serão geradas automaticamente."
-                            }
-                        />
-                    </div>
+                    <EmptyState
+                        icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
+                        title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Tudo limpo!"}
+                        description="Nenhuma cobrança corresponde aos critérios atuais."
+                        className="bg-gray-50/50 border-dashed py-12"
+                    />
                 ) : (
                     filteredCobrancas.map((cobranca: any) => (
                         <CobrancaCard
@@ -277,7 +228,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 )}
             </div>
 
-            {/* Modal de Cancelamento */}
+            {/* Modals */}
             <CancelarCobrancaModal
                 isOpen={cancelModalOpen}
                 onClose={() => setCancelModalOpen(false)}
@@ -285,7 +236,6 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 loading={loading}
             />
 
-            {/* Modal de Confirmação de Pagamento */}
             <ConfirmarPagamentoModal
                 isOpen={confirmPaymentModalOpen}
                 onClose={() => setConfirmPaymentModalOpen(false)}
@@ -293,7 +243,6 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                 loading={loading}
             />
 
-            {/* Modal de Detalhes */}
             <DetalhesCobrancaModal
                 isOpen={detailsModalOpen}
                 onClose={() => {

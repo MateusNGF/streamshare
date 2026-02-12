@@ -1,11 +1,12 @@
 "use client";
 
-import { Eye, Trash, CalendarClock, CreditCard } from "lucide-react";
+import { Eye, Trash, CreditCard, MoreVertical, Smartphone, User } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { cn } from "@/lib/utils"; // Assumindo utilitário de classes
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface AssinaturaCardProps {
     sub: any;
@@ -16,14 +17,12 @@ interface AssinaturaCardProps {
 export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardProps) {
     const { format } = useCurrency();
 
-    // Helper para identificar status visualmente
     const isActive = sub.status === 'ativo';
     const isCancelled = sub.status === 'cancelada';
 
-    // Opções do menu
     const menuOptions = [
         {
-            label: "Detalhes da Assinatura",
+            label: "Ver Detalhes",
             icon: <Eye size={16} />,
             onClick: onViewDetails
         },
@@ -40,113 +39,114 @@ export function AssinaturaCard({ sub, onViewDetails, onCancel }: AssinaturaCardP
 
     return (
         <div className={cn(
-            "bg-white p-3 sm:p-4 rounded-2xl border transition-all group w-full flex items-center gap-3 sm:gap-5",
-            "hover:shadow-lg hover:border-gray-200",
-            // Alterar borda sutilmente baseada no status para feedback rápido
-            isCancelled ? "border-gray-100 opacity-75" : "border-gray-100"
+            "group relative bg-white rounded-xl border transition-all duration-200 w-full overflow-hidden",
+            "hover:shadow-md hover:border-primary/20",
+            isCancelled ? "border-gray-100 opacity-75 bg-gray-50/50" : "border-gray-200"
         )}>
+            {/* Indicador lateral de status (Visual Cue) */}
+            <div className={cn(
+                "absolute left-0 top-0 bottom-0 w-1",
+                isActive ? "bg-green-500" : isCancelled ? "bg-gray-300" : "bg-yellow-400"
+            )} />
 
-            {/* 1. Identidade Visual e Participante */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="relative flex-shrink-0">
-                    <StreamingLogo
-                        name={sub.streaming.catalogo.nome}
-                        iconeUrl={sub.streaming.catalogo.iconeUrl}
-                        color={sub.streaming.catalogo.corPrimaria}
-                        size="md"
-                        rounded="xl"
-                        className="shadow-sm"
-                    />
-                    {/* Micro-indicador de status para mobile (Lei de Hick: remove decisão de ler status) */}
-                    <div className={cn(
-                        "absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-white rounded-full sm:hidden",
-                        isActive ? "bg-green-500" : isCancelled ? "bg-red-400" : "bg-yellow-400"
-                    )} />
-                </div>
+            <div className="flex flex-col md:grid md:grid-cols-[240px_1fr_100px_120px_120px_auto] md:items-center p-4 pl-5 gap-4">
 
-                <div className="flex flex-col min-w-0 justify-center">
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate leading-tight">
-                        {sub.participante.nome}
-                    </h3>
+                {/* 1. Participante & Serviço (Combinado para Mobile, Separado visualmente no Desktop) */}
+                <div className="flex items-start md:items-center gap-3 w-full">
+                    <div className="relative">
+                        <StreamingLogo
+                            name={sub.streaming.catalogo.nome}
+                            iconeUrl={sub.streaming.catalogo.iconeUrl}
+                            color={sub.streaming.catalogo.corPrimaria}
+                            size="md"
+                            rounded="lg"
+                            className="shadow-sm"
+                        />
+                        {/* Status Dot apenas Mobile */}
+                        <div className={cn(
+                            "absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-white rounded-full md:hidden",
+                            isActive ? "bg-green-500" : isCancelled ? "bg-gray-400" : "bg-yellow-400"
+                        )} />
+                    </div>
 
-                    {/* Mobile: Mostra serviço aqui / Desktop: Mostra WhatsApp ou info secundária */}
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5 truncate">
-                        <span className="sm:hidden font-medium text-gray-600">
-                            {sub.streaming.apelido || sub.streaming.catalogo.nome}
-                        </span>
-                        <span className="hidden sm:inline">
-                            {sub.participante.whatsappNumero || "Sem contato"}
-                        </span>
+                    <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 text-sm truncate">
+                                {sub.participante.nome}
+                            </h3>
+                            {/* Badge de Serviço no Mobile ao lado do nome */}
+                            <span className="md:hidden text-[10px] font-medium px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full truncate max-w-[100px]">
+                                {sub.streaming.apelido || sub.streaming.catalogo.nome}
+                            </span>
+                        </div>
 
-                        {/* Indicador de Frequência (Visualmente distinto) */}
-                        {sub.frequencia !== 'mensal' && (
-                            <>
-                                <span className="text-gray-300">•</span>
-                                <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 rounded font-bold uppercase tracking-wider">
-                                    {sub.frequencia.slice(0, 3)}
-                                </span>
-                            </>
-                        )}
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                            <User size={12} />
+                            <span className="truncate">{sub.participante.email || "Sem email"}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* 2. Coluna Central: Info de Serviço (Desktop Only) */}
-            <div className="hidden md:flex flex-col w-[140px] border-l border-gray-50 pl-4">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
-                    Plano
-                </span>
-                <div className="flex items-center gap-1.5">
-                    <CreditCard size={12} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700 truncate">
+                {/* 2. Detalhes do Serviço (Desktop Only - Coluna Dedicada) */}
+                <div className="hidden md:flex flex-col min-w-0 border-l border-gray-100 pl-4">
+                    <span className="text-sm font-medium text-gray-700 truncate">
                         {sub.streaming.apelido || sub.streaming.catalogo.nome}
                     </span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                        <CreditCard size={10} className="text-gray-400" />
+                        <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                            {sub.frequencia}
+                        </span>
+                    </div>
                 </div>
-            </div>
 
-            {/* 3. Coluna Central: Datas (Desktop Only) */}
-            <div className="hidden lg:flex flex-col w-[120px]">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
-                    Início
-                </span>
-                <div className="flex items-center gap-1.5">
-                    <CalendarClock size={12} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-700">
-                        {new Date(sub.createdAt).toLocaleDateString('pt-BR')}
+                {/* 3. Status (Desktop Only) */}
+                <div className="hidden md:flex justify-center">
+                    <StatusBadge status={sub.status} className="scale-90" />
+                </div>
+
+                {/* 4. Valor (Layout Híbrido) */}
+                <div className="flex items-center justify-between md:flex-col md:items-end md:justify-center border-t border-gray-100 pt-3 md:pt-0 md:border-0">
+                    <div className="flex flex-col md:hidden">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Mensalidade</span>
+                        <StatusBadge status={sub.status} className="scale-75 origin-left -ml-1 mt-1" />
+                    </div>
+
+                    <div className="flex flex-col items-end">
+                        <span className={cn(
+                            "text-sm font-bold",
+                            isCancelled ? "text-gray-400 line-through" : "text-gray-900"
+                        )}>
+                            {format(Number(sub.valor))}
+                        </span>
+                        <span className="text-[10px] text-gray-400 hidden md:block">por pessoa</span>
+                    </div>
+                </div>
+
+                {/* 5. Valor Integral (Desktop Only - Contexto) */}
+                <div className="hidden md:flex flex-col items-end opacity-60">
+                    <span className="text-xs font-semibold text-gray-600">
+                        {format(Number(sub.streaming.valorIntegral))}
                     </span>
-                </div>
-            </div>
-
-            {/* 4. Financeiro e Status (Adaptativo) */}
-            <div className="flex flex-col items-end justify-center sm:items-start sm:w-[120px]">
-                <div className="flex items-baseline gap-1">
-                    <span className={cn(
-                        "text-sm sm:text-base font-black tracking-tight",
-                        isCancelled ? "text-gray-400 decoration-slate-400 line-through" : "text-gray-900"
-                    )}>
-                        {format(Number(sub.valor))}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-medium sm:hidden">/mês</span>
+                    <span className="text-[9px] text-gray-400 uppercase">Total Grupo</span>
                 </div>
 
-                {/* Status Badge (Desktop) vs Texto simples (Mobile) */}
-                <div className="hidden sm:block mt-1">
-                    <StatusBadge
-                        status={sub.status}
-                        className="scale-90 origin-left"
-                    />
+                {/* 6. Ações */}
+                <div className="flex justify-end gap-2 md:pl-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-400 hover:text-primary md:hidden"
+                        onClick={onViewDetails}
+                    >
+                        <Eye size={18} />
+                    </Button>
+                    <Dropdown options={menuOptions}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical size={16} className="text-gray-500" />
+                        </Button>
+                    </Dropdown>
                 </div>
-                {/* Texto de status sutil no mobile se não for ativo */}
-                {!isActive && (
-                    <span className="sm:hidden text-[9px] font-bold text-red-500 uppercase tracking-tight">
-                        {sub.status}
-                    </span>
-                )}
-            </div>
-
-            {/* 5. Ações (Fixo à Direita) */}
-            <div className="pl-2 border-l border-gray-50 sm:border-none">
-                <Dropdown options={menuOptions} />
             </div>
         </div>
     );

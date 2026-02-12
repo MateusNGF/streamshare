@@ -12,6 +12,36 @@ import {
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
+
+export async function getAssinaturasKPIs() {
+    const { contaId } = await getContext();
+
+    const stats = await prisma.assinatura.groupBy({
+        by: ['status'],
+        where: { participante: { contaId } },
+        _count: { id: true },
+        _sum: { valor: true }
+    });
+
+    const kpis = {
+        totalAtivas: 0,
+        totalSuspensas: 0,
+        receitaMensalEstimada: 0,
+        totalAssinaturas: 0
+    };
+
+    stats.forEach(stat => {
+        kpis.totalAssinaturas += stat._count.id;
+        if (stat.status === 'ativa') {
+            kpis.totalAtivas = stat._count.id;
+            kpis.receitaMensalEstimada = Number(stat._sum.valor || 0);
+        } else if (stat.status === 'suspensa') {
+            kpis.totalSuspensas = stat._count.id;
+        }
+    });
+
+    return kpis;
+}
 import { subscriptionValidator } from "@/services/subscription-validator";
 
 export async function getAssinaturas(filters?: {

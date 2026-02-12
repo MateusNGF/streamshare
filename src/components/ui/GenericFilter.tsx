@@ -106,15 +106,18 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
     const renderInput = (filter: FilterConfig, localValues: Record<string, string>, setLocalValues: (k: string, v: string) => void) => {
         if (filter.type === "text") {
             return (
-                <div key={filter.key} className={cn("relative w-full", filter.className)}>
+                <div key={filter.key} className={cn("relative w-full group", filter.className)}>
                     {filter.key.includes("search") || filter.key === "q" ? (
-                        <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
                     ) : null}
                     <Input
                         placeholder={filter.placeholder || filter.label}
                         value={localValues[filter.key] || ""}
                         onChange={(e) => setLocalValues(filter.key, e.target.value)}
-                        className={filter.key.includes("search") || filter.key === "q" ? "pl-9" : ""}
+                        className={cn(
+                            "bg-gray-50/50 border-gray-100 hover:border-gray-200 focus:bg-white transition-all rounded-xl",
+                            (filter.key.includes("search") || filter.key === "q") ? "pl-9" : ""
+                        )}
                     />
                 </div>
             );
@@ -127,10 +130,10 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                         value={localValues[filter.key] || "all"}
                         onValueChange={(val) => setLocalValues(filter.key, val)}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-gray-50/50 border-gray-100 rounded-xl hover:border-gray-200 transition-all">
                             <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
                             <SelectItem value="all">Todos</SelectItem>
                             {filter.options?.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
@@ -144,7 +147,7 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
         }
         if (filter.type === "switch") {
             return (
-                <div key={filter.key} className={cn("flex items-center space-x-2", filter.className)}>
+                <div key={filter.key} className={cn("flex items-center space-x-3 bg-gray-50/50 px-3 py-2 rounded-xl border border-gray-100", filter.className)}>
                     <Switch
                         id={filter.key}
                         checked={localValues[filter.key] === "true"}
@@ -152,7 +155,7 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                     />
                     <label
                         htmlFor={filter.key}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-semibold text-gray-600 cursor-pointer select-none"
                     >
                         {filter.label}
                     </label>

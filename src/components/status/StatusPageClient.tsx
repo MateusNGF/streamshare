@@ -48,10 +48,11 @@ const changelogData = [
         id: "2026-02-12",
         date: "12/02/2026",
         changes: [
-            { category: "Faturamento", description: "Unificação da lógica de vencimento padrão (D+5) e integração total com o sistema de assinaturas e renovações." },
-            { category: "Integridade", description: "Obrigatoriedade do campo de vencimento no banco de dados, garantindo consistência absoluta em todos os registros financeiros." },
-            { category: "Arquitetura", description: "Refatoração do serviço de faturamento seguindo princípios de design sólido, aumentando a robustez contra falhas." },
-            { category: "Interface", description: "Aprimoramento do acompanhamento de faturas com indicadores claros de prazos, atrasos e status em tempo real." },
+            { category: "Integridade", description: "Obrigatoriedade do campo de vencimento no banco de dados e migração de registros antigos para consistência absoluta." },
+            { category: "Design", description: "Modernização completa das páginas de faturamento com estética premium, glassmorphism e micro-interações." },
+            { category: "Dashboard", description: "Novos painéis de indicadores dinâmicos para acompanhamento em tempo real de receita e volume de assinaturas." },
+            { category: "Mobile", description: "Otimização total da interface para dispositivos móveis com layouts de grid resilientes e melhor legibilidade." },
+            { category: "Experiência", description: "Ações rápidas no desktop para notificações via WhatsApp e sistemas de filtragem aprimorados com suporte a modal." },
         ],
     },
     {

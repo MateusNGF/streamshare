@@ -1,5 +1,5 @@
 
-import { getAssinaturas } from "@/actions/assinaturas";
+import { getAssinaturas, getAssinaturasKPIs } from "@/actions/assinaturas";
 import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
 import AssinaturasClient from "./AssinaturasClient";
@@ -13,14 +13,15 @@ interface AssinaturasPageProps {
 }
 
 export default async function AssinaturasPage({ searchParams }: AssinaturasPageProps) {
-    const [assinaturas, participantes, streamings] = await Promise.all([
+    const [assinaturas, participantes, streamings, kpis] = await Promise.all([
         getAssinaturas({
             status: searchParams.status,
             streamingId: searchParams.streaming,
             searchTerm: searchParams.search
         }),
         getParticipantes(),
-        getStreamings()
+        getStreamings(),
+        getAssinaturasKPIs()
     ]);
 
     return (
@@ -28,6 +29,7 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
             initialSubscriptions={assinaturas}
             participantes={participantes}
             streamings={streamings}
+            kpis={kpis}
         />
     );
 }
