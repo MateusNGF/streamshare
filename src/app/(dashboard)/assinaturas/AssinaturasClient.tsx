@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, XCircle, Users, Activity, TrendingUp } from "lucide-react";
+import { Plus, Search, XCircle, Users, Activity, TrendingUp, Calendar, User } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -25,11 +25,13 @@ import {
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { Eye, Trash, CreditCard, AlertCircle } from "lucide-react";
+import { Eye, Trash, CreditCard, AlertCircle, MessageCircle, History as HistoryIcon } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { calcularTotalCiclo } from "@/lib/financeiro-utils";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { format as formatFN } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -215,12 +217,41 @@ export default function AssinaturasClient({
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader className="bg-gray-50/50">
-                                    <TableRow className="hover:bg-transparent">
-                                        <TableHead>Participante</TableHead>
-                                        <TableHead>Serviço</TableHead>
-                                        <TableHead className="text-center">Status</TableHead>
-                                        <TableHead className="text-right">Valores (Vigente / Ref.)</TableHead>
-                                        <TableHead className="w-[50px] text-center font-black">#</TableHead>
+                                    <TableRow className="hover:bg-transparent border-b border-gray-100">
+                                        <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                            <div className="flex items-center gap-2">
+                                                <User size={12} className="text-gray-400" />
+                                                Participante
+                                            </div>
+                                        </TableHead>
+                                        <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </TableHead>
+                                        <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                            <div className="flex items-center gap-2">
+                                                <Activity size={12} className="text-gray-400" />
+                                                Serviço
+                                            </div>
+                                        </TableHead>
+                                        <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <TrendingUp size={12} className="text-gray-400" />
+                                                Frequência
+                                            </div>
+                                        </TableHead>
+                                        <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <HistoryIcon size={12} className="text-gray-400" />
+                                                Vigência (Período)
+                                            </div>
+                                        </TableHead>
+                                        <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <CreditCard size={12} className="text-gray-400" />
+                                                Valores
+                                            </div>
+                                        </TableHead>
+                                        <TableHead className="w-[50px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -258,9 +289,12 @@ export default function AssinaturasClient({
                                             <TableRow key={sub.id} className={cn(isCancelled && "opacity-60")}>
                                                 <TableCell>
                                                     <div className="flex flex-col">
-                                                        <span className="font-bold text-gray-900">{sub.participante.nome}</span>
-                                                        <span className="text-[11px] text-gray-500 truncate max-w-[150px]">{sub.participante.email}</span>
+                                                        <span className="font-bold text-gray-900 leading-tight">{sub.participante.nome}</span>
+                                                        <span className="text-[11px] text-gray-500 truncate max-w-[150px]">{sub.participante.email || "-"}</span>
                                                     </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <StatusBadge status={sub.status} className="scale-75" />
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
@@ -271,26 +305,34 @@ export default function AssinaturasClient({
                                                             size="sm"
                                                             rounded="md"
                                                         />
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium text-gray-700 text-sm">
-                                                                {sub.streaming.apelido || sub.streaming.catalogo.nome}
-                                                            </span>
-                                                            <div className="flex items-center gap-1 text-[10px] text-gray-400 uppercase font-bold">
-                                                                <CreditCard size={10} />
-                                                                {sub.frequencia}
-                                                            </div>
-                                                        </div>
+                                                        <span className="font-medium text-gray-700 text-sm truncate max-w-[100px]">
+                                                            {sub.streaming.apelido || sub.streaming.catalogo.nome}
+                                                        </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    <StatusBadge status={sub.status} className="scale-90" />
+                                                    <div className="inline-flex items-center gap-1 text-[10px] text-primary uppercase font-black bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
+                                                        <CreditCard size={10} />
+                                                        {sub.frequencia}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {sub.cobrancas && sub.cobrancas.length > 0 ? (
+                                                        <div className="inline-flex items-center gap-2 text-[10px] font-black text-gray-700 uppercase whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                                            <span>{formatFN(new Date(sub.cobrancas[0].periodoInicio), 'MMM/yy', { locale: ptBR })}</span>
+                                                            <span className="text-gray-300">|</span>
+                                                            <span>{formatFN(new Date(sub.cobrancas[0].periodoFim), 'MMM/yy', { locale: ptBR })}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[10px] text-gray-300 italic">N/A</span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex flex-col items-end">
                                                         <div className="font-black text-sm text-gray-900">
                                                             {isNonMonthly ? (
-                                                                <div className="flex flex-col items-end">
-                                                                    <span className="text-[9px] uppercase text-primary font-bold">Total {sub.frequencia}</span>
+                                                                <div className="flex flex-col items-end leading-tight">
+                                                                    <span className="text-[8px] uppercase text-primary font-black">Ciclo</span>
                                                                     <span>{format(Number(valorCiclo))}</span>
                                                                 </div>
                                                             ) : (

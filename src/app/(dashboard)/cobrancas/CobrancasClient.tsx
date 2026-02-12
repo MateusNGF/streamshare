@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, CheckCircle, AlertCircle, Search } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, Search, User, TrendingUp, Calendar } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GenericFilter } from "@/components/ui/GenericFilter";
@@ -218,13 +218,41 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50/50">
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHead>Participante</TableHead>
-                                    <TableHead className="text-center">Vencimento</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
-                                    <TableHead className="text-center">Pagamento</TableHead>
-                                    <TableHead className="text-right">Valor</TableHead>
-                                    <TableHead className="w-[50px] text-center font-black">#</TableHead>
+                                <TableRow className="hover:bg-transparent border-b border-gray-100">
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <User size={12} className="text-gray-400" />
+                                            Participante
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <TrendingUp size={12} className="text-gray-400" />
+                                            Emissão
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Calendar size={12} className="text-gray-400" />
+                                            Vencimento
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        Pagamento
+                                    </TableHead>
+                                    <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <DollarSign size={12} className="text-gray-400" />
+                                            Valor
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        Transação
+                                    </TableHead>
+                                    <TableHead className="w-[50px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -279,7 +307,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                                         <span className="font-bold text-gray-900 leading-tight">
                                                             {cobranca.assinatura.participante.nome}
                                                         </span>
-                                                        <span className="text-[10px] text-gray-400 font-medium truncate max-w-[120px]">
+                                                        <span className="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">
                                                             {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
                                                         </span>
                                                     </div>
@@ -287,14 +315,22 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex flex-col items-center">
+                                                    <span className="text-xs font-medium">
+                                                        {formatDate(cobranca.createdAt).split(',')[0]}
+                                                    </span>
+
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex flex-col items-center">
                                                     <span className={cn(
-                                                        "text-sm font-medium",
+                                                        "text-xs font-medium",
                                                         atrasada ? "text-red-600 font-bold" : "text-gray-700"
                                                     )}>
                                                         {formatDate(cobranca.dataVencimento)}
                                                     </span>
                                                     {atrasada && (
-                                                        <div className="flex items-center gap-1 text-[9px] text-red-500 font-black uppercase tracking-tighter">
+                                                        <div className="flex items-center gap-1 text-[9px] text-red-500 font-black uppercase tracking-tighter leading-none mt-0.5">
                                                             <Clock size={8} />
                                                             ATRASADA
                                                         </div>
@@ -302,17 +338,29 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado }
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <StatusBadge status={cobranca.status} className="scale-90" />
+                                                <StatusBadge status={cobranca.status} className="scale-75" />
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <span className="text-sm font-medium text-gray-700">
-                                                    {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento) : "-"}
+                                                <span className="text-sm font-black text-gray-700">
+                                                    {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento).split(',')[0] : "-"}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <span className="font-black text-gray-900">
+                                                <span className="font-black text-gray-900 text-sm">
                                                     {format(Number(cobranca.valor))}
                                                 </span>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                    <span className="text-[9px] font-black uppercase text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-100">
+                                                        {cobranca.gatewayProvider || "Manual"}
+                                                    </span>
+                                                    {cobranca.gatewayTransactionId && (
+                                                        <span className="text-[9px] text-gray-400 font-mono truncate max-w-[60px]" title={cobranca.gatewayTransactionId}>
+                                                            ID:{cobranca.gatewayTransactionId.slice(-6)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Dropdown options={options} />

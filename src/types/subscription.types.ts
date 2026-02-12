@@ -67,6 +67,7 @@ export interface SubscriptionWithCharges {
         contaId: number;
         nome: string;
         whatsappNumero: string | null;
+        email: string | null;
         userId?: number | null;
     };
     streaming: {

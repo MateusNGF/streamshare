@@ -15,7 +15,11 @@ import {
     Globe,
     AlertOctagon,
     Clock,
-    User
+    User,
+    Mail,
+    MessageCircle,
+    Receipt,
+    Wallet
 } from "lucide-react";
 
 interface DetalhesCobrancaModalProps {
@@ -62,34 +66,57 @@ export function DetalhesCobrancaModal({
             <div className="space-y-6">
 
                 {/* 1. HERO SECTION: Valor e Status (Foco na Clareza) */}
-                <div className="flex flex-col items-center justify-center py-6 border-b border-gray-50 relative">
+                <div className="flex flex-col items-center justify-center py-8 border-b border-gray-50 relative">
                     <StatusBadge status={cobranca.status} className="mb-4 shadow-sm" />
 
                     <div className="text-center">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 block">
-                            Valor Total
+                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 block">
+                            Valor do Ciclo
                         </span>
                         <h2 className="text-5xl font-black text-gray-900 tracking-tight flex items-baseline justify-center gap-1">
                             <span className="text-lg text-gray-400 font-bold">R$</span>
                             {format(Number(cobranca.valor)).replace('R$', '').trim()}
                         </h2>
-                        <p className="text-sm text-gray-500 font-medium mt-2 bg-gray-50 inline-block px-3 py-1 rounded-full border border-gray-100">
-                            Referência: {new Date(cobranca.periodoInicio).toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
-                        </p>
+                        <div className="flex flex-col items-center gap-2 mt-4">
+                            <p className="text-xs font-bold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                Referência: {new Date(cobranca.periodoInicio).toLocaleString('pt-BR', { month: 'long' })}
+                                {new Date(cobranca.periodoInicio).getFullYear() !== new Date().getFullYear() && ` ${new Date(cobranca.periodoInicio).getFullYear()}`}
+                            </p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">
+                                ({format(Number(cobranca.assinatura.valor))} / mês)
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* 2. Participante (Humanização) */}
-                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-gray-100 shadow-sm text-gray-400">
-                        <User size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cliente</p>
-                        <h3 className="font-bold text-gray-900 truncate">{cobranca.assinatura.participante.nome}</h3>
-                        <p className="text-xs text-gray-500 truncate">
-                            {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                        </p>
+                {/* 2. Participante & Contato (Humanização) */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-gray-100 shadow-sm text-primary">
+                            <User size={20} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-gray-400 uppercase tracking-wider">Cliente</p>
+                            <h3 className="font-bold text-gray-900 truncate">{cobranca.assinatura.participante.nome}</h3>
+                            <p className="text-xs text-gray-500 truncate font-medium">
+                                {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                            </p>
+                        </div>
+                        <a
+                            href={cobranca.assinatura.participante.whatsappNumero ? `https://wa.me/55${cobranca.assinatura.participante.whatsappNumero.replace(/\D/g, '')}` : "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                                "flex items-center justify-center gap-2 p-2.5 rounded-xl transition-all shadow-sm",
+                                cobranca.assinatura.participante.whatsappNumero
+                                    ? "bg-green-500 text-white hover:bg-green-600"
+                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            )}
+                            title="Conversar no WhatsApp"
+                        >
+                            <MessageCircle size={20} />
+                        </a>
                     </div>
                 </div>
 
@@ -103,9 +130,9 @@ export function DetalhesCobrancaModal({
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2 text-gray-500">
                                     <Clock size={14} className="text-blue-500" />
-                                    <span className="text-xs font-semibold">Vencimento</span>
+                                    <span className="text-xs font-bold">Vencimento</span>
                                 </div>
-                                <span className="text-sm font-bold text-gray-900">
+                                <span className="text-sm font-black text-gray-900">
                                     {formatDate(cobranca.dataVencimento)}
                                 </span>
                             </div>
@@ -113,10 +140,10 @@ export function DetalhesCobrancaModal({
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2 text-gray-500">
                                     <CheckCircle2 size={14} className="text-green-500" />
-                                    <span className="text-xs font-semibold">Pagamento</span>
+                                    <span className="text-xs font-bold">Pagamento</span>
                                 </div>
-                                <span className={cn("text-sm font-bold", cobranca.dataPagamento ? "text-green-700" : "text-gray-300")}>
-                                    {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento, true) : "Pendente"}
+                                <span className={cn("text-sm font-black", cobranca.dataPagamento ? "text-green-600" : "text-gray-300 italic")}>
+                                    {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento, true).split(',')[0] : "Pendente"}
                                 </span>
                             </div>
                         </div>
@@ -129,9 +156,9 @@ export function DetalhesCobrancaModal({
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2 text-gray-500">
                                     <Globe size={14} className="text-purple-500" />
-                                    <span className="text-xs font-semibold">Gateway</span>
+                                    <span className="text-xs font-bold">Gateway</span>
                                 </div>
-                                <span className="text-xs font-bold uppercase bg-purple-50 text-purple-700 px-2 py-0.5 rounded">
+                                <span className="text-[10px] font-black uppercase bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full border border-purple-100">
                                     {cobranca.gatewayProvider || "Manual"}
                                 </span>
                             </div>
@@ -139,13 +166,13 @@ export function DetalhesCobrancaModal({
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-2 text-gray-500 whitespace-nowrap">
                                     <Hash size={14} className="text-gray-400" />
-                                    <span className="text-xs font-semibold">ID Trans.</span>
+                                    <span className="text-xs font-bold">ID Trans.</span>
                                 </div>
 
                                 {cobranca.gatewayTransactionId ? (
                                     <button
                                         onClick={handleCopyId}
-                                        className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary transition-colors bg-gray-50 hover:bg-blue-50 px-2 py-0.5 rounded border border-gray-100 group max-w-[120px]"
+                                        className="flex items-center gap-1.5 text-[11px] text-gray-600 hover:text-primary transition-colors bg-gray-50 hover:bg-blue-50 px-2 py-0.5 rounded border border-gray-100 group max-w-[120px]"
                                         title="Copiar ID"
                                     >
                                         <span className="font-mono truncate">{cobranca.gatewayTransactionId}</span>
@@ -158,6 +185,30 @@ export function DetalhesCobrancaModal({
                         </div>
                     </div>
                 </div>
+
+                {/* 4. Taxas e Líquido (Se disponível em metadata) */}
+                {cobranca.metadataJson && (cobranca.metadataJson.fee || cobranca.metadataJson.net) && (
+                    <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg border border-gray-100 text-red-500 shadow-sm">
+                                <Receipt size={16} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase">Taxa Gateway</p>
+                                <p className="text-sm font-bold text-gray-900">{format(Number(cobranca.metadataJson.fee || 0))}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg border border-gray-100 text-green-600 shadow-sm">
+                                <Wallet size={16} />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase">Recebimento Líquido</p>
+                                <p className="text-sm font-bold text-green-600">{format(Number(cobranca.metadataJson.net || cobranca.valor))}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 4. Footer de Alerta (Somente se necessário) */}
                 {cobranca.deletedAt && (
