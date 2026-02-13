@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useState, useCallback, ReactNode, useContext } from 'react';
 import { Toast, ToastType, ToastContextType } from '@/types/toast';
 
 export const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -40,4 +40,12 @@ export function ToastProvider({ children }: ToastProviderProps) {
             {children}
         </ToastContext.Provider>
     );
+}
+
+export function useToast() {
+    const context = useContext(ToastContext);
+    if (context === undefined) {
+        throw new Error("useToast must be used within a ToastProvider");
+    }
+    return context;
 }

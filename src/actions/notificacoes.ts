@@ -65,12 +65,13 @@ export async function criarNotificacao(data: {
     entidadeId?: number;
     usuarioId?: number | null; // NULL = Admins, ID = Specific User
     metadata?: Record<string, any>;
+    contaId?: number;
 }) {
     const { contaId, userId } = await getContext();
 
     const notificacao = await prisma.notificacao.create({
         data: {
-            contaId,
+            contaId: data.contaId || contaId,
             usuarioId: data.usuarioId !== undefined ? data.usuarioId : userId,
             tipo: data.tipo,
             titulo: data.titulo,

@@ -4,6 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { SupportButton } from "@/components/support/SupportButton";
 import "@/cron/init"; // Initialize cron jobs
 
 const inter = Inter({ subsets: ["latin"] });
@@ -78,6 +79,7 @@ export default async function RootLayout({
         <ToastProvider>
           <TooltipProvider>
             {children}
+            <SupportButton />
             <ToastContainer />
           </TooltipProvider>
         </ToastProvider>

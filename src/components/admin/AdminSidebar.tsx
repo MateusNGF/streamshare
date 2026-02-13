@@ -10,6 +10,7 @@ import {
     LogOut,
     User,
     Bell,
+    MessageCircleQuestion,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -20,6 +21,7 @@ const menuItems = [
     { icon: Play, label: "Catálogo", href: "/admin/catalogo" },
     { icon: Settings, label: "Parâmetros", href: "/admin/parametros" },
     { icon: User, label: "Usuários", href: "/admin/usuarios" },
+    { icon: MessageCircleQuestion, label: "Reports", href: "/admin/reports" },
 ];
 
 export function AdminSidebar() {

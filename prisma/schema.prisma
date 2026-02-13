@@ -107,6 +107,32 @@ enum TipoNotificacao {
   solicitacao_participacao_recusada
   convite_recebido
   convite_aceito
+
+  // Suporte
+  suporte_atualizado
+}
+
+enum StatusSuporte {
+  pendente
+  em_analise
+  resolvido
+  finalizado
+}
+
+model Suporte {
+  id        Int           @id @default(autoincrement())
+  nome      String
+  email     String
+  assunto   String
+  descricao String        @db.Text
+  status    StatusSuporte @default(pendente)
+  usuarioId Int?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@map("suporte")
 }
 
 //////////////////////////////////////////////////
@@ -162,6 +188,7 @@ model Usuario {
   assinaturasCanceladas Assinatura[]   @relation("CanceladoPor")
   convitesFeitos        Convite[]      @relation("Convidou")
   convitesRecebidos     Convite[]      @relation("Convidado")
+  reports               Suporte[]
 
   @@map("usuario")
 }
