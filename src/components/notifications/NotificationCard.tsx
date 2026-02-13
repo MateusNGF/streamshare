@@ -3,7 +3,8 @@
 import { TipoNotificacao } from "@prisma/client";
 import {
     Users, Tv, FileSignature, CreditCard, FolderOpen, Settings, Zap,
-    UserPlus, Edit, Trash2, CheckCircle, XCircle, Bell
+    UserPlus, Edit, Trash2, CheckCircle, XCircle, Bell,
+    UserCheck, UserMinus, Mail, MessageCircleQuestion
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,12 +41,12 @@ const iconMap: Record<TipoNotificacao, React.ElementType> = {
     grupo_excluido: Trash2,
     configuracao_alterada: Settings,
     plano_alterado: Zap,
-    solicitacao_participacao_criada: "symbol",
-    solicitacao_participacao_aceita: "symbol",
-    solicitacao_participacao_recusada: "symbol",
-    convite_recebido: "symbol",
-    convite_aceito: "symbol",
-    suporte_atualizado: "symbol"
+    solicitacao_participacao_criada: UserPlus,
+    solicitacao_participacao_aceita: UserCheck,
+    solicitacao_participacao_recusada: UserMinus,
+    convite_recebido: Mail,
+    convite_aceito: CheckCircle,
+    suporte_atualizado: MessageCircleQuestion
 };
 
 const colorMap: Record<TipoNotificacao, string> = {
@@ -68,12 +69,12 @@ const colorMap: Record<TipoNotificacao, string> = {
     grupo_excluido: "bg-red-50 text-red-600",
     configuracao_alterada: "bg-gray-50 text-gray-600",
     plano_alterado: "bg-violet-50 text-violet-600",
-    solicitacao_participacao_criada: "",
-    solicitacao_participacao_aceita: "",
-    solicitacao_participacao_recusada: "",
-    convite_recebido: "",
-    convite_aceito: "",
-    suporte_atualizado: ""
+    solicitacao_participacao_criada: "bg-blue-50 text-blue-600",
+    solicitacao_participacao_aceita: "bg-green-50 text-green-600",
+    solicitacao_participacao_recusada: "bg-red-50 text-red-600",
+    convite_recebido: "bg-indigo-50 text-indigo-600",
+    convite_aceito: "bg-green-50 text-green-600",
+    suporte_atualizado: "bg-amber-50 text-amber-600"
 };
 
 export function NotificationCard({
