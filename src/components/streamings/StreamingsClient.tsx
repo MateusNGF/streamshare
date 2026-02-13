@@ -69,6 +69,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 apelido: data.apelido,
                 valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
+                isPublico: data.isPublico,
             });
             toast.success("Streaming criado com sucesso!");
             setIsAddModalOpen(false);
@@ -87,6 +88,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 apelido: data.apelido,
                 valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
+                isPublico: data.isPublico,
                 updateExistingSubscriptions: data.updateExistingSubscriptions,
             });
 
@@ -210,6 +212,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                                         slots={{ occupied: s._count?.assinaturas || 0, total: s.limiteParticipantes }}
                                         price={s.valorIntegral}
                                         frequency="Mensal"
+                                        isPublico={s.isPublico}
                                         onEdit={() => {
                                             setSelectedStreaming(s);
                                             setIsEditModalOpen(true);
@@ -255,6 +258,7 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                             apelido: selectedStreaming.apelido || "",
                             valorIntegral: String(selectedStreaming.valorIntegral),
                             limiteParticipantes: String(selectedStreaming.limiteParticipantes),
+                            isPublico: selectedStreaming.isPublico,
                             activeSubscriptions: selectedStreaming._count?.assinaturas || 0,
                         }
                         : undefined

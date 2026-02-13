@@ -11,7 +11,7 @@ export async function getParticipantes() {
     const { contaId } = await getContext();
 
     return prisma.participante.findMany({
-        where: { contaId },
+        where: { contaId, deletedAt: null },
         include: {
             _count: {
                 select: {
@@ -68,10 +68,10 @@ export async function createParticipante(data: {
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null, // Broadcast para Admins
                 tipo: "participante_criado",
                 titulo: `Participante adicionado`,
-                descricao: `${created.nome} foi adicionado ao sistema.`,
+                descricao: `${created.nome} foi adicionado ao sistema por ${userId}.`,
                 entidadeId: created.id,
                 metadata: {
                     whatsapp: created.whatsappNumero
@@ -116,12 +116,25 @@ export async function updateParticipante(
     }
 
     const participante = await prisma.$transaction(async (tx) => {
+        // Check if email matches an existing user to auto-link
+        let userIdToLink = null;
+        if (data.email) {
+            const existingUser = await tx.usuario.findUnique({
+                where: { email: data.email }
+            });
+            if (existingUser) {
+                userIdToLink = existingUser.id;
+            }
+        }
+
         const updated = await tx.participante.update({
             where: { id, contaId },
             data: {
                 ...data,
                 cpf: data.cpf || null,
                 whatsappNumero: data.whatsappNumero || null,
+                // Only update userId if we found a match, otherwise keep existing (or null)
+                ...(userIdToLink && { userId: userIdToLink })
             },
         });
 
@@ -129,14 +142,29 @@ export async function updateParticipante(
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null, // Broadcast para Admins
                 tipo: "participante_editado",
                 titulo: `Participante atualizado`,
-                descricao: `As informações de ${updated.nome} foram atualizadas.`,
+                descricao: `As informações de ${updated.nome} foram atualizadas por ${userId}.${userIdToLink ? " Usuário vinculado com sucesso." : ""}`,
                 entidadeId: updated.id,
                 lida: false
             }
         });
+
+        // If linked to a user, notify them as well
+        if (userIdToLink && userIdToLink !== userId) {
+            await tx.notificacao.create({
+                data: {
+                    contaId, // Context of the account where they are a participant
+                    usuarioId: userIdToLink,
+                    tipo: "participante_criado", // Reusing this type or add new enum value
+                    titulo: "Perfil Vinculado",
+                    descricao: `Seu perfil foi vinculado à conta de ${updated.nome}.`,
+                    entidadeId: updated.id,
+                    lida: false
+                }
+            });
+        }
 
         return updated;
     });
@@ -188,10 +216,10 @@ export async function deleteParticipante(id: number) {
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null, // Broadcast para Admins
                 tipo: "participante_excluido",
                 titulo: `Participante removido`,
-                descricao: `${participante.nome} foi removido do sistema.`,
+                descricao: `${participante.nome} foi removido do sistema por ${userId}.`,
                 entidadeId: id,
                 lida: false
             }

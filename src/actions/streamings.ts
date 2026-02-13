@@ -139,7 +139,6 @@ export async function getActiveSubscriptionsCount(streamingId: number) {
 
     return count;
 }
-
 /**
  * Update the value of all existing active subscriptions for a streaming
  */
@@ -162,11 +161,61 @@ export async function updateExistingSubscriptionValues(streamingId: number, newV
     return updated.count;
 }
 
+/**
+ * Busca streamings públicos para o Explorer
+ */
+export async function getPublicStreamings(filters?: {
+    search?: string;
+    catalogoId?: number;
+}) {
+    const where: any = {
+        isAtivo: true,
+        isPublico: true,
+        deletedAt: null
+    };
+
+    if (filters?.catalogoId) {
+        where.streamingCatalogoId = filters.catalogoId;
+    }
+
+    if (filters?.search) {
+        where.OR = [
+            { apelido: { contains: filters.search, mode: 'insensitive' } },
+            { catalogo: { nome: { contains: filters.search, mode: 'insensitive' } } }
+        ];
+    }
+
+    const streamings = await prisma.streaming.findMany({
+        where,
+        include: {
+            catalogo: true,
+            conta: {
+                select: { nome: true }
+            },
+            _count: {
+                select: {
+                    assinaturas: {
+                        where: { status: { in: ['ativa', 'suspensa'] } }
+                    }
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    return streamings.map(s => ({
+        ...s,
+        valorIntegral: s.valorIntegral.toNumber(),
+        vagasDisponiveis: s.limiteParticipantes - s._count.assinaturas
+    }));
+}
+
 export async function createStreaming(data: {
     catalogoId: number;
     apelido: string;
     valorIntegral: number;
     limiteParticipantes: number;
+    isPublico?: boolean;
 }) {
 
 
@@ -236,6 +285,7 @@ export async function createStreaming(data: {
             apelido: data.apelido.trim(),
             valorIntegral: data.valorIntegral,
             limiteParticipantes: data.limiteParticipantes,
+            isPublico: data.isPublico || false,
         },
         include: {
             catalogo: true,
@@ -273,13 +323,12 @@ export async function updateStreaming(
         apelido: string;
         valorIntegral: number;
         limiteParticipantes: number;
-        updateExistingSubscriptions?: boolean; // Optional: update existing subscription values
+        isPublico?: boolean;
+        updateExistingSubscriptions?: boolean;
     }
 ) {
     const { contaId } = await getContext();
 
-    // Business validations
-    // Business validations using Zod
     const validatedData = StreamingSchema.parse({
         ...data,
         catalogoId: String(data.catalogoId)
@@ -289,7 +338,6 @@ export async function updateStreaming(
         throw new Error("Limite de participantes não pode exceder 100");
     }
 
-    // Get current streaming data
     const currentStreaming = await prisma.streaming.findUnique({
         where: { id, contaId },
         include: {
@@ -309,19 +357,16 @@ export async function updateStreaming(
 
     const activeSubscriptionsCount = currentStreaming._count.assinaturas;
 
-    // VALIDATION: Prevent reducing participant limit below active subscriptions
     if (data.limiteParticipantes < activeSubscriptionsCount) {
         throw new Error(
             `Não é possível reduzir o limite para ${data.limiteParticipantes}. ` +
-            `Existem ${activeSubscriptionsCount} assinatura(s) ativa(s). ` +
-            `Cancele ${activeSubscriptionsCount - data.limiteParticipantes} assinatura(s) antes de prosseguir.`
+            `Existem ${activeSubscriptionsCount} assinatura(s) ativa(s).`
         );
     }
 
     const valueChanged = currentStreaming.valorIntegral.toString() !== data.valorIntegral.toString();
     const shouldUpdateSubscriptions = valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0;
 
-    // If not updating subscriptions, just update the streaming
     if (!shouldUpdateSubscriptions) {
         const streaming = await prisma.streaming.update({
             where: { id, contaId },
@@ -330,22 +375,20 @@ export async function updateStreaming(
                 apelido: data.apelido.trim(),
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
+                isPublico: data.isPublico,
             },
             include: {
                 catalogo: true,
                 _count: {
                     select: {
                         assinaturas: {
-                            where: {
-                                status: { not: "cancelada" }
-                            }
+                            where: { status: { not: "cancelada" } }
                         }
                     }
                 }
             }
         });
 
-        // Create notification
         await criarNotificacao({
             tipo: "streaming_editado",
             titulo: `Streaming atualizado`,
@@ -364,7 +407,6 @@ export async function updateStreaming(
         };
     }
 
-    // Use transaction when updating both streaming and subscriptions atomically
     const result = await prisma.$transaction(async (tx) => {
         const streaming = await tx.streaming.update({
             where: { id, contaId },
@@ -373,15 +415,14 @@ export async function updateStreaming(
                 apelido: data.apelido.trim(),
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
+                isPublico: data.isPublico,
             },
             include: {
                 catalogo: true,
                 _count: {
                     select: {
                         assinaturas: {
-                            where: {
-                                status: { not: "cancelada" }
-                            }
+                            where: { status: { not: "cancelada" } }
                         }
                     }
                 }
@@ -402,7 +443,6 @@ export async function updateStreaming(
         return { streaming, updatedCount: updated.count };
     });
 
-    // Create notification
     await criarNotificacao({
         tipo: "streaming_editado",
         titulo: `Streaming atualizado`,

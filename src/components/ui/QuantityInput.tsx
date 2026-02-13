@@ -14,6 +14,8 @@ interface QuantityInputProps {
     error?: string;
     className?: string;
     disabled?: boolean;
+    id?: string;
+    required?: boolean;
 }
 
 export function QuantityInput({
@@ -25,8 +27,13 @@ export function QuantityInput({
     label,
     error,
     className,
-    disabled
+    disabled,
+    id,
+    required,
 }: QuantityInputProps) {
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+
     const numValue = typeof value === "string" ? parseInt(value, 10) || min : value;
 
     const handleDecrement = () => {
@@ -44,12 +51,16 @@ export function QuantityInput({
     return (
         <div className={cn("flex flex-col gap-1.5", className)}>
             {label && (
-                <label className="text-xs font-medium text-gray-700">
+                <label
+                    htmlFor={inputId}
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                >
                     {label}
+                    {required && <span className="text-red-500 ml-1">*</span>}
                 </label>
             )}
             <div className={cn(
-                "flex items-center justify-between p-1 border border-gray-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all",
+                "flex items-center h-full justify-between p-1 border border-gray-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all",
                 error && "border-red-300 focus-within:ring-red-500/10 focus-within:border-red-500",
                 disabled && "opacity-50 cursor-not-allowed bg-gray-50"
             )}>

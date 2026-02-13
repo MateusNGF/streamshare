@@ -1,6 +1,7 @@
-import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
+import { Users, Calendar, DollarSign, Edit, Trash2, Globe, Lock } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { cn } from "@/lib/utils";
 
 interface StreamingDetailCardProps {
     id: number;
@@ -12,6 +13,7 @@ interface StreamingDetailCardProps {
     slots: { occupied: number; total: number };
     price: number | string; // Changed to accept number/string for formatter
     frequency: string;
+    isPublico?: boolean;
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -25,6 +27,7 @@ export function StreamingDetailCard({
     slots,
     price,
     frequency,
+    isPublico,
     onEdit,
     onDelete,
 }: StreamingDetailCardProps) {
@@ -70,6 +73,25 @@ export function StreamingDetailCard({
                         )}
                         <div className="text-sm text-gray-500">{frequency}</div>
                     </div>
+                </div>
+
+                <div className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all",
+                    isPublico
+                        ? "bg-primary/5 text-primary border-primary/20 shadow-sm"
+                        : "bg-gray-50 text-gray-400 border-gray-100"
+                )}>
+                    {isPublico ? (
+                        <>
+                            <Globe size={12} className="text-primary" />
+                            <span>Público</span>
+                        </>
+                    ) : (
+                        <>
+                            <Lock size={12} className="text-gray-400" />
+                            <span>Privado</span>
+                        </>
+                    )}
                 </div>
             </div>
 

@@ -29,6 +29,7 @@ interface StreamingStore {
         apelido: string;
         valorIntegral: number;
         limiteParticipantes: number;
+        isPublico?: boolean;
     }) => Promise<StreamingWithRelations>;
     updateStreaming: (
         id: number,
@@ -37,6 +38,7 @@ interface StreamingStore {
             apelido: string;
             valorIntegral: number;
             limiteParticipantes: number;
+            isPublico?: boolean;
             updateExistingSubscriptions?: boolean;
         }
     ) => Promise<{ streaming: StreamingWithRelations; updatedSubscriptions: number }>;
@@ -137,6 +139,7 @@ export const useStreamingStore = create<StreamingStore>()(
                                     apelido: data.apelido,
                                     valorIntegral: data.valorIntegral,
                                     limiteParticipantes: data.limiteParticipantes,
+                                    isPublico: data.isPublico ?? s.isPublico,
                                     // Preserve catalogo relation during optimistic update
                                     catalogo: s.catalogo,
                                 }

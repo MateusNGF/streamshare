@@ -194,11 +194,11 @@ export async function confirmarPagamento(
                 }
             });
 
-            // Re-activation notification
+            // Re-activation notification (Broadcast to Admins)
             await tx.notificacao.create({
                 data: {
                     contaId,
-                    usuarioId: userId,
+                    usuarioId: null,
                     tipo: "assinatura_editada",
                     titulo: "Assinatura Reativada",
                     descricao: `A assinatura de ${assinatura.participante.nome} foi reativada automaticamente após o pagamento da cobrança atual.`,
@@ -207,11 +207,11 @@ export async function confirmarPagamento(
             });
         }
 
-        // Create notification inside transaction for the payment itself
+        // Create notification inside transaction for the payment itself (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "cobranca_confirmada",
                 titulo: `Pagamento confirmado`,
                 descricao: `Pagamento de ${result.assinatura.participante.nome} no valor de ${result.valor} foi confirmado.`,
@@ -267,11 +267,11 @@ export async function cancelarCobranca(cobrancaId: number) {
             }
         });
 
-        // Create notification inside transaction
+        // Create notification inside transaction (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "cobranca_cancelada",
                 titulo: `Cobrança cancelada`,
                 descricao: `Cobrança de ${result.assinatura.participante.nome} foi cancelada.`,

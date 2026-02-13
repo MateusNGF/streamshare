@@ -3,8 +3,7 @@
 import { prisma } from "@/lib/db";
 import { TipoNotificacao } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-
-
+import { getCurrentUser } from "@/lib/auth";
 import { getContext } from "@/lib/action-context";
 
 /**
@@ -17,6 +16,9 @@ export async function getNotificacoes(params?: {
     tipos?: TipoNotificacao[];
     dataInicio?: Date;
 }) {
+    const session = await getCurrentUser();
+    if (!session) throw new Error("Não autenticado");
+
     const { contaId } = await getContext();
     const { limite = 20, offset = 0, apenasNaoLidas = false, tipos, dataInicio } = params || {};
 
@@ -24,6 +26,10 @@ export async function getNotificacoes(params?: {
         contaId,
         ...(apenasNaoLidas ? { lida: false } : {}),
         ...(dataInicio ? { createdAt: { gte: dataInicio } } : {}),
+        OR: [
+            { usuarioId: session.userId }, // Minhas notificações diretas
+            { usuarioId: null }            // Alertas globais da conta (Admins)
+        ]
     };
 
     if (tipos && tipos.length > 0) {
@@ -57,6 +63,7 @@ export async function criarNotificacao(data: {
     titulo: string;
     descricao?: string;
     entidadeId?: number;
+    usuarioId?: number | null; // NULL = Admins, ID = Specific User
     metadata?: Record<string, any>;
 }) {
     const { contaId, userId } = await getContext();
@@ -64,7 +71,7 @@ export async function criarNotificacao(data: {
     const notificacao = await prisma.notificacao.create({
         data: {
             contaId,
-            usuarioId: userId,
+            usuarioId: data.usuarioId !== undefined ? data.usuarioId : userId,
             tipo: data.tipo,
             titulo: data.titulo,
             descricao: data.descricao,

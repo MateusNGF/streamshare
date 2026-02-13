@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Globe, Info, Lock, LockOpen } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
@@ -14,6 +15,7 @@ import { ZodIssue } from "zod";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getNextStreamingNumber } from "@/actions/streamings";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { Switch } from "@/components/ui/switch";
 import { QuantityInput } from "@/components/ui/QuantityInput";
 
 interface StreamingModalProps {
@@ -29,6 +31,7 @@ export interface StreamingFormData {
     apelido: string;
     valorIntegral: number | string;
     limiteParticipantes: string;
+    isPublico?: boolean; // Added optional field
     activeSubscriptions?: number;
 }
 
@@ -45,8 +48,9 @@ export function StreamingModal({
         streaming || {
             catalogoId: "",
             apelido: "",
-            valorIntegral: "", // Empty string by default
+            valorIntegral: "",
             limiteParticipantes: "1",
+            isPublico: false, // Default to private
         }
     );
     const [loadingCatalog, setLoadingCatalog] = useState(false);
@@ -101,6 +105,7 @@ export function StreamingModal({
                 apelido: "",
                 valorIntegral: "", // Empty string by default
                 limiteParticipantes: "1",
+                isPublico: false,
             }));
         }
     }, [streaming, isOpen]);
@@ -128,7 +133,8 @@ export function StreamingModal({
         }
     };
 
-    const handleChange = (field: keyof StreamingFormData, value: string) => {
+    const handleChange = (field: keyof StreamingFormData, value: boolean | string) => {
+        // @ts-ignore - dynamic key assignment with mixed types
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -311,9 +317,47 @@ export function StreamingModal({
                             </div>
                         )}
 
-                        <p className="text-xs text-gray-400 mt-2">
-                            * Configure o valor total que você paga pelo serviço e o limite de vagas disponíveis.
-                        </p>
+
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <div className={cn(
+                                "p-2 rounded-xl border transition-all duration-300",
+                                formData.isPublico
+                                    ? "bg-primary/5 border-primary/20"
+                                    : "bg-gray-50 border-gray-100"
+                            )}>
+                                <div className="flex items-start gap-4">
+                                    <div className={cn(
+                                        "p-2.5 rounded-xl flex items-center justify-center transition-colors",
+                                        formData.isPublico ? "bg-primary border text-white shadow-lg shadow-primary/25" : "bg-white border border-gray-200 text-gray-400"
+                                    )}>
+                                        {formData.isPublico ? (
+                                            <LockOpen size={20} strokeWidth={2.5} />
+                                        ) : (
+                                            <Lock size={20} strokeWidth={2.5} />
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label
+                                                className="text-sm font-bold text-gray-900 cursor-pointer select-none"
+                                                onClick={() => handleChange("isPublico", !formData.isPublico)}
+                                            >
+                                                Visibilidade Pública
+                                            </label>
+                                            <Switch
+                                                checked={formData.isPublico}
+                                                onCheckedChange={(checked) => handleChange("isPublico", checked)}
+                                            />
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 leading-relaxed max-w-[90%]">
+                                            Permitir que este streaming apareça no <strong>Explorer</strong> para outros usuários da comunidade solicitarem entrada.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </form>

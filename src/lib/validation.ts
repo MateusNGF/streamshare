@@ -148,6 +148,7 @@ export const ValidationMessages = {
         format: "Telefone deve ter 10 ou 11 dígitos",
     },
     email: {
+        required: "Email é obrigatório",
         invalid: "Email inválido",
     },
     name: {

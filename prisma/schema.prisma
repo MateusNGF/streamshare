@@ -42,6 +42,22 @@ enum StatusCobranca {
   cancelado
 }
 
+enum StatusParticipante {
+  ativo
+  pendente
+  recusado
+  bloqueado
+  saiu
+}
+
+enum StatusConvite {
+  pendente
+  aceito
+  recusado
+  expirado
+  solicitado
+}
+
 enum TipoNotificacaoWhatsApp {
   nova_assinatura
   cobranca_gerada
@@ -84,6 +100,13 @@ enum TipoNotificacao {
 
   // Sistema
   plano_alterado
+
+  // Convites e Solicitações
+  solicitacao_participacao_criada
+  solicitacao_participacao_aceita
+  solicitacao_participacao_recusada
+  convite_recebido
+  convite_aceito
 }
 
 //////////////////////////////////////////////////
@@ -108,6 +131,7 @@ model Conta {
   streamings     Streaming[]
   whatsappConfig WhatsAppConfig?
   notificacoes   Notificacao[]
+  convites       Convite[]
 
   stripeCustomerId         String? @unique
   stripeSubscriptionId     String? @unique
@@ -132,10 +156,12 @@ model Usuario {
   updatedAt        DateTime     @updatedAt
 
   contas                ContaUsuario[]
-  participante          Participante?
+  participantes         Participante[]
   admin                 UsuarioAdmin?
   notificacoes          Notificacao[]
   assinaturasCanceladas Assinatura[]   @relation("CanceladoPor")
+  convitesFeitos        Convite[]      @relation("Convidou")
+  convitesRecebidos     Convite[]      @relation("Convidado")
 
   @@map("usuario")
 }
@@ -197,6 +223,7 @@ model Streaming {
   credenciaisSenha       String?
   frequenciasHabilitadas String    @default("mensal,trimestral,semestral,anual")
   isAtivo                Boolean   @default(true)
+  isPublico              Boolean   @default(false)
   deletedAt              DateTime?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
@@ -205,6 +232,7 @@ model Streaming {
   catalogo    StreamingCatalogo @relation(fields: [streamingCatalogoId], references: [id])
   grupos      GrupoStreaming[]
   assinaturas Assinatura[]
+  convites    Convite[]
 
   @@map("streaming")
 }
@@ -223,13 +251,14 @@ model GrupoStreaming {
 }
 
 model Participante {
-  id             Int     @id @default(autoincrement())
+  id             Int                @id @default(autoincrement())
   contaId        Int
   nome           String
   whatsappNumero String?
-  cpf            String? @default("")
+  cpf            String?            @default("")
   email          String?
-  userId         Int?    @unique
+  userId         Int?
+  status         StatusParticipante @default(ativo)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -242,6 +271,7 @@ model Participante {
 
   @@unique([contaId, cpf])
   @@unique([contaId, whatsappNumero])
+  @@unique([contaId, userId])
   @@map("participante")
 }
 
@@ -338,6 +368,28 @@ model WhatsAppLog {
 
   @@index([configId, createdAt])
   @@map("whatsapp_log")
+}
+
+model Convite {
+  id             String        @id @default(uuid())
+  email          String
+  contaId        Int
+  streamingId    Int?
+  status         StatusConvite @default(pendente)
+  token          String        @unique
+  expiresAt      DateTime
+  convidadoPorId Int?
+  usuarioId      Int?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  conta        Conta      @relation(fields: [contaId], references: [id])
+  streaming    Streaming? @relation(fields: [streamingId], references: [id])
+  convidadoPor Usuario?   @relation("Convidou", fields: [convidadoPorId], references: [id])
+  usuario      Usuario?   @relation("Convidado", fields: [usuarioId], references: [id])
+
+  @@index([email])
+  @@map("convite")
 }
 
 model UsuarioAdmin {

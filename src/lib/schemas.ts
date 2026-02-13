@@ -31,6 +31,8 @@ export const StreamingSchema = z.object({
             .min(1, "Limite deve ser no mínimo 1")
             .max(100, "Limite deve ser no máximo 100")
     ),
+
+    isPublico: z.boolean().optional(),
 });
 
 export type StreamingSchemaType = z.infer<typeof StreamingSchema>;
