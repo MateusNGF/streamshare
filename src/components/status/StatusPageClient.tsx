@@ -45,6 +45,19 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-13",
+        date: "13/02/2026",
+        changes: [
+            { category: "Suporte", description: "Lançamento da Central de Ajuda com sistema completo de abertura de chamados, histórico de atendimentos e notificações em tempo real." },
+            { category: "Navegação", description: "Reformulação da estrutura lateral com agrupamento inteligente de seções, otimizando o fluxo entre gestão de conta e faturamento." },
+            { category: "Engajamento", description: "Novo sistema de descoberta de grupos e portal de convites, facilitando a expansão da rede e a gestão de solicitações de participação." },
+            { category: "Faturamento", description: "Implementação de motor de processamento para renovações automáticas e expansão dos módulos de controle para serviços e assinaturas." },
+            { category: "Comunicação", description: "Refinamento visual das notificações com estética moderna e lógica aprimorada de direcionamento para administradores e usuários." },
+            { category: "Interface", description: "Padronização de componentes interativos e melhorias de precisão visual em campos de entrada para máxima consistência estética." },
+            { category: "Integridade", description: "Otimização profunda da infraestrutura técnica, eliminando inconsistências de módulos e garantindo estabilidade absoluta do sistema." },
+        ],
+    },
+    {
         id: "2026-02-12",
         date: "12/02/2026",
         changes: [
