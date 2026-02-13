@@ -115,14 +115,14 @@ export async function updateAccount(data: { nome: string; email: string; chavePi
             },
         });
 
-        // Create notification inside transaction
+        // Create notification inside transaction (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "configuracao_alterada",
                 titulo: `Conta atualizada`,
-                descricao: `As informações da conta foram atualizadas.`,
+                descricao: `As informações da conta foram atualizadas por um administrador.`,
                 lida: false
             }
         });
@@ -148,11 +148,11 @@ export async function updateCurrency(currencyCode: string) {
             data: { moedaPreferencia: currencyCode },
         });
 
-        // Create notification inside transaction
+        // Create notification inside transaction (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "configuracao_alterada",
                 titulo: `Moeda atualizada`,
                 descricao: `A moeda preferencial foi alterada para ${currencyCode}.`,

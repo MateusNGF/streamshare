@@ -301,12 +301,13 @@ export async function createStreaming(data: {
         }
     });
 
-    // Create notification
+    // Create notification (Broadcast to Admins)
     await criarNotificacao({
         tipo: "streaming_criado",
         titulo: `Streaming adicionado`,
         descricao: `${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foi adicionado ao sistema.`,
-        entidadeId: streaming.id
+        entidadeId: streaming.id,
+        usuarioId: null // Admin Broadcast
     });
 
     revalidatePath("/streamings");
@@ -443,11 +444,13 @@ export async function updateStreaming(
         return { streaming, updatedCount: updated.count };
     });
 
+    // Broadcast to Admins
     await criarNotificacao({
         tipo: "streaming_editado",
         titulo: `Streaming atualizado`,
         descricao: `As informações do streaming foram atualizadas${result.updatedCount > 0 ? ` e ${result.updatedCount} assinatura(s) ajustada(s)` : ''}.`,
-        entidadeId: id
+        entidadeId: id,
+        usuarioId: null // Admin Broadcast
     });
 
     revalidatePath("/streamings");
@@ -513,11 +516,13 @@ export async function deleteStreaming(id: number) {
         return s ? `${s.catalogo.nome}${s.apelido ? ` (${s.apelido})` : ''}` : null;
     }).catch(() => null);
 
+    // Create notification (Broadcast to Admins)
     await criarNotificacao({
         tipo: "streaming_excluido",
         titulo: `Streaming removido`,
         descricao: streamingName ? `${streamingName} foi removido do sistema.` : "Um streaming foi removido do sistema.",
-        entidadeId: id
+        entidadeId: id,
+        usuarioId: null // Admin Broadcast
     });
 
     revalidatePath("/streamings");

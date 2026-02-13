@@ -204,13 +204,28 @@ async function executeBillingTransactionWithTx(
 
             const ass = assinaturasSource.find(a => a.id === id);
             if (ass) {
+                // 1. Notificar Usuário (Direct if linked)
+                if (ass.participante.userId) {
+                    await tx.notificacao.create({
+                        data: {
+                            contaId: ass.participante.contaId,
+                            usuarioId: ass.participante.userId,
+                            tipo: "assinatura_suspensa",
+                            titulo: "Sua Assinatura foi Suspensa",
+                            descricao: `Sua assinatura do serviço foi suspensa por falta de pagamento.`,
+                            entidadeId: id,
+                        }
+                    });
+                }
+
+                // 2. Notificar Admins (Broadcast)
                 await tx.notificacao.create({
                     data: {
                         contaId: ass.participante.contaId,
-                        usuarioId: ass.participante.userId || null,
+                        usuarioId: null,
                         tipo: "assinatura_suspensa",
                         titulo: "Assinatura Suspensa",
-                        descricao: `A assinatura de ${ass.participante.nome} foi suspensa por falta de pagamento.`,
+                        descricao: `A assinatura de ${ass.participante.nome} foi suspensa por inadimplência.`,
                         entidadeId: id,
                     }
                 });
@@ -258,12 +273,27 @@ async function executeBillingTransactionWithTx(
 
             const ass = assinaturasSource.find(a => a.id === id);
             if (ass) {
+                // 1. Notificar Usuário (Direct if linked)
+                if (ass.participante.userId) {
+                    await tx.notificacao.create({
+                        data: {
+                            contaId: ass.participante.contaId,
+                            usuarioId: ass.participante.userId,
+                            tipo: "assinatura_cancelada",
+                            titulo: "Assinatura Encerrada",
+                            descricao: `Seu período pago terminou e o acesso ao serviço foi encerrado.`,
+                            entidadeId: id,
+                        }
+                    });
+                }
+
+                // 2. Notificar Admins (Broadcast)
                 await tx.notificacao.create({
                     data: {
                         contaId: ass.participante.contaId,
-                        usuarioId: ass.participante.userId || null,
+                        usuarioId: null,
                         tipo: "assinatura_cancelada",
-                        titulo: "Assinatura encerrada",
+                        titulo: "Assinatura Encerrada",
                         descricao: `O período pago da assinatura de ${ass.participante.nome} terminou e o acesso foi revogado.`,
                         entidadeId: id,
                     }

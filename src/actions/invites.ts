@@ -96,18 +96,20 @@ export async function inviteUser(data: {
         });
     }
 
-    // Notify the admin who sent it (confirmation)
+    // Notify all Admins that an invite was sent (Account Broadcast)
     await prisma.notificacao.create({
         data: {
             contaId,
-            usuarioId: convidadoPorId,
-            tipo: "convite_recebido", // Maybe change to "convite_enviado" logically, but schema might restrict
-            titulo: "Convite enviado",
-            descricao: `Convite enviado para ${emailFormatted}${convite.streaming ? ` para o streaming ${convite.streaming.apelido || convite.streaming.catalogo.nome}` : ""}.`,
+            usuarioId: null, // Broadcast to all admins
+            tipo: "assinatura_editada", // Usando um tipo compatível ou genérico para admin ver
+            titulo: "Convite Enviado",
+            descricao: `Um convite foi enviado para ${emailFormatted}.${convite.streaming ? " (Vinculado a streaming)" : ""}`,
             metadata: {
                 conviteId: convite.id,
-                email: emailFormatted
-            }
+                email: emailFormatted,
+                enviadoPor: convidadoPorId
+            },
+            lida: false
         }
     });
 
@@ -272,17 +274,18 @@ export async function acceptInvite(token: string) {
             }
         }
 
-        // 5. Notificar Admin
+        // 5. Notificar Admins (Account Broadcast)
         await tx.notificacao.create({
             data: {
                 contaId: convite.contaId,
-                usuarioId: convite.convidadoPorId,
+                usuarioId: null, // Broadcast to all admins
                 tipo: "convite_aceito",
                 titulo: "Convite aceito",
-                descricao: `${convidado.nome} aceitou seu convite para entrar no streaming.`,
+                descricao: `${convidado.nome} aceitou o convite para entrar na conta.`,
                 metadata: {
                     participanteId: participante?.id,
-                    usuarioId: userId
+                    usuarioId: userId,
+                    convidadoPorId: convite.convidadoPorId
                 }
             }
         });

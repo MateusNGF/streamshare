@@ -157,11 +157,11 @@ export async function createGrupo(data: {
             }))
         });
 
-        // Create notification inside transaction
+        // Create notification inside transaction (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "grupo_criado",
                 titulo: `Grupo criado`,
                 descricao: `O grupo "${novoGrupo.nome}" foi criado com ${data.streamingIds.length} streaming(s).`,
@@ -269,11 +269,11 @@ export async function updateGrupo(
             }))
         });
 
-        // Create notification inside transaction
+        // Create notification inside transaction (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "grupo_editado",
                 titulo: `Grupo atualizado`,
                 descricao: `O grupo "${data.nome}" foi atualizado.`,
@@ -309,11 +309,11 @@ export async function deleteGrupo(id: number) {
             data: { isAtivo: false }
         });
 
-        // Create notification inside transaction
+        // Create notification inside transaction (Broadcast to Admins)
         await tx.notificacao.create({
             data: {
                 contaId,
-                usuarioId: userId,
+                usuarioId: null,
                 tipo: "grupo_excluido",
                 titulo: `Grupo removido`,
                 descricao: `O grupo "${grupo.nome}" foi removido.`,
