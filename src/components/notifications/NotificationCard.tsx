@@ -40,6 +40,12 @@ const iconMap: Record<TipoNotificacao, React.ElementType> = {
     grupo_excluido: Trash2,
     configuracao_alterada: Settings,
     plano_alterado: Zap,
+    solicitacao_participacao_criada: "symbol",
+    solicitacao_participacao_aceita: "symbol",
+    solicitacao_participacao_recusada: "symbol",
+    convite_recebido: "symbol",
+    convite_aceito: "symbol",
+    suporte_atualizado: "symbol"
 };
 
 const colorMap: Record<TipoNotificacao, string> = {
@@ -62,6 +68,12 @@ const colorMap: Record<TipoNotificacao, string> = {
     grupo_excluido: "bg-red-50 text-red-600",
     configuracao_alterada: "bg-gray-50 text-gray-600",
     plano_alterado: "bg-violet-50 text-violet-600",
+    solicitacao_participacao_criada: "",
+    solicitacao_participacao_aceita: "",
+    solicitacao_participacao_recusada: "",
+    convite_recebido: "",
+    convite_aceito: "",
+    suporte_atualizado: ""
 };
 
 export function NotificationCard({

@@ -15,7 +15,7 @@ import { ZodIssue } from "zod";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getNextStreamingNumber } from "@/actions/streamings";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/Switch";
 import { QuantityInput } from "@/components/ui/QuantityInput";
 
 interface StreamingModalProps {

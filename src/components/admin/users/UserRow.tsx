@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { AdminUser, toggleAdminRole } from "@/actions/admin/users";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { TableCell, TableRow } from "@/components/ui/table";
+import { TableCell, TableRow } from "@/components/ui/Table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Shield, ShieldOff } from "lucide-react";

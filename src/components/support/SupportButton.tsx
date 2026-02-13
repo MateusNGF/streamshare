@@ -2,12 +2,12 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { HelpCircle, MessageCircleQuestion, Send, Clock } from "lucide-react";
-import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
-import { Tabs } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Label } from "@/components/ui/Label";
 import { createReport, SuporteInput } from "@/actions/suporte";
 import { TicketHistoryTable } from "./TicketHistoryTable";
 import { useToast } from "@/contexts/ToastContext";

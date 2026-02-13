@@ -6,7 +6,7 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { calcularTotalCiclo } from "@/lib/financeiro-utils";
 import { Tooltip } from "@/components/ui/Tooltip";
 

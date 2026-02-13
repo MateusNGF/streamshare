@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Search, Users, Activity, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";

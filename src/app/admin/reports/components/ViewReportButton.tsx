@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye } from "lucide-react";
 import { ReportDetailsModal } from "./ReportDetailsModal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 interface ViewReportButtonProps {
     report: any; // Using any for simplicity as previously seen, but ideally should be typed

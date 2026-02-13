@@ -8,7 +8,7 @@ import { DateRange, DayPicker } from "react-day-picker";
 import * as Popover from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 
 interface DateRangePickerProps {

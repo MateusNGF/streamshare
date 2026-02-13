@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/Switch";
 import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
 import { INTERVALOS_MESES, calcularCustoBase, calcularTotalCiclo, arredondarMoeda } from "@/lib/financeiro-utils";

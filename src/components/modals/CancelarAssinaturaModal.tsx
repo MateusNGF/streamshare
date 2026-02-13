@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { AlertTriangle } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
