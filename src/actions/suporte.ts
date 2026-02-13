@@ -27,30 +27,42 @@ export interface SuporteInput {
     usuarioId?: number;
 }
 
-export async function createReport(data: SuporteInput) {
-    // Rate limit: Max 5 tickets per user per day
-    if (data.usuarioId) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
 
-        const count = await prisma.suporte.count({
-            where: {
-                usuarioId: data.usuarioId,
-                createdAt: {
-                    gte: today,
-                },
+/**
+ * Checks if the user has reached the daily rate limit for support tickets.
+ * @param usuarioId The ID of the user to check.
+ * @returns True if the user can create a report, false otherwise.
+ */
+async function checkRateLimit(usuarioId: number): Promise<boolean> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const count = await prisma.suporte.count({
+        where: {
+            usuarioId,
+            createdAt: {
+                gte: today,
             },
-        });
+        },
+    });
 
-        if (count >= 5) {
+    return count < 5;
+}
+
+export async function createReport(data: SuporteInput) {
+    // 1. Rate Limiting Check
+    if (data.usuarioId) {
+        const canCreate = await checkRateLimit(data.usuarioId);
+        if (!canCreate) {
             return {
                 success: false,
-                error: "Você atingiu o limite de 5 chamados por dia. Tente novamente amanhã.",
+                error: "Limite diário de 5 chamados atingido. Tente novamente amanhã.",
             };
         }
     }
 
     try {
+        // 2. Create the Report
         const report = await prisma.suporte.create({
             data: {
                 nome: data.nome,
@@ -62,13 +74,13 @@ export async function createReport(data: SuporteInput) {
             },
         });
 
-        // Revalidate admin page if it exists/cached
+        // 3. Revalidate Cache
         revalidatePath('/admin/reports');
 
-        return { success: true, da: report };
+        return { success: true, data: report };
     } catch (error) {
-        console.error('Error creating report:', error);
-        return { success: false, error: 'Failed to create report' };
+        console.error('[createReport] Error:', error);
+        return { success: false, error: 'Falha ao criar o chamado. Tente novamente.' };
     }
 }
 
@@ -85,12 +97,20 @@ export async function getReports(filters?: { status?: StatusSuporte }) {
             orderBy: {
                 createdAt: 'desc',
             },
+            include: {
+                usuario: {
+                    select: {
+                        nome: true,
+                        email: true,
+                    }
+                }
+            }
         });
 
         return { success: true, data: reports };
     } catch (error) {
-        console.error('Error fetching reports:', error);
-        return { success: false, error: 'Failed to fetch reports' };
+        console.error('[getReports] Error:', error);
+        return { success: false, error: 'Erro ao buscar chamados.' };
     }
 }
 
@@ -99,24 +119,31 @@ export async function updateReportStatus(id: number, status: StatusSuporte) {
         const report = await prisma.suporte.update({
             where: { id },
             data: { status },
+            include: { usuario: true } // Include user to get ID and ensure existence
         });
 
-        // Notify user if exits
+        // Notify user if linked account exists
         if (report.usuarioId) {
-            // Find user's account to notify
+            // Find user's active account to associate the notification with
+            // We notify the most recently updated account where the user is active
             const userAccount = await prisma.contaUsuario.findFirst({
-                where: { usuarioId: report.usuarioId, isAtivo: true },
-                select: { contaId: true }
+                where: {
+                    usuarioId: report.usuarioId,
+                    isAtivo: true
+                },
+                select: { contaId: true },
+                orderBy: { id: 'desc' } // Get most recent association if multiplerAccount) {
             });
 
             if (userAccount) {
                 await criarNotificacao({
-                    tipo: 'suporte_atualizado' as any, // Cast to any temporarily to bypass outdated TS check or use Enum if imported
+                    tipo: 'suporte_atualizado' as any, // Cast until type is updated in generated client
                     titulo: `Atualização no Chamado #${report.id}`,
-                    descricao: `O status do seu chamado "${report.assunto}" foi atualizado para: ${status.replace('_', ' ')}.`,
+                    descricao: `Status atualizado para: ${status.replace(/_/g, ' ').toUpperCase()}.`,
                     usuarioId: report.usuarioId,
+                    contaId: userAccount.contaId, // Explicitly target the user's account
                     entidadeId: report.id,
-                    metadata: { status }
+                    metadata: { status, previousStatus: report.status }
                 });
             }
         }
@@ -124,14 +151,14 @@ export async function updateReportStatus(id: number, status: StatusSuporte) {
         revalidatePath('/admin/reports');
         return { success: true, data: report };
     } catch (error) {
-        console.error('Error updating report status:', error);
-        return { success: false, error: 'Failed to update report status' };
+        console.error('[updateReportStatus] Error:', error);
+        return { success: false, error: 'Falha ao atualizar status do chamado.' };
     }
 }
 
 export async function getUserReports() {
     const session = await getCurrentUser();
-    if (!session) return { success: false, error: 'Not authenticated' };
+    if (!session) return { success: false, error: 'Sessão expirada ou inválida.' };
 
     try {
         const reports = await prisma.suporte.findMany({
@@ -140,7 +167,7 @@ export async function getUserReports() {
         });
         return { success: true, data: reports };
     } catch (error) {
-        console.error('Error fetching user reports:', error);
-        return { success: false, error: 'Failed to fetch user reports' };
+        console.error('[getUserReports] Error:', error);
+        return { success: false, error: 'Erro ao carregar seus chamados.' };
     }
 }

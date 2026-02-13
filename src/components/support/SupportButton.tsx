@@ -99,24 +99,35 @@ export function SupportButton() {
                 className="sm:max-w-2xl"
                 footer={
                     activeTab === 'new' ? (
-                        <Button
-                            type="submit"
-                            form="support-form"
-                            className="w-full shadow-lg shadow-primary/25"
-                            disabled={isPending}
-                        >
-                            {isPending ? (
-                                <>
-                                    <span className="animate-spin mr-2">⏳</span>
-                                    Enviando...
-                                </>
-                            ) : (
-                                <>
-                                    Enviar Mensagem
-                                    <Send size={18} />
-                                </>
-                            )}
-                        </Button>
+                        <div className="flex gap-3 w-full">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="flex-1"
+                                onClick={() => setIsOpen(false)}
+                                disabled={isPending}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                form="support-form"
+                                className="flex-[2] shadow-lg shadow-primary/25"
+                                disabled={isPending}
+                            >
+                                {isPending ? (
+                                    <>
+                                        <span className="animate-spin mr-2">⏳</span>
+                                        Enviando...
+                                    </>
+                                ) : (
+                                    <>
+                                        Enviar Mensagem
+                                        <Send size={18} className="ml-2" />
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     ) : (
                         <Button
                             type="button"
@@ -124,6 +135,7 @@ export function SupportButton() {
                             className="w-full"
                             onClick={() => setActiveTab('new')}
                         >
+                            <MessageCircleQuestion size={18} className="mr-2" />
                             Abrir Novo Chamado
                         </Button>
                     )
