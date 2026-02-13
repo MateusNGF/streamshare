@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Label } from "@/components/ui/Label";
 import { createReport, SuporteInput } from "@/actions/suporte";
 import { TicketHistoryTable } from "./TicketHistoryTable";
 import { useToast } from "@/contexts/ToastContext";
