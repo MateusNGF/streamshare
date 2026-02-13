@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 export default function AdminUsuariosLoading() {
     return (

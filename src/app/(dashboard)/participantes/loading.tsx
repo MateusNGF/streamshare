@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/Skeleton";
-import { LoadingCard } from "@/components/ui/LoadingCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingCard } from "@/components/ui/loading-card";
 import { PageContainer } from "@/components/layout/PageContainer";
 
 export default function ParticipantesLoading() {

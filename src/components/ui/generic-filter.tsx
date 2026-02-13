@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Filter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Modal } from "@/components/ui/Modal";
-import { DateRangePicker } from "@/components/ui/DateRangePicker";
+import { Modal } from "@/components/ui/modal";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { RangeSlider } from "@/components/ui/RangeSlider";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { RangeSlider } from "@/components/ui/range-slider";
+import { StreamingLogo } from "@/components/ui/streaming-logo";
 import { cn } from "@/lib/utils";
 
 export interface FilterOption {

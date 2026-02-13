@@ -6,7 +6,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { upsertParametros, testSmtpConnection, testWhatsAppConnection } from "@/actions/parametros";
 import { useToast } from "@/hooks/useToast";
-import { Tabs, TabItem } from "@/components/ui/Tabs";
+import { Tabs, TabItem } from "@/components/ui/tabs";
 import { SmtpTab } from "@/components/admin/parametros/SmtpTab";
 import { WhatsappTab } from "@/components/admin/parametros/WhatsappTab";
 import { GeneralTab } from "@/components/admin/parametros/GeneralTab";

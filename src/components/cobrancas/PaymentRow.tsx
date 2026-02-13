@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar, User, CreditCard } from "lucide-react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useCurrency } from "@/hooks/useCurrency";
 
 interface PaymentRowProps {

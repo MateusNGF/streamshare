@@ -1,4 +1,4 @@
-import { Modal } from "@/components/ui/Modal";
+import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 

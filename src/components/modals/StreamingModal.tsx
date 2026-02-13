@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Modal } from "@/components/ui/Modal";
-import { CurrencyInput } from "@/components/ui/CurrencyInput";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
-import { Spinner } from "@/components/ui/Spinner";
+import { Modal } from "@/components/ui/modal";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { CatalogoPicker } from "@/components/streamings/CatalogoPicker";
 import { getCatalogos } from "@/actions/streamings";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,8 @@ import { StreamingSchema } from "@/lib/schemas";
 import { ZodIssue } from "zod";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getNextStreamingNumber } from "@/actions/streamings";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
-import { QuantityInput } from "@/components/ui/QuantityInput";
+import { StreamingLogo } from "@/components/ui/streaming-logo";
+import { QuantityInput } from "@/components/ui/quantity-input";
 
 interface StreamingModalProps {
     isOpen: boolean;

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StreamingLogo } from "@/components/ui/streaming-logo";
 
 interface CatalogoItem {
     id: number;

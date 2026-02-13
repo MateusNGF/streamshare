@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Check, X } from "lucide-react";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import {
     PASSWORD_REQUIREMENTS,
     getMetRequirements,

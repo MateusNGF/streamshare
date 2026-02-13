@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Modal } from "@/components/ui/Modal";
+import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { NotificationCard } from "@/components/notifications/NotificationCard";
-import { Spinner } from "@/components/ui/Spinner";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Spinner } from "@/components/ui/spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Bell, CheckCheck, Clock } from "lucide-react";
 import { getNotificacoes, marcarComoLida, marcarTodasComoLidas } from "@/actions/notificacoes";
 import { useToast } from "@/hooks/useToast";
@@ -17,7 +17,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/Select";
+} from "@/components/ui/select";
 
 interface NotificationsModalProps {
     isOpen: boolean;

@@ -1,4 +1,4 @@
-import { Spinner } from "./Spinner";
+import { Spinner } from "./spinner";
 
 export function LoadingPage() {
     return (

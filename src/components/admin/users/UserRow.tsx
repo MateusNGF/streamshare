@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { AdminUser, toggleAdminRole } from "@/actions/admin/users";
-import { Dropdown } from "@/components/ui/Dropdown";
+import { Dropdown } from "@/components/ui/dropdown";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

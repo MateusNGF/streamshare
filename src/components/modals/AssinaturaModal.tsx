@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
 import { createAssinatura } from "@/actions/assinaturas";
@@ -14,9 +14,9 @@ import { AlertCircle, Calculator } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from "@/lib/financeiro-utils";
-import { CurrencyInput } from "@/components/ui/CurrencyInput";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useBillingCalculations } from "@/hooks/useBillingCalculations";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StreamingLogo } from "@/components/ui/streaming-logo";
 
 interface AssinaturaModalProps {
     isOpen: boolean;

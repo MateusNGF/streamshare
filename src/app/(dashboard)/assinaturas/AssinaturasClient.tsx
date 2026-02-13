@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
-import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import { GenericFilter, FilterConfig } from "@/components/ui/generic-filter";
 import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
 import { AssinaturasTable } from "@/components/assinaturas/AssinaturasTable";
 import { AssinaturasModals } from "@/components/assinaturas/AssinaturasModals";

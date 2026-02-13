@@ -3,7 +3,7 @@
 import { DollarSign, CheckCircle, AlertCircle } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { GenericFilter } from "@/components/ui/GenericFilter";
+import { GenericFilter } from "@/components/ui/generic-filter";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { useCobrancasActions } from "@/hooks/useCobrancasActions";
 import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";

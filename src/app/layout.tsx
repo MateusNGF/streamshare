@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/contexts/ToastContext";
-import { ToastContainer } from "@/components/ui/ToastContainer";
+import { ToastContainer } from "@/components/ui/toast-container";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import "@/cron/init"; // Initialize cron jobs
 

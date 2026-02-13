@@ -2,7 +2,7 @@
 
 import { MoreVertical } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StreamingLogo } from "@/components/ui/streaming-logo";
 
 interface StreamingCardProps {
     name: string;

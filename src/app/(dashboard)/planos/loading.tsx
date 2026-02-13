@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PlanosLoading() {
     return (

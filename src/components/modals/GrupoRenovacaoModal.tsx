@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Modal } from "@/components/ui/Modal";
-import { Spinner } from "@/components/ui/Spinner";
+import { Modal } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/Select";
+} from "@/components/ui/select";
 import { Copy, ExternalLink, Check, Calendar, MessageCircle, AlertCircle } from "lucide-react";
 import { gerarMensagemRenovacao } from "@/actions/grupos";
 import { generateWhatsAppLinkTextOnly } from "@/lib/whatsapp-link-utils";

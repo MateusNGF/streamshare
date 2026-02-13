@@ -1,7 +1,7 @@
 "use client";
 
 import { useCurrency } from "@/hooks/useCurrency";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
 import { format as formatFN } from "date-fns";
 import { ptBR } from "date-fns/locale";

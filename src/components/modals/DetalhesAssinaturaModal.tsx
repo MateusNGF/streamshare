@@ -1,8 +1,8 @@
 "use client";
 
-import { Modal } from "@/components/ui/Modal";
+import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useModalDetails } from "@/hooks/useModalDetails";
 import { ParticipantSection } from "./shared/ParticipantSection";
@@ -14,7 +14,7 @@ import {
     History
 } from "lucide-react";
 import { SubscriptionWithCharges } from "@/types/subscription.types";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StreamingLogo } from "@/components/ui/streaming-logo";
 import { calcularTotalCiclo } from "@/lib/financeiro-utils";
 
 interface DetalhesAssinaturaModalProps {

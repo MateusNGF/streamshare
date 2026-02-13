@@ -1,31 +1,28 @@
-import * as React from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "danger";
-}
+const Badge = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { variant?: "default" | "secondary" | "destructive" | "outline" }>(
+    ({ className, variant = "default", ...props }, ref) => {
+        const variants = {
+            default: "bg-primary text-white hover:bg-primary/80 border-transparent",
+            secondary: "bg-gray-100 text-gray-900 hover:bg-gray-100/80 border-transparent",
+            destructive: "bg-red-500 text-white hover:bg-red-500/80 border-transparent",
+            outline: "text-gray-950 border-gray-200",
+        };
 
-function Badge({ className, variant = "default", ...props }: BadgeProps) {
-    const variantStyles = {
-        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-        success: "border-transparent bg-green-100 text-green-800",
-        warning: "border-transparent bg-amber-100 text-amber-800",
-        danger: "border-transparent bg-red-100 text-red-800",
-    };
-
-    return (
-        <div
-            className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                variantStyles[variant],
-                className
-            )}
-            {...props}
-        />
-    );
-}
+        return (
+            <div
+                ref={ref}
+                className={cn(
+                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    variants[variant],
+                    className
+                )}
+                {...props}
+            />
+        );
+    }
+);
+Badge.displayName = "Badge";
 
 export { Badge };

@@ -1,7 +1,7 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { TableSkeleton } from "@/components/ui/TableSkeleton";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
