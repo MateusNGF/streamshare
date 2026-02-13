@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getUsers } from "@/actions/admin/users";
 import { UsersClient } from "@/components/admin/users/UsersClient";
-import { LoadingPage } from "@/components/ui/loading-page";
+import { LoadingPage } from "@/components/ui/LoadingPage";
 
 export const metadata = {
     title: "Gerenciar Usuários | StreamShare Admin",

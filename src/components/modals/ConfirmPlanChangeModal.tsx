@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal } from "@/components/ui/modal";
+import { Modal } from "@/components/ui/Modal";
 import { AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
 
 interface ConfirmPlanChangeModalProps {

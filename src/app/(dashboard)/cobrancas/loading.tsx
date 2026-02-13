@@ -1,7 +1,7 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
 
 export default function CobrancasLoading() {
     return (

@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AdminUser } from "@/actions/admin/users";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { GenericFilter, FilterConfig } from "@/components/ui/generic-filter";
+import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import {
     Table,
     TableBody,
@@ -17,7 +17,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { UserRow } from "./UserRow";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface UsersClientProps {
     users: AdminUser[];

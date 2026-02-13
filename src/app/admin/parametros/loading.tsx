@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function AdminParametrosLoading() {
     return (

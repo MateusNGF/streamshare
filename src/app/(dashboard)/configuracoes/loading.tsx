@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { PageContainer } from "@/components/layout/PageContainer";
 
 export default function ConfiguracoesLoading() {

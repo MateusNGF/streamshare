@@ -1,5 +1,5 @@
 import { Phone, Mail, CreditCard, Edit, Trash2 } from "lucide-react";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 interface ParticipantCardProps {
     id: number;

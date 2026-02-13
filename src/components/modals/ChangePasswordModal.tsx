@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Lock } from "lucide-react";
-import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { validatePassword } from "@/lib/password-validation";
 
 interface ChangePasswordModalProps {

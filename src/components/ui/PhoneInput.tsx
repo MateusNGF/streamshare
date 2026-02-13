@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CountryCodeSelect } from "./country-code-select";
-import { MaskedInput } from "./masked-input";
+import { CountryCodeSelect } from "./CountryCodeSelect";
+import { MaskedInput } from "./MaskedInput";
 import { getDefaultCountry, extractCountryFromPhone, CountryCode } from "@/lib/country-codes";
 import { removeNonNumeric } from "@/lib/validation";
 

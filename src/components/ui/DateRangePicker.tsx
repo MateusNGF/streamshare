@@ -9,7 +9,7 @@ import * as Popover from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
+import { Modal } from "@/components/ui/Modal";
 
 interface DateRangePickerProps {
     value?: DateRange;

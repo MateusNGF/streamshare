@@ -1,6 +1,6 @@
 import { Users, Calendar, DollarSign, Edit, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface StreamingDetailCardProps {
     id: number;

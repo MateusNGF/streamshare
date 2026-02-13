@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Modal } from "@/components/ui/modal";
-import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { MaskedInput } from "@/components/ui/masked-input";
-import { Spinner } from "@/components/ui/spinner";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { MaskedInput } from "@/components/ui/MaskedInput";
+import { Spinner } from "@/components/ui/Spinner";
 import { validateCPF, validatePhone, validateEmail, ValidationMessages } from "@/lib/validation";
 
 interface ParticipantModalProps {

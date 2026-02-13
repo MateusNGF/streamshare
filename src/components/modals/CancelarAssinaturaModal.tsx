@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Modal } from "@/components/ui/modal";
+import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface CancelarAssinaturaModalProps {
     isOpen: boolean;

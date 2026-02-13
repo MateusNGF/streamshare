@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Chrome } from "lucide-react";
 
 export function LoginForm() {

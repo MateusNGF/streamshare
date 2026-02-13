@@ -1,6 +1,6 @@
 "use client";
 
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export default function NotificationsTab() {
     return (

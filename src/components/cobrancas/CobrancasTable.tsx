@@ -9,10 +9,10 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History } from "lucide-react";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Dropdown } from "@/components/ui/dropdown";
-import { EmptyState } from "@/components/ui/empty-state";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "./shared/BillingTableCells";
 

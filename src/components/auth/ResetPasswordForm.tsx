@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { validatePassword } from "@/lib/password-validation";
 import { CheckCircle2 } from "lucide-react";
 

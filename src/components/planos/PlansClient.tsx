@@ -6,7 +6,7 @@ import { Check, Loader2, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Toast, ToastVariant } from "@/components/ui/toast";
+import { Toast, ToastVariant } from "@/components/ui/Toast";
 
 interface PlansClientProps {
     currentPlan: string;

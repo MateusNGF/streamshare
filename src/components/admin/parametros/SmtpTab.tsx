@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 import { TestTube, Eye, EyeOff } from "lucide-react";
 
 interface SmtpTabProps {

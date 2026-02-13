@@ -2,9 +2,9 @@
 
 import { Eye, MessageCircle, Check, XCircle, AlertCircle, Calendar } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Dropdown } from "@/components/ui/dropdown";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { cn } from "@/lib/utils";
 import { differenceInDays, isToday, startOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";

@@ -1,14 +1,14 @@
 "use client";
 import { useState, useMemo } from "react";
 import { Plus, Search, Edit2, Trash2, ExternalLink } from "lucide-react";
-import { Modal } from "@/components/ui/modal";
-import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { createCatalogoItem, updateCatalogoItem, deleteCatalogoItem } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface CatalogoItem {
     id: number;

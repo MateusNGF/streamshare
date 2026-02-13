@@ -9,16 +9,16 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { User, Activity, TrendingUp, History as HistoryIcon, CreditCard, Eye, Trash } from "lucide-react";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Dropdown } from "@/components/ui/dropdown";
-import { Tooltip } from "@/components/ui/tooltip";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { format as formatFN } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCurrency } from "@/hooks/useCurrency";
 import { calcularTotalCiclo } from "@/lib/financeiro-utils";
 import { cn } from "@/lib/utils";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Search } from "lucide-react";
 
 interface AssinaturasTableProps {

@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LoadingCard } from "@/components/ui/loading-card";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
 
 export default function GruposLoading() {
     return (

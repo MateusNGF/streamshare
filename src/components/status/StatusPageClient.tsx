@@ -3,7 +3,7 @@
 import { CheckCircle2, Server, Database, Bell, Shield, ArrowRight, Zap, RefreshCw, ChevronLeft, Copy } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useState } from "react";
 import { InsectInteractive } from "../backgrounds/InsectInteractive";

@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { COUNTRY_CODES, CountryCode } from "@/lib/country-codes";
 
 interface CountryCodeSelectProps {

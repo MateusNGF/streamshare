@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { Modal } from "@/components/ui/modal";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
 import { Tv, Check, Users } from "lucide-react";
 import { createGrupo, updateGrupo, getStreamingsParaGrupo, getGrupoById } from "@/actions/grupos";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/hooks/useCurrency";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 type Streaming = {
     id: number;

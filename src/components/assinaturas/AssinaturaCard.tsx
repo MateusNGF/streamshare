@@ -2,13 +2,13 @@
 
 import { Eye, Trash, CreditCard, User, AlertCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Dropdown } from "@/components/ui/dropdown";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { calcularTotalCiclo } from "@/lib/financeiro-utils";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface AssinaturaCardProps {
     sub: any;

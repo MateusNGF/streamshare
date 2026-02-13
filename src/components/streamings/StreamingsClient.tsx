@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
-import { GenericFilter } from "@/components/ui/generic-filter";
+import { GenericFilter } from "@/components/ui/GenericFilter";
 import { StreamingDetailCard } from "@/components/streamings/StreamingDetailCard";
 import { StreamingModal, StreamingFormData } from "@/components/modals/StreamingModal";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";

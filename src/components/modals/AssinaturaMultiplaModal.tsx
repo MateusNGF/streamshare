@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Modal } from "@/components/ui/modal";
+import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/switch";
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { FrequenciaPagamento } from "@prisma/client";
 import { INTERVALOS_MESES, calcularCustoBase, calcularTotalCiclo, arredondarMoeda } from "@/lib/financeiro-utils";
 import { Prisma } from "@prisma/client";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Check, ChevronLeft, Search, Users, X, Calendar, Wallet, Plus, Minus, ChevronDown, ChevronUp } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CurrencyInput } from "@/components/ui/currency-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { useBillingCalculations } from "@/hooks/useBillingCalculations";
-import { StreamingLogo } from "@/components/ui/streaming-logo";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 // --- Types ---
 

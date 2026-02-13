@@ -4,7 +4,7 @@ import { AlertTriangle, CreditCard, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { createCustomerPortalSession } from "@/actions/planos";
 import { useRouter } from "next/navigation";
-import { Toast } from "@/components/ui/toast";
+import { Toast } from "@/components/ui/Toast";
 
 interface SubscriptionAlertProps {
     status: string | null;
