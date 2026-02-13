@@ -25,7 +25,6 @@ Diretrizes visuais para manter a experiência premium.
 - **[Integração WhatsApp](./WHATSAPP_INTEGRATION.md)**: Fluxos automáticos via Twilio e manuais via API Link.
 - **[Sistema de Faturamento](./frontend/BILLING_SYSTEM.md)**: Lógica de geração de cobranças e conciliação.
 - **[Configuração de Email](./EMAIL_CONFIGURATION.md)**: Setup de provedores e templates.
-- **[Descoberta e Convites](./features/DISCOVERY_AND_INVITES.md)**: Fluxos de expansão de rede e onboarding de membros.
 
 ## 💼 Regras de Negócio
 

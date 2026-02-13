@@ -42,21 +42,6 @@ enum StatusCobranca {
   cancelado
 }
 
-enum StatusParticipante {
-  ativo
-  pendente
-  recusado
-  bloqueado
-  saiu
-}
-
-enum StatusConvite {
-  pendente
-  aceito
-  recusado
-  expirado
-}
-
 enum TipoNotificacaoWhatsApp {
   nova_assinatura
   cobranca_gerada
@@ -99,13 +84,6 @@ enum TipoNotificacao {
 
   // Sistema
   plano_alterado
-
-  // Discovery & Invites
-  solicitacao_participacao_criada
-  solicitacao_participacao_aceita
-  solicitacao_participacao_recusada
-  convite_recebido
-  convite_aceito
 }
 
 //////////////////////////////////////////////////
@@ -131,11 +109,10 @@ model Conta {
   whatsappConfig WhatsAppConfig?
   notificacoes   Notificacao[]
 
-  stripeCustomerId         String?   @unique
-  stripeSubscriptionId     String?   @unique
+  stripeCustomerId         String? @unique
+  stripeSubscriptionId     String? @unique
   stripeSubscriptionStatus String?
-  stripeCancelAtPeriodEnd  Boolean   @default(false)
-  convites                 Convite[]
+  stripeCancelAtPeriodEnd  Boolean @default(false)
 
   @@map("conta")
 }
@@ -159,8 +136,6 @@ model Usuario {
   admin                 UsuarioAdmin?
   notificacoes          Notificacao[]
   assinaturasCanceladas Assinatura[]   @relation("CanceladoPor")
-  convitesFeitos        Convite[]      @relation("Convidou")
-  convitesRecebidos     Convite[]      @relation("Convidado")
 
   @@map("usuario")
 }
@@ -230,7 +205,6 @@ model Streaming {
   catalogo    StreamingCatalogo @relation(fields: [streamingCatalogoId], references: [id])
   grupos      GrupoStreaming[]
   assinaturas Assinatura[]
-  convites    Convite[]
 
   @@map("streaming")
 }
@@ -266,33 +240,9 @@ model Participante {
   assinaturas  Assinatura[]
   whatsappLogs WhatsAppLog[]
 
-  status StatusParticipante @default(ativo)
-
   @@unique([contaId, cpf])
   @@unique([contaId, whatsappNumero])
   @@map("participante")
-}
-
-model Convite {
-  id             String        @id @default(uuid())
-  email          String
-  contaId        Int
-  streamingId    Int?
-  status         StatusConvite @default(pendente)
-  token          String        @unique
-  expiresAt      DateTime
-  convidadoPorId Int
-  usuarioId      Int?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  conta        Conta      @relation(fields: [contaId], references: [id])
-  streaming    Streaming? @relation(fields: [streamingId], references: [id])
-  convidadoPor Usuario    @relation("Convidou", fields: [convidadoPorId], references: [id])
-  usuario      Usuario?   @relation("Convidado", fields: [usuarioId], references: [id])
-
-  @@index([email])
-  @@map("convite")
 }
 
 model Assinatura {

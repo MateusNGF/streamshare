@@ -14,9 +14,6 @@ import {
     FileSignature,
     ShieldCheck,
     FolderOpen,
-    Compass,
-    UserPlus,
-    Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -50,7 +47,6 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
             label: "Geral",
             items: [
                 { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-                { icon: Compass, label: "Explorar", href: "/explore" },
                 { icon: Tv, label: "Streamings", href: "/streamings" },
                 { icon: FolderOpen, label: "Grupos", href: "/grupos" },
             ]
@@ -59,8 +55,6 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
             label: "Conta",
             items: [
                 { icon: Users, label: "Participantes", href: "/participantes" },
-                { icon: UserPlus, label: "Solicitações", href: "/solicitacoes" },
-                { icon: Mail, label: "Meus Convites", href: "/convites" },
                 { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
                 { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
             ]

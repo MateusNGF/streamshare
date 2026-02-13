@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus, Mail } from "lucide-react";
-import { GenericFilter } from "@/components/ui/generic-filter";
+import { Plus } from "lucide-react";
+import { GenericFilter } from "@/components/ui/GenericFilter";
 import { ParticipantCard } from "@/components/participantes/ParticipantCard";
 import { ParticipantModal, ParticipantFormData } from "@/components/modals/ParticipantModal";
 import { DeleteModal } from "@/components/modals/DeleteModal";
-import { InviteModal } from "@/components/modals/InviteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { createParticipante, updateParticipante, deleteParticipante } from "@/actions/participantes";
@@ -25,11 +24,9 @@ interface Participante {
 
 interface ParticipantesClientProps {
     initialData: Participante[];
-    contaId: number;
-    streamings: any[];
 }
 
-export function ParticipantesClient({ initialData, contaId, streamings }: ParticipantesClientProps) {
+export function ParticipantesClient({ initialData }: ParticipantesClientProps) {
     const toast = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -37,8 +34,6 @@ export function ParticipantesClient({ initialData, contaId, streamings }: Partic
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedParticipant, setSelectedParticipant] = useState<Participante | null>(null);
     const [loading, setLoading] = useState(false);
-
-    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     // Filter logic
     const filteredParticipants = useMemo(() => {
@@ -104,24 +99,14 @@ export function ParticipantesClient({ initialData, contaId, streamings }: Partic
                 title="Participantes"
                 description="Gerencie os participantes das assinaturas"
                 action={
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setIsInviteModalOpen(true)}
-                            aria-label="Convidar participante"
-                            className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-6 py-3 rounded-2xl font-bold shadow-sm transition-all touch-manipulation"
-                        >
-                            <Mail size={20} />
-                            Convidar
-                        </button>
-                        <button
-                            onClick={() => setIsAddModalOpen(true)}
-                            aria-label="Adicionar novo participante"
-                            className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
-                        >
-                            <Plus size={20} />
-                            Novo Participante
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        aria-label="Adicionar novo participante"
+                        className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
+                    >
+                        <Plus size={20} />
+                        Novo Participante
+                    </button>
                 }
             />
 
@@ -193,12 +178,6 @@ export function ParticipantesClient({ initialData, contaId, streamings }: Partic
             </div>
 
             {/* Modals */}
-            <InviteModal
-                isOpen={isInviteModalOpen}
-                onClose={() => setIsInviteModalOpen(false)}
-                contaId={contaId}
-                streamings={streamings}
-            />
             <ParticipantModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
