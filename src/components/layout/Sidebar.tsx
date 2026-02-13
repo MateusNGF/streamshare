@@ -42,19 +42,31 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
         await refreshCount();
     };
 
-    const menuItems = [
-        { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-        { icon: Users, label: "Participantes", href: "/participantes" },
-        { icon: Tv, label: "Streamings", href: "/streamings" },
-        { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
-        { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
-        { icon: FolderOpen, label: "Grupos", href: "/grupos" },
-        { icon: Settings, label: "Configurações", href: "/configuracoes" },
+    const menuGroups = [
+        {
+            label: "Geral",
+            items: [
+                { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+                { icon: Tv, label: "Streamings", href: "/streamings" },
+                { icon: FolderOpen, label: "Grupos", href: "/grupos" },
+            ]
+        },
+        {
+            label: "Conta",
+            items: [
+                { icon: Users, label: "Participantes", href: "/participantes" },
+                { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
+                { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
+            ]
+        },
+        {
+            label: "Sistema",
+            items: [
+                { icon: Settings, label: "Configurações", href: "/configuracoes" },
+                ...(isSystemAdmin ? [{ icon: ShieldCheck, label: "Painel Admin", href: "/admin/parametros" }] : []),
+            ]
+        }
     ];
-
-    if (isSystemAdmin) {
-        menuItems.push({ icon: ShieldCheck, label: "Painel Admin", href: "/admin/parametros" });
-    }
 
     const handleLogout = async () => {
         setLoading(true);
@@ -128,41 +140,50 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                     </Link>
                 </div>
 
-                <nav className="flex-1 px-4 mt-2" aria-label="Menu principal">
-                    <ul className="space-y-2">
-                        {menuItems.map((item) => {
-                            const isActive = pathname === item.href;
-                            return (
-                                <li key={item.href}>
-                                    <Link
-                                        href={item.href}
-                                        onClick={closeMobileMenu}
-                                        aria-label={item.label}
-                                        aria-current={isActive ? "page" : undefined}
-                                        className={cn(
-                                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 touch-manipulation group cursor-pointer",
-                                            isActive
-                                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                                                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:translate-x-1"
-                                        )}
-                                    >
-                                        <item.icon size={20} className={cn(
-                                            "transition-transform duration-200",
-                                            isActive ? "text-white" : "text-gray-400 group-hover:scale-110"
-                                        )} />
-                                        <span className="font-medium">{item.label}</span>
-                                    </Link>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                <nav className="flex-1 px-4 mt-2 overflow-y-auto pb-4 scrollbar-hide" aria-label="Menu principal">
+                    <div className="flex flex-col gap-6">
+                        {menuGroups.map((group) => (
+                            <div key={group.label} className="flex flex-col gap-1">
+                                <h3 className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] mb-1">
+                                    {group.label}
+                                </h3>
+                                <ul className="space-y-0.5">
+                                    {group.items.map((item) => {
+                                        const isActive = pathname === item.href;
+                                        return (
+                                            <li key={item.href}>
+                                                <Link
+                                                    href={item.href}
+                                                    onClick={closeMobileMenu}
+                                                    aria-label={item.label}
+                                                    aria-current={isActive ? "page" : undefined}
+                                                    className={cn(
+                                                        "flex items-center gap-2.5 px-4 py-2 rounded-lg transition-all duration-200 touch-manipulation group cursor-pointer",
+                                                        isActive
+                                                            ? "bg-primary text-white shadow-md shadow-primary/10"
+                                                            : "text-gray-500 hover:bg-gray-50/80 hover:text-gray-900 hover:translate-x-1"
+                                                    )}
+                                                >
+                                                    <item.icon size={18} className={cn(
+                                                        "transition-transform duration-200",
+                                                        isActive ? "text-white" : "text-gray-400 group-hover:scale-110"
+                                                    )} />
+                                                    <span className="font-medium text-[13.5px]">{item.label}</span>
+                                                </Link>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
                 </nav>
 
-                <div className="p-4 border-t border-gray-100 flex flex-col gap-2">
+                <div className="p-4 border-t border-gray-100 flex flex-col gap-1">
                     {/* Desktop Notification Button */}
                     <button
                         onClick={() => setIsNotificationsOpen(true)}
-                        className="hidden lg:flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-gray-500 hover:bg-gray-50 hover:translate-x-1 transition-all duration-200 touch-manipulation group"
+                        className="hidden lg:flex items-center gap-2.5 w-full px-4 py-2 rounded-lg font-medium text-[13.5px] text-gray-500 hover:bg-gray-50/80 hover:translate-x-1 transition-all duration-200 touch-manipulation group"
                     >
                         <div className="relative">
                             <NotificationBell
@@ -178,9 +199,9 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                     <button
                         onClick={() => setIsLogoutModalOpen(true)}
                         aria-label="Sair da conta"
-                        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl font-medium text-red-500 hover:bg-red-50 hover:translate-x-1 transition-all duration-200 touch-manipulation group"
+                        className="flex items-center gap-2.5 w-full px-4 py-2 rounded-lg font-medium text-[13.5px] text-red-500 hover:bg-red-50/80 hover:translate-x-1 transition-all duration-200 touch-manipulation group"
                     >
-                        <LogOut size={20} className="group-hover:scale-110 transition-transform duration-200" />
+                        <LogOut size={18} className="group-hover:scale-110 transition-transform duration-200" />
                         <span>Sair</span>
                     </button>
                 </div>
