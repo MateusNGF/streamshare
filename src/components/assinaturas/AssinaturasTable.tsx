@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Search } from "lucide-react";
 
+import { BillingValueCell, BillingPeriodCell } from "@/components/cobrancas/shared/BillingTableCells";
+
 interface AssinaturasTableProps {
     subscriptions: any[];
     onViewDetails: (sub: any) => void;
@@ -49,7 +51,7 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[140px]">
                                 <div className="flex items-center gap-2">
                                     <User size={12} className="text-gray-400" />
                                     Participante
@@ -58,7 +60,7 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                             <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
                                 Status
                             </TableHead>
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[120px]">
                                 <div className="flex items-center gap-2">
                                     <Activity size={12} className="text-gray-400" />
                                     Serviço
@@ -70,13 +72,13 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                                     Frequência
                                 </div>
                             </TableHead>
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">
                                 <div className="flex items-center justify-center gap-2">
                                     <HistoryIcon size={12} className="text-gray-400" />
                                     Vigência (Período)
                                 </div>
                             </TableHead>
-                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[100px]">
                                 <div className="flex items-center justify-end gap-2">
                                     <CreditCard size={12} className="text-gray-400" />
                                     Valores
@@ -148,24 +150,19 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
                                     </TableCell>
                                     <TableCell className="text-center">
                                         {sub.cobrancas && sub.cobrancas.length > 0 ? (
-                                            <div className="inline-flex items-center gap-2 text-[10px] font-black text-gray-700 uppercase whitespace-nowrap bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                                                <span>{formatFN(new Date(sub.cobrancas[0].periodoInicio), 'MMM/yy', { locale: ptBR })}</span>
-                                                <span className="text-gray-300">|</span>
-                                                <span>{formatFN(new Date(sub.cobrancas[0].periodoFim), 'MMM/yy', { locale: ptBR })}</span>
-                                            </div>
+                                            <BillingPeriodCell
+                                                inicio={sub.cobrancas[0].periodoInicio}
+                                                fim={sub.cobrancas[0].periodoFim}
+                                            />
                                         ) : (
                                             <span className="text-[10px] text-gray-300 italic">N/A</span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <div className="flex flex-col items-end">
-                                            <div className="font-black text-sm text-gray-900 leading-tight">
-                                                {format(Number(valorCiclo || sub.valor))}
-                                            </div>
-                                            <div className="text-[10px] text-gray-400 font-medium">
-                                                {format(Number(sub.valor))} / mês
-                                            </div>
-                                        </div>
+                                        <BillingValueCell
+                                            valor={valorCiclo || sub.valor}
+                                            valorMensal={sub.valor}
+                                        />
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Dropdown options={menuOptions} />

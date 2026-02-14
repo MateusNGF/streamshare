@@ -60,21 +60,21 @@ export function FaturasTable({
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[140px]">
                                 <div className="flex items-center gap-2">
                                     <Hash size={12} className="text-gray-400" />
                                     Serviço
                                 </div>
                             </TableHead>
 
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[120px]">
                                 <div className="flex items-center justify-center gap-2">
                                     <Clock size={12} className="text-gray-400" />
                                     Período
                                 </div>
                             </TableHead>
 
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[110px]">
                                 <div className="flex items-center justify-center gap-2">
                                     <Calendar size={12} className="text-gray-400" />
                                     Vencimento
@@ -92,7 +92,7 @@ export function FaturasTable({
                                 </div>
                             </TableHead>
 
-                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
+                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[100px]">
                                 <div className="flex items-center justify-end gap-2">
                                     <DollarSign size={12} className="text-gray-400" />
                                     Valor
