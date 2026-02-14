@@ -15,7 +15,7 @@ import {
     ShieldCheck,
     FolderOpen,
     Compass,
-    Receipt,
+    Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -49,15 +49,20 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
             label: "Geral",
             items: [
                 { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-                { icon: Receipt, label: "Faturas", href: "/faturas" },
                 { icon: Compass, label: "Explorar", href: "/explore" },
-                { icon: Tv, label: "Streamings", href: "/streamings" },
-                { icon: FolderOpen, label: "Grupos", href: "/grupos" },
+            ]
+        },
+        {
+            label: "Usuário",
+            items: [
+                { icon: Wallet, label: "Faturas", href: "/faturas" },
             ]
         },
         {
             label: "Conta",
             items: [
+                { icon: Tv, label: "Streamings", href: "/streamings" },
+                { icon: FolderOpen, label: "Grupos", href: "/grupos" },
                 { icon: Users, label: "Participantes", href: "/participantes" },
                 { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
                 { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
