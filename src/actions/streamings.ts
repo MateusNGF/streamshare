@@ -7,6 +7,7 @@ import { StreamingSchema } from "@/lib/schemas";
 import { PLANS } from "@/config/plans";
 import { criarNotificacao } from "@/actions/notificacoes";
 import { getContext } from "@/lib/action-context";
+import { calcularValorPeriodo } from "@/lib/financeiro-utils";
 
 export async function getCatalogos() {
     return prisma.streamingCatalogo.findMany({
@@ -145,20 +146,44 @@ export async function getActiveSubscriptionsCount(streamingId: number) {
 export async function updateExistingSubscriptionValues(streamingId: number, newValue: number) {
     const { contaId } = await getContext();
 
-    const updated = await prisma.assinatura.updateMany({
-        where: {
-            streamingId,
-            streaming: { contaId },
-            status: { in: ["ativa", "suspensa"] }
-        },
-        data: {
-            valor: newValue
+    const result = await prisma.$transaction(async (tx) => {
+        const updatedAssinaturas = await tx.assinatura.updateMany({
+            where: {
+                streamingId,
+                streaming: { contaId },
+                status: { in: ["ativa", "suspensa", "pendente"] }
+            },
+            data: {
+                valor: newValue
+            }
+        });
+
+        // Also update pending charges for these subscriptions correctly handling frequency
+        const pendingCharges = await tx.cobranca.findMany({
+            where: {
+                status: "pendente",
+                assinatura: {
+                    streamingId,
+                    streaming: { contaId }
+                }
+            },
+            include: { assinatura: true }
+        });
+
+        for (const charge of pendingCharges) {
+            const newValueForCharge = calcularValorPeriodo(newValue, charge.assinatura.frequencia);
+            await tx.cobranca.update({
+                where: { id: charge.id },
+                data: { valor: newValueForCharge }
+            });
         }
+
+        return { assinaturasCount: updatedAssinaturas.count, cobrancasCount: pendingCharges.length };
     });
 
     revalidatePath("/assinaturas");
     revalidatePath("/cobrancas");
-    return updated.count;
+    return result.assinaturasCount;
 }
 
 /**
@@ -498,12 +523,36 @@ export async function updateStreaming(
             where: {
                 streamingId: id,
                 streaming: { contaId },
-                status: { in: ["ativa", "suspensa"] }
+                status: { in: ["ativa", "suspensa", "pendente"] }
             },
             data: {
                 valor: data.valorIntegral
             }
         });
+
+        // Update pending charges as well correctly handling frequency
+        const pendingCharges = await tx.cobranca.findMany({
+            where: {
+                status: "pendente",
+                assinatura: {
+                    streamingId: id,
+                    streaming: { contaId }
+                }
+            },
+            include: {
+                assinatura: {
+                    select: { frequencia: true }
+                }
+            }
+        });
+
+        for (const charge of pendingCharges) {
+            const newValueForCharge = calcularValorPeriodo(data.valorIntegral, charge.assinatura.frequencia);
+            await tx.cobranca.update({
+                where: { id: charge.id },
+                data: { valor: newValueForCharge }
+            });
+        }
 
         return { streaming, updatedCount: updated.count };
     });

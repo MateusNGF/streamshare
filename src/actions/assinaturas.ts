@@ -26,6 +26,7 @@ export async function getAssinaturasKPIs() {
     const kpis = {
         totalAtivas: 0,
         totalSuspensas: 0,
+        totalPendentes: 0,
         receitaMensalEstimada: 0,
         totalAssinaturas: 0
     };
@@ -34,9 +35,12 @@ export async function getAssinaturasKPIs() {
         kpis.totalAssinaturas += stat._count.id;
         if (stat.status === 'ativa') {
             kpis.totalAtivas = stat._count.id;
-            kpis.receitaMensalEstimada = Number(stat._sum.valor || 0);
+            kpis.receitaMensalEstimada += Number(stat._sum.valor || 0);
         } else if (stat.status === 'suspensa') {
             kpis.totalSuspensas = stat._count.id;
+        } else if (stat.status === 'pendente') {
+            kpis.totalPendentes = stat._count.id;
+            kpis.receitaMensalEstimada += Number(stat._sum.valor || 0);
         }
     });
 
@@ -152,7 +156,7 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 frequencia: data.frequencia,
                 valor: data.valor,
                 dataInicio: dataInicio,
-                status: StatusAssinatura.ativa,
+                status: (data.cobrancaAutomaticaPaga ?? false) ? StatusAssinatura.ativa : StatusAssinatura.pendente,
                 cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
             },
         });
@@ -225,7 +229,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
             // Uses standard validator but we need the object return, so we might need to adjust or call finding manually.
             const streaming = await tx.streaming.findUnique({
                 where: { id: ass.streamingId },
-                include: { catalogo: true, _count: { select: { assinaturas: { where: { status: { in: ['ativa', 'suspensa'] } } } } } }
+                include: { catalogo: true, _count: { select: { assinaturas: { where: { status: { in: ['ativa', 'suspensa', 'pendente'] } } } } } }
             });
 
             if (!streaming) throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
@@ -251,7 +255,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                         frequencia: ass.frequencia,
                         valor: ass.valor,
                         dataInicio,
-                        status: 'ativa',
+                        status: (data.cobrancaAutomaticaPaga ?? false) ? 'ativa' : 'pendente',
                         cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
                     }
                 });

@@ -179,12 +179,12 @@ export async function confirmarPagamento(
         const agora = new Date();
         const assinatura = result.assinatura;
 
-        // Check for reactivation (D-07)
-        // Criteria: Suspended AND charge covers the current date
-        const isSuspended = assinatura.status === "suspensa";
+        // Check for activation/reactivation (D-07)
+        // Criteria: (Suspended OR Pendente) AND charge covers the current date
+        const isSuspendedOrPendente = assinatura.status === "suspensa" || assinatura.status === "pendente";
         const coversCurrentDate = agora >= result.periodoInicio && agora <= result.periodoFim;
 
-        if (isSuspended && coversCurrentDate) {
+        if (isSuspendedOrPendente && coversCurrentDate) {
             await tx.assinatura.update({
                 where: { id: assinatura.id },
                 data: {
@@ -200,8 +200,10 @@ export async function confirmarPagamento(
                     contaId,
                     usuarioId: null,
                     tipo: "assinatura_editada",
-                    titulo: "Assinatura Reativada",
-                    descricao: `A assinatura de ${assinatura.participante.nome} foi reativada automaticamente após o pagamento da cobrança atual.`,
+                    titulo: assinatura.status === "pendente" ? "Assinatura Ativada" : "Assinatura Reativada",
+                    descricao: assinatura.status === "pendente"
+                        ? `A assinatura de ${assinatura.participante.nome} foi ativada após a confirmação do primeiro pagamento.`
+                        : `A assinatura de ${assinatura.participante.nome} foi reativada automaticamente após o pagamento da cobrança atual.`,
                     entidadeId: assinatura.id,
                 }
             });

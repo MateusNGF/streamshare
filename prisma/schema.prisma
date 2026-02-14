@@ -30,6 +30,7 @@ enum FrequenciaPagamento {
 }
 
 enum StatusAssinatura {
+  pendente
   ativa
   suspensa
   cancelada

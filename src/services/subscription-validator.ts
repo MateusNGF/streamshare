@@ -28,7 +28,7 @@ export const subscriptionValidator = {
                     select: {
                         assinaturas: {
                             where: {
-                                status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa] }
+                                status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa, StatusAssinatura.pendente] }
                             }
                         }
                     }
