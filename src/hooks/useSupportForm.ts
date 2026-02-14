@@ -30,7 +30,8 @@ export function useSupportForm({ onSuccess, isOpen }: UseSupportFormProps) {
                     setFormData(prev => ({
                         ...prev,
                         nome: user.nome || "",
-                        email: user.email || ""
+                        email: user.email || "",
+                        usuarioId: user.id
                     }));
                 } else {
                     setIsLoggedIn(false);
