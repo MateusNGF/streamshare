@@ -9,6 +9,7 @@ import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
 import { AssinaturasTable } from "@/components/assinaturas/AssinaturasTable";
 import { AssinaturasModals } from "@/components/assinaturas/AssinaturasModals";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -160,17 +161,20 @@ export default function AssinaturasClient({
                     />
                 </div>
 
-                <AssinaturasTable
-                    subscriptions={initialSubscriptions}
-                    onViewDetails={(sub) => {
-                        setSelectedAssinatura(sub);
-                        setDetailsModalOpen(true);
-                    }}
-                    onCancel={(sub) => {
-                        setSelectedAssinatura(sub);
-                        setCancelModalOpen(true);
-                    }}
-                />
+                <div className="space-y-6">
+                    <SectionHeader title="Listagem de Assinaturas" />
+                    <AssinaturasTable
+                        subscriptions={initialSubscriptions}
+                        onViewDetails={(sub) => {
+                            setSelectedAssinatura(sub);
+                            setDetailsModalOpen(true);
+                        }}
+                        onCancel={(sub) => {
+                            setSelectedAssinatura(sub);
+                            setCancelModalOpen(true);
+                        }}
+                    />
+                </div>
             </div>
 
             <AssinaturasModals

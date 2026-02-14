@@ -8,6 +8,7 @@ import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { useCobrancasActions } from "@/hooks/useCobrancasActions";
 import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
 import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface CobrancasClientProps {
     kpis: {
@@ -153,18 +154,21 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 />
             </div>
 
-            <CobrancasTable
-                cobrancas={filteredCobrancas}
-                onViewDetails={(id) => {
-                    setSelectedCobrancaId(id);
-                    setDetailsModalOpen(true);
-                }}
-                onConfirmPayment={handleConfirmarPagamento}
-                onSendWhatsApp={handleEnviarWhatsApp}
-                onCancel={handleCancelarCobranca}
-                searchTerm={searchTerm}
-                statusFilter={statusFilter}
-            />
+            <div className="space-y-6">
+                <SectionHeader title="Listagem de Cobranças" />
+                <CobrancasTable
+                    cobrancas={filteredCobrancas}
+                    onViewDetails={(id) => {
+                        setSelectedCobrancaId(id);
+                        setDetailsModalOpen(true);
+                    }}
+                    onConfirmPayment={handleConfirmarPagamento}
+                    onSendWhatsApp={handleEnviarWhatsApp}
+                    onCancel={handleCancelarCobranca}
+                    searchTerm={searchTerm}
+                    statusFilter={statusFilter}
+                />
+            </div>
 
             <CobrancasModals
                 cancelModalOpen={cancelModalOpen}

@@ -80,6 +80,62 @@ interface PageHeaderProps {
 
 ---
 
+### SectionHeader
+
+**Localização**: `src/components/layout/SectionHeader.tsx`
+
+**Propósito**: Header para seções dentro de uma página, com título, descrição opcional e elemento à direita. Ideal para encabeçar tabelas ou listas.
+
+**Props**:
+```typescript
+interface SectionHeaderProps {
+    title: string;           // Obrigatório
+    description?: string;    // Opcional
+    rightElement?: ReactNode; // Opcional (ex: toggle, botões)
+}
+```
+
+**Uso**:
+```tsx
+<SectionHeader
+    title="Histórico de Cobranças"
+    description="Veja todos os pagamentos realizados"
+    rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
+/>
+```
+
+---
+
+### ViewModeToggle
+
+**Localização**: `src/components/ui/ViewModeToggle.tsx`
+
+**Propósito**: Componente para alternar a visualização de uma lista entre modo Tabela e modo Grid (Cards).
+
+**Props**:
+```typescript
+type ViewMode = "table" | "grid";
+
+interface ViewModeToggleProps {
+    viewMode: ViewMode;
+    setViewMode: (mode: ViewMode) => void;
+}
+```
+
+**Uso**:
+```tsx
+const [viewMode, setViewMode] = useState<ViewMode>("table");
+
+return (
+    <ViewModeToggle
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+    />
+);
+```
+
+---
+
 ## 📋 Páginas que Usam
 
 1. **Dashboard** - Com múltiplas ações (notificação + botão)
