@@ -46,40 +46,49 @@ export function DetalhesAssinaturaModal({
         >
             <div className="space-y-8">
 
-                {/* 1. Header de Identidade (Hero) */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-gray-100">
-                    <StreamingLogo
-                        name={assinatura.streaming.catalogo.nome}
-                        color={assinatura.streaming?.catalogo?.corPrimaria ?? ""}
-                        iconeUrl={assinatura.streaming.catalogo.iconeUrl}
-                        size="lg"
-                        rounded="2xl"
-                        className="shadow-md flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h3 className="text-2xl font-black text-gray-900 tracking-tight truncate">
-                                {assinatura.participante.nome}
-                            </h3>
+                {/* 1. Header de Identidade (Hero) - Otimizado para Mobile e Desktop */}
+                <div className="flex items-center gap-3 sm:gap-5 pb-5 border-b border-gray-100">
+                    <div className="relative flex-shrink-0">
+                        <StreamingLogo
+                            name={assinatura.streaming.catalogo.nome}
+                            color={assinatura.streaming?.catalogo?.corPrimaria ?? ""}
+                            iconeUrl={assinatura.streaming.catalogo.iconeUrl}
+                            size="lg"
+                            rounded="2xl"
+                            className="shadow-lg border-2 border-white ring-1 ring-gray-100 h-14 w-14 sm:h-16 sm:w-16"
+                        />
+                        <div className="absolute -bottom-1 -right-1">
                             <StatusBadge
                                 status={assinatura.status}
                                 dataCancelamento={assinatura.dataCancelamento}
-                                className="scale-90"
+                                className="scale-75 origin-bottom-right"
                             />
                         </div>
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                            <span className="text-primary font-bold">
-                                {assinatura.streaming.apelido || assinatura.streaming.catalogo.nome}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span>Início em {formatDate(assinatura.createdAt)}</span>
-                        </div>
                     </div>
-                    {/* Valor em Destaque no Header (Desktop) */}
-                    <div className="hidden sm:block text-right">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Valor do Ciclo</p>
-                        <p className="text-2xl font-black text-gray-900">{format(Number(valorCiclo))}</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight -mt-1">{format(Number(assinatura.valor))} / mês</p>
+
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                <h3 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight truncate leading-tight">
+                                    {assinatura.participante.nome}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                                    <span className="text-[10px] sm:text-xs font-black text-primary uppercase tracking-wider">
+                                        {assinatura.streaming.apelido || assinatura.streaming.catalogo.nome}
+                                    </span>
+                                    <span className="hidden xs:inline text-gray-300">•</span>
+                                    <span className="text-[10px] sm:text-xs text-gray-400 font-medium">Desde {formatDate(assinatura.createdAt)}</span>
+                                </div>
+                            </div>
+
+                            <div className="text-right flex-shrink-0">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Ciclo</p>
+                                <p className="text-lg sm:text-2xl font-black text-gray-900 leading-none">
+                                    {format(Number(valorCiclo))}
+                                </p>
+                                <p className="text-[8px] font-bold text-gray-400 uppercase mt-0.5 hidden xs:block">{assinatura.frequencia}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

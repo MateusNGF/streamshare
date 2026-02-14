@@ -43,31 +43,33 @@ export function DetalhesCobrancaModal({
         >
             <div className="space-y-6">
 
-                {/* 1. HERO SECTION: Valor e Status */}
-                <div className="flex flex-col items-center justify-center py-8 border-b border-gray-50 relative">
-                    <StatusBadge status={cobranca.status} className="mb-4 shadow-sm" />
+                {/* 1. HERO SECTION: Valor e Status - Design Compacto e Eficiente para Mobile */}
+                <div className="flex items-center gap-3 sm:gap-4 py-5 border-b border-gray-100 mb-2">
+                    <div className="p-2 sm:p-3 bg-blue-50 rounded-2xl border border-blue-100 flex-shrink-0">
+                        <Receipt className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8" />
+                    </div>
 
-                    <div className="text-center">
-                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 block">
-                            Valor do Ciclo
-                        </span>
-                        <h2 className="text-5xl font-black text-gray-900 tracking-tight flex items-baseline justify-center gap-1">
-                            <span className="text-lg text-gray-400 font-bold">R$</span>
-                            {format(Number(cobranca.valor)).replace('R$', '').trim()}
-                        </h2>
-                        <div className="flex flex-col items-center gap-2 mt-4">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100 shadow-sm">
-                                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-tight">Período:</span>
-                                <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-700 uppercase">
-                                    <span>{new Date(cobranca.periodoInicio).toLocaleString('pt-BR', { month: 'short', year: '2-digit' })}</span>
-                                    <span className="text-gray-300">|</span>
-                                    <span>{new Date(cobranca.periodoFim).toLocaleString('pt-BR', { month: 'short', year: '2-digit' })}</span>
-                                </div>
+                    <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Fatura do Cliente</p>
+                            <h3 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight truncate leading-tight">
+                                {cobranca.assinatura.participante.nome}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <StatusBadge status={cobranca.status} className="scale-75 origin-left" />
+                                <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase hidden xs:inline">
+                                    {new Date(cobranca.periodoInicio).toLocaleDateString('pt-BR', { month: 'short' })} • {new Date(cobranca.periodoFim).toLocaleDateString('pt-BR', { month: 'short' })}
+                                </span>
                             </div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mt-1">
-                                ({format(Number(cobranca.assinatura.valor))} / mês)
-                            </p>
+                        </div>
+
+                        <div className="text-right flex-shrink-0">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Total</p>
+                            <div className="flex items-baseline justify-end gap-0.5">
+                                <span className="text-xl sm:text-3xl font-black text-gray-900 leading-none">
+                                    {format(Number(cobranca.valor))}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
