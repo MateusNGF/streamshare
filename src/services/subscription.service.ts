@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, FrequenciaPagamento } from "@prisma/client";
 import {
     calcularTotalCiclo,
     calcularProximoVencimento,
@@ -19,6 +19,7 @@ export class SubscriptionService {
         tx: Prisma.TransactionClient,
         participanteId: number,
         streamingId: number,
+        frequencia: FrequenciaPagamento = "mensal",
         dtInicio: Date = new Date()
     ) {
         // 1. Fetch Streaming to get value and limits
@@ -43,8 +44,6 @@ export class SubscriptionService {
         }
 
         // 3. Calculate Values
-        // Defaulting to monthly for automatically created subscriptions
-        const frequencia = "mensal";
         const valorPorPessoa = streaming.valorIntegral.toNumber() / streaming.limiteParticipantes;
 
         // 4. Create Subscription

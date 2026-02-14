@@ -611,3 +611,33 @@ export async function deleteStreaming(id: number) {
 
     revalidatePath("/streamings");
 }
+
+export async function getStreamingByPublicToken(token: string) {
+    const streaming = await prisma.streaming.findUnique({
+        where: { publicToken: token, isAtivo: true, isPublico: true },
+        include: {
+            catalogo: true,
+            conta: {
+                select: { nome: true }
+            },
+            _count: {
+                select: {
+                    assinaturas: {
+                        where: { status: { in: ["ativa", "suspensa"] } }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!streaming) return null;
+
+    // Sanitize data
+    const { credenciaisLogin, credenciaisSenha, ...safeStreaming } = streaming;
+
+    return {
+        ...safeStreaming,
+        valorIntegral: (safeStreaming.valorIntegral as any).toNumber(),
+        vagasRestantes: safeStreaming.limiteParticipantes - safeStreaming._count.assinaturas
+    };
+}

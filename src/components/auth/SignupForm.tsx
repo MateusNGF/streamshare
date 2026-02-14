@@ -12,6 +12,7 @@ export function SignupForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const plan = searchParams.get("plan");
+    const callbackUrl = searchParams.get("callbackUrl");
 
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
@@ -50,9 +51,10 @@ export function SignupForm() {
                 throw new Error(data.error || "Erro ao criar conta");
             }
 
-            // Redirect to dashboard
-            // Redirect to checkout if plan is selected, otherwise dashboard
-            if (plan) {
+            // Redirect: callbackUrl > plan > dashboard
+            if (callbackUrl) {
+                router.push(callbackUrl);
+            } else if (plan) {
                 router.push(`/checkout/start?plan=${plan}`);
             } else {
                 router.push("/dashboard");

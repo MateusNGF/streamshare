@@ -51,6 +51,7 @@ export function StreamingGrid({ streamings, isLoading, searchTerm, onEdit, onDel
                         price={s.valorIntegral}
                         frequency="Mensal"
                         isPublico={s.isPublico}
+                        publicToken={s.publicToken}
                         onEdit={() => onEdit(s)}
                         onDelete={() => onDelete(s)}
                     />

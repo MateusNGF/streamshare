@@ -250,6 +250,7 @@ model Streaming {
   credenciaisLogin       String?
   credenciaisSenha       String?
   frequenciasHabilitadas String    @default("mensal,trimestral,semestral,anual")
+  publicToken            String    @unique @default(uuid())
   isAtivo                Boolean   @default(true)
   isPublico              Boolean   @default(false)
   deletedAt              DateTime?

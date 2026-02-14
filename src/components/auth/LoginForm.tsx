@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,8 @@ import { Chrome } from "lucide-react";
 
 export function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -34,8 +36,8 @@ export function LoginForm() {
                 throw new Error(data.error || "Erro ao fazer login");
             }
 
-            // Redirect to dashboard
-            router.push("/dashboard");
+            // Redirect to callbackUrl or dashboard
+            router.push(callbackUrl);
             router.refresh();
         } catch (err: any) {
             setError(err.message);

@@ -13,13 +13,22 @@ export async function inviteUser(data: {
     streamingId?: number;
 }) {
     const { contaId, userId: convidadoPorId } = await getContext();
+    const emailFormatted = data.email.toLowerCase().trim();
 
     // 1. Validar email
     if (!data.email) {
         throw new Error("Email é obrigatório");
     }
 
-    const emailFormatted = data.email.toLowerCase().trim();
+    // 1.5. Validar se o usuário não está convidando a si mesmo
+    const currentUser = await prisma.usuario.findUnique({
+        where: { id: convidadoPorId },
+        select: { email: true }
+    });
+
+    if (currentUser?.email.toLowerCase() === emailFormatted) {
+        throw new Error("Você não pode convidar a si mesmo.");
+    }
 
     // 2. Verificar se já existe como participante ativo na conta
     const participanteExistente = await prisma.participante.findFirst({

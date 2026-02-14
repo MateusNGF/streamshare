@@ -1,8 +1,10 @@
-import { Users, Calendar, DollarSign, Edit, Trash2, Globe, Lock } from "lucide-react";
+import { Users, Calendar, DollarSign, Edit, Trash2, Globe, Lock, Link, Copy, Check } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/useToast";
 
 interface StreamingDetailCardProps {
     id: number;
@@ -15,6 +17,7 @@ interface StreamingDetailCardProps {
     price: number | string; // Changed to accept number/string for formatter
     frequency: string;
     isPublico?: boolean;
+    publicToken?: string;
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -29,17 +32,29 @@ export function StreamingDetailCard({
     price,
     frequency,
     isPublico,
+    publicToken,
     onEdit,
     onDelete,
 }: StreamingDetailCardProps) {
     const { format } = useCurrency();
+    const { success } = useToast();
+    const [copied, setCopied] = useState(false);
+
     const percentage = (slots.occupied / slots.total) * 100;
     const isNearFull = percentage >= 80;
     const available = slots.total - slots.occupied;
 
+    const copyPublicLink = () => {
+        if (!publicToken) return;
+        const url = `${window.location.origin}/assinar/${publicToken}`;
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        success("Link público copiado!");
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="bg-white/70 backdrop-blur-md p-6 rounded-[32px] border border-white/20 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden flex flex-col h-full hover:-translate-y-1 duration-300">
-            {/* Top Row: Logo & Visibility */}
             <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
                     <div className="relative">
@@ -78,6 +93,19 @@ export function StreamingDetailCard({
                     </div>
                 </div>
 
+                <Tooltip content="Copiar link de inscrição">
+                    <button
+                        onClick={copyPublicLink}
+                        className={cn(
+                            "p-2 rounded-xl border transition-all flex items-center gap-2",
+                            copied
+                                ? "bg-green-50 text-green-600 border-green-200"
+                                : "bg-white hover:bg-gray-50 text-gray-400 border-gray-100 hover:text-primary hover:border-primary/20"
+                        )}
+                    >
+                        {copied ? <Check size={16} /> : <Link size={16} />}
+                    </button>
+                </Tooltip>
             </div>
 
             {/* Middle Section: Progress & Slots */}
