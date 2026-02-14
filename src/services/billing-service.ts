@@ -13,10 +13,80 @@ export const billingService = {
      * @param contaId Optional. If provided, processes only for that account. If null, processes all active subscriptions (Cron mode).
      */
     processarRenovacoes: async (contaId?: number) => {
-        // ... previous implementation ...
-        // (I will keep the existing implementation but add the new method below)
+        // Use a unique lock key for billing.
+        // We use hashtext to convert a stable string into a 32-bit integer for Postgres advisory locks.
+        const lockKey = contaId ? `billing:renewal:${contaId}` : 'billing:renewal:global';
+
         return await prisma.$transaction(async (tx) => {
-            // ... (rest of old implementation)
+            // 1. Acquire advisory lock (session-level lock released at end of transaction)
+            // pg_try_advisory_xact_lock returns true if lock acquired, false otherwise.
+            const [{ lock_acquired }] = await tx.$queryRawUnsafe<any>(
+                `SELECT pg_try_advisory_xact_lock(hashtext($1)) as lock_acquired`,
+                lockKey
+            );
+
+            if (!lock_acquired) {
+                console.warn(`[BILLING] Process already running for ${contaId ? `account ${contaId}` : 'all accounts'}. Skipping.`);
+                return { renovadas: 0, canceladas: 0, suspensas: 0, totalProcessado: 0, skipped: true };
+            }
+
+            const whereClause: any = { status: "ativa" };
+            if (contaId) whereClause.participante = { contaId };
+
+            const assinaturasAtivas = await tx.assinatura.findMany({
+                where: whereClause,
+                include: {
+                    participante: {
+                        select: {
+                            contaId: true,
+                            nome: true,
+                            userId: true
+                        }
+                    },
+                    cobrancas: { orderBy: { periodoFim: "desc" }, take: 1 }
+                }
+            });
+
+            // Cast to our strictly typed interface
+            const assinaturasTyped = assinaturasAtivas as unknown as SubscriptionWithCharges[];
+
+            const cobrancasParaCriar: Array<ChargeCreationData> = [];
+            const assinaturasParaCancelar: number[] = [];
+            const assinaturasParaSuspender: number[] = [];
+            const agora = new Date();
+
+            // 2. Mark pending charges with dataVencimento < agora as "atrasado"
+            await tx.cobranca.updateMany({
+                where: {
+                    status: "pendente",
+                    dataVencimento: { lt: agora }
+                },
+                data: { status: "atrasado" }
+            });
+
+            // 3. Evaluate each subscription
+            for (const assinatura of assinaturasTyped) {
+                const decision = evaluateSubscriptionRenewal(assinatura, agora);
+
+                if (decision.action === 'CREATE_CHARGE' && decision.data) {
+                    cobrancasParaCriar.push(decision.data);
+                } else if (decision.action === 'CANCEL_SCHEDULED') {
+                    assinaturasParaCancelar.push(assinatura.id);
+                } else if (decision.action === 'SUSPEND') {
+                    assinaturasParaSuspender.push(assinatura.id);
+                }
+            }
+
+            // 4. Execute Updates (passing tx to reuse the transaction)
+            return executeBillingTransactionWithTx(
+                tx,
+                cobrancasParaCriar,
+                assinaturasParaCancelar,
+                assinaturasParaSuspender,
+                assinaturasTyped
+            );
+        }, {
+            timeout: 30000 // Increase timeout for bulk processing
         });
     },
 
@@ -60,6 +130,79 @@ export const billingService = {
         }
 
         return pendingCharges.length;
+    },
+
+    /**
+     * Evaluates and performs subscription activation or reactivation after a payment is confirmed.
+     */
+    avaliarAtivacaoAposPagamento: async (tx: any, params: {
+        assinatura: any,
+        cobranca: any,
+        contaId: number,
+        agora: Date
+    }) => {
+        const { assinatura, cobranca, contaId, agora } = params;
+
+        // Criteria: (Suspended OR Pendente) AND charge covers the current date
+        const isSuspendedOrPendente = assinatura.status === "suspensa" || assinatura.status === "pendente";
+        const coversCurrentDate = agora >= cobranca.periodoInicio && agora <= cobranca.periodoFim;
+
+        if (isSuspendedOrPendente && coversCurrentDate) {
+            await tx.assinatura.update({
+                where: { id: assinatura.id },
+                data: {
+                    status: "ativa",
+                    dataSuspensao: null,
+                    motivoSuspensao: null
+                }
+            });
+
+            // Re-activation notification (Broadcast to Admins)
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: null,
+                    tipo: "assinatura_editada",
+                    titulo: assinatura.status === "pendente" ? "Assinatura Ativada" : "Assinatura Reativada",
+                    descricao: assinatura.status === "pendente"
+                        ? `A assinatura de ${assinatura.participante.nome} foi ativada após a confirmação do primeiro pagamento.`
+                        : `A assinatura de ${assinatura.participante.nome} foi reativada automaticamente após o pagamento da cobrança atual.`,
+                    entidadeId: assinatura.id,
+                }
+            });
+
+            return true;
+        }
+
+        return false;
+    },
+
+    /**
+     * Helper to prepare and create the initial charge for a new subscription.
+     */
+    gerarCobrancaInicial: async (tx: any, params: {
+        assinaturaId: number,
+        valorMensal: number,
+        frequencia: any,
+        dataInicio: Date,
+        pago: boolean
+    }) => {
+        const { assinaturaId, valorMensal, frequencia, dataInicio, pago } = params;
+
+        const periodoFim = calcularProximoVencimento(dataInicio, frequencia, dataInicio);
+        const valorCobranca = calcularValorPeriodo(valorMensal, frequencia);
+
+        return await tx.cobranca.create({
+            data: {
+                assinaturaId,
+                valor: valorCobranca,
+                periodoInicio: dataInicio,
+                periodoFim,
+                status: pago ? "pago" : "pendente",
+                dataPagamento: pago ? new Date() : null,
+                dataVencimento: calcularDataVencimentoPadrao(new Date())
+            }
+        });
     }
 };
 

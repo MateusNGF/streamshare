@@ -3,12 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
-import { criarCobrancaInicial } from "./cobrancas";
-import {
-    calcularProximoVencimento,
-    calcularValorPeriodo,
-    calcularDataVencimentoPadrao
-} from "@/lib/financeiro-utils";
+import { billingService } from "@/services/billing-service";
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
@@ -161,21 +156,13 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
             },
         });
 
-        // Create Initial Charge
-        const periodoInicio = dataInicio;
-        const periodoFim = calcularProximoVencimento(periodoInicio, data.frequencia, dataInicio);
-        const valorCobranca = calcularValorPeriodo(data.valor, data.frequencia);
-
-        const cobranca = await tx.cobranca.create({
-            data: {
-                assinaturaId: assinatura.id,
-                valor: valorCobranca,
-                periodoInicio,
-                periodoFim,
-                status: data.cobrancaAutomaticaPaga ? "pago" : "pendente",
-                dataPagamento: data.cobrancaAutomaticaPaga ? new Date() : null,
-                dataVencimento: calcularDataVencimentoPadrao()
-            }
+        // Create Initial Charge (Delegated to Billing Service)
+        const cobranca = await billingService.gerarCobrancaInicial(tx, {
+            assinaturaId: assinatura.id,
+            valorMensal: data.valor,
+            frequencia: data.frequencia,
+            dataInicio,
+            pago: !!data.cobrancaAutomaticaPaga
         });
 
         const participante = await tx.participante.findUnique({
@@ -260,23 +247,13 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                     }
                 });
 
-                // 3. Create Initial Charge (Atomicity Improvement D-08)
-                const periodoInicio = dataInicio;
-                const periodoFim = calcularProximoVencimento(periodoInicio, ass.frequencia, dataInicio);
-                const valorCobranca = calcularValorPeriodo(ass.valor, ass.frequencia);
-
-                const isCobrancaPaga = data?.cobrancaAutomaticaPaga ?? false;
-
-                await tx.cobranca.create({
-                    data: {
-                        assinaturaId: assinatura.id,
-                        valor: valorCobranca,
-                        periodoInicio,
-                        periodoFim,
-                        status: isCobrancaPaga ? "pago" : "pendente",
-                        dataPagamento: isCobrancaPaga ? new Date() : null,
-                        dataVencimento: calcularDataVencimentoPadrao()
-                    }
+                // 3. Create Initial Charge (Delegated to Billing Service)
+                await billingService.gerarCobrancaInicial(tx, {
+                    assinaturaId: assinatura.id,
+                    valorMensal: ass.valor,
+                    frequencia: ass.frequencia,
+                    dataInicio,
+                    pago: !!data.cobrancaAutomaticaPaga
                 });
 
                 results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });

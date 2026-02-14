@@ -12,6 +12,7 @@ import type { EnviarNotificacaoResult } from "@/types/whatsapp";
 import type { CurrencyCode } from "@/types/currency.types";
 
 import { getContext } from "@/lib/action-context";
+import { billingService } from "@/services/billing-service";
 
 /**
  * Get all charges for the current account with optional filters
@@ -180,34 +181,12 @@ export async function confirmarPagamento(
         const assinatura = result.assinatura;
 
         // Check for activation/reactivation (D-07)
-        // Criteria: (Suspended OR Pendente) AND charge covers the current date
-        const isSuspendedOrPendente = assinatura.status === "suspensa" || assinatura.status === "pendente";
-        const coversCurrentDate = agora >= result.periodoInicio && agora <= result.periodoFim;
-
-        if (isSuspendedOrPendente && coversCurrentDate) {
-            await tx.assinatura.update({
-                where: { id: assinatura.id },
-                data: {
-                    status: "ativa",
-                    dataSuspensao: null,
-                    motivoSuspensao: null
-                }
-            });
-
-            // Re-activation notification (Broadcast to Admins)
-            await tx.notificacao.create({
-                data: {
-                    contaId,
-                    usuarioId: null,
-                    tipo: "assinatura_editada",
-                    titulo: assinatura.status === "pendente" ? "Assinatura Ativada" : "Assinatura Reativada",
-                    descricao: assinatura.status === "pendente"
-                        ? `A assinatura de ${assinatura.participante.nome} foi ativada após a confirmação do primeiro pagamento.`
-                        : `A assinatura de ${assinatura.participante.nome} foi reativada automaticamente após o pagamento da cobrança atual.`,
-                    entidadeId: assinatura.id,
-                }
-            });
-        }
+        await billingService.avaliarAtivacaoAposPagamento(tx, {
+            assinatura: result.assinatura,
+            cobranca: result,
+            contaId,
+            agora
+        });
 
         // Create notification inside transaction for the payment itself (Broadcast to Admins)
         await tx.notificacao.create({
