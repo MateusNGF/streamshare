@@ -9,7 +9,13 @@
 ALTER TYPE "StatusAssinatura" ADD VALUE 'pendente';
 
 -- AlterTable
-ALTER TABLE "streaming" ADD COLUMN     "publicToken" TEXT NOT NULL;
+ALTER TABLE "streaming" ADD COLUMN "publicToken" TEXT;
+
+-- Update existing rows with a random UUID
+UPDATE "streaming" SET "publicToken" = gen_random_uuid()::text WHERE "publicToken" IS NULL;
+
+-- Make the column required
+ALTER TABLE "streaming" ALTER COLUMN "publicToken" SET NOT NULL;
 
 -- CreateIndex
 CREATE UNIQUE INDEX "streaming_publicToken_key" ON "streaming"("publicToken");
