@@ -191,6 +191,37 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ---
 
+### 5. FaturaCard
+
+**Arquivo**: `src/components/faturas/FaturaCard.tsx`
+
+**Características**:
+- Border Radius: `rounded-2xl`
+- Border Destaque: `border-l-4` (cor semântica baseada no status)
+- Padding: `p-6`
+- Hover: `shadow-md`
+
+**Elementos**:
+- **StreamingLogo**: Versão `lg`, `rounded-2xl`
+- **Ação Principal**: Botão Pix `bg-primary`, `shadow-primary/25`
+- **Contador**: Badge de tempo restante para pagamento
+
+---
+
+### 6. Tabelas de Dados (DataTables)
+
+**Características**:
+- Background: `bg-white`
+- Border Radius: `rounded-2xl`
+- Cabeçalhos: `bg-gray-50/50`, uppercase, `text-[10px]`, `font-black`
+
+**Células Padronizadas**:
+- **Vencimento**: `BillingDueDateCell` com contador de dias
+- **Período**: `BillingPeriodCell` com formato `MMM/yy | MMM/yy`
+- **Valor**: `BillingValueCell` com valor total e mensal empilhados
+
+---
+
 ## 🎭 Padrões de Layout
 
 ### Dashboard Page
