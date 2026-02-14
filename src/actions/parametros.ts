@@ -4,6 +4,16 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
+const SENSITIVE_KEYWORDS = ["token", "secret", "password", "key", "sid", "auth"];
+
+function maskSensitiveValue(key: string, value: string): string {
+    const isSensitive = SENSITIVE_KEYWORDS.some(keyword => key.toLowerCase().includes(keyword));
+    if (isSensitive && value) {
+        return "********";
+    }
+    return value;
+}
+
 interface ParametroInput {
     chave: string;
     valor: string;
@@ -53,7 +63,10 @@ export async function getParametros() {
         orderBy: { chave: "asc" },
     });
 
-    return parametros;
+    return parametros.map(p => ({
+        ...p,
+        valor: maskSensitiveValue(p.chave, p.valor)
+    }));
 }
 
 export async function getParametro(chave: string) {
@@ -65,11 +78,25 @@ export async function getParametro(chave: string) {
         },
     });
 
-    return parametro;
+    if (!parametro) return null;
+
+    return {
+        ...parametro,
+        valor: maskSensitiveValue(parametro.chave, parametro.valor)
+    };
 }
 
 export async function upsertParametro(data: ParametroInput) {
     await validateAdmin();
+
+    const updateData: any = {
+        tipo: data.tipo,
+        descricao: data.descricao,
+    };
+
+    if (data.valor !== "********") {
+        updateData.valor = data.valor;
+    }
 
     const parametro = await prisma.parametro.upsert({
         where: {
@@ -77,15 +104,11 @@ export async function upsertParametro(data: ParametroInput) {
         },
         create: {
             chave: data.chave,
-            valor: data.valor,
+            valor: data.valor === "********" ? "" : data.valor,
             tipo: data.tipo || "string",
             descricao: data.descricao,
         },
-        update: {
-            valor: data.valor,
-            tipo: data.tipo,
-            descricao: data.descricao,
-        },
+        update: updateData,
     });
 
     revalidatePath("/admin/parametros");
@@ -96,24 +119,29 @@ export async function upsertParametros(parametros: ParametroInput[]) {
     await validateAdmin();
 
     const results = await Promise.all(
-        parametros.map((data) =>
-            prisma.parametro.upsert({
+        parametros.map((data) => {
+            const updateData: any = {
+                tipo: data.tipo,
+                descricao: data.descricao,
+            };
+
+            if (data.valor !== "********") {
+                updateData.valor = data.valor;
+            }
+
+            return prisma.parametro.upsert({
                 where: {
                     chave: data.chave,
                 },
                 create: {
                     chave: data.chave,
-                    valor: data.valor,
+                    valor: data.valor === "********" ? "" : data.valor,
                     tipo: data.tipo || "string",
                     descricao: data.descricao,
                 },
-                update: {
-                    valor: data.valor,
-                    tipo: data.tipo,
-                    descricao: data.descricao,
-                },
-            })
-        )
+                update: updateData,
+            });
+        })
     );
 
     revalidatePath("/admin/parametros");
@@ -152,9 +180,10 @@ export async function testSmtpConnection(config: SmtpConfig) {
 
         return { success: true, message: "Conexão SMTP estabelecida com sucesso!" };
     } catch (error) {
+        console.error("SMTP Test Error:", error);
         return {
             success: false,
-            message: error instanceof Error ? error.message : "Erro ao testar conexão SMTP"
+            message: "Falha na conexão SMTP. Verifique as configurações e tente novamente."
         };
     }
 }
@@ -180,9 +209,10 @@ export async function testWhatsAppConnection(config: WhatsAppTestConfig) {
             return { success: false, message: "Credenciais inválidas" };
         }
     } catch (error) {
+        console.error("WhatsApp Test Error:", error);
         return {
             success: false,
-            message: error instanceof Error ? error.message : "Erro ao testar conexão WhatsApp"
+            message: "Falha na conexão WhatsApp. Verifique as credenciais e tente novamente."
         };
     }
 }

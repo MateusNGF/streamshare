@@ -105,10 +105,7 @@ export async function createGrupo(data: {
     });
 
     if (currentGruposCount >= planConfig.maxGrupos) {
-        throw new Error(
-            `Seu plano (${planConfig.label}) permite apenas ${planConfig.maxGrupos} grupo(s). ` +
-            `Atualize para o plano PRO para ter acesso ilimitado.`
-        );
+        throw new Error("Limite de grupos do plano atingido. Faça upgrade para adicionar mais.");
     }
 
     // Validações
@@ -208,10 +205,7 @@ export async function updateGrupo(
     });
 
     if (currentGruposCount >= planConfig.maxGrupos) {
-        throw new Error(
-            `Seu plano (${planConfig.label}) permite apenas ${planConfig.maxGrupos} grupo(s). ` +
-            `Atualize para o plano PRO para ter acesso ilimitado.`
-        );
+        throw new Error("Limite de grupos do plano atingido. Faça upgrade para adicionar mais.");
     }
 
     // Validações

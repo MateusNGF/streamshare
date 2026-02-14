@@ -18,7 +18,8 @@ export async function POST(req: Request) {
             process.env.STRIPE_WEBHOOK_SECRET!
         );
     } catch (error: any) {
-        return new Response(`Webhook Error: ${error.message}`, { status: 400 });
+        console.error("Stripe Webhook Error:", error.message);
+        return new Response(`Webhook Error`, { status: 400 });
     }
 
 

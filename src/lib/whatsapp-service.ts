@@ -77,9 +77,10 @@ class TwilioProvider {
                 providerId: data.sid
             };
         } catch (error) {
+            console.error("Twilio sendMessage Error:", error);
             return {
                 success: false,
-                error: (error as Error).message
+                error: "Falha ao enviar mensagem pelo provedor."
             };
         }
     }
@@ -199,7 +200,8 @@ export async function sendWhatsAppNotification(
             },
         });
 
-        return { success: false, error: (error as Error).message };
+        console.error("sendWhatsAppNotification generic catch error:", error);
+        return { success: false, error: "Erro interno ao enviar notificação WhatsApp" };
     }
 }
 

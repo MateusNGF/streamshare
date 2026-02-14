@@ -316,17 +316,12 @@ export async function createStreaming(data: {
     });
 
     if (currentStreamingsCount >= planConfig.maxStreamings) {
-        throw new Error(
-            `Seu plano (${planConfig.label}) permite apenas ${planConfig.maxStreamings} streaming(s). ` +
-            `Atualize para o plano PRO para ter acesso ilimitado.`
-        );
+        throw new Error("Limite de streamings do plano atingido. Faça upgrade para adicionar mais.");
     }
 
     // 3. Validate Participants Limit
     if (data.limiteParticipantes > planConfig.maxParticipantes) {
-        throw new Error(
-            `Seu plano (${planConfig.label}) permite no máximo ${planConfig.maxParticipantes} participantes por streaming.`
-        );
+        throw new Error("Limite de participantes do plano excedido.");
     }
 
     // Business validations

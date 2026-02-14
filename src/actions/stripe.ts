@@ -63,7 +63,7 @@ export async function cancelSubscriptionAction(contaId: number) {
         return { success: true };
     } catch (error: any) {
         console.error("Erro ao cancelar assinatura:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Falha ao processar cancelamento. Tente novamente mais tarde." };
     }
 }
 
@@ -125,6 +125,6 @@ export async function reactivateSubscriptionAction(contaId: number) {
         return { success: true };
     } catch (error: any) {
         console.error("Erro ao reativar assinatura:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: "Falha ao reativar assinatura. Tente novamente mais tarde." };
     }
 }
