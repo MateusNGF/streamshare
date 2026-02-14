@@ -45,6 +45,17 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-14",
+        date: "14/02/2026",
+        changes: [
+            { category: "Faturamento", description: "Aprimoramento do assistente de **Criação em Lote**, incluindo novos indicadores de lucro líquido e análise de rentabilidade detalhada no resumo final da operação." },
+            { category: "Precisão", description: "Refatoração do motor de cálculos financeiros do **Gerenciador de Lotes**, garantindo precisão centesimal em operações complexas com múltiplos participantes." },
+            { category: "Interface", description: "Novo design para as etapas de **Configuração de Valores**, com feedback visual instantâneo de lucro e navegação otimizada entre os passos do assistente." },
+            { category: "Mobile", description: "Otimização responsiva dos campos de faturamento no **Ajuste de Assinaturas**, garantindo leitura perfeita e facilidade de edição em dispositivos móveis." },
+            { category: "Experiência", description: "Melhorias de usabilidade no fluxo de **Seleção de Participantes**, com novas validações inteligentes de capacidade e vagas disponíveis por serviço." },
+        ],
+    },
+    {
         id: "2026-02-13",
         date: "13/02/2026",
         changes: [
