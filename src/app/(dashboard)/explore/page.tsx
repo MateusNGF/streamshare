@@ -12,20 +12,23 @@ interface PageProps {
     searchParams: {
         search?: string;
         catalogoId?: string;
+        onlyMyAccount?: string;
     };
 }
 
 export default async function ExplorePage({ searchParams }: PageProps) {
     const filters = {
         search: searchParams.search,
-        catalogoId: searchParams.catalogoId
+        catalogoId: searchParams.catalogoId,
+        onlyMyAccount: searchParams.onlyMyAccount
     };
 
     // Fetch data in parallel
     const [streamings, catalogos] = await Promise.all([
         getPublicStreamings({
             search: filters.search,
-            catalogoId: filters.catalogoId ? parseInt(filters.catalogoId) : undefined
+            catalogoId: filters.catalogoId ? parseInt(filters.catalogoId) : undefined,
+            onlyMyAccount: filters.onlyMyAccount === 'true'
         }),
         getCatalogos()
     ]);

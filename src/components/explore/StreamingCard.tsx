@@ -1,11 +1,6 @@
-"use client";
-
-import { useTransition } from "react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
-import { Users, CreditCard, ArrowRight } from "lucide-react";
-import { requestParticipation } from "@/actions/requests";
-import { useToast } from "@/hooks/useToast";
-import { Spinner } from "@/components/ui/Spinner";
+import { Users, CreditCard } from "lucide-react";
+import { StreamingActionButton, UserStreamingStatus } from "@/components/explore/StreamingActionButton";
 
 interface StreamingCardProps {
     streaming: {
@@ -22,24 +17,12 @@ interface StreamingCardProps {
         conta: {
             nome: string;
         };
+        isOwner?: boolean;
+        userStatus?: 'participando' | 'solicitado' | 'convidado' | 'recusado' | null;
     };
 }
 
 export function StreamingCard({ streaming }: StreamingCardProps) {
-    const [isPending, startTransition] = useTransition();
-    const toast = useToast();
-
-    const handleRequest = () => {
-        startTransition(async () => {
-            try {
-                await requestParticipation(streaming.id);
-                toast.success("Solicitação enviada com sucesso! Aguarde aprovação.");
-            } catch (error: any) {
-                toast.error(error.message || "Erro ao solicitar participação");
-            }
-        });
-    };
-
     const valorPorVaga = streaming.valorIntegral / streaming.limiteParticipantes;
 
     return (
@@ -90,31 +73,12 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
                     </div>
                 </div>
 
-                <button
-                    onClick={handleRequest}
-                    disabled={isPending || streaming.vagasDisponiveis === 0}
-                    className={`
-                        w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold transition-all
-                        ${streaming.vagasDisponiveis > 0
-                            ? "bg-primary text-white shadow-lg shadow-primary/25 hover:bg-accent hover:-translate-y-0.5 active:translate-y-0"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"}
-                        disabled:opacity-70
-                    `}
-                >
-                    {isPending ? (
-                        <>
-                            <Spinner size="sm" color="white" />
-                            Processando...
-                        </>
-                    ) : streaming.vagasDisponiveis > 0 ? (
-                        <>
-                            Solicitar Vaga
-                            <ArrowRight size={18} />
-                        </>
-                    ) : (
-                        "Sem Vagas"
-                    )}
-                </button>
+                <StreamingActionButton
+                    streamingId={streaming.id}
+                    vagasDisponiveis={streaming.vagasDisponiveis}
+                    isOwner={streaming.isOwner}
+                    userStatus={streaming.userStatus}
+                />
             </div>
         </div>
     );

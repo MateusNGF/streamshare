@@ -416,6 +416,8 @@ model Convite {
   usuario      Usuario?   @relation("Convidado", fields: [usuarioId], references: [id])
 
   @@index([email])
+  @@index([usuarioId])
+  @@index([contaId, status])
   @@map("convite")
 }
 

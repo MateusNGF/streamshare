@@ -9,7 +9,7 @@ import { useTransition } from "react";
 interface ExploreClientProps {
     streamings: any[];
     catalogos: any[];
-    initialFilters: { search?: string; catalogoId?: string };
+    initialFilters: { search?: string; catalogoId?: string; onlyMyAccount?: string };
 }
 
 export function ExploreClient({ streamings, catalogos, initialFilters }: ExploreClientProps) {
@@ -20,7 +20,7 @@ export function ExploreClient({ streamings, catalogos, initialFilters }: Explore
 
     const handleFilterChange = (key: string, value: string) => {
         const params = new URLSearchParams(searchParams.toString());
-        if (value && value !== "all" && value !== "") {
+        if (value && value !== "all" && value !== "" && value !== "false") {
             params.set(key, value);
         } else {
             params.delete(key);
@@ -57,11 +57,18 @@ export function ExploreClient({ streamings, catalogos, initialFilters }: Explore
                                 icon: c.iconeUrl,
                                 color: c.corPrimaria
                             }))
+                        },
+                        {
+                            key: "onlyMyAccount",
+                            type: "switch",
+                            label: "Filtrar apenas por streaming da minha conta",
+                            className: "md:flex-1"
                         }
                     ]}
                     values={{
                         search: initialFilters.search || "",
-                        catalogoId: initialFilters.catalogoId || "all"
+                        catalogoId: initialFilters.catalogoId || "all",
+                        onlyMyAccount: initialFilters.onlyMyAccount || "false"
                     }}
                     onChange={handleFilterChange}
                     onClear={() => {

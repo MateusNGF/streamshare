@@ -167,7 +167,10 @@ export async function updateExistingSubscriptionValues(streamingId: number, newV
 export async function getPublicStreamings(filters?: {
     search?: string;
     catalogoId?: number;
+    onlyMyAccount?: boolean;
 }) {
+    const { contaId, userId } = await getContext();
+
     const where: any = {
         isAtivo: true,
         isPublico: true,
@@ -179,10 +182,18 @@ export async function getPublicStreamings(filters?: {
     }
 
     if (filters?.search) {
+        const searchTerm = filters.search.slice(0, 100); // Limit search term length for performance
         where.OR = [
-            { apelido: { contains: filters.search, mode: 'insensitive' } },
-            { catalogo: { nome: { contains: filters.search, mode: 'insensitive' } } }
+            { apelido: { contains: searchTerm, mode: 'insensitive' } },
+            { catalogo: { nome: { contains: searchTerm, mode: 'insensitive' } } }
         ];
+    }
+
+    // Filter logic: Default hides own streamings, toggle shows ONLY own streamings
+    if (filters?.onlyMyAccount) {
+        where.contaId = contaId;
+    } else {
+        where.contaId = { not: contaId };
     }
 
     const streamings = await prisma.streaming.findMany({
@@ -190,7 +201,7 @@ export async function getPublicStreamings(filters?: {
         include: {
             catalogo: true,
             conta: {
-                select: { nome: true }
+                select: { nome: true, id: true }
             },
             _count: {
                 select: {
@@ -198,16 +209,69 @@ export async function getPublicStreamings(filters?: {
                         where: { status: { in: ['ativa', 'suspensa'] } }
                     }
                 }
+            },
+            // Check for existing requests/invites for the current user
+            convites: {
+                where: {
+                    usuarioId: userId
+                },
+                select: {
+                    status: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            },
+            // Check for existing active subscription
+            assinaturas: {
+                where: {
+                    participante: {
+                        userId: userId
+                    },
+                    status: { in: ['ativa', 'suspensa'] }
+                },
+                select: {
+                    status: true
+                }
             }
         },
         orderBy: { createdAt: 'desc' }
     });
 
-    return streamings.map(s => ({
-        ...s,
-        valorIntegral: s.valorIntegral.toNumber(),
-        vagasDisponiveis: s.limiteParticipantes - s._count.assinaturas
-    }));
+    return streamings.map(s => {
+        const userStatus = determineUserStreamingStatus(s.assinaturas, s.convites);
+
+        return {
+            ...s,
+            valorIntegral: s.valorIntegral.toNumber(),
+            vagasDisponiveis: s.limiteParticipantes - s._count.assinaturas,
+            isOwner: s.conta.id === contaId,
+            userStatus
+        };
+    });
+}
+
+/**
+ * Helper to determine the user's relationship status with a streaming service.
+ * Prioritizes active participation, then pending requests/invites.
+ */
+function determineUserStreamingStatus(
+    assinaturas: { status: string }[],
+    convites: { status: string }[]
+): 'participando' | 'solicitado' | 'convidado' | 'recusado' | null {
+    if (assinaturas.length > 0) {
+        return 'participando';
+    }
+
+    if (convites.length > 0) {
+        // Prioritize the top-most relevant status (since we order by createdAt desc)
+        const convite = convites[0];
+        if (convite.status === 'solicitado') return 'solicitado';
+        if (convite.status === 'pendente') return 'convidado';
+        if (convite.status === 'recusado') return 'recusado';
+    }
+
+    return null;
 }
 
 export async function createStreaming(data: {
