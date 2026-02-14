@@ -711,12 +711,6 @@ function CreationSummary({
                     <Wallet size={14} className="text-primary" />
                     <span>Veja o que está sendo criado</span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                        {configurations.size} streamings • {totalSlots} vagas
-                    </span>
-                    {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </div>
             </button>
 
             {isOpen && (
