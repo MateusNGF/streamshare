@@ -9,6 +9,7 @@ import { criarNotificacao } from "@/actions/notificacoes";
 import { getContext } from "@/lib/action-context";
 import { calcularValorPeriodo } from "@/lib/financeiro-utils";
 import { billingService } from "@/services/billing-service";
+import { generateShareToken, verifyShareToken } from "@/lib/share-token";
 
 export async function getCatalogos() {
     return prisma.streamingCatalogo.findMany({
@@ -605,25 +606,72 @@ export async function deleteStreaming(id: number) {
     });
 
     revalidatePath("/streamings");
+    revalidatePath("/streamings");
+}
+
+export async function generateStreamingShareLink(streamingId: number, expiration: string) {
+    const { contaId } = await getContext();
+
+    const streaming = await prisma.streaming.findUnique({
+        where: { id: streamingId, contaId },
+    });
+
+    if (!streaming) {
+        throw new Error("Streaming não encontrado");
+    }
+
+    // If expiration is 'never', we can return the existing publicToken if available,
+    // or generate a token without expiration.
+    // However, switching to publicToken here might be confusing if the frontend expects a JWT.
+    // Let's stick to generating a token or returning publicToken if specifically requested as 'permanent'.
+
+    // We always use JWT for share links to distinguish them from the raw publicToken
+    // and to allow sharing private streamings without exposing them generally.
+    return generateShareToken(streamingId, expiration);
 }
 
 export async function getStreamingByPublicToken(token: string) {
-    const streaming = await prisma.streaming.findUnique({
-        where: { publicToken: token, isAtivo: true },
-        include: {
-            catalogo: true,
-            conta: {
-                select: { nome: true }
-            },
-            _count: {
-                select: {
-                    assinaturas: {
-                        where: { status: { in: ["ativa", "suspensa"] } }
+    let streaming;
+
+    // First try to verify if it's a JWT share token
+    const sharePayload = verifyShareToken(token);
+
+    if (sharePayload) {
+        streaming = await prisma.streaming.findUnique({
+            where: { id: sharePayload.streamingId, isAtivo: true },
+            include: {
+                catalogo: true,
+                conta: {
+                    select: { nome: true }
+                },
+                _count: {
+                    select: {
+                        assinaturas: {
+                            where: { status: { in: ["ativa", "suspensa"] } }
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } else {
+        // Fallback to legacy publicToken (UUID)
+        streaming = await prisma.streaming.findUnique({
+            where: { publicToken: token, isAtivo: true },
+            include: {
+                catalogo: true,
+                conta: {
+                    select: { nome: true }
+                },
+                _count: {
+                    select: {
+                        assinaturas: {
+                            where: { status: { in: ["ativa", "suspensa"] } }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     if (!streaming) return null;
 

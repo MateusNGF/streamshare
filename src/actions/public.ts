@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { SubscriptionService } from "@/services/subscription.service";
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento } from "@prisma/client";
+import { verifyShareToken } from "@/lib/share-token";
 
 export async function publicSubscribe(data: {
     token: string;
@@ -15,19 +16,40 @@ export async function publicSubscribe(data: {
     frequencia?: FrequenciaPagamento;
 }) {
     // 1. Validar Streaming
-    const streaming = await prisma.streaming.findUnique({
-        where: { publicToken: data.token, isAtivo: true, isPublico: true },
-        include: {
-            conta: true,
-            _count: {
-                select: {
-                    assinaturas: {
-                        where: { status: { in: ["ativa", "suspensa"] } }
+    let streaming;
+    const sharePayload = verifyShareToken(data.token);
+
+    if (sharePayload) {
+        // If it's a valid share link, allow access by ID (bypass isPublico check)
+        streaming = await prisma.streaming.findUnique({
+            where: { id: sharePayload.streamingId, isAtivo: true },
+            include: {
+                conta: true,
+                _count: {
+                    select: {
+                        assinaturas: {
+                            where: { status: { in: ["ativa", "suspensa"] } }
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } else {
+        // Fallback to legacy/public token (must be public)
+        streaming = await prisma.streaming.findUnique({
+            where: { publicToken: data.token, isAtivo: true, isPublico: true },
+            include: {
+                conta: true,
+                _count: {
+                    select: {
+                        assinaturas: {
+                            where: { status: { in: ["ativa", "suspensa"] } }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     if (!streaming) {
         throw new Error("Streaming não disponível ou link inválido.");

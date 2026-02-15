@@ -54,7 +54,7 @@ export class SubscriptionService {
                 frequencia,
                 valor: valorPorPessoa,
                 dataInicio: dtInicio,
-                status: "ativa"
+                status: "pendente"
             }
         });
 
