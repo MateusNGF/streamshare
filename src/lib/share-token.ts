@@ -21,7 +21,7 @@ export function generateShareToken(streamingId: number, expiresIn: string | numb
 
 export function verifyShareToken(token: string): ShareTokenPayload | null {
     try {
-        const payload = jwt.verify(token, SHARE_SECRET) as ShareTokenPayload;
+        const payload = jwt.verify(token, SHARE_SECRET, { clockTolerance: 120 }) as ShareTokenPayload;
         if (payload.type !== 'share_link') return null;
         return payload;
     } catch (error) {

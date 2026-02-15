@@ -17,12 +17,13 @@ export async function publicSubscribe(data: {
 }) {
     // 1. Validar Streaming
     let streaming;
-    const sharePayload = verifyShareToken(data.token);
+    const token = data.token.trim();
+    const sharePayload = verifyShareToken(token);
 
     if (sharePayload) {
         // If it's a valid share link, allow access by ID (bypass isPublico check)
         streaming = await prisma.streaming.findUnique({
-            where: { id: sharePayload.streamingId, isAtivo: true },
+            where: { id: sharePayload.streamingId },
             include: {
                 conta: true,
                 _count: {
@@ -34,10 +35,14 @@ export async function publicSubscribe(data: {
                 }
             }
         });
+
+        if (streaming && !streaming.isAtivo) {
+            throw new Error("Este streaming não está mais ativo.");
+        }
     } else {
         // Fallback to legacy/public token (must be public)
         streaming = await prisma.streaming.findUnique({
-            where: { publicToken: data.token, isAtivo: true, isPublico: true },
+            where: { publicToken: token, isPublico: true },
             include: {
                 conta: true,
                 _count: {
@@ -49,6 +54,10 @@ export async function publicSubscribe(data: {
                 }
             }
         });
+
+        if (streaming && !streaming.isAtivo) {
+            throw new Error("Este streaming não está mais ativo.");
+        }
     }
 
     if (!streaming) {
