@@ -609,7 +609,7 @@ export async function deleteStreaming(id: number) {
 
 export async function getStreamingByPublicToken(token: string) {
     const streaming = await prisma.streaming.findUnique({
-        where: { publicToken: token, isAtivo: true, isPublico: true },
+        where: { publicToken: token, isAtivo: true },
         include: {
             catalogo: true,
             conta: {
