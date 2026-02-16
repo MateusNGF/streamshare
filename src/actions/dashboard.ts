@@ -81,7 +81,11 @@ export async function getDashboardStats() {
         activeParticipantsCount,
         occupationRate,
         defaultRate,
-        currencyCode: conta?.moedaPreferencia || 'BRL'
+        currencyCode: conta?.moedaPreferencia || 'BRL',
+        totalSlots,
+        occupiedSlots,
+        activeStreamingsCount: streamings.length,
+        averageTicket: activeParticipantsCount > 0 ? monthlyRevenue / activeParticipantsCount : 0
     };
 }
 
