@@ -1,8 +1,9 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, HelpCircle } from 'lucide-react';
 import { EmptyChartState } from '../EmptyChartState';
+import { Tooltip as UITooltip } from '@/components/ui/Tooltip';
 
 interface RevenueDistributionChartProps {
     data: {
@@ -26,7 +27,14 @@ export function RevenueDistributionChart({ data, currencyCode = 'BRL', onViewStr
     return (
         <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col h-full">
             <div className="mb-6">
-                <h3 className="font-bold text-gray-900">Distribuição de Receita</h3>
+                <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-900">Distribuição de Receita</h3>
+                    <UITooltip content="Parcela da receita total gerada por cada serviço de streaming cadastrado.">
+                        <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
+                            <HelpCircle size={16} />
+                        </button>
+                    </UITooltip>
+                </div>
                 <p className="text-xs text-gray-500">Por serviço de streaming</p>
             </div>
 

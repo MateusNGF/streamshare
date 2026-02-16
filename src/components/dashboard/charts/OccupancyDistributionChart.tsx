@@ -10,8 +10,9 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
-import { LayoutPanelLeft } from 'lucide-react';
+import { LayoutPanelLeft, HelpCircle } from 'lucide-react';
 import { EmptyChartState } from '../EmptyChartState';
+import { Tooltip as UITooltip } from '@/components/ui/Tooltip';
 
 interface OccupancyDistributionChartProps {
     data: any[];
@@ -24,7 +25,14 @@ export function OccupancyDistributionChart({ data, onAddStreaming }: OccupancyDi
     return (
         <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col h-full">
             <div className="mb-6">
-                <h3 className="font-bold text-gray-900">Taxa de Ocupação</h3>
+                <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-900">Taxa de Ocupação</h3>
+                    <UITooltip content="Acompanhe a lotação de cada serviço. Valores altos indicam boa ocupação, valores baixos indicam vagas ociosas.">
+                        <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
+                            <HelpCircle size={16} />
+                        </button>
+                    </UITooltip>
+                </div>
                 <p className="text-xs text-gray-500">Distribuição de vagas por streaming</p>
             </div>
 

@@ -1,54 +1,62 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { CreditCard, HelpCircle } from 'lucide-react';
+import { UserMinus, HelpCircle } from 'lucide-react';
 import { EmptyChartState } from '../EmptyChartState';
 import { Tooltip as UITooltip } from '@/components/ui/Tooltip';
 
-interface PaymentStatusChartProps {
+interface ChurnRiskChartProps {
     data: {
         name: string;
         value: number;
         color: string;
     }[];
-    onManageSubscriptions?: () => void;
+    riskRate: number;
+    onViewParticipants?: () => void;
 }
 
-export function PaymentStatusChart({ data, onManageSubscriptions }: PaymentStatusChartProps) {
+export function ChurnRiskChart({ data, riskRate, onViewParticipants }: ChurnRiskChartProps) {
     const total = data.reduce((sum, item) => sum + item.value, 0);
     const hasData = total > 0;
-    const paidItem = data.find(d => d.name === 'Pago');
-    const healthPercentage = paidItem && total > 0 ? Math.round((paidItem.value / total) * 100) : 0;
+
+    // A cor do texto central depende do nível de risco
+    const getRiskLabel = (rate: number) => {
+        if (rate >= 50) return { label: "Crítico", color: "text-red-500" };
+        if (rate >= 25) return { label: "Médio", color: "text-amber-500" };
+        return { label: "Baixo", color: "text-emerald-500" };
+    };
+
+    const riskInfo = getRiskLabel(riskRate);
 
     return (
         <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col relative overflow-hidden h-full">
             <div className="mb-6 relative z-10">
                 <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-900">Saúde dos Pagamentos</h3>
-                    <UITooltip content="Status das cobranças geradas nos últimos 90 dias. O 'Aproveitamento' reflete o percentual de cobranças já pagas.">
+                    <h3 className="font-bold text-gray-900">Risco de Churn</h3>
+                    <UITooltip content="Analisa o padrão de atrasos dos participantes. Um risco alto indica que o participante tem grandes chances de cancelar por inadimplência.">
                         <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
                             <HelpCircle size={16} />
                         </button>
                     </UITooltip>
                 </div>
-                <p className="text-xs text-gray-500">Status das cobranças (últimos 90 dias)</p>
+                <p className="text-xs text-gray-500">Probabilidade de saída baseada em atrasos</p>
             </div>
 
             {!hasData ? (
                 <EmptyChartState
-                    icon={CreditCard}
-                    title="Sem cobranças no momento"
-                    description="O status dos seus pagamentos aparecerá aqui quando as primeiras cobranças forem geradas."
-                    actionLabel="Ver assinaturas"
-                    onAction={onManageSubscriptions}
+                    icon={UserMinus}
+                    title="Dados insuficientes"
+                    description="O risco de churn será calculado conforme os pagamentos forem registrados."
+                    actionLabel="Ver participantes"
+                    onAction={onViewParticipants}
                     className="border-none bg-transparent min-h-[200px]"
                 />
             ) : (
                 <>
                     <div className="flex-1 min-h-[250px] relative">
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <span className="text-4xl font-black text-gray-900">{healthPercentage}%</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aproveitamento</span>
+                            <span className={`text-3xl font-black ${riskInfo.color}`}>{riskRate.toFixed(1)}%</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{riskInfo.label}</span>
                         </div>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -72,7 +80,7 @@ export function PaymentStatusChart({ data, onManageSubscriptions }: PaymentStatu
                                             const item = payload[0].payload;
                                             return (
                                                 <div className="bg-gray-900 text-white p-2 px-3 rounded-xl text-[10px] font-bold shadow-xl">
-                                                    {item.name}: {item.value} cobranças
+                                                    {item.name}: {item.value} assinaturas
                                                 </div>
                                             );
                                         }
@@ -99,4 +107,3 @@ export function PaymentStatusChart({ data, onManageSubscriptions }: PaymentStatu
         </div>
     );
 }
-

@@ -3,8 +3,20 @@ export interface DashboardStats {
     membership: MembershipMetrics;
     occupancy: OccupancyMetrics;
     payments: PaymentMetrics;
+    churn: ChurnMetrics;
     catalogs: CatalogRevenue[];
     currencyCode: string;
+}
+
+export interface ChurnMetrics {
+    riskRate: number;
+    riskData: ChurnRiskItem[];
+}
+
+export interface ChurnRiskItem {
+    name: "Crítico" | "Médio" | "Saudável";
+    value: number;
+    color: string;
 }
 
 export interface FinancialMetrics {

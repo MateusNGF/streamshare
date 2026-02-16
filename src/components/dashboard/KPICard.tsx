@@ -1,4 +1,5 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, HelpCircle } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface KPICardProps {
     title: string;
@@ -7,9 +8,10 @@ interface KPICardProps {
     icon: LucideIcon;
     trend: "up" | "down";
     index?: number;
+    tooltip?: string;
 }
 
-export function KPICard({ title, value, change, icon: Icon, trend, index = 0 }: KPICardProps) {
+export function KPICard({ title, value, change, icon: Icon, trend, index = 0, tooltip }: KPICardProps) {
     const shadowColor = trend === 'up' ? 'shadow-green-500/10' : 'shadow-red-500/10';
     const blobColor = trend === 'up' ? 'bg-green-500' : 'bg-red-500';
 
@@ -39,7 +41,16 @@ export function KPICard({ title, value, change, icon: Icon, trend, index = 0 }: 
             </div>
             <div className="relative">
                 <h3 className="text-3xl font-black text-gray-900 tracking-tighter leading-none mb-2">{value}</h3>
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{title}</p>
+                <div className="flex items-center gap-1.5">
+                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{title}</p>
+                    {tooltip && (
+                        <Tooltip content={tooltip}>
+                            <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
+                                <HelpCircle size={12} />
+                            </button>
+                        </Tooltip>
+                    )}
+                </div>
             </div>
         </div>
     );

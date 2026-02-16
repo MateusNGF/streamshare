@@ -8,6 +8,7 @@ import {
     MembershipMetrics,
     OccupancyMetrics,
     PaymentMetrics,
+    ChurnMetrics,
     RevenueHistory,
     ParticipantStats,
     ParticipantSubscription
@@ -177,6 +178,60 @@ async function getCatalogRevenue(contaId: number) {
     return Array.from(catalogMap.values());
 }
 
+async function getChurnMetrics(contaId: number): Promise<ChurnMetrics> {
+    // Buscar todas as assinaturas ativas da conta
+    const assinaturas = await prisma.assinatura.findMany({
+        where: { streaming: { contaId }, status: "ativa" },
+        include: {
+            cobrancas: {
+                where: { status: { in: ["pago", "atrasado"] } },
+                orderBy: { periodoInicio: "desc" },
+                take: 6
+            }
+        }
+    });
+
+    let critico = 0;
+    let medio = 0;
+    let saudavel = 0;
+
+    assinaturas.forEach(sub => {
+        const cobrancas = sub.cobrancas;
+        if (cobrancas.length === 0) {
+            saudavel++;
+            return;
+        }
+
+        const atrasadas = cobrancas.filter(c => c.status === "atrasado").length;
+        const totalCobrancas = cobrancas.length;
+        const ratioAtraso = atrasadas / totalCobrancas;
+
+        // Lógica de Risco:
+        // Crítico: Últimas 3 foram atrasadas OU > 50% de atraso nos últimos 6 meses
+        const ultimas3Atrasadas = cobrancas.slice(0, 3).every(c => c.status === "atrasado") && cobrancas.length >= 3;
+
+        if (ultimas3Atrasadas || ratioAtraso >= 0.5) {
+            critico++;
+        } else if (cobrancas[0].status === "atrasado" || ratioAtraso >= 0.25) {
+            // Médio: Última foi atrasada OU > 25% de atraso
+            medio++;
+        } else {
+            saudavel++;
+        }
+    });
+
+    const total = critico + medio + saudavel;
+
+    return {
+        riskRate: total > 0 ? ((critico + medio) / total) * 100 : 0,
+        riskData: [
+            { name: "Crítico", value: critico, color: "#ef4444" },
+            { name: "Médio", value: medio, color: "#f59e0b" },
+            { name: "Saudável", value: saudavel, color: "#10b981" }
+        ]
+    };
+}
+
 /**
  * Public Actions (Server Actions)
  */
@@ -190,6 +245,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         membership,
         occupancy,
         payments,
+        churn,
         catalogs,
         conta
     ] = await Promise.all([
@@ -197,6 +253,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         getMembershipMetrics(contaId, agora),
         getOccupancyMetrics(contaId),
         getPaymentMetrics(contaId, agora),
+        getChurnMetrics(contaId),
         getCatalogRevenue(contaId),
         prisma.conta.findUnique({ where: { id: contaId }, select: { moedaPreferencia: true } })
     ]);
@@ -206,6 +263,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         membership,
         occupancy,
         payments,
+        churn,
         catalogs,
         currencyCode: conta?.moedaPreferencia || 'BRL'
     };

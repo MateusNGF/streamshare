@@ -1,7 +1,8 @@
 'use client';
 
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, HelpCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface KPIFinanceiroCardProps {
     titulo: string;
@@ -10,6 +11,7 @@ interface KPIFinanceiroCardProps {
     cor: "primary" | "green" | "red";
     isMoeda?: boolean;
     index?: number;
+    tooltip?: string;
 }
 
 const corConfig: Record<"primary" | "green" | "red", { iconBg: string; shadow: string; icon: string }> = {
@@ -30,7 +32,7 @@ const corConfig: Record<"primary" | "green" | "red", { iconBg: string; shadow: s
     }
 };
 
-export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = true, index = 0 }: KPIFinanceiroCardProps) {
+export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = true, index = 0, tooltip }: KPIFinanceiroCardProps) {
     const { format } = useCurrency();
     const config = corConfig[cor];
 
@@ -52,7 +54,16 @@ export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = t
                 <div className="text-3xl font-black text-gray-900 mb-2 tracking-tighter leading-none">
                     {isMoeda ? format(valor) : valor.toLocaleString('pt-BR')}
                 </div>
-                <div className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{titulo}</div>
+                <div className="flex items-center gap-1.5">
+                    <div className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{titulo}</div>
+                    {tooltip && (
+                        <Tooltip content={tooltip}>
+                            <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
+                                <HelpCircle size={12} />
+                            </button>
+                        </Tooltip>
+                    )}
+                </div>
             </div>
         </div>
     );

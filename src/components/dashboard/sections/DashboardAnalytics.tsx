@@ -33,6 +33,11 @@ const PaymentStatusChart = dynamic(() => import("../charts/PaymentStatusChart").
     ssr: false
 });
 
+const ChurnRiskChart = dynamic(() => import("../charts/ChurnRiskChart").then(mod => mod.ChurnRiskChart), {
+    loading: () => <div className="h-[420px] bg-white rounded-[32px] flex items-center justify-center border border-gray-100"><Spinner /></div>,
+    ssr: false
+});
+
 interface DashboardAnalyticsProps {
     stats: DashboardStats;
     revenueHistory: RevenueHistory[];
@@ -43,12 +48,13 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
     const router = useRouter();
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-    const { financial, membership, occupancy, payments, catalogs, currencyCode } = stats;
+    const { financial, membership, occupancy, payments, churn, catalogs, currencyCode } = stats;
 
     const formatCurrency = (val: number) => formatarMoeda(val, currencyCode);
 
     const handleAddStreaming = () => router.push("/streamings");
     const handleManageCobrancas = () => router.push("/cobrancas");
+    const handleViewParticipants = () => router.push("/participantes");
 
     const isDashboardEmpty =
         financial.monthlyRevenue === 0 &&
@@ -71,10 +77,10 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                     <div className="relative group">
                         <div className="flex overflow-x-auto pb-4 md:grid md:pb-0 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 scrollbar-hide snap-x snap-mandatory">
                             {[
-                                { title: "Receita Estimada", value: formatCurrency(financial.monthlyRevenue), change: `${financial.revenueTrend >= 0 ? '+' : ''}${financial.revenueTrend.toFixed(1)}%`, trend: (financial.revenueTrend >= 0 ? "up" : "down") as "up" | "down", icon: TrendingUp },
-                                { title: "Assinantes Ativos", value: String(membership.activeParticipantsCount), change: `${membership.participantsTrend >= 0 ? '+' : ''}${membership.participantsTrend}`, trend: (membership.participantsTrend >= 0 ? "up" : "down") as "up" | "down", icon: Users2 },
-                                { title: "Taxa de Ocupação", value: `${occupancy.occupationRate.toFixed(1)}%`, change: occupancy.totalSlots > 0 ? `${occupancy.occupiedSlots}/${occupancy.totalSlots} vagas` : "0 vagas", trend: (occupancy.occupationRate > 80 ? "up" : "down") as "up" | "down", icon: LineChart },
-                                { title: "Ticket Médio", value: formatCurrency(financial.averageTicket), change: "por usuário", trend: "up" as const, icon: AlertCircle },
+                                { title: "Receita Estimada", value: formatCurrency(financial.monthlyRevenue), change: `${financial.revenueTrend >= 0 ? '+' : ''}${financial.revenueTrend.toFixed(1)}%`, trend: (financial.revenueTrend >= 0 ? "up" : "down") as "up" | "down", icon: TrendingUp, tooltip: "Projeção mensal baseada no valor das assinaturas ativas." },
+                                { title: "Assinantes Ativos", value: String(membership.activeParticipantsCount), change: `${membership.participantsTrend >= 0 ? '+' : ''}${membership.participantsTrend}`, trend: (membership.participantsTrend >= 0 ? "up" : "down") as "up" | "down", icon: Users2, tooltip: "Número total de participantes com assinaturas em dia." },
+                                { title: "Taxa de Ocupação", value: `${occupancy.occupationRate.toFixed(1)}%`, change: occupancy.totalSlots > 0 ? `${occupancy.occupiedSlots}/${occupancy.totalSlots} vagas` : "0 vagas", trend: (occupancy.occupationRate > 80 ? "up" : "down") as "up" | "down", icon: LineChart, tooltip: "Percentual de vagas preenchidas em relação ao total disponível." },
+                                { title: "Risco de Churn", value: `${churn.riskRate.toFixed(1)}%`, change: "baseado em atrasos", trend: (churn.riskRate < 20 ? "up" : "down") as "up" | "down", icon: AlertCircle, tooltip: "Probabilidade de saída baseada em padrões de atraso de pagamento (Últimos 6 meses)." },
                             ].map((card, idx) => (
                                 <div key={idx} className="min-w-[280px] md:min-w-0 snap-center animate-scale-in" style={{ animationDelay: `${idx * 150}ms`, animationFillMode: 'both' }}>
                                     <KPICard {...card} />
@@ -91,6 +97,7 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                             icone={Wallet}
                             cor={financial.netBalance >= 0 ? "green" : "red"}
                             index={0}
+                            tooltip="Resultado da receita estimada menos o custo total dos planos no mercado."
                         />
                         <KPIFinanceiroCard
                             titulo="Valor Total dos Planos"
@@ -98,6 +105,7 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                             icone={Receipt}
                             cor="primary"
                             index={1}
+                            tooltip="Soma dos valores integrais (preço de mercado) de todos os streamings ativos."
                         />
                         <KPIFinanceiroCard
                             titulo="Economia Gerada"
@@ -105,6 +113,7 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                             icone={Sparkles}
                             cor="green"
                             index={2}
+                            tooltip="Total economizado por você e seus participantes através do compartilhamento."
                         />
                     </div>
                 </div>
@@ -120,7 +129,7 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                     </div>
 
                     {/* Linha 2: Distribuições e Saúde - Staggered Fade-in */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="animate-slide-in-from-bottom" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
                             <RevenueDistributionChart
                                 data={catalogs || []}
@@ -138,6 +147,13 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                             <PaymentStatusChart
                                 data={payments.paymentStatusData || []}
                                 onManageSubscriptions={handleManageCobrancas}
+                            />
+                        </div>
+                        <div className="animate-slide-in-from-bottom" style={{ animationDelay: '800ms', animationFillMode: 'both' }}>
+                            <ChurnRiskChart
+                                data={churn.riskData || []}
+                                riskRate={churn.riskRate}
+                                onViewParticipants={handleViewParticipants}
                             />
                         </div>
                     </div>
