@@ -44,7 +44,7 @@ const frequencyLabels: Record<FrequenciaPagamento, string> = {
     anual: "Anual",
 };
 
-export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledFrequencies, loggedUser }: JoinStreamingFormProps) {
+export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledFrequencies, loggedUser, vagasRestantes }: JoinStreamingFormProps) {
     const router = useRouter();
     const { success, error: toastError } = useToast();
     const { format } = useCurrency();
