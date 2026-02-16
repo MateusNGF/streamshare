@@ -13,9 +13,20 @@ export default function AuthPage() {
     const searchParams = useSearchParams();
     const hasPlan = searchParams.get("plan");
     const mode = searchParams.get("mode");
+    const reason = searchParams.get("reason");
+    const messageParam = searchParams.get("message");
+
     const [activeTab, setActiveTab] = useState<AuthTab>(
         hasPlan || mode === "signup" ? "signup" : "login"
     );
+
+    const ALERT_MESSAGES: Record<string, string> = {
+        ip_change: "Sua sessão foi encerrada por segurança devido a uma mudança de endereço IP.",
+        session_expired: "Sua sessão expirou. Por favor, faça login novamente.",
+        logout: "Você saiu da sua conta.",
+    };
+
+    const alertMessage = messageParam || (reason ? ALERT_MESSAGES[reason] : null);
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-gray-900 px-0 py-8 md:p-4">
@@ -65,6 +76,19 @@ export default function AuthPage() {
                             <span className="text-2xl font-bold text-gray-900 tracking-tight">StreamShare</span>
                         </div>
                     </div>
+
+                    {/* Security Alert: Top of Card */}
+                    {alertMessage && (
+                        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                            <div className="p-1 bg-amber-100 rounded-full text-amber-600 mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-amber-900">Atenção</h4>
+                                <p className="text-xs text-amber-800 mt-0.5">{alertMessage}</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Tab Switcher */}
                     <div className="flex p-1 bg-gray-100/80 rounded-2xl mb-6 md:mb-8 relative">

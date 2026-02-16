@@ -56,6 +56,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [loadingAccount, setLoadingAccount] = useState(false);
     const [loadingLogout, setLoadingLogout] = useState(false);
+    const [loadingRemoteLogout, setLoadingRemoteLogout] = useState(false);
     const [loadingCurrency, setLoadingCurrency] = useState(false);
 
     // Toast state
@@ -100,6 +101,27 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
     const showToast = (message: string, variant: ToastVariant = "success") => {
         setToast({ message, variant });
+    };
+
+    const handleRemoteLogout = async () => {
+        if (!confirm("Isso desconectará você de TODOS os dispositivos, incluindo este. Deseja continuar?")) {
+            return;
+        }
+
+        setLoadingRemoteLogout(true);
+        try {
+            await fetch("/api/auth/logout-remote", { method: "POST" });
+            // Also call local logout to clear current cookie
+            await fetch("/api/auth/logout", { method: "POST" });
+
+            showToast("Desconectado de todos os dispositivos.", "success");
+            router.push("/login?reason=session_expired");
+            router.refresh();
+        } catch (error) {
+            showToast("Erro ao desconectar sessões", "error");
+        } finally {
+            setLoadingRemoteLogout(false);
+        }
     };
 
     const handleLogout = async () => {
@@ -247,6 +269,16 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                             <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all opacity-50 cursor-not-allowed">
                                 <p className="font-semibold text-gray-900">Autenticação 2FA</p>
                                 <p className="text-sm text-gray-500">Em breve</p>
+                            </button>
+                            <button
+                                onClick={handleRemoteLogout}
+                                disabled={loadingRemoteLogout}
+                                className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-100 transition-all group"
+                            >
+                                <p className="font-semibold text-gray-900 group-hover:text-red-700">Sair de todos os dispositivos</p>
+                                <p className="text-sm text-gray-500 group-hover:text-red-500">
+                                    {loadingRemoteLogout ? "Processando..." : "Descontentar todas as sessões ativas (incluindo esta)"}
+                                </p>
                             </button>
                         </div>
                     </section>

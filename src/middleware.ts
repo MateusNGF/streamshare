@@ -1,9 +1,31 @@
 import { NextResponse } from "next/server";
+import { verifyToken } from "@/lib/jwt";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
     const token = request.cookies.get("auth-token")?.value;
     const { pathname } = request.nextUrl;
+
+    // IP Verification (Basic)
+    if (token) {
+        const payload = verifyToken(token);
+        if (payload && payload.clientIp) {
+            const currentIp = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+            // Allow unknown or matching IP. If strict, uncomment throwing error.
+            if (currentIp !== "unknown" && payload.clientIp !== "unknown" && currentIp !== payload.clientIp) {
+                // Suspicious login attempt from different IP?
+                // For now, let's just log it or (if strict) redirect to login.
+                // In production, this might be too strict for mobile users switching networks.
+                // The requirement is "drastically different". Without GeoIP, strict equality is the only easy check.
+                // User said "Bloqueio de Múltiplos IPs Simultâneos".
+                // We will implement strict check but maybe allow a small grace period or just invalidate.
+                // For this implementation, let's invalidate and ask for re-login with a query param.
+                const response = NextResponse.redirect(new URL("/login?reason=ip_change", request.url));
+                response.cookies.delete("auth-token");
+                return response;
+            }
+        }
+    }
 
     // Define public and protected routes
     const publicRoutes = ["/", "/login", "/esqueci-senha"];

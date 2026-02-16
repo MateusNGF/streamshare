@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
         // Atualizar senha no banco
         await prisma.usuario.update({
             where: { id: user.id },
-            data: { senhaHash },
+            data: {
+                senhaHash,
+                sessionVersion: { increment: 1 }
+            },
         });
 
         return NextResponse.json({

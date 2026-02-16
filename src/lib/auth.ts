@@ -1,25 +1,9 @@
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { prisma } from "@/lib/db";
+import { generateToken, verifyToken, JWTPayload } from "./jwt";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const JWT_EXPIRES_IN = "7d";
-
-export interface JWTPayload {
-    userId: number;
-    email: string;
-}
-
-export function generateToken(payload: JWTPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-}
-
-export function verifyToken(token: string): JWTPayload | null {
-    try {
-        return jwt.verify(token, JWT_SECRET) as JWTPayload;
-    } catch (error) {
-        return null;
-    }
-}
+// Re-export for convenience if needed, but prefer strict separation
+export { generateToken, verifyToken, type JWTPayload };
 
 export async function setAuthCookie(token: string) {
     const cookieStore = await cookies();
@@ -45,5 +29,24 @@ export async function clearAuthCookie() {
 export async function getCurrentUser(): Promise<JWTPayload | null> {
     const token = await getAuthToken();
     if (!token) return null;
-    return verifyToken(token);
+
+    const payload = verifyToken(token);
+    if (!payload) return null;
+
+    // Validate session in DB
+    try {
+        const user = await prisma.usuario.findUnique({
+            where: { id: payload.userId },
+            select: { sessionVersion: true }
+        });
+
+        if (!user || user.sessionVersion !== payload.sessionVersion) {
+            return null; // Session invalid or user deleted
+        }
+
+        return payload;
+    } catch (error) {
+        console.error("Session validation error:", error);
+        return null;
+    }
 }

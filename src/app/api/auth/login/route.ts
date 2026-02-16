@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { generateToken, setAuthCookie } from "@/lib/auth";
@@ -38,10 +39,32 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Extract IP and User Agent
+        const headersList = await headers();
+        const forwardedFor = headersList.get("x-forwarded-for");
+        const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
+        const userAgent = headersList.get("user-agent") || "unknown";
+
+        // Update user session info
+        const updatedUser = await prisma.usuario.update({
+            where: { id: user.id },
+            data: {
+                lastIp: clientIp,
+                lastUserAgent: userAgent,
+            },
+            select: {
+                id: true,
+                email: true,
+                sessionVersion: true,
+            }
+        });
+
         // Generate JWT token
         const token = generateToken({
             userId: user.id,
             email: user.email,
+            sessionVersion: updatedUser.sessionVersion,
+            clientIp: clientIp,
         });
 
         // Set cookie

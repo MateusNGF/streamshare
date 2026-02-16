@@ -178,6 +178,9 @@ model Usuario {
   provider         ProviderAuth @default(local)
   isAtivo          Boolean      @default(true)
   ultimoLogin      DateTime?
+  sessionVersion   Int          @default(1)
+  lastIp           String?
+  lastUserAgent    String?
   resetToken       String?
   resetTokenExpiry DateTime?
   createdAt        DateTime     @default(now())
