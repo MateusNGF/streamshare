@@ -32,7 +32,7 @@ interface SettingsClientProps {
             stripeSubscriptionStatus?: string | null;
             createdAt: Date;
             isAtivo: boolean;
-            limiteGrupos: number;
+
             _count?: {
                 grupos: number;
                 streamings: number;
@@ -374,12 +374,10 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                         {/* Plano Atual */}
                         <section className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden relative">
                             {(() => {
-                                const currentPlanKey = (initialData.conta?.plano || "basico") as keyof typeof PLANS;
+                                const currentPlanKey = (initialData.conta?.plano || "free") as keyof typeof PLANS;
                                 const planDetails = PLANS[currentPlanKey];
                                 const isPro = currentPlanKey === "pro";
                                 const usage = initialData.conta?._count || { grupos: 0, streamings: 0, participantes: 0 };
-                                const limitGroups = initialData.conta?.limiteGrupos || 5;
-                                const usagePercent = (usage.grupos / limitGroups) * 100;
                                 const isActive = initialData.conta?.isAtivo;
                                 const isCanceled = initialData.conta?.stripeCancelAtPeriodEnd;
 
@@ -452,25 +450,23 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                         {/* Content */}
                                         <div className="p-8 space-y-8">
                                             {/* Usage Stats */}
+                                            {/* Usage Stats - Streamings Only now */}
                                             <div className="space-y-3">
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-gray-600 flex items-center gap-2 font-medium">
-                                                        <Building2 size={16} /> Grupos Criados
+                                                        <Building2 size={16} /> Streamings Criados
                                                     </span>
                                                     <span className="font-semibold text-gray-900">
-                                                        {usage.grupos} <span className="text-gray-400 font-normal">/ {limitGroups === 9999 ? '∞' : limitGroups}</span>
+                                                        {usage.streamings} <span className="text-gray-400 font-normal">/ {planDetails.maxStreamings === 0 ? '-' : (planDetails.maxStreamings === 9999 ? '∞' : planDetails.maxStreamings)}</span>
                                                     </span>
                                                 </div>
-                                                <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-500 ${isPro ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-primary'}`}
-                                                        style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                                                    />
-                                                </div>
-                                                {usagePercent >= 80 && limitGroups < 9999 && (
-                                                    <p className="text-xs text-amber-600 flex items-center gap-1">
-                                                        <Zap size={12} /> Você está próximo do limite do seu plano.
-                                                    </p>
+                                                {planDetails.maxStreamings > 0 && planDetails.maxStreamings < 9999 && (
+                                                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all duration-500 ${isPro ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-primary'}`}
+                                                            style={{ width: `${Math.min((usage.streamings / planDetails.maxStreamings) * 100, 100)}%` }}
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
 

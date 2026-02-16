@@ -100,13 +100,7 @@ export async function createGrupo(data: {
 
     const planConfig = PLANS[conta.plano];
 
-    const currentGruposCount = await prisma.grupo.count({
-        where: { contaId, isAtivo: true }
-    });
 
-    if (currentGruposCount >= planConfig.maxGrupos) {
-        throw new Error("Limite de grupos do plano atingido. Faça upgrade para adicionar mais.");
-    }
 
     // Validações
     if (!data.nome || !data.nome.trim()) {
@@ -200,13 +194,7 @@ export async function updateGrupo(
 
     const planConfig = PLANS[conta.plano];
 
-    const currentGruposCount = await prisma.grupo.count({
-        where: { contaId, isAtivo: true }
-    });
 
-    if (currentGruposCount >= planConfig.maxGrupos) {
-        throw new Error("Limite de grupos do plano atingido. Faça upgrade para adicionar mais.");
-    }
 
     // Validações
     if (!data.nome || !data.nome.trim()) {

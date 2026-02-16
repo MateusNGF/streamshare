@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 import { getContext } from "@/lib/action-context";
+import { PLANS } from "@/config/plans";
 
 export async function getWhatsAppConfig() {
     const { contaId } = await getContext();
@@ -31,6 +32,21 @@ export async function saveWhatsAppConfig(data: {
     // Validações
     if (data.diasAvisoVencimento < 0 || data.diasAvisoVencimento > 30) {
         throw new Error("Dias de aviso deve estar entre 0 e 30");
+    }
+
+    // Validate if plan supports automation
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { plano: true }
+    });
+
+    if (!conta) throw new Error("Conta não encontrada");
+
+    if (data.isAtivo && !PLANS[conta.plano].automationEnabled) {
+        // Allow saving config but force isAtivo to false if plan doesn't support it?
+        // Or throw error? User said "Business... automation".
+        // Ideally throw error if they try to ENABLE it.
+        throw new Error("Seu plano não permite automação (WhatsApp/Telegram). Faça upgrade para o plano Business.");
     }
 
     await prisma.whatsAppConfig.upsert({
@@ -63,6 +79,15 @@ export async function saveWhatsAppConfig(data: {
 
 export async function testWhatsAppConnection(testNumber: string) {
     const { contaId } = await getContext();
+
+    const conta = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { plano: true }
+    });
+
+    if (!conta || !PLANS[conta.plano].automationEnabled) {
+        throw new Error("Funcionalidade indisponível no seu plano.");
+    }
 
     const config = await prisma.whatsAppConfig.findUnique({
         where: { contaId },

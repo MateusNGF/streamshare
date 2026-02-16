@@ -51,18 +51,25 @@ O sistema depende de IDs de preços (`Price IDs`) para criar sessões de checkou
 4.  **Preço**: 29,90 BRL / Mês (Recorrente).
 5.  Salve e copie o **ID do Preço** (começa com `price_`... NÃO confunda com ID do Produto `prod_`).
 
-### 2. Atualizar Configuração
-Adicione o ID gerado ao seu `.env` e ao arquivo de configuração:
+### 2. Criar Produto "Business"
+1.  Repita o processo para o produto Business.
+2.  **Nome**: StreamShare Business.
+3.  **Preço**: 99,90 BRL / Mês (Recorrente).
+4.  Salve e copie o **ID do Preço**.
+
+### 3. Atualizar Configuração
+Adicione os IDs gerados ao seu `.env` e ao arquivo de configuração:
 
 **Arquivo `.env`**:
 ```bash
-NEXT_PUBLIC_STRIPE_PRICE_PRO="price_1234567890abcdef"
+NEXT_PUBLIC_STRIPE_PRICE_PRO="price_pro_id..."
+NEXT_PUBLIC_STRIPE_PRICE_BUSINESS="price_business_id..."
 ```
 
 **Arquivo `apps/web/src/config/plans.ts`**:
-O código já lê automaticamente `process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO`.
+O código já lê automaticamente as variáveis de ambiente.
 
-> **Nota**: O plano **Básico** é gratuito e não requer ID.
+> **Nota**: O plano **Free** é gratuito e não requer ID.
 
 ---
 
@@ -75,7 +82,7 @@ O StreamShare usa webhooks para sincronizar o status da assinatura com o banco d
 |--------|------------------------|
 | `checkout.session.completed` | Atualiza usuário com `stripeSubscriptionId` e muda plano. |
 | `customer.subscription.updated` | Atualiza status (`active`, `past_due`, etc.) e `cancel_at_period_end` na tabela `Conta`. |
-| `customer.subscription.deleted` | Reverte a conta para o plano `basico`. |
+| `customer.subscription.deleted` | Reverte a conta para o plano `free`. |
 
 ### Testando Webhooks Localmente (Stripe CLI)
 
@@ -107,7 +114,7 @@ O StreamShare usa webhooks para sincronizar o status da assinatura com o banco d
 1.  Certifique-se que o projeto está rodando (`pnpm dev`).
 2.  Inicie o listener do Stripe (`stripe listen ...`).
 3.  Acesse `http://localhost:3000/planos`.
-4.  Selecione o plano **Profissional**.
+4.  Selecione o plano **Profissional** ou **Business**.
 5.  Confirme no modal.
 6.  No Checkout do Stripe, use os cartões de teste:
     -   **Número**: `4242 4242 4242 4242`
@@ -132,7 +139,7 @@ O StreamShare usa webhooks para sincronizar o status da assinatura com o banco d
 Quando for para produção (Live Mode):
 
 1.  Crie os produtos novamente no Dashboard (modo Live).
-2.  Atualize as variáveis de ambiente (`STRIPE_KEY`, `PRICE_ID`) com os valores Live.
+2.  Atualize as variáveis de ambiente (`STRIPE_KEY`, `PRICE_ID`, ect) com os valores Live.
 3.  Configure o Endpoint de Webhook no Dashboard do Stripe apontando para sua URL real (`https://sua-app.com/api/webhooks/stripe`).
 4.  Selecione os eventos necessários (`checkout.session.completed`, `customer.subscription.*`).
 

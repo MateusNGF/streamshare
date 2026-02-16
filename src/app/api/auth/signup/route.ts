@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     nome: `Conta de ${nome}`,
                     email: email, // Use user email for account email
-                    plano: "basico",
+                    plano: "free",
                 },
             });
 

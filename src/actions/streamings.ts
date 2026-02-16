@@ -320,10 +320,7 @@ export async function createStreaming(data: {
         throw new Error("Limite de streamings do plano atingido. Faça upgrade para adicionar mais.");
     }
 
-    // 3. Validate Participants Limit
-    if (data.limiteParticipantes > planConfig.maxParticipantes) {
-        throw new Error("Limite de participantes do plano excedido.");
-    }
+
 
     // Business validations
     // Business validations using Zod
@@ -332,9 +329,7 @@ export async function createStreaming(data: {
         catalogoId: String(data.catalogoId)
     });
 
-    if (validatedData.limiteParticipantes > 100) {
-        throw new Error("Limite de participantes não pode exceder 100");
-    }
+
 
     // Validate catalog exists and is active
     const catalogo = await prisma.streamingCatalogo.findUnique({
@@ -408,9 +403,7 @@ export async function updateStreaming(
         catalogoId: String(data.catalogoId)
     });
 
-    if (validatedData.limiteParticipantes > 100) {
-        throw new Error("Limite de participantes não pode exceder 100");
-    }
+
 
     const currentStreaming = await prisma.streaming.findUnique({
         where: { id, contaId },
@@ -431,12 +424,7 @@ export async function updateStreaming(
 
     const activeSubscriptionsCount = currentStreaming._count.assinaturas;
 
-    if (data.limiteParticipantes < activeSubscriptionsCount) {
-        throw new Error(
-            `Não é possível reduzir o limite para ${data.limiteParticipantes}. ` +
-            `Existem ${activeSubscriptionsCount} assinatura(s) ativa(s).`
-        );
-    }
+
 
     const valueChanged = currentStreaming.valorIntegral.toString() !== data.valorIntegral.toString();
     const shouldUpdateSubscriptions = valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0;

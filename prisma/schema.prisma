@@ -8,8 +8,9 @@ datasource db {
 }
 
 enum PlanoConta {
-  basico
+  free
   pro
+  business
 }
 
 enum ProviderAuth {
@@ -141,15 +142,15 @@ model Suporte {
 //////////////////////////////////////////////////
 
 model Conta {
-  id               Int        @id @default(autoincrement())
-  nome             String?
-  email            String?    @unique
-  plano            PlanoConta
-  limiteGrupos     Int        @default(5)
-  isAtivo          Boolean    @default(true)
-  moedaPreferencia String     @default("BRL")
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  id    Int        @id @default(autoincrement())
+  nome  String?
+  email String?    @unique
+  plano PlanoConta
+
+  isAtivo          Boolean  @default(true)
+  moedaPreferencia String   @default("BRL")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   chavePix         String?
 
   usuarios       ContaUsuario[]

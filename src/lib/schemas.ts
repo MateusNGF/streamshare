@@ -29,7 +29,6 @@ export const StreamingSchema = z.object({
         z.number()
             .int("Limite deve ser um número inteiro")
             .min(1, "Limite deve ser no mínimo 1")
-            .max(100, "Limite deve ser no máximo 100")
     ),
 
     isPublico: z.boolean().optional(),

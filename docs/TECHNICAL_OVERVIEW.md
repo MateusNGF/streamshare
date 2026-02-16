@@ -105,8 +105,13 @@ src/
 
 ## 5. Módulos Principais
 
-### 5.1. Gestão de Assinaturas
-Core da aplicação. Permite criar grupos (Streamings), adicionar participantes e definir regras de cobrança (mensal, trimestral, etc).
+### 5.1. Gestão de Planos e Assinaturas
+Core da aplicação. O sistema oferece três níveis de acesso (Planos):
+- `free`: Participação ilimitada em grupos. Sem capacidade de criar streamings.
+- `pro`: Gestão de até 20 streamings com grupos e participantes ilimitados.
+- `business`: Gestão ilimitada de streamings com grupos e participantes ilimitados, automação via WhatsApp e API.
+
+Permite criar grupos (Streamings), adicionar participantes e definir regras de cobrança (mensal, trimestral, etc).
 
 ### 5.2. Sistema Financeiro
 Módulo responsável por gerar cobranças, calcular vencimentos e rastrear pagamentos. Utiliza uma máquina de estados para o ciclo de vida da fatura (Pendente -> Pago / Atrasado -> Expirado).

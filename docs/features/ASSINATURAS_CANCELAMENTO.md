@@ -7,9 +7,9 @@ Este documento detalha o ciclo de vida das assinaturas no StreamShare, cobrindo 
 O StreamShare utiliza o Stripe para gerenciar pagamentos recorrentes. O estado da assinatura é espelhado no banco de dados local da aplicação para garantir performance e permitir consultas offline (sem bater na API do Stripe a cada request).
 
 ### Estados Principais (Banco de Dados)
-- **Ativa (`isPro`)**: `plano != 'basico'` E `stripeSubscriptionStatus = 'active'`.
+- **Ativa**: `plano != 'free'` E `stripeSubscriptionStatus = 'active'`.
 - **Cancelada (Agendada)**: `stripeCancelAtPeriodEnd = true`. O acesso continua até o fim do período.
-- **Expirada/Cancelada (Definitivo)**: `plano = 'basico'`.
+- **Expirada/Cancelada (Definitivo)**: `plano = 'free'`.
 
 ---
 
@@ -63,9 +63,8 @@ Chega a data de renovação de uma assinatura cancelada. O Stripe encerra a assi
   1. O Stripe envia o evento `customer.subscription.deleted`.
   2. O sistema busca a conta pelo `stripeSubscriptionId`.
   3. **Atualização no Banco**:
-     - `plano`: Reverte para 'basico'.
+     - `plano`: Reverte para 'free'.
      - `stripeSubscriptionStatus`: Atualiza para 'canceled'.
-     - `limiteGrupos`: Reduz para o padrão gratuito (5).
   4. Uma notificação é gerada para o usuário informando o fim do acesso.
 
 ### 5. Falha no Pagamento (Inadimplência)
@@ -93,7 +92,7 @@ Status da implementação atual vs. Documentação:
 | Assinatura Inicial | ✅ Sim | Webhook `checkout.session.completed` configurado. |
 | Cancelamento Voluntário | ✅ Sim | Action e UI implementadas. |
 | Reativação | ✅ Sim | Action e UI implementadas. |
-| Término (Downgrade) | ✅ Sim | Webhook `customer.subscription.deleted` reverte para básico. |
+| Término (Downgrade) | ✅ Sim | Webhook `customer.subscription.deleted` reverte para free. |
 | Sincronização de Status | ✅ Sim | Webhook `customer.subscription.updated` mantém status local. |
 
 ### Pontos de Atenção Verificados

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { TipoNotificacaoWhatsApp } from "@prisma/client";
+import { PLANS } from "@/config/plans";
 import crypto from "crypto";
 
 // Função para descriptografar credenciais
@@ -137,13 +138,22 @@ export async function sendWhatsAppNotification(
     }
 
     // 2. Buscar configuração específica da conta (preferências)
+    // 2. Buscar configuração específica da conta (preferências)
     const config = await prisma.whatsAppConfig.findUnique({
         where: { contaId },
+        include: { conta: { select: { plano: true } } }
     });
 
     // Se a conta não tiver configuração ou estiver inativa, retorna silenciosamente
     if (!config || !config.isAtivo) {
         return { success: false, reason: "account_disabled" };
+    }
+
+    // Check Plan Automation
+    // Note: We use type assertion or ignore if type definition is outdated until prisma generate runs
+    // @ts-ignore
+    if (!PLANS[config.conta.plano]?.automationEnabled) {
+        return { success: false, reason: "plan_restricted" };
     }
 
     // 3. Verificar se notificação deste tipo está habilitada para ESTA conta

@@ -23,12 +23,14 @@ import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { MobileMenuButton } from "./MobileMenuButton";
 import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { PlanoConta } from "@prisma/client";
 
 interface SidebarProps {
     isSystemAdmin?: boolean;
+    userPlan?: PlanoConta;
 }
 
-export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
+export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -44,6 +46,15 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
         await refreshCount();
     };
 
+    const isFreePlan = userPlan === "free";
+    // NOTE: 'basico' users are legacy with 1 streaming, so they technically CAN manage that 1 streaming. 
+    // IF we want to allow 'basico' to see the menu, we should exclude them from isFreePlan check here, 
+    // OR allow them specific access.
+    // User said: "Plano free... mas ele não consegue gerenciar". 
+    // New Free plan is strict. Legacy Basico might need access. 
+    // Let's assume Legacy Basico keeps access.
+    const showManagement = userPlan !== "free"; // Hide only for new Free plan.
+
     const menuGroups = [
         {
             label: "Geral",
@@ -58,7 +69,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 { icon: Wallet, label: "Faturas", href: "/faturas" },
             ]
         },
-        {
+        ...(showManagement ? [{
             label: "Conta",
             items: [
                 { icon: Tv, label: "Streamings", href: "/streamings" },
@@ -67,7 +78,7 @@ export function Sidebar({ isSystemAdmin = false }: SidebarProps) {
                 { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
                 { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
             ]
-        },
+        }] : []),
         {
             label: "Sistema",
             items: [

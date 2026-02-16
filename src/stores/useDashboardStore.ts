@@ -5,7 +5,8 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { DashboardStats, AssinaturaWithRelations, StreamingWithRelations } from "./types";
+import type { AssinaturaWithRelations, StreamingWithRelations } from "./types";
+import type { DashboardStats } from "@/types/dashboard.types";
 import { isStale } from "./utils";
 import {
     getDashboardStats as fetchStatsAction,

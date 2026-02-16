@@ -42,7 +42,7 @@ export async function POST(req: Request) {
                     stripeSubscriptionStatus: "active",
                     stripeCancelAtPeriodEnd: false,
                     plano: plano,
-                    limiteGrupos: planConfig?.maxGrupos || 5
+
                 },
             });
 
@@ -108,8 +108,8 @@ export async function POST(req: Request) {
                     data: {
                         stripeSubscriptionStatus: subscription.status,
                         stripeCancelAtPeriodEnd: false,
-                        plano: "basico",
-                        limiteGrupos: 5
+                        plano: "free",
+
                     },
                 });
 
@@ -118,8 +118,8 @@ export async function POST(req: Request) {
                         contaId: account.id,
                         tipo: "plano_alterado",
                         titulo: "Assinatura Cancelada",
-                        descricao: "Sua assinatura foi cancelada e sua conta retornou ao plano Básico.",
-                        metadata: { transition: "pro_to_basico", reason: "subscription_deleted" }
+                        descricao: "Sua assinatura foi cancelada e sua conta retornou ao plano Gratuito.",
+                        metadata: { transition: "pro_to_free", reason: "subscription_deleted" }
                     }
                 });
             });

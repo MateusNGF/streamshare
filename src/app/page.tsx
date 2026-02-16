@@ -310,7 +310,7 @@ export default async function LandingPage() {
 
 
           <div className="max-w-6xl mx-auto">
-            <PlansClient isLoggedIn={!!session} currentPlan={account?.conta.plano || "basico"} />
+            <PlansClient isLoggedIn={!!session} currentPlan={account?.conta.plano || "free"} />
           </div>
 
           {/* Comparison note */}

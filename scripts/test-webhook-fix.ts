@@ -33,9 +33,8 @@ async function testWebhookLogic() {
     // Create account directly
     const conta = await prisma.conta.create({
         data: {
-            plano: "basico",
+            plano: "pro",
             email: testEmail,
-            limiteGrupos: 1,
             stripeSubscriptionId: "sub_test_123",
             stripeSubscriptionStatus: "active"
         }
@@ -72,8 +71,7 @@ async function testWebhookLogic() {
                     data: {
                         stripeSubscriptionStatus: newStatus,
                         ...(planConfig && {
-                            plano: planConfig.id,
-                            limiteGrupos: planConfig.maxGrupos
+                            plano: planConfig.id
                         })
                     },
                 });
@@ -97,7 +95,7 @@ async function testWebhookLogic() {
             where: { id: conta.id }
         });
 
-        if (updatedAccount?.plano === "pro" && updatedAccount.limiteGrupos === proPlan.maxGrupos) {
+        if (updatedAccount?.plano === "pro") {
             console.log("SUCCESS: Account upgraded to PRO correctly.");
         } else {
             console.error("FAILURE: Account did not upgrade.", updatedAccount);

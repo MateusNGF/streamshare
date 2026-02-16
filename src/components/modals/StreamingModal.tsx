@@ -276,7 +276,7 @@ export function StreamingModal({
                                 onValueChange={(val) => handleChange("limiteParticipantes", String(val))}
                                 error={errors.limiteParticipantes}
                                 min={1}
-                                max={10} // Just as a safe default for common shared accounts
+
                                 className="w-full"
                             />
                         </div>

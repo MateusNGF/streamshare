@@ -13,8 +13,8 @@ export interface PlanDefinition {
     price: number;
     // Limits
     maxStreamings: number;
-    maxGrupos: number;
-    maxParticipantes: number;
+
+    automationEnabled: boolean;
 
     features: PlanFeature[];
     highlighted?: boolean;
@@ -23,50 +23,69 @@ export interface PlanDefinition {
 }
 
 export const PLANS: Record<PlanoConta, PlanDefinition> = {
-    [PlanoConta.basico]: {
-        id: PlanoConta.basico,
-        label: "Básico",
-        description: "Para quem está começando.",
-        subDescription: "Gerencie poucos grupos",
+    [PlanoConta.free]: {
+        id: PlanoConta.free,
+        label: "Free",
+        description: "Participe de grupos.",
+        subDescription: "Sem gestão de streamings",
         price: 0,
 
-        maxStreamings: 1,
-        maxGrupos: 1,
-        maxParticipantes: 6,
+        maxStreamings: 0,
+
+        automationEnabled: false,
 
         color: "gray",
-        // No price ID for free plan
         features: [
-            { text: "1 Serviço de Streaming", included: true },
-            { text: "Até 6 Participantes por serviço", included: true },
-            { text: "1 Grupo de compartilhamento", included: true },
-            { text: "Painel de Gestão Completo", included: true },
-            { text: "Cobrança Manual", included: true },
+            { text: "Participação Ilimitada", included: true },
+            { text: "Sem gestão de streamings", included: true },
+            { text: "Sem gestão de cobranças", included: false },
         ],
     },
+
     [PlanoConta.pro]: {
         id: PlanoConta.pro,
-        label: "Profissional",
-        description: "Para administradores sérios.",
-        subDescription: "Expanda sua operação",
+        label: "Pro",
+        description: "Para gestores.",
+        subDescription: "Gerencie até 20 streamings",
         price: 29.90,
 
-        maxStreamings: 9999, // Unlimited
-        maxGrupos: 9999,    // Unlimited
-        maxParticipantes: 9999, // Unlimited
+        maxStreamings: 20,
+
+        automationEnabled: false,
 
         highlighted: true,
         color: "primary",
-        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO, // Env var
+        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
+        features: [
+            { text: "20 Streamings", included: true },
+            { text: "Participantes Ilimitados", included: true },
+            { text: "Grupos Ilimitados", included: true },
+            { text: "Cobrança Manual", included: true },
+            { text: "Atendimento Prioritário", included: true },
+            { text: "Sem Automação", included: false },
+        ],
+    },
+    [PlanoConta.business]: {
+        id: PlanoConta.business,
+        label: "Business",
+        description: "Automação total.",
+        subDescription: "Streamings ilimitados e automação",
+        price: 99.90, // Example price, user didn't specify.
+
+        maxStreamings: 9999,
+
+        automationEnabled: true,
+
+        color: "purple", // Distinct color
+        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
         features: [
             { text: "Streamings Ilimitados", included: true },
             { text: "Participantes Ilimitados", included: true },
             { text: "Grupos Ilimitados", included: true },
-            { text: "Automação de WhatsApp", included: true },
-            { text: "Cobranças Automáticas", included: true },
+            { text: "Cobrança Automática", included: true },
+            { text: "Integração WhatsApp/Telegram", included: true },
         ],
     },
-
 };
 
 export const PLANS_LIST = Object.values(PLANS);

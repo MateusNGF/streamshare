@@ -27,11 +27,12 @@ export default async function DashboardLayout({
 
     const status = userAccount?.conta?.stripeSubscriptionStatus || null;
     const isSystemAdmin = !!systemAdmin;
+    const userPlan = userAccount?.conta?.plano;
 
     return (
         <div className="flex min-h-screen bg-gray-50 w-full">
             <CurrencyInitializer currencyCode={userAccount?.conta?.moedaPreferencia || 'BRL'} />
-            <Sidebar isSystemAdmin={isSystemAdmin} />
+            <Sidebar isSystemAdmin={isSystemAdmin} userPlan={userPlan} />
             <main className="flex-1 overflow-y-auto h-screen pt-16 lg:pt-0">
                 <div className="p-4 md:p-8 max-w-7xl mx-auto">
                     <SubscriptionAlert status={status} />

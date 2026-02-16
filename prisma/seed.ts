@@ -87,7 +87,7 @@ async function main() {
             nome: "StreamShare",
             email: "atendimento@streamshare.com.br",
             plano: PlanoConta.pro,
-            limiteGrupos: 20,
+
             isAtivo: true,
         },
     });

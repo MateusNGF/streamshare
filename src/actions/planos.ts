@@ -80,7 +80,7 @@ async function internalUpdateToFree(userId: number, plano: PlanoConta) {
         where: { id: userAccount.contaId },
         data: {
             plano: plano,
-            limiteGrupos: planConfig.maxGrupos,
+
             stripeSubscriptionStatus: 'active', // Free is always active
         }
     });

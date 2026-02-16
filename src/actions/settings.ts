@@ -25,7 +25,7 @@ export async function getSettingsData() {
                     nome: true,
                     email: true,
                     plano: true,
-                    limiteGrupos: true,
+
                     moedaPreferencia: true,
                     chavePix: true,
                     stripeSubscriptionStatus: true,
