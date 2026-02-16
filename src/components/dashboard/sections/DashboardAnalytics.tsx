@@ -9,6 +9,9 @@ import { Spinner } from "@/components/ui/Spinner";
 import { TrendingUp, Users2, LineChart, AlertCircle, Wallet, Receipt, Sparkles } from "lucide-react";
 import { DashboardStats, RevenueHistory } from "@/types/dashboard.types";
 import { formatarMoeda } from "@/lib/financeiro-utils";
+import { useRouter } from "next/navigation";
+import { EmptyChartState } from "../EmptyChartState";
+import { LayoutDashboard } from "lucide-react";
 
 const RevenueHistoryChart = dynamic(() => import("../charts/RevenueHistoryChart").then(mod => mod.RevenueHistoryChart), {
     loading: () => <div className="lg:col-span-2 h-[420px] bg-white rounded-[32px] flex items-center justify-center border border-gray-100"><Spinner /></div>,
@@ -37,11 +40,20 @@ interface DashboardAnalyticsProps {
 }
 
 export function DashboardAnalytics({ stats, revenueHistory, distributionData }: DashboardAnalyticsProps) {
+    const router = useRouter();
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
     const { financial, membership, occupancy, payments, catalogs, currencyCode } = stats;
 
     const formatCurrency = (val: number) => formatarMoeda(val, currencyCode);
+
+    const handleAddStreaming = () => router.push("/streamings");
+    const handleManageCobrancas = () => router.push("/cobrancas");
+
+    const isDashboardEmpty =
+        financial.monthlyRevenue === 0 &&
+        membership.activeParticipantsCount === 0 &&
+        occupancy.totalSlots === 0;
 
     return (
         <section>
@@ -100,20 +112,34 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                 <div className="space-y-8 animate-fade-in">
                     {/* Linha 1: Faturamento & Crescimento - Full Width with Float animation */}
                     <div className="w-full transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 rounded-[40px]">
-                        <RevenueHistoryChart data={revenueHistory} currencyCode={currencyCode} />
+                        <RevenueHistoryChart
+                            data={revenueHistory}
+                            currencyCode={currencyCode}
+                            onAddStreaming={handleAddStreaming}
+                        />
                     </div>
 
                     {/* Linha 2: Distribuições e Saúde - Staggered Fade-in */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[
-                            <RevenueDistributionChart key="dist" data={catalogs || []} currencyCode={currencyCode} />,
-                            <OccupancyDistributionChart key="occ" data={distributionData} />,
-                            <PaymentStatusChart key="pay" data={payments.paymentStatusData || []} />
-                        ].map((chart, idx) => (
-                            <div key={idx} className="animate-slide-in-from-bottom" style={{ animationDelay: `${(idx + 1) * 200}ms`, animationFillMode: 'both' }}>
-                                {chart}
-                            </div>
-                        ))}
+                        <div className="animate-slide-in-from-bottom" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+                            <RevenueDistributionChart
+                                data={catalogs || []}
+                                currencyCode={currencyCode}
+                                onViewStreamings={handleAddStreaming}
+                            />
+                        </div>
+                        <div className="animate-slide-in-from-bottom" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
+                            <OccupancyDistributionChart
+                                data={distributionData}
+                                onAddStreaming={handleAddStreaming}
+                            />
+                        </div>
+                        <div className="animate-slide-in-from-bottom" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
+                            <PaymentStatusChart
+                                data={payments.paymentStatusData || []}
+                                onManageSubscriptions={handleManageCobrancas}
+                            />
+                        </div>
                     </div>
                 </div>
             )}

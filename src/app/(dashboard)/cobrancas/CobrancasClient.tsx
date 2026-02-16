@@ -9,6 +9,11 @@ import { useCobrancasActions } from "@/hooks/useCobrancasActions";
 import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
 import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { FeatureGuards } from "@/lib/feature-guards";
+import { PlanoConta } from "@prisma/client";
+import { UpgradeFeatureOverlay } from "@/components/ui/UpgradeFeatureOverlay";
+import { Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface CobrancasClientProps {
     kpis: {
@@ -20,9 +25,11 @@ interface CobrancasClientProps {
     cobrancasIniciais: any[];
     whatsappConfigurado: boolean;
     streamings: any[];
+    plano: PlanoConta;
 }
 
-export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings }: CobrancasClientProps) {
+export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings, plano }: CobrancasClientProps) {
+    const router = useRouter();
     const {
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
@@ -44,6 +51,9 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         handleClearFilters,
         setSelectedCobrancaId // Added this just in case, though handled by actions
     } = useCobrancasActions(cobrancasIniciais);
+
+    const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
+    const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
 
     return (
         <PageContainer>
@@ -154,8 +164,29 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 />
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 relative">
                 <SectionHeader title="Listagem de Cobranças" />
+
+                {!whatsappCheck.enabled && (
+                    <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-white p-2 rounded-xl text-primary shadow-sm">
+                                <Sparkles size={20} />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-900">Automatize suas cobranças via WhatsApp</h4>
+                                <p className="text-xs text-gray-600">No plano Business, o sistema envia cobranças automaticamente para você.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => router.push("/planos")}
+                            className="text-xs font-bold text-primary hover:underline"
+                        >
+                            Conhecer planos
+                        </button>
+                    </div>
+                )}
+
                 <CobrancasTable
                     cobrancas={filteredCobrancas}
                     onViewDetails={(id) => {

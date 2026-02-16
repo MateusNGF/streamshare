@@ -10,6 +10,8 @@ import { getContext } from "@/lib/action-context";
 import { calcularValorPeriodo } from "@/lib/financeiro-utils";
 import { billingService } from "@/services/billing-service";
 import { generateShareToken, verifyShareToken } from "@/lib/share-token";
+import { FeatureGuards } from "@/lib/feature-guards";
+import { PlanoConta } from "@prisma/client";
 
 export async function getCatalogos() {
     return prisma.streamingCatalogo.findMany({
@@ -309,15 +311,17 @@ export async function createStreaming(data: {
 
     if (!conta) throw new Error("Conta não encontrada");
 
-    const planConfig = PLANS[conta.plano];
-
-    // 2. Validate Streaming Count Limit
-    const currentStreamingsCount = await prisma.streaming.count({
-        where: { contaId }
+    // 1. Validate Feature Access & Limits
+    const accountData = await prisma.conta.findUnique({
+        where: { id: contaId },
+        select: { _count: { select: { streamings: true } } }
     });
 
-    if (currentStreamingsCount >= planConfig.maxStreamings) {
-        throw new Error("Limite de streamings do plano atingido. Faça upgrade para adicionar mais.");
+    const totalStreamings = accountData?._count.streamings || 0;
+
+    const check = await FeatureGuards.checkLimit(conta.plano as PlanoConta, "max_streamings", totalStreamings);
+    if (!check.enabled) {
+        throw new Error(check.reason);
     }
 
 

@@ -3,13 +3,15 @@ import { getStreamings } from "@/actions/streamings";
 import { CobrancasClient } from "./CobrancasClient";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { PlanoConta } from "@prisma/client";
 
 export default async function CobrancasPage() {
-    const [kpis, cobrancas, whatsappConfig, streamings] = await Promise.all([
+    const [kpis, cobrancas, whatsappConfig, streamings, accountData] = await Promise.all([
         getKPIsFinanceiros(),
         getCobrancas(),
         checkWhatsAppConfig(),
-        getStreamings()
+        getStreamings(),
+        getAccountData()
     ]);
 
     return (
@@ -18,8 +20,21 @@ export default async function CobrancasPage() {
             cobrancasIniciais={cobrancas}
             whatsappConfigurado={whatsappConfig}
             streamings={streamings}
+            plano={accountData.plano as PlanoConta}
         />
     );
+}
+
+async function getAccountData() {
+    const session = await getCurrentUser();
+    if (!session) return { plano: "free" };
+
+    const userAccount = await prisma.contaUsuario.findFirst({
+        where: { usuarioId: session.userId, isAtivo: true },
+        select: { conta: { select: { plano: true } } },
+    });
+
+    return userAccount?.conta || { plano: "free" };
 }
 
 async function checkWhatsAppConfig(): Promise<boolean> {
