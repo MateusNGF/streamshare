@@ -26,9 +26,9 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
                 <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 scrollbar-hide snap-x snap-mandatory items-stretch py-10 px-4 -mx-4">
                     <div className="min-w-[280px] md:min-w-0 snap-center flex flex-col">
                         <KPICard
-                            title="Minhas Assinaturas"
+                            title="Planos Ativos"
                             value={String(activeSubscriptions)}
-                            change="Ativas no momento"
+                            change="Serviços contratados"
                             trend="up"
                             icon={Receipt}
                             index={0}
@@ -36,9 +36,9 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
                     </div>
                     <div className="min-w-[280px] md:min-w-0 snap-center flex flex-col">
                         <KPICard
-                            title="Próximo Vencimento"
-                            value={nextPaymentDate ? new Date(nextPaymentDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : "Nenhum"}
-                            change={nextPaymentDate ? "Fique atento" : "Tudo em dia"}
+                            title="Próxima Renovação"
+                            value={nextPaymentDate ? new Date(nextPaymentDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : "---"}
+                            change={nextPaymentDate ? "Data de cobrança" : "Tudo em dia"}
                             trend="up"
                             icon={Calendar}
                             index={1}
@@ -46,7 +46,7 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
                     </div>
                     <div className="min-w-[280px] md:min-w-0 snap-center lg:col-span-1 flex flex-col">
                         <KPIFinanceiroCard
-                            titulo="Gasto Mensal"
+                            titulo="Mensalidade Total"
                             valor={monthlySpending}
                             icone={Wallet}
                             cor="primary"
@@ -55,7 +55,7 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
                     </div>
                     <div className="min-w-[280px] md:min-w-0 snap-center lg:col-span-1 flex flex-col">
                         <KPIFinanceiroCard
-                            titulo="Economia Total"
+                            titulo="Economia Acumulada"
                             valor={totalSavings}
                             icone={Sparkles}
                             cor="green"

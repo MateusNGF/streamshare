@@ -93,14 +93,14 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                             index={0}
                         />
                         <KPIFinanceiroCard
-                            titulo="Custo Original (Total)"
+                            titulo="Valor Total dos Planos"
                             valor={financial.totalMarketCost}
                             icone={Receipt}
                             cor="primary"
                             index={1}
                         />
                         <KPIFinanceiroCard
-                            titulo="Economia do Grupo"
+                            titulo="Economia Gerada"
                             valor={financial.totalSavings}
                             icone={Sparkles}
                             cor="green"
