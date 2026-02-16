@@ -48,6 +48,11 @@ const changelogData = [
         id: "2026-02-16",
         date: "16/02/2026",
         changes: [
+            { category: "Precisão", description: "Implementação de **Travamento de Concorrência** e conformidade transacional no processamento de adesões, eliminando riscos de sobre-ocupação de vagas em cenários de alta demanda simultânea." },
+            { category: "Segurança", description: "Reforço no motor de controle de acesso com bloqueio automático na geração de novos links para serviços com lotação máxima, garantindo a integridade das regras de negócio." },
+            { category: "Experiência", description: "Implementação de **Seleção de Múltiplas Cotas** no fluxo de assinatura pública, permitindo a reserva de várias vagas simultaneamente com atualização dinâmica de valores." },
+            { category: "Interface", description: "Redesign visual dos indicadores de disponibilidade na **Vitrine de Serviços**, introduzindo sinalização de lotação e feedback claro sobre a ativação condicionada ao pagamento." },
+            { category: "Segurança", description: "Refatoração da arquitetura de serviços utilizando princípios de **Responsabilidade Única**, centralizando o gerenciamento de membros e serviços para maior isolamento e proteção dos dados." },
             { category: "Interface", description: "Refatoração completa do componente de **Planos e Preços**, introduzindo navegação horizontal responsiva e otimização de espaço para melhor visualização em dispositivos móveis." },
             { category: "Experiência", description: "Otimização da hierarquia visual na **Vitrine de Assinaturas**, utilizando princípios de psicologia do design para facilitar a comparação de benefícios e a tomada de decisão." },
             { category: "Automação", description: "Lançamento do **Motor de Gestão de Planos**, automatizando o controle de limites operacionais e garantindo que o acesso a recursos premium siga rigorosamente as regras de assinatura." },
