@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
                 nome: newUser.nome,
                 email: newUser.email,
                 createdAt: newUser.createdAt,
+                sessionVersion: newUser.sessionVersion,
             };
         });
 
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
         const token = generateToken({
             userId: user.id,
             email: user.email,
+            sessionVersion: user.sessionVersion,
         });
 
         // Set cookie
