@@ -610,7 +610,7 @@ export async function deleteStreaming(id: number) {
 }
 
 export async function generateStreamingShareLink(streamingId: number, expiration: string) {
-    const { contaId } = await getContext();
+    const { contaId, userId } = await getContext();
 
     const streaming = await prisma.streaming.findUnique({
         where: { id: streamingId, contaId },
@@ -620,14 +620,55 @@ export async function generateStreamingShareLink(streamingId: number, expiration
         throw new Error("Streaming não encontrado");
     }
 
-    // If expiration is 'never', we can return the existing publicToken if available,
-    // or generate a token without expiration.
-    // However, switching to publicToken here might be confusing if the frontend expects a JWT.
-    // Let's stick to generating a token or returning publicToken if specifically requested as 'permanent'.
+    const token = generateShareToken(streamingId, expiration);
 
-    // We always use JWT for share links to distinguish them from the raw publicToken
-    // and to allow sharing private streamings without exposing them generally.
-    return generateShareToken(streamingId, expiration);
+    // Persist as a special invite to allow history and revocation
+    const expiresAt = new Date();
+    if (expiration !== 'never') {
+        const value = parseInt(expiration);
+        const unit = expiration.slice(-1);
+        if (unit === 'm') expiresAt.setMinutes(expiresAt.getMinutes() + value);
+        else if (unit === 'h') expiresAt.setHours(expiresAt.getHours() + value);
+        else if (unit === 'd') expiresAt.setDate(expiresAt.getDate() + value);
+        else expiresAt.setDate(expiresAt.getDate() + 7); // Default
+    } else {
+        expiresAt.setFullYear(expiresAt.getFullYear() + 10); // Far future
+    }
+
+    await prisma.convite.create({
+        data: {
+            email: "public-link@system.internal",
+            contaId,
+            streamingId,
+            token,
+            status: "pendente",
+            expiresAt,
+            convidadoPorId: userId
+        }
+    });
+
+    return token;
+}
+
+export async function getStreamingLinksHistory(streamingId: number) {
+    const { contaId } = await getContext();
+    return prisma.convite.findMany({
+        where: {
+            streamingId,
+            contaId,
+            email: "public-link@system.internal"
+        },
+        orderBy: { createdAt: "desc" }
+    });
+}
+
+export async function revokeStreamingLink(inviteId: string) {
+    const { contaId } = await getContext();
+    await prisma.convite.update({
+        where: { id: inviteId, contaId },
+        data: { status: "recusado" }
+    });
+    revalidatePath("/dashboard");
 }
 
 export async function getStreamingByPublicToken(token: string) {
@@ -637,6 +678,19 @@ export async function getStreamingByPublicToken(token: string) {
     const sharePayload = verifyShareToken(token);
 
     if (sharePayload) {
+        // Double check in DB if it was revoked
+        const dbInvite = await prisma.convite.findFirst({
+            where: {
+                token,
+                status: "pendente",
+                expiresAt: { gt: new Date() }
+            }
+        });
+
+        if (!dbInvite && token.length > 50) { // JWTs are long, publicTokens (UUIDs) are short
+            return null; // Revoked or not found in DB
+        }
+
         streaming = await prisma.streaming.findUnique({
             where: { id: sharePayload.streamingId, isAtivo: true },
             include: {

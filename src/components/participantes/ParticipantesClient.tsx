@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { createParticipante, updateParticipante, deleteParticipante } from "@/actions/participantes";
 import { useToast } from "@/hooks/useToast";
 import { Tabs } from "@/components/ui/Tabs";
-import { InviteModal } from "@/components/participantes/InviteModal";
+import { AddMemberModal } from "@/components/modals/AddMemberModal";
 import { inviteUser, cancelInvite } from "@/actions/invites";
 import { approveRequest, rejectRequest } from "@/actions/requests";
 import { Participante, PendingInvite, PendingRequest, Streaming } from "@/types/participante";
@@ -59,19 +59,6 @@ export function ParticipantesClient({
             setIsAddModalOpen(false);
         } catch (error) {
             toast.error("CPF ou WhatsApp já estão em uso");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleInvite = async (data: { email: string; streamingId?: number }) => {
-        setLoading(true);
-        try {
-            await inviteUser(data);
-            toast.success("Convite enviado com sucesso!");
-            setIsInviteModalOpen(false);
-        } catch (error: any) {
-            toast.error(error.message || "Erro ao enviar convite");
         } finally {
             setLoading(false);
         }
@@ -234,11 +221,9 @@ export function ParticipantesClient({
                 loading={loading}
             />
 
-            <InviteModal
+            <AddMemberModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
-                onInvite={handleInvite}
-                loading={loading}
                 streamings={streamings}
             />
 

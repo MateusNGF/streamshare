@@ -1,26 +1,50 @@
 'use client';
 
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, UserPlus, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { useRouter } from "next/navigation";
 
 interface StreamingCardProps {
+    id: number;
     name: string;
     slots: { occupied: number; total: number };
     value: number;
     color: string;
     initial: string;
     iconeUrl?: string | null;
+    onAction?: (action: 'invite' | 'share', id: number) => void;
 }
 
-export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: StreamingCardProps) {
+export function StreamingCard({ id, name, slots, value, color, initial, iconeUrl, onAction }: StreamingCardProps) {
     const percentage = (slots.occupied / slots.total) * 100;
     const { format } = useCurrency();
+    const router = useRouter();
+
+    const dropdownOptions = [
+        {
+            label: "Convidar por E-mail",
+            icon: <UserPlus size={16} />,
+            onClick: () => onAction?.('invite', id)
+        },
+        {
+            label: "Copiar Link de Convite",
+            icon: <LinkIcon size={16} />,
+            onClick: () => onAction?.('share', id)
+        },
+        { type: "separator" as const },
+        {
+            label: "Ver Detalhes",
+            icon: <ExternalLink size={16} />,
+            onClick: () => router.push("/streamings")
+        }
+    ];
 
     return (
         <div className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-all group">
             <div className="flex items-center gap-4">
-                <div className="relative group/actions">
+                <div className="relative">
                     <StreamingLogo
                         name={name}
                         color={color}
@@ -29,9 +53,6 @@ export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: 
                         rounded="2xl"
                         className="shadow-lg"
                     />
-                    <button className="absolute -top-1 -right-1 p-1 bg-white shadow-md rounded-full text-gray-400 hover:text-gray-900 border border-gray-100 opacity-0 group-hover/actions:opacity-100 transition-all">
-                        <MoreVertical size={14} />
-                    </button>
                 </div>
                 <div>
                     <h4 className="font-bold text-gray-900 leading-tight mb-0.5">{name}</h4>
@@ -48,6 +69,15 @@ export function StreamingCard({ name, slots, value, color, initial, iconeUrl }: 
                     </div>
                 </div>
             </div>
+
+            <Dropdown
+                options={dropdownOptions}
+                trigger={
+                    <div className="p-1 bg-white shadow-md rounded-full text-gray-400 hover:text-gray-900 border border-gray-100 opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                        <MoreVertical size={14} />
+                    </div>
+                }
+            />
         </div>
     );
 }

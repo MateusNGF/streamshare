@@ -1,270 +1,157 @@
-# Implementation Plan - Discovery & Invitations (Explorer focused)
+# Sistema de Descoberta e Convites (Discovery & Invitations)
 
-## Goal Description
-Implement a Discovery module for public streamings, a Request/Invite system for new members, and ensure Admins can be members of other streamings (Hybrid Profile).
-**Refinement:** The Explore module will focus on **Streamings (Available Slots)**, and Invitations can be linked directly to a **Subscription**.
+Este documento detalha a implementação técnica e funcional do ecossistema de crescimento do StreamShare, composto por três pilares: **Explorer (Descoberta)**, **Solicitações de Entrada** e **Convites Diretos**.
 
-## User Review Required
-> [!IMPORTANT]
-> **Schema Changes:** We are adding a `status` field to `Participante` and a new `Convite` model with an optional `streamingId`.
-> **Explore Logic:** The Explore page will list "Vagas Disponíveis" (Streamings), aggregating data from Public Streamings.
+## Visão Geral
 
-## Proposed Changes
+O sistema permite duas formas de entrada em streamings:
+1.  **Passiva (Convite):** O administrador convida um usuário via e-mail.
+2.  **Ativa (Solicitação):** O usuário encontra um streaming público no Explorer e solicita entrada.
 
-### Database Schema (Prisma)
-#### [MODIFY] [schema.prisma](file:///w:/projetos/streamsharev2/prisma/schema.prisma)
+Ambos os fluxos convergem para a criação de um `Participante` ativo e uma `Assinatura` (com cobranças geradas automaticamente).
 
-```prisma
-// 1. Add Status Enum
-enum StatusParticipante {
-  ativo
-  pendente
-  recusado
-  bloqueado
-}
+---
 
-enum StatusConvite {
-  pendente
-  aceito
-  recusado
-  expirado
-}
+## Módulos e Arquivos Principais
 
-// 2. Update Participante
-model Participante {
-  // ... existing fields ...
-  status StatusParticipante @default(ativo)
-}
-
-// 3. New Model: Convite
-model Convite {
-  id             String        @id @default(uuid())
-  email          String
-  contaId        Int
-  streamingId    Int?          // [NEW] Optional: Invite specifically for a subscription
-  status         StatusConvite @default(pendente)
-  token          String        @unique
-  expiresAt      DateTime
-  convidadoPorId Int
-  usuarioId      Int?          // Optional: if the user already exists in the system
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  conta        Conta     @relation(fields: [contaId], references: [id])
-  streaming    Streaming? @relation(fields: [streamingId], references: [id])
-  convidadoPor Usuario   @relation("Convidou", fields: [convidadoPorId], references: [id])
-  usuario      Usuario?  @relation("Convidado", fields: [usuarioId], references: [id])
-
-  @@index([email])
-  @@map("convite")
-}
-
-// 4. Update Notification Types
-enum TipoNotificacao {
-  // ... existing
-  solicitacao_participacao_criada // User -> Admin
-  solicitacao_participacao_aceita // Admin -> User
-  solicitacao_participacao_recusada // Admin -> User
-  convite_recebido // Admin -> User
-  convite_aceito // User -> Admin
-}
-
-// 5. Update Usuario to include relations
-model Usuario {
-  // ... existing fields ...
-  convitesFeitos    Convite[] @relation("Convidou")
-  convitesRecebidos Convite[] @relation("Convidado")
-}
-```
-
-### Server Actions
-#### `requestParticipation` (Solicitar Vaga)
-```typescript
-'use server'
-// ... imports
-
-export async function solicitarVaga(streamingId: number) {
-  // 1. Validate User
-  // 2. Get Streaming & Group
-  // 3. Create Participante (Status: Pending) in the Group
-  // 4. Create Notification for Admin: "User solicits entry for [Streaming]"
-}
-```
-
-#### `inviteUser` (Admin Invites to Subscription)
-```typescript
-export async function convidarUsuario(email: string, contaId: number, streamingId?: number) {
-  // ... validation ...
-  // Create Invite with streamingId
-  // Send Email: "You have been invited to join [Streaming] to share costs"
-}
-```
-
-#### `acceptInvite`
-```typescript
-export async function aceitarConvite(token: string) {
-  // 1. Validate Token
-  // 2. Create/Link User
-  // 3. Create Participante (Active)
-  // 4. IF invite.streamingId exists:
-  //    Create Assinatura (Active) for that Streaming
-}
-```
-
-### UI Structure (Explore Page)
-#### `app/explore/page.tsx` (Mockup - Focused on Streamings)
-
-```tsx
-import { Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-
-export default function ExplorePage() {
-  // const vagas = await getAvailableSlots() // Returns { streaming, group, price }
-
-  return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8 space-y-4">
-        <h1 className="text-3xl font-bold">Encontre sua próxima assinatura</h1>
-        <p className="text-muted-foreground">Vagas disponíveis em streamings compartilhados.</p>
-        
-        <div className="flex gap-4">
-          <Input placeholder="Buscar por Netflix, Spotify, HBO..." className="max-w-md" />
-          <Button>Buscar</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Slot Card Mockup */}
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center gap-4 pb-2">
-              {/* Streaming Logo */}
-              <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold">N</div>
-              <div>
-                <h3 className="font-bold text-lg">Netflix 4K</h3>
-                <p className="text-xs text-muted-foreground">Streaming "Família Silva"</p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-2xl font-bold text-primary">R$ 15,90</p>
-                  <p className="text-xs text-muted-foreground">/mês</p>
-                </div>
-                <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-                  2 vagas
-                </Badge>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full">Solicitar Entrada</Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
-}
-```
-
-## Public Streaming Use Cases (Explorer)
-
-### 1. Detailed Interface (Explorer Page)
-- **Visual Grid:** Cards displaying High-Resolution logos of the streaming services.
-- **Contextual Badges:**
-  - **"Dono Verificado":** Trust indicator for long-term Admins.
-  - **"Vaga Imediata":** For streamings where approval is automated or fast.
-- **Service Tags:** Filterable chips (Movie, Music, Productivity, Education).
-- **Price Highlighting:** Clear contrast for the monthly price point.
-
-### 2. Operational Flows
-**A. Discovery & Request Flow:**
-1. **Browse/Search:** User filters for "Spotify Family" on the Explorer.
-2. **Consult Terms:** User clicks "Ver Detalhes" to check payment dates and shared rules.
-3. **Identification:** User provides/confirms their info for the Admin's review.
-4. **Finalization:** Request submitted (`PENDENTE` status).
-
-**B. Moderation Flow (Admin):**
-1. **Alert:** Dashboard shows "Nova solicitação para o Streaming [Nome]".
-2. **Review:** Admin sees requester profile (History of payments, join date).
-3. **Approval:** One-click approval triggers onboarding and automated billing.
-
-### 3. Formal Use Cases (UC)
-- **UC-ESP-01 (Smart Filtering):** The visitor can filter streamings by brand and price range.
-- **UC-ESP-02 (Participation Request):** The user can request to join a specific streaming slot, providing a commitment to the price.
-- **UC-ESP-03 (Admin Decision):** The Admin has the power to accept/reject external members based on their profile data.
-- **UC-ESP-04 (Public Visibility):** The Admin can mark a specific Subscription as "Public" to attract unknown subscribers via Explorer.
-- **UC-ESP-05 (Seamless Onboarding):** Once accepted, the user is automatically added to the billing cycle and receives access instructions.
-
-## Questions & Answers
-**Q: O que mostrar no Explorar: Grupos ou Streamings?**
-**A:** **Streamings (Vagas).** O usuário final busca pelo *serviço* (ex: "Vaga no YouTube Premium"), não pelo nome da conta/grupo.
-- **Proposta:** A tela "Explorar" deve listar **Vagas Disponíveis**.
-- Cada card representa: "Netflix no Streaming Família Silva".
-- Destaque: Logo do Streaming, Valor da Cota, Botão "Solicitar".
-- Ao solicitar, o Admin recebe: "Fulano quer entrar no seu streaming para dividir o Netflix".
-
-**Q: Como vincular o Convite à Assinatura?**
-**A:** Campo `streamingId` no `Convite`. Ao aceitar, o sistema cria o membro E a assinatura automaticamente.
-
-**Q: Como lidar com Rollbacks, Dados e Faturas?**
-**A:**
-1.  **Integridade Transacional:** Usaremos `prisma.$transaction`. A criação do Participante, da Assinatura e da Primeira Cobrança ocorre em uma única operação atômica.
-2.  **Faturamento Imediato:** Assim que o convite é aceito, uma cobrança `PENDENTE` é gerada imediamente para o ciclo atual (ex: 30 dias).
-3.  **Inadimplência:** Se o usuário entrar e não pagar, o `billing-service` detectará o atraso e suspenderá a assinatura automaticamente.
-
-## UI/UX Strategy & Workflows
-
-#### 1. Discovery Flow (Explore Page)
-**Goal:** Convert visitors into participants by reducing friction.
-- **Card Design:**
-  - **Header:** Service Logo (Brand recognition) + Streaming Name (Trust).
-  - **Body:** Price (Value proposition) + "X Spots Left" (Urgency).
-  - **Footer:** "Solicitar" button.
-- **Filters:**
-  - *By Service:* "Show only Netflix".
-  - *By Price Range:* "Under R$ 20,00".
-- **Action:** Clicking "Solicitar" opens a modal summarizing terms.
-
-#### 2. Invitation Flow (Admin Side)
-**Goal:** Make it easy for admins to fill slots.
-- **Location:** "Participantes" tab in Streaming Dashboard.
-- **Action:** "Convidar Membro" button.
-- **Modal:**
-  - Input: Email address.
-  - Option: "Vincular a Assinatura Existente?" (Select Service).
-  - *Scenario A (Generic):* Invites to streaming account only.
-  - *Scenario B (Specific):* Invites to streaming account + pre-selects subscription.
-- **Feedback:** Toast notification "Convite enviado para [email]".
-
-#### 3. Acceptance Flow (User Side)
-**Goal:** Seamless onboarding.
-- **Entry Point:** Email Link -> Landing Page.
-- **Confirmation Screen:**
-  - "Você foi convidado para o streaming [Nome]."
-  - [If Linked] "Isso inclui uma assinatura de [Serviço] por [Valor]."
-  - Button: "Aceitar e Entrar".
-
-## Business Rules
-
-| Rule ID | Description | Validation |
+| Módulo | Arquivos Principais | Responsabilidade |
 | :--- | :--- | :--- |
-| **BR-01** | **Vaga Única** | A slot (vaga) in a subscription can only be filled if `current_subscribers < limit`. Explore page must filter out full streamings. |
-| **BR-02** | **No Double Dipping** | User cannot request to join a subscription they already have active in *any* streaming account. |
-| **BR-03** | **Admin Hybrid** | Admin of Streaming A *can* be a Member of Streaming B. |
-| **BR-04** | **Auto-Billing** | If an invite links to a subscription, the first charge is generated immediately upon acceptance. |
-| **BR-05** | **Request Expiry** | Pending requests should expire after 7 days if not approved by Admin. |
+| **Discovery** | [`src/actions/streamings.ts`](../../src/actions/streamings.ts) | Busca de streamings públicos, filtros e cálculo de vagas. |
+| **Frontend** | [`src/app/(dashboard)/explore/page.tsx`](../../src/app/(dashboard)/explore/page.tsx) | Interface de busca (Explorer). |
+| **Requests** | [`src/actions/requests.ts`](../../src/actions/requests.ts) | Backend para solicitar vaga, aprovar ou recusar solicitações. |
+| **Invites** | [`src/actions/invites.ts`](../../src/actions/invites.ts) | Backend para enviar convites diretos, validar tokens e aceitar. |
+| **UI** | [`src/components/participantes/InviteModal.tsx`](../../src/components/participantes/InviteModal.tsx) | Modal para envio de convites pelo admin. |
+| **Token Page** | [`src/app/convite/[token]/page.tsx`](../../src/app/convite/[token]/page.tsx) | Landing page pública para aceitar convites. |
 
-## Notification Strategy
+---
 
-| Event | Actor | Recipient | Channel | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| **New Request** | Public User | **Streaming Admin(s)** | System + Email | "User X wants to join [Streaming] for [Service]." |
-| **Invite Sent** | Admin | **Invited Email** | Email | "You have been invited to [Streaming]. Click to accept." |
-| **Invite Sent** | Admin | **Invited User** (if exists) | System | "You have a pending invite from [Streaming]." |
-| **Request Approved** | Admin | **Requester** | System + Email | "Your request to join [Streaming] was approved!" |
-| **Request Rejected** | Admin | **Requester** | System | "Your request to join [Streaming] was declined." |
-| **Invite Accepted** | User | **Streaming Admin(s)** | System | "User X accepted your invite and joined [Streaming]." |
+## 1. Explorer (Descoberta)
+
+O módulo Explorer permite que usuários encontrem streamings públicos com vagas disponíveis.
+
+### Funcionalidades
+-   **Listagem Pública:** Exibe apenas streamings com `isPublico: true` e `isAtivo: true`.
+-   **Filtros:**
+    -   Por Nome ou Catálogo (Search).
+    -   Por Categoria (CatalogoId).
+    -   "Minha Conta" vs "Outras Contas".
+-   **Status do Usuário:** Para cada card, o sistema calcula a relação do usuário logado:
+    -   `participando`: Já possui assinatura ativa.
+    -   `solicitado`: Já enviou solicitação (aguardando aprovação).
+    -   `convidado`: Possui convite pendente.
+    -   `recusado`: Solicitação anterior foi recusada.
+
+### Regra de Vagas
+A disponibilidade é calculada dinamicamente:
+`vagasDisponiveis = limiteParticipantes - count(assinaturas_ativas_ou_suspensas)`
+
+---
+
+## 2. Fluxo de Solicitação (Request)
+
+Quando um usuário deseja entrar em um streaming público.
+
+1.  **Solicitar (`requestParticipation`):**
+    -   Usuário clica em "Solicitar" no Explorer.
+    -   **Validações:** Verifica se há vagas, se usuário já é participante e se já existe solicitação pendente.
+    -   **Registro:** Cria um `Convite` com status `solicitado` (sem token de link público).
+    -   **Notificação:** Envia `solicitacao_participacao_criada` para todos os admins da conta dona do streaming.
+
+2.  **Aprovação do Admin (`approveRequest`):**
+    -   Admin visualiza solicitação na aba "Participantes".
+    -   Ao aprovar:
+        -   Transação atômica cria `Participante` e `Assinatura`.
+        -   Status do convite muda para `aceito`.
+        -   Notifica o usuário (`solicitacao_participacao_aceita`).
+        -   **Cobrança:** A primeira cobrança é gerada imediatamente (Pro Rata ou Integral, conforme configuração).
+
+3.  **Recusa (`rejectRequest`):**
+    -   Admin recusa a solicitação.
+    -   Status muda para `recusado`.
+    -   Notifica o usuário (`solicitacao_participacao_recusada`).
+
+---
+
+## 3. Fluxo de Convite Direto (Invite)
+
+Quando um administrador convida ativamente uma pessoa.
+
+1.  **Enviar Convite (`inviteUser`):**
+    -   Admin informa e-mail e (opcionalmente) seleciona um streaming para vínculo automático.
+    -   **Registro:** Cria `Convite` com status `pendente` e um `token` UUID único.
+    -   **Validade:** O token expira em 7 dias.
+    -   **Notificação:** Se o e-mail já for de um usuário cadastrado, ele recebe notificação interna.
+
+2.  **Acesso ao Link (`/convite/[token]`):**
+    -   Acesso público (sem login obrigatório inicial).
+    -   Valida validade e status do token.
+    -   Exibe detalhes da conta e do streaming (se houver).
+
+3.  **Aceite (`acceptInvite`):**
+    -   Requer login/cadastro.
+    -   Ao aceitar:
+        -   Vincula o usuário ao `Participante`.
+        -   Se houver `streamingId` no convite, cria a `Assinatura`.
+        -   Dispara notificações de boas-vindas.
+
+---
+
+## Modelo de Dados
+
+O sistema utiliza a tabela `Convite` para unificar convites e solicitações, diferenciados pelo fluxo e status.
+
+### Tabela `Convite`
+| Campo | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | UUID | Identificador único. |
+| `email` | String | E-mail do alvo (convidado ou solicitante). |
+| `status` | Enum | `pendente` (convite), `solicitado` (request), `aceito`, `recusado`. |
+| `token` | UUID | Usado apenas em convites diretos para link externo. |
+| `streamingId` | Int? | Vínculo opcional para assinatura automática. |
+| `usuarioId` | Int? | FK para usuário (se já existir no sistema). |
+| `convidadoPorId` | Int? | Admin que convidou (null em solicitações). |
+
+---
+
+## Regras de Negócio (Business Rules)
+
+| ID | Regra | Implementação |
+| :--- | :--- | :--- |
+| **BR-01** | **Limite de Vagas** | Solicitações e Aprovações são bloqueadas se `vagasDisponiveis <= 0`. |
+| **BR-02** | **Não-Duplicidade** | Usuário não pode solicitar se já participa ou já tem pedido pendente. |
+| **BR-03** | **Expiração** | Convites diretos expiram em 7 dias. Solicitações não tem expiração automática definida no código atual (ficam como pendentes até ação do admin). |
+| **BR-04** | **Auto-Cobrança** | Ao entrar em um streaming (via convite vinculado ou aprovação), a cobrança é gerada instantaneamente. |
+| **BR-05** | **Isolamento** | Admin só pode gerenciar convites/solicitações da sua própria conta (`getContext`). |
+
+## Estratégia de Notificações
+
+| Evento | De -> Para | Tipo | Descrição |
+| :--- | :--- | :--- | :--- |
+| **Nova Solicitação** | Sistema -> Admins | `solicitacao_participacao_criada` | "Fulano quer entrar no streaming X" |
+| **Solicitação Aprovada** | Admin -> Usuário | `solicitacao_participacao_aceita` | "Sua entrada no streaming X foi aprovada" |
+| **Solicitação Recusada** | Admin -> Usuário | `solicitacao_participacao_recusada` | "Sua entrada foi recusada" |
+| **Convite Recebido** | Admin -> Usuário | `convite_recebido` | "Você tem um convite para o streaming Y" |
+| **Convite Aceito** | Usuário -> Admins | `convite_aceito` | "Fulano aceitou o convite" |
+
+---
+
+## 4. Link Público de Assinatura (Direct Share)
+
+Permite que o administrador compartilhe um link direto para assinatura de um streaming específico, sem necessidade de convite por e-mail prévio.
+
+### Fluxo de Compartilhamento
+1.  **Geração (`generateStreamingShareLink`):**
+    -   Admin clica em "Compartilhar" no card do streaming.
+    -   Define validade (ex: 30min, 1 dia, Permanente).
+    -   Sistema gera um **JWT** assinado contendo `{ streamingId, type: 'share_link' }`.
+    -   URL gerada: `/assinar/[token-jwt]`.
+
+2.  **Acesso Público (`/assinar/[token]`):**
+    -   Qualquer pessoa com o link pode acessar.
+    -   Página exibe detalhes do streaming (Nome, Valor, Vagas).
+    -   **Checkout Seguro:** Usuário preenche dados (ou loga) e confirma assinatura.
+
+3.  **Diferença para Convite e Explorer:**
+    -   **Convite:** Focado em pessoa específica (e-mail).
+    -   **Explorer:** Público geral (vitrine).
+    -   **Link Direto:** Distribuição controlada (ex: Grupo de WhatsApp), ignorando a vitrine do Explorer mas sem restringir a um e-mail específico inicial.

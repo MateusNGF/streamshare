@@ -8,9 +8,8 @@ import {
     AlertCircle
 } from "lucide-react";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { StreamingCard } from "@/components/dashboard/StreamingCard";
+import { DashboardStreamingList } from "@/components/dashboard/DashboardStreamingList";
 import { RecentSubscription } from "@/components/dashboard/RecentSubscription";
-import { QuickActions } from "@/components/dashboard/QuickActions";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getDashboardStats, getRecentSubscriptions, getDashboardStreamings } from "@/actions/dashboard";
@@ -72,30 +71,7 @@ export default async function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
                 {/* My Streamings */}
-                <section className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg md:text-xl font-bold text-gray-900">Meus Streamings</h2>
-                        <button className="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
-                            Ver Todos <ChevronRight size={16} />
-                        </button>
-                    </div>
-                    <div className="space-y-2">
-                        {streamings.length > 0 ? (
-                            streamings.map((s) => (
-                                <StreamingCard
-                                    key={s.id}
-                                    name={s.apelido || s.catalogo.nome}
-                                    initial={s.catalogo.nome.charAt(0).toUpperCase()}
-                                    color={s.catalogo.corPrimaria}
-                                    slots={{ occupied: s._count.assinaturas, total: s.limiteParticipantes }}
-                                    value={s.valorIntegral.toNumber()}
-                                />
-                            ))
-                        ) : (
-                            <p className="text-gray-400 text-center py-4 text-sm">Nenhum streaming cadastrado.</p>
-                        )}
-                    </div>
-                </section>
+                <DashboardStreamingList streamings={streamings} />
 
                 {/* Recent Subscriptions */}
                 <section className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm">

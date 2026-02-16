@@ -5,7 +5,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useToast } from "@/hooks/useToast";
-import { ShareStreamingModal } from "./ShareStreamingModal";
+import { AddMemberModal } from "@/components/modals/AddMemberModal";
 
 interface StreamingDetailCardProps {
     id: number;
@@ -46,12 +46,16 @@ export function StreamingDetailCard({
 
     return (
         <>
-            <ShareStreamingModal
+            <AddMemberModal
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
-                streamingId={id}
-                streamingName={name}
-                publicToken={publicToken}
+                streamings={[{
+                    id,
+                    apelido: name,
+                    catalogo: { nome: catalogName || name }
+                }]}
+                initialStreamingId={id}
+                initialTab="link"
             />
 
             <div className="bg-white/70 backdrop-blur-md p-6 rounded-[32px] border border-white/20 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden flex flex-col h-full hover:-translate-y-1 duration-300">
