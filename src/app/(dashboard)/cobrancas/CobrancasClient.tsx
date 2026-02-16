@@ -165,7 +165,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
             </div>
 
             <div className="space-y-6 relative">
-                <SectionHeader title="Listagem de Cobranças" />
+                <SectionHeader title="Listagem de Cobranças" className="mb-0" />
 
                 {!whatsappCheck.enabled && (
                     <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between gap-4 mb-4">

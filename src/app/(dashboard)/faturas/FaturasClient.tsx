@@ -36,6 +36,7 @@ export function FaturasClient({ faturas, resumo }: FaturasClientProps) {
             <div className="space-y-6 mt-8">
                 <SectionHeader
                     title="Histórico de Cobranças"
+                    className="mb-0"
                     rightElement={
                         <ViewModeToggle
                             viewMode={viewMode}

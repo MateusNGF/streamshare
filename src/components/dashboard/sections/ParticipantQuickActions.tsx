@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { LucideIcon } from "lucide-react";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface ParticipantQuickActionsProps {
     onOpenSupport: () => void;
@@ -18,10 +19,7 @@ interface ParticipantQuickActionsProps {
 export function ParticipantQuickActions({ onOpenSupport }: ParticipantQuickActionsProps) {
     return (
         <section className="space-y-6">
-            <div className="flex items-center gap-2">
-                <div className="w-1.5 h-6 bg-primary rounded-full" />
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">Atalhos do Participante</h2>
-            </div>
+            <SectionHeader title="Atalhos do Participante" className="mb-0" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 p-2 -m-2">
                 {/* Destaque: Explorar */}

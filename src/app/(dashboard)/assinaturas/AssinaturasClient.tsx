@@ -162,7 +162,7 @@ export default function AssinaturasClient({
                 </div>
 
                 <div className="space-y-6">
-                    <SectionHeader title="Listagem de Assinaturas" />
+                    <SectionHeader title="Listagem de Assinaturas" className="mb-0" />
                     <AssinaturasTable
                         subscriptions={initialSubscriptions}
                         onViewDetails={(sub) => {

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/useToast";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { MySubscriptionsTable } from "./MySubscriptionsTable";
 import { MySubscriptionsGrid } from "./MySubscriptionsGrid";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface MySubscriptionsSectionProps {
     subscriptions: ParticipantSubscription[];
@@ -39,15 +40,15 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
 
     return (
         <section className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-primary rounded-full" />
-                    <h2 className="text-xl font-bold text-gray-900">Minhas Assinaturas</h2>
-                </div>
-                {subscriptions.length > 0 && (
-                    <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
-                )}
-            </div>
+            <SectionHeader
+                title="Minhas Assinaturas"
+                className="mb-0"
+                rightElement={
+                    subscriptions.length > 0 && (
+                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                    )
+                }
+            />
 
             {subscriptions.length === 0 ? (
                 <div className="p-12 text-center border-dashed border-2 bg-gray-50/50 rounded-[32px] border-gray-200">

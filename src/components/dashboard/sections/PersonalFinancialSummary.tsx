@@ -4,6 +4,7 @@ import { Wallet, Sparkles, Calendar, Receipt } from "lucide-react";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { ParticipantStats } from "@/types/dashboard.types";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 import { formatarMoeda } from "@/lib/financeiro-utils";
 
 interface PersonalFinancialSummaryProps {
@@ -17,10 +18,7 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
 
     return (
         <section className="space-y-6">
-            <div className="flex items-center gap-2">
-                <div className="w-1.5 h-6 bg-primary rounded-full" />
-                <h2 className="text-xl font-bold text-gray-900">Resumo Pessoal</h2>
-            </div>
+            <SectionHeader title="Resumo Pessoal" className="mb-0" />
 
             <div className="relative group">
                 <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 scrollbar-hide snap-x snap-mandatory items-stretch py-10 px-4 -mx-4">
