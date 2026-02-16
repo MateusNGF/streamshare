@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, MessageCircle, Pencil, Trash2, Tv } from "lucide-react";
+import { Plus, Tv } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DeleteModal } from "@/components/modals/DeleteModal";
@@ -10,6 +10,9 @@ import { GrupoRenovacaoModal } from "@/components/modals/GrupoRenovacaoModal";
 import { deleteGrupo } from "@/actions/grupos";
 import { useToast } from "@/hooks/useToast";
 import { PageContainer } from "../layout/PageContainer";
+import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
+import { GruposGrid } from "./GruposGrid";
+import { GruposTable } from "./GruposTable";
 
 type Grupo = {
     id: number;
@@ -35,6 +38,7 @@ interface GruposClientProps {
 export function GruposClient({ initialGrupos }: GruposClientProps) {
     const toast = useToast();
     const [grupos, setGrupos] = useState(initialGrupos);
+    const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isRenovacaoModalOpen, setIsRenovacaoModalOpen] = useState(false);
@@ -85,19 +89,23 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
 
     return (
         <PageContainer>
-            <PageHeader
-                title="Grupos"
-                description="Agrupe seus streamings para facilitar a geração de mensagens de renovação"
-                action={
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <PageHeader
+                    title="Grupos"
+                    description="Agrupe seus streamings para facilitar a geração de mensagens de renovação"
+                    className="mb-0" // Reset mb from PageHeader if needed
+                />
+                <div className="flex items-center gap-2">
+                    <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
                     <button
                         onClick={handleOpenCreate}
-                        className="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
+                        className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all text-sm h-10"
                     >
-                        <Plus size={20} />
+                        <Plus size={18} />
                         Novo Grupo
                     </button>
-                }
-            />
+                </div>
+            </div>
 
             {grupos.length === 0 ? (
                 <EmptyState
@@ -115,85 +123,21 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
                     }
                 />
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {grupos.map((grupo) => {
-                        // Aggregation logic
-                        const aggregated = grupo.streamings.reduce((acc, item) => {
-                            const name = item.streaming.apelido || item.streaming.catalogo.nome;
-                            acc.set(name, (acc.get(name) || 0) + 1);
-                            return acc;
-                        }, new Map<string, number>());
-
-                        const displayItems = Array.from(aggregated.entries());
-                        const remainingCount = displayItems.length - 5;
-
-                        return (
-                            <div
-                                key={grupo.id}
-                                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900">{grupo.nome}</h3>
-                                        {grupo.descricao && (
-                                            <p className="text-sm text-gray-500 mt-1">{grupo.descricao}</p>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => handleOpenRenovacao(grupo)}
-                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                            title="Gerar mensagem de renovação"
-                                        >
-                                            <MessageCircle size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleOpenEdit(grupo)}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Editar grupo"
-                                        >
-                                            <Pencil size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleOpenDelete(grupo)}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Excluir grupo"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="mt-4">
-                                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                        <Tv size={16} className="text-gray-400" />
-                                        <span>{grupo._count.streamings} assinaturas</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {displayItems.slice(0, 5).map(([name, count], i) => (
-                                            <span
-                                                key={i}
-                                                className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs font-medium text-gray-600 flex items-center gap-1"
-                                            >
-                                                {name}
-                                                {count > 1 && (
-                                                    <span className="text-primary font-bold bg-primary/10 px-1 rounded-[4px] text-[10px]">
-                                                        {count}
-                                                    </span>
-                                                )}
-                                            </span>
-                                        ))}
-                                        {remainingCount > 0 && (
-                                            <span className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-md text-xs text-gray-400">
-                                                +{remainingCount}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                viewMode === "grid" ? (
+                    <GruposGrid
+                        grupos={grupos}
+                        onRenovacao={handleOpenRenovacao}
+                        onEdit={handleOpenEdit}
+                        onDelete={handleOpenDelete}
+                    />
+                ) : (
+                    <GruposTable
+                        grupos={grupos}
+                        onRenovacao={handleOpenRenovacao}
+                        onEdit={handleOpenEdit}
+                        onDelete={handleOpenDelete}
+                    />
+                )
             )}
 
             {/* Form Modal */}

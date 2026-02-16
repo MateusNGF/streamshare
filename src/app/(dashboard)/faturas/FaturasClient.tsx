@@ -4,10 +4,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { FaturasTable } from "@/components/faturas/FaturasTable";
 import { FaturaCard } from "@/components/faturas/FaturaCard";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { Wallet, AlertCircle, CheckCircle } from "lucide-react";
-import { useCurrency } from "@/hooks/useCurrency";
-import { useState, useMemo } from "react";
+import { Wallet } from "lucide-react";
+import { useState } from "react";
 import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
@@ -18,7 +16,6 @@ interface FaturasClientProps {
 }
 
 export function FaturasClient({ faturas, resumo }: FaturasClientProps) {
-    const { format } = useCurrency();
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const [selectedFatura, setSelectedFatura] = useState<any>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -29,19 +26,6 @@ export function FaturasClient({ faturas, resumo }: FaturasClientProps) {
         setIsDetailsModalOpen(true);
     };
 
-    const stats = useMemo(() => {
-        const pendente = resumo.pendente || { total: 0, count: 0 };
-        const atrasado = resumo.atrasado || { total: 0, count: 0 };
-        const pago = resumo.pago || { total: 0, count: 0 };
-
-        return {
-            totalAPagar: pendente.total + atrasado.total,
-            pendentesCount: pendente.count + atrasado.count,
-            atrasado,
-            pago
-        };
-    }, [resumo]);
-
     return (
         <PageContainer>
             <PageHeader
@@ -49,31 +33,7 @@ export function FaturasClient({ faturas, resumo }: FaturasClientProps) {
                 description="Veja suas cobranças pendentes e o histórico de pagamentos."
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 mt-8">
-                <KPICard
-                    title="Total a Pagar"
-                    value={format(stats.totalAPagar)}
-                    change={`${stats.pendentesCount} pendentes`}
-                    icon={Wallet}
-                    trend="up"
-                />
-                <KPICard
-                    title="Faturas em Atraso"
-                    value={format(stats.atrasado.total)}
-                    change={`${stats.atrasado.count} atrasadas`}
-                    icon={AlertCircle}
-                    trend="down"
-                />
-                <KPICard
-                    title="Total Pago"
-                    value={format(stats.pago.total)}
-                    change={`${stats.pago.count} confirmadas`}
-                    icon={CheckCircle}
-                    trend="up"
-                />
-            </div>
-
-            <div className="space-y-6">
+            <div className="space-y-6 mt-8">
                 <SectionHeader
                     title="Histórico de Cobranças"
                     rightElement={

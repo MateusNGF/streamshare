@@ -9,11 +9,12 @@ import { DeleteModal } from "@/components/modals/DeleteModal";
 import { useStreamingStore } from "@/stores";
 import { useToast } from "@/hooks/useToast";
 import { useStreamingActions } from "@/hooks/useStreamingActions";
+import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 
 // Refactored Sub-components
-import { StreamingStats } from "./StreamingStats";
 import { StreamingFilters } from "./StreamingFilters";
 import { StreamingGrid } from "./StreamingGrid";
+import { StreamingTable } from "./StreamingTable";
 
 interface StreamingsClientProps {
     initialData?: any[];
@@ -22,6 +23,7 @@ interface StreamingsClientProps {
 export function StreamingsClient({ initialData }: StreamingsClientProps) {
     const toast = useToast();
     const [mounted, setMounted] = useState(false);
+    const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
     const {
         streamings,
@@ -67,27 +69,40 @@ export function StreamingsClient({ initialData }: StreamingsClientProps) {
                 }
             />
 
-            {/* KPIs */}
-            {!isLoading && displayStreamings.length > 0 && (
-                <StreamingStats streamings={displayStreamings} />
-            )}
 
-            {/* Filters */}
-            <StreamingFilters
-                streamings={streamings}
-                filters={filters}
-                onFilterChange={(key, value) => setFilters({ ...filters, [key]: value })}
-                onClear={() => setFilters({ searchTerm: "", catalogoId: undefined, onlyFull: false })}
-            />
+
+            {/* Filters & View Toggle */}
+            <div className="space-y-4">
+                <StreamingFilters
+                    streamings={streamings}
+                    filters={filters}
+                    onFilterChange={(key, value) => setFilters({ ...filters, [key]: value })}
+                    onClear={() => setFilters({ searchTerm: "", catalogoId: undefined, onlyFull: false })}
+                />
+
+                <div className="flex justify-end">
+                    <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                </div>
+            </div>
 
             {/* List/Grid */}
-            <StreamingGrid
-                streamings={displayStreamings}
-                isLoading={isLoading}
-                searchTerm={filters.searchTerm}
-                onEdit={actions.openEdit}
-                onDelete={actions.openDelete}
-            />
+            {viewMode === "grid" ? (
+                <StreamingGrid
+                    streamings={displayStreamings}
+                    isLoading={isLoading}
+                    searchTerm={filters.searchTerm}
+                    onEdit={actions.openEdit}
+                    onDelete={actions.openDelete}
+                />
+            ) : (
+                <StreamingTable
+                    streamings={displayStreamings}
+                    isLoading={isLoading}
+                    searchTerm={filters.searchTerm}
+                    onEdit={actions.openEdit}
+                    onDelete={actions.openDelete}
+                />
+            )}
 
             {/* Modals */}
             <StreamingModal
