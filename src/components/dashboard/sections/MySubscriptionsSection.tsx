@@ -4,10 +4,35 @@ import { ParticipantSubscription } from "@/types/dashboard.types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatarMoeda } from "@/lib/financeiro-utils";
-import { Eye, EyeOff, Calendar, ShieldCheck, Key } from "lucide-react";
+import {
+    Eye,
+    EyeOff,
+    Calendar,
+    ShieldCheck,
+    Key,
+    ChevronRight,
+    TrendingUp,
+    CreditCard,
+    MoreHorizontal
+} from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@/components/ui/Table";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
+import { getParticipantSubscriptionDetail } from "@/actions/dashboard";
+import { useToast } from "@/hooks/useToast";
+import { cn } from "@/lib/utils";
 
 interface MySubscriptionsSectionProps {
     subscriptions: ParticipantSubscription[];
@@ -16,9 +41,26 @@ interface MySubscriptionsSectionProps {
 
 export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscriptionsSectionProps) {
     const [visibleCredentials, setVisibleCredentials] = useState<Record<number, boolean>>({});
+    const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [loadingDetails, setLoadingDetails] = useState(false);
+    const toast = useToast();
 
     const toggleCredentials = (id: number) => {
         setVisibleCredentials(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleViewDetails = async (subId: number) => {
+        setLoadingDetails(true);
+        try {
+            const fullSub = await getParticipantSubscriptionDetail(subId);
+            setSelectedAssinatura(fullSub);
+            setIsDetailsModalOpen(true);
+        } catch (error: any) {
+            toast.error(error.message || "Erro ao carregar detalhes");
+        } finally {
+            setLoadingDetails(false);
+        }
     };
 
     return (
@@ -48,115 +90,137 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {subscriptions.map((sub, idx) => (
-                        <div
-                            key={sub.id}
-                            className="group relative bg-white rounded-[40px] p-1 border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 animate-slide-in-from-bottom"
-                            style={{ animationDelay: `${idx * 100}ms`, animationFillMode: 'both' }}
-                        >
-                            <div className="bg-white rounded-[38px] p-6 h-full border border-transparent group-hover:border-primary/10 transition-colors">
-                                <div className="flex items-start justify-between mb-8">
-                                    <div className="flex gap-5">
-                                        <div
-                                            className="w-16 h-16 rounded-[22px] flex items-center justify-center text-white shadow-2xl shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3"
-                                            style={{
-                                                backgroundColor: sub.streamingColor,
-                                                backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)`
-                                            }}
+                <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto overflow-y-hidden">
+                        <Table>
+                            <TableHeader className="bg-gray-50/50">
+                                <TableRow className="hover:bg-transparent border-b border-gray-100">
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider py-5 px-6">
+                                        Serviço
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </TableHead>
+                                    <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        Investimento
+                                    </TableHead>
+                                    <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        Vencimento
+                                    </TableHead>
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[180px]">
+                                        Acesso
+                                    </TableHead>
+                                    <TableHead className="w-[80px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {subscriptions.map((sub, idx) => {
+                                    const isVisible = visibleCredentials[sub.id];
+                                    const isActive = sub.status === 'ativa';
+
+                                    const menuOptions = [
+                                        {
+                                            label: "Ver Detalhes",
+                                            icon: <Eye size={16} />,
+                                            onClick: () => handleViewDetails(sub.id)
+                                        }
+                                    ];
+
+                                    return (
+                                        <TableRow
+                                            key={sub.id}
+                                            className="group animate-in fade-in slide-in-from-bottom duration-500 fill-mode-both"
+                                            style={{ animationDelay: `${idx * 50}ms` }}
                                         >
-                                            {sub.streamingLogo ? (
-                                                <div className="relative w-10 h-10">
-                                                    <Image
-                                                        src={sub.streamingLogo}
-                                                        alt={sub.streamingName}
-                                                        fill
-                                                        className="object-contain brightness-0 invert"
+                                            <TableCell className="py-4 px-6">
+                                                <div className="flex items-center gap-4">
+                                                    <StreamingLogo
+                                                        name={sub.streamingName}
+                                                        iconeUrl={sub.streamingLogo}
+                                                        color={sub.streamingColor}
+                                                        size="sm"
+                                                        rounded="xl"
+                                                        className="shadow-sm group-hover:scale-110 transition-transform duration-300"
                                                     />
-                                                </div>
-                                            ) : (
-                                                <span className="font-black text-2xl">{sub.streamingName.charAt(0)}</span>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-black text-gray-900 text-xl tracking-tight">{sub.streamingName}</h3>
-                                            <div className="flex items-center gap-3 mt-1.5">
-                                                <Badge
-                                                    variant={sub.status === 'ativa' ? 'success' : 'warning'}
-                                                    className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest"
-                                                >
-                                                    {sub.status === 'ativa' ? 'Ativo' : 'Pendente'}
-                                                </Badge>
-                                                <span className="text-[11px] font-black text-primary uppercase tracking-widest pl-2 border-l border-gray-100">
-                                                    {formatarMoeda(sub.valor, currencyCode)} <small className="text-[9px] font-medium opacity-60">/mês</small>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right hidden sm:block">
-                                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 opacity-70">Vencimento</div>
-                                        <div className="flex items-center gap-2 font-black text-gray-900 text-sm">
-                                            <Calendar size={14} className="text-primary" />
-                                            {sub.proximoVencimento ? new Date(sub.proximoVencimento).toLocaleDateString() : 'A definir'}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Credentials Area - Glass style */}
-                                {sub.status === 'ativa' && (
-                                    <div className="bg-gray-50/50 backdrop-blur-sm rounded-[28px] p-5 space-y-4 border border-gray-100/50 group-hover:bg-primary/[0.02] group-hover:border-primary/10 transition-all duration-500">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
-                                                <Key size={12} className="text-primary" />
-                                                Acesso Exclusivo
-                                            </div>
-                                            <button
-                                                onClick={() => toggleCredentials(sub.id)}
-                                                className="text-primary hover:text-accent transition-colors flex items-center gap-2 text-xs font-black uppercase tracking-wider"
-                                            >
-                                                {visibleCredentials[sub.id] ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                {visibleCredentials[sub.id] ? 'Esconder' : 'Revelar'}
-                                            </button>
-                                        </div>
-
-                                        {visibleCredentials[sub.id] && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-scale-in">
-                                                <div className="space-y-1.5">
-                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Usuário</div>
-                                                    <div className="bg-white/80 px-4 py-2.5 rounded-xl border border-gray-100 text-sm font-bold text-gray-900 truncate shadow-sm">
-                                                        {sub.credenciaisLogin || 'Não informado'}
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-900 group-hover:text-primary transition-colors">
+                                                            {sub.streamingName}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-tight">
+                                                            Economia: {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div className="space-y-1.5">
-                                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Senha</div>
-                                                    <div className="bg-white/80 px-4 py-2.5 rounded-xl border border-gray-100 text-sm font-bold text-gray-900 truncate shadow-sm">
-                                                        {sub.credenciaisSenha || '********'}
-                                                    </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <StatusBadge status={sub.status} className="scale-75" />
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-black text-gray-900">
+                                                        {formatarMoeda(sub.valor, currencyCode)}
+                                                    </span>
+                                                    <span className="text-[9px] font-bold text-gray-400 uppercase">por mês</span>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Sua Economia</span>
-                                        <span className="text-green-600 font-black text-lg">
-                                            {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)}
-                                            <small className="text-[10px] font-bold opacity-60 ml-1">/mês</small>
-                                        </span>
-                                    </div>
-                                    <Link href={`/assinaturas/${sub.id}`}>
-                                        <Button variant="ghost" className="text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-primary hover:bg-primary/5 rounded-full px-6 py-5 h-auto transition-all">
-                                            Detalhes <ChevronRight size={14} className="ml-1" />
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex items-center justify-center gap-2 font-bold text-gray-600 text-xs">
+                                                    <Calendar size={12} className="text-primary/60" />
+                                                    {sub.proximoVencimento ? new Date(sub.proximoVencimento).toLocaleDateString() : 'A definir'}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {isActive ? (
+                                                    <div className="bg-gray-50/80 rounded-xl p-2 flex items-center justify-between gap-2 border border-transparent group-hover:border-primary/10 group-hover:bg-primary/[0.02] transition-all">
+                                                        <div className="flex flex-col min-w-0">
+                                                            <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Login / Senha</div>
+                                                            <div className="text-[11px] font-bold text-gray-700 truncate">
+                                                                {isVisible ? sub.credenciaisLogin : '••••••••••••'}
+                                                            </div>
+                                                            {isVisible && (
+                                                                <div className="text-[11px] font-bold text-gray-400 truncate mt-0.5">
+                                                                    {sub.credenciaisSenha}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => toggleCredentials(sub.id)}
+                                                            className="p-1.5 text-gray-400 hover:text-primary hover:bg-white rounded-lg transition-all shadow-sm active:scale-95"
+                                                        >
+                                                            {isVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 text-gray-300">
+                                                        <ShieldCheck size={14} />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">Acesso Restrito</span>
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Dropdown
+                                                    options={menuOptions}
+                                                    trigger={
+                                                        <div className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-400 hover:text-gray-600">
+                                                            <MoreHorizontal size={18} />
+                                                        </div>
+                                                    }
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
             )}
+
+            <DetalhesAssinaturaModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+                assinatura={selectedAssinatura}
+            />
         </section>
     );
 }

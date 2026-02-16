@@ -381,3 +381,33 @@ export async function getParticipantSubscriptions(): Promise<ParticipantSubscrip
         credenciaisSenha: sub.status === "ativa" ? sub.streaming.credenciaisSenha : null,
     }));
 }
+export async function getParticipantSubscriptionDetail(assinaturaId: number): Promise<any> {
+    const { userId } = await getContext();
+
+    const assinatura = await prisma.assinatura.findFirst({
+        where: {
+            id: assinaturaId,
+            participante: { userId }
+        },
+        include: {
+            streaming: {
+                include: { catalogo: true }
+            },
+            cobrancas: {
+                orderBy: { periodoFim: "desc" }
+            },
+            canceladoPor: {
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true
+                }
+            },
+            participante: true
+        }
+    });
+
+    if (!assinatura) throw new Error("Assinatura não encontrada ou sem permissão");
+
+    return assinatura;
+}
