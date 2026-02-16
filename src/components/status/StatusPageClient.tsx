@@ -45,6 +45,15 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-16",
+        date: "16/02/2026",
+        changes: [
+            { category: "Automação", description: "Lançamento do **Motor de Gestão de Planos**, automatizando o controle de limites operacionais e garantindo que o acesso a recursos premium siga rigorosamente as regras de assinatura." },
+            { category: "Interface", description: "Implementação de **Estados Dinâmicos de Dados** no Painel de Controle, apresentando orientações interativas em cenários sem histórico e facilitando a configuração inicial da conta." },
+            { category: "Experiência", description: "Novas **Interfaces de Upgrade Contextual**, com sinalização visual de recursos avançados e fluxos integrados para expansão de funcionalidades da conta." },
+        ],
+    },
+    {
         id: "2026-02-14",
         date: "14/02/2026",
         changes: [
