@@ -10,8 +10,9 @@ import {
     Tooltip,
     ResponsiveContainer
 } from 'recharts';
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, HelpCircle } from "lucide-react";
 import { EmptyChartState } from "../EmptyChartState";
+import { Tooltip as UITooltip } from '@/components/ui/Tooltip';
 
 interface RevenueHistoryChartProps {
     data: any[];
@@ -59,7 +60,14 @@ export function RevenueHistoryChart({ data, currencyCode, onAddStreaming }: Reve
         <div className="w-full bg-white/70 backdrop-blur-xl p-6 md:p-10 rounded-[40px] border border-white/20 shadow-sm overflow-hidden animate-scale-in transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
                 <div>
-                    <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Evolução da Receita & Crescimento</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Evolução da Receita & Crescimento</h3>
+                        <UITooltip content="Acompanhe o crescimento financeiro e a entrada de novos membros no seu ecossistema nos últimos 6 meses.">
+                            <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
+                                <HelpCircle size={18} />
+                            </button>
+                        </UITooltip>
+                    </div>
                     <p className="text-sm text-gray-500 font-medium">Histórico semestral de faturamento e novos assinantes</p>
                 </div>
                 {hasData && (
