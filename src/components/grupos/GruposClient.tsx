@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Plus, Tv } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DeleteModal } from "@/components/modals/DeleteModal";
@@ -13,6 +14,7 @@ import { PageContainer } from "../layout/PageContainer";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { GruposGrid } from "./GruposGrid";
 import { GruposTable } from "./GruposTable";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 type Grupo = {
     id: number;
@@ -89,55 +91,49 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
 
     return (
         <PageContainer>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <PageHeader
-                    title="Grupos"
-                    description="Agrupe seus streamings para facilitar a geração de mensagens de renovação"
-                    className="mb-0" // Reset mb from PageHeader if needed
-                />
-                <div className="flex items-center gap-2">
-                    <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
-                    <button
+            <PageHeader
+                title="Grupos"
+                description="Agrupe seus streamings para facilitar a geração de mensagens de renovação"
+                action={
+                    <Button
                         onClick={handleOpenCreate}
-                        className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all text-sm h-10"
+                        className="gap-2 shadow-lg shadow-primary/25 h-10 px-5 text-sm"
                     >
                         <Plus size={18} />
                         Novo Grupo
-                    </button>
-                </div>
-            </div>
+                    </Button>
+                }
+            />
 
             {grupos.length === 0 ? (
                 <EmptyState
                     icon={Tv}
                     title="Nenhum grupo cadastrado"
                     description="Crie grupos para agrupar seus streamings e facilitar o envio de mensagens de renovação via WhatsApp."
-                    action={
-                        <button
-                            onClick={handleOpenCreate}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all"
-                        >
-                            <Plus size={20} />
-                            Criar Primeiro Grupo
-                        </button>
-                    }
                 />
             ) : (
-                viewMode === "grid" ? (
-                    <GruposGrid
-                        grupos={grupos}
-                        onRenovacao={handleOpenRenovacao}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleOpenDelete}
+                <div className="space-y-6">
+                    <SectionHeader
+                        title="Seus Grupos"
+                        className="mb-0"
+                        rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
                     />
-                ) : (
-                    <GruposTable
-                        grupos={grupos}
-                        onRenovacao={handleOpenRenovacao}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleOpenDelete}
-                    />
-                )
+                    {viewMode === "grid" ? (
+                        <GruposGrid
+                            grupos={grupos}
+                            onRenovacao={handleOpenRenovacao}
+                            onEdit={handleOpenEdit}
+                            onDelete={handleOpenDelete}
+                        />
+                    ) : (
+                        <GruposTable
+                            grupos={grupos}
+                            onRenovacao={handleOpenRenovacao}
+                            onEdit={handleOpenEdit}
+                            onDelete={handleOpenDelete}
+                        />
+                    )}
+                </div>
             )}
 
             {/* Form Modal */}
