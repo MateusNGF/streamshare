@@ -88,10 +88,17 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                             style={{ animationDelay: `${index * 150}ms` }}
                         >
                             {/* Badge Popular (se houver) */}
-                            {isHighlighted && (
+                            {isHighlighted && !plan.comingSoon && (
                                 <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-500 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 animate-pulse-subtle whitespace-nowrap">
                                     <Star size={14} fill="currentColor" className="animate-spin-slow" />
                                     Mais Popular
+                                </div>
+                            )}
+
+                            {plan.comingSoon && (
+                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-gray-500 to-gray-700 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 whitespace-nowrap">
+                                    <Loader2 size={14} className="animate-spin" />
+                                    Em Breve
                                 </div>
                             )}
 
@@ -141,8 +148,8 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
 
                             {/* Button */}
                             <button
-                                onClick={() => handleSelectPlan(plan)}
-                                disabled={loading !== null || isCurrent}
+                                onClick={() => !plan.comingSoon && handleSelectPlan(plan)}
+                                disabled={loading !== null || isCurrent || plan.comingSoon}
                                 className={`
                                     w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2
                                     ${isCurrent
@@ -159,6 +166,8 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
                                         <Loader2 size={20} className="animate-spin" />
                                         Processando...
                                     </>
+                                ) : plan.comingSoon ? (
+                                    "Em Breve"
                                 ) : isCurrent ? (
                                     "Seu Plano Atual"
                                 ) : (

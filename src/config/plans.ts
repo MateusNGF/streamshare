@@ -18,6 +18,7 @@ export interface PlanDefinition {
 
     features: PlanFeature[];
     highlighted?: boolean;
+    comingSoon?: boolean;
     color: string;
     stripePriceId?: string;
 }
@@ -75,6 +76,7 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
         maxStreamings: 9999,
 
         automationEnabled: true,
+        comingSoon: true,
 
         color: "purple", // Distinct color
         stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
