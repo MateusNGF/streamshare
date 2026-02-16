@@ -51,3 +51,25 @@ export interface RevenueHistory {
     participantes: number;
     novosMembros: number;
 }
+
+export interface ParticipantStats {
+    activeSubscriptions: number;
+    monthlySpending: number;
+    totalSavings: number;
+    nextPaymentDate: Date | null;
+    currencyCode: string;
+}
+
+export interface ParticipantSubscription {
+    id: number;
+    streamingId: number;
+    streamingName: string;
+    streamingLogo: string | null;
+    streamingColor: string;
+    status: string;
+    valor: number;
+    valorIntegral: number;
+    proximoVencimento: Date | null;
+    credenciaisLogin?: string | null;
+    credenciaisSenha?: string | null;
+}

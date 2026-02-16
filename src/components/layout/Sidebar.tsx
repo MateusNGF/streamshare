@@ -59,19 +59,20 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
         {
             label: "Geral",
             items: [
-                { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
                 { icon: Compass, label: "Explorar", href: "/explore" },
             ]
         },
         {
             label: "Usuário",
             items: [
+                { icon: LayoutDashboard, label: "Painel Participante", href: "/dashboard/participante" },
                 { icon: Wallet, label: "Faturas", href: "/faturas" },
             ]
         },
         ...(showManagement ? [{
             label: "Conta",
             items: [
+                { icon: LayoutDashboard, label: "Visão Provedor", href: "/dashboard/provedor" },
                 { icon: Tv, label: "Streamings", href: "/streamings" },
                 { icon: FolderOpen, label: "Grupos", href: "/grupos" },
                 { icon: Users, label: "Participantes", href: "/participantes" },

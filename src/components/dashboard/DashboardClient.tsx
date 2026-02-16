@@ -16,16 +16,32 @@ import { RecentSubscriptionsSection } from "./sections/RecentSubscriptionsSectio
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));
 
-import { DashboardStats, RevenueHistory } from "@/types/dashboard.types";
+import { DashboardStats, RevenueHistory, ParticipantStats, ParticipantSubscription } from "@/types/dashboard.types";
+import { ParticipantDashboardClient } from "./ParticipantDashboardClient";
+import { Users2, UserRound, LayoutDashboard } from "lucide-react";
 
 interface DashboardClientProps {
     stats: DashboardStats;
     recentSubscriptions: any[];
     streamings: any[];
     revenueHistory: RevenueHistory[];
+    participantStats: ParticipantStats;
+    participantSubscriptions: ParticipantSubscription[];
+    initialView?: "provider" | "participant";
+    hideSwitcher?: boolean;
 }
 
-export function DashboardClient({ stats, recentSubscriptions, streamings, revenueHistory }: DashboardClientProps) {
+export function DashboardClient({
+    stats,
+    recentSubscriptions,
+    streamings,
+    revenueHistory,
+    participantStats,
+    participantSubscriptions,
+    initialView = "provider",
+    hideSwitcher = false
+}: DashboardClientProps) {
+    const [view, setView] = useState<"provider" | "participant">(initialView);
     const [isStreamingModalOpen, setIsStreamingModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -63,31 +79,69 @@ export function DashboardClient({ stats, recentSubscriptions, streamings, revenu
     })).sort((a, b) => b.ocupadas - a.ocupadas).slice(0, 5), [streamings]);
 
     return (
-        <div className="space-y-10 animate-slide-in-from-bottom pb-10">
-
-            {/* 1. Quick Access (Cognitive ease - put common tools first) */}
-            <QuickActionsSection
-                onOpenStreamingModal={() => setIsStreamingModalOpen(true)}
-                onOpenAddMemberModal={() => setIsAddMemberModalOpen(true)}
-            />
-
-            {/* 2. KPIs & Advanced Analytics */}
-            <DashboardAnalytics
-                stats={stats}
-                revenueHistory={revenueHistory}
-                distributionData={distributionData}
-            />
-
-            {/* 3. Operational Data */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-10">
-                <div className="lg:col-span-3">
-                    <DashboardStreamingList streamings={streamings} />
+        <div className="space-y-8 animate-slide-in-from-bottom pb-10">
+            {/* View Switcher - Premium Segmented Control */}
+            {!hideSwitcher && (
+                <div className="flex justify-center md:justify-start">
+                    <div className="bg-white/60 backdrop-blur-xl p-1.5 rounded-[24px] flex items-center gap-1 border border-white/40 shadow-xl shadow-black/5 ring-1 ring-black/[0.03]">
+                        <button
+                            onClick={() => setView("provider")}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-[18px] text-sm font-black transition-all duration-300 ${view === "provider"
+                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                }`}
+                        >
+                            <LayoutDashboard size={16} />
+                            <span className="hidden sm:inline">Visão Provedor</span>
+                            <span className="sm:hidden">Provedor</span>
+                        </button>
+                        <button
+                            onClick={() => setView("participant")}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-[18px] text-sm font-black transition-all duration-300 ${view === "participant"
+                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                }`}
+                        >
+                            <UserRound size={16} />
+                            <span className="hidden sm:inline">Visão Participante</span>
+                            <span className="sm:hidden">Meu Painel</span>
+                        </button>
+                    </div>
                 </div>
+            )}
 
-                <div className="lg:col-span-2">
-                    <RecentSubscriptionsSection recentSubscriptions={recentSubscriptions} />
+            {view === "participant" ? (
+                <ParticipantDashboardClient
+                    stats={participantStats}
+                    subscriptions={participantSubscriptions}
+                />
+            ) : (
+                <div className="space-y-10 animate-fade-in">
+                    {/* 1. Quick Access (Cognitive ease - put common tools first) */}
+                    <QuickActionsSection
+                        onOpenStreamingModal={() => setIsStreamingModalOpen(true)}
+                        onOpenAddMemberModal={() => setIsAddMemberModalOpen(true)}
+                    />
+
+                    {/* 2. KPIs & Advanced Analytics */}
+                    <DashboardAnalytics
+                        stats={stats}
+                        revenueHistory={revenueHistory}
+                        distributionData={distributionData}
+                    />
+
+                    {/* 3. Operational Data */}
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-10">
+                        <div className="lg:col-span-3">
+                            <DashboardStreamingList streamings={streamings} />
+                        </div>
+
+                        <div className="lg:col-span-2">
+                            <RecentSubscriptionsSection recentSubscriptions={recentSubscriptions} />
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Modals - Orchestration Layer */}
             <StreamingModal
