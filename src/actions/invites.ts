@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getContext } from "@/lib/action-context";
 import { revalidatePath } from "next/cache";
 import { TipoNotificacao } from "@prisma/client";
+import { ParticipantService } from "@/services/participant.service";
 
 /**
  * Convidar usuário via email
@@ -62,68 +63,71 @@ export async function inviteUser(data: {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // 5. Criar convite
-    const convite = await prisma.convite.create({
-        data: {
-            email: emailFormatted,
-            contaId,
-            streamingId: data.streamingId,
-            status: "pendente",
-            token,
-            expiresAt,
-            convidadoPorId,
-        },
-        include: {
-            streaming: {
-                include: { catalogo: true }
-            }
-        }
-    });
-
-    // 6. Criar notificação para o sistema
-
-    // Check if invited email belongs to a user
-    const usuarioConvidado = await prisma.usuario.findUnique({
-        where: { email: emailFormatted }
-    });
-
-    if (usuarioConvidado) {
-        await prisma.notificacao.create({
+    // 5. Executar em Transação (Atomicity)
+    const result = await prisma.$transaction(async (tx) => {
+        // Criar convite
+        const convite = await tx.convite.create({
             data: {
-                contaId, // Notification context
-                usuarioId: usuarioConvidado.id,
-                tipo: "convite_recebido",
-                titulo: "Novo Convite",
-                descricao: `Você foi convidado para participar da conta de um administrador.${convite.streaming ? " Inclui acesso a streaming." : ""}`,
+                email: emailFormatted,
+                contaId,
+                streamingId: data.streamingId,
+                status: "pendente",
+                token,
+                expiresAt,
+                convidadoPorId,
+            },
+            include: {
+                streaming: {
+                    include: { catalogo: true }
+                }
+            }
+        });
+
+        // Check if invited email belongs to a user
+        const usuarioConvidado = await tx.usuario.findUnique({
+            where: { email: emailFormatted }
+        });
+
+        if (usuarioConvidado) {
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: usuarioConvidado.id,
+                    tipo: "convite_recebido",
+                    titulo: "Novo Convite",
+                    descricao: `Você foi convidado para participar da conta de um administrador.${convite.streaming ? " Inclui acesso a streaming." : ""}`,
+                    metadata: {
+                        conviteId: convite.id,
+                        email: emailFormatted,
+                        link: `/convite/${token}`
+                    },
+                    lida: false
+                }
+            });
+        }
+
+        // Notify all Admins that an invite was sent (Account Broadcast)
+        await tx.notificacao.create({
+            data: {
+                contaId,
+                usuarioId: null,
+                tipo: "assinatura_editada",
+                titulo: "Convite Enviado",
+                descricao: `Um convite foi enviado para ${emailFormatted}.${convite.streaming ? " (Vinculado a streaming)" : ""}`,
                 metadata: {
                     conviteId: convite.id,
                     email: emailFormatted,
-                    link: `/convite/${token}`
+                    enviadoPor: convidadoPorId
                 },
                 lida: false
             }
         });
-    }
 
-    // Notify all Admins that an invite was sent (Account Broadcast)
-    await prisma.notificacao.create({
-        data: {
-            contaId,
-            usuarioId: null, // Broadcast to all admins
-            tipo: "assinatura_editada", // Usando um tipo compatível ou genérico para admin ver
-            titulo: "Convite Enviado",
-            descricao: `Um convite foi enviado para ${emailFormatted}.${convite.streaming ? " (Vinculado a streaming)" : ""}`,
-            metadata: {
-                conviteId: convite.id,
-                email: emailFormatted,
-                enviadoPor: convidadoPorId
-            },
-            lida: false
-        }
+        return convite;
     });
 
     revalidatePath("/participantes");
-    return convite;
+    return result;
 }
 
 /**
@@ -220,52 +224,14 @@ export async function acceptInvite(token: string) {
             data: { status: "aceito", usuarioId: userId }
         });
 
-        // 2. Garantir que o Participante existe e está ativo na Conta
-        // Procuramos por userId na conta
-        let participante = await tx.participante.findUnique({
-            where: {
-                contaId_userId: {
-                    contaId: convite.contaId,
-                    userId
-                }
-            }
+        // 2. Garantir Participante
+        const participante = await ParticipantService.findOrCreateParticipant(tx, {
+            contaId: convite.contaId,
+            nome: convidado.nome,
+            email: convidado.email,
+            userId: userId,
+            whatsappNumero: "" // We might not have it from the user object here, findOrCreateParticipant handles this
         });
-
-        if (participante) {
-            if (participante.status !== "ativo") {
-                participante = await tx.participante.update({
-                    where: { id: participante.id },
-                    data: { status: "ativo" }
-                });
-            }
-        } else {
-            // Se não existe por userId, verificamos se existe por email desvinculado
-            participante = await tx.participante.findFirst({
-                where: {
-                    contaId: convite.contaId,
-                    email: convite.email,
-                    userId: null
-                }
-            });
-
-            if (participante) {
-                participante = await tx.participante.update({
-                    where: { id: participante.id },
-                    data: { userId, status: "ativo" }
-                });
-            } else {
-                // Criar novo participante
-                participante = await tx.participante.create({
-                    data: {
-                        contaId: convite.contaId,
-                        nome: convidado.nome,
-                        email: convidado.email,
-                        userId: userId,
-                        status: "ativo"
-                    }
-                });
-            }
-        }
 
         // 3. Se houver streaming vinculado, criar assinatura
         if (convite.streamingId && participante) {

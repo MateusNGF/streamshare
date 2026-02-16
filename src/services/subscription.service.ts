@@ -22,14 +22,18 @@ export class SubscriptionService {
         frequencia: FrequenciaPagamento = "mensal",
         dtInicio: Date = new Date()
     ) {
-        // 1. Fetch Streaming to get value and limits
+        // 1. Lock the streaming row to prevent race conditions (Consistency & Isolation)
+        // This prevents multiple transactions from over-occupying the limited spots
+        await tx.$executeRaw`SELECT id FROM "Streaming" WHERE id = ${streamingId} FOR UPDATE`;
+
+        // 2. Fetch Streaming to get value and limits
         const streaming = await tx.streaming.findUnique({
             where: { id: streamingId },
             include: {
                 _count: {
                     select: {
                         assinaturas: {
-                            where: { status: { in: ["ativa", "suspensa"] } }
+                            where: { status: { in: ["ativa", "suspensa", "pendente"] } }
                         }
                     }
                 }

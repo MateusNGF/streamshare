@@ -7,11 +7,10 @@ import { StreamingSchema } from "@/lib/schemas";
 import { PLANS } from "@/config/plans";
 import { criarNotificacao } from "@/actions/notificacoes";
 import { getContext } from "@/lib/action-context";
-import { calcularValorPeriodo } from "@/lib/financeiro-utils";
 import { billingService } from "@/services/billing-service";
-import { generateShareToken, verifyShareToken } from "@/lib/share-token";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
+import { StreamingService } from "@/services/streaming.service";
 
 export async function getCatalogos() {
     return prisma.streamingCatalogo.findMany({
@@ -97,7 +96,7 @@ export async function getStreamings() {
                 select: {
                     assinaturas: {
                         where: {
-                            status: { not: "cancelada" }
+                            status: { in: ["ativa", "suspensa", "pendente"] }
                         }
                     }
                 }
@@ -111,7 +110,8 @@ export async function getStreamings() {
 
     return streamings.map(s => ({
         ...s,
-        valorIntegral: s.valorIntegral.toNumber()
+        valorIntegral: s.valorIntegral.toNumber(),
+        vagasRestantes: s.limiteParticipantes - s._count.assinaturas
     }));
 }
 
@@ -365,7 +365,7 @@ export async function createStreaming(data: {
                 select: {
                     assinaturas: {
                         where: {
-                            status: { not: "cancelada" }
+                            status: { in: ["ativa", "suspensa", "pendente"] }
                         }
                     }
                 }
@@ -415,7 +415,7 @@ export async function updateStreaming(
             _count: {
                 select: {
                     assinaturas: {
-                        where: { status: { in: ["ativa", "suspensa"] } }
+                        where: { status: { in: ["ativa", "suspensa", "pendente"] } }
                     }
                 }
             }
@@ -448,7 +448,7 @@ export async function updateStreaming(
                 _count: {
                     select: {
                         assinaturas: {
-                            where: { status: { not: "cancelada" } }
+                            where: { status: { in: ["ativa", "suspensa", "pendente"] } }
                         }
                     }
                 }
@@ -488,7 +488,7 @@ export async function updateStreaming(
                 _count: {
                     select: {
                         assinaturas: {
-                            where: { status: { not: "cancelada" } }
+                            where: { status: { in: ["ativa", "suspensa", "pendente"] } }
                         }
                     }
                 }
@@ -603,43 +603,7 @@ export async function deleteStreaming(id: number) {
 
 export async function generateStreamingShareLink(streamingId: number, expiration: string) {
     const { contaId, userId } = await getContext();
-
-    const streaming = await prisma.streaming.findUnique({
-        where: { id: streamingId, contaId },
-    });
-
-    if (!streaming) {
-        throw new Error("Streaming não encontrado");
-    }
-
-    const token = generateShareToken(streamingId, expiration);
-
-    // Persist as a special invite to allow history and revocation
-    const expiresAt = new Date();
-    if (expiration !== 'never') {
-        const value = parseInt(expiration);
-        const unit = expiration.slice(-1);
-        if (unit === 'm') expiresAt.setMinutes(expiresAt.getMinutes() + value);
-        else if (unit === 'h') expiresAt.setHours(expiresAt.getHours() + value);
-        else if (unit === 'd') expiresAt.setDate(expiresAt.getDate() + value);
-        else expiresAt.setDate(expiresAt.getDate() + 7); // Default
-    } else {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 10); // Far future
-    }
-
-    await prisma.convite.create({
-        data: {
-            email: "public-link@system.internal",
-            contaId,
-            streamingId,
-            token,
-            status: "pendente",
-            expiresAt,
-            convidadoPorId: userId
-        }
-    });
-
-    return token;
+    return StreamingService.generateShareLink(streamingId, expiration, contaId, userId);
 }
 
 export async function getStreamingLinksHistory(streamingId: number) {
@@ -664,69 +628,5 @@ export async function revokeStreamingLink(inviteId: string) {
 }
 
 export async function getStreamingByPublicToken(token: string) {
-    let streaming;
-
-    // First try to verify if it's a JWT share token
-    const sharePayload = verifyShareToken(token);
-
-    if (sharePayload) {
-        // Double check in DB if it was revoked
-        const dbInvite = await prisma.convite.findFirst({
-            where: {
-                token,
-                status: "pendente",
-                expiresAt: { gt: new Date() }
-            }
-        });
-
-        if (!dbInvite && token.length > 50) { // JWTs are long, publicTokens (UUIDs) are short
-            return null; // Revoked or not found in DB
-        }
-
-        streaming = await prisma.streaming.findUnique({
-            where: { id: sharePayload.streamingId, isAtivo: true },
-            include: {
-                catalogo: true,
-                conta: {
-                    select: { nome: true }
-                },
-                _count: {
-                    select: {
-                        assinaturas: {
-                            where: { status: { in: ["ativa", "suspensa"] } }
-                        }
-                    }
-                }
-            }
-        });
-    } else {
-        // Fallback to legacy publicToken (UUID)
-        streaming = await prisma.streaming.findUnique({
-            where: { publicToken: token, isAtivo: true },
-            include: {
-                catalogo: true,
-                conta: {
-                    select: { nome: true }
-                },
-                _count: {
-                    select: {
-                        assinaturas: {
-                            where: { status: { in: ["ativa", "suspensa"] } }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    if (!streaming) return null;
-
-    // Sanitize data
-    const { credenciaisLogin, credenciaisSenha, ...safeStreaming } = streaming;
-
-    return {
-        ...safeStreaming,
-        valorIntegral: (safeStreaming.valorIntegral as any).toNumber(),
-        vagasRestantes: safeStreaming.limiteParticipantes - safeStreaming._count.assinaturas
-    };
+    return StreamingService.validatePublicToken(token);
 }

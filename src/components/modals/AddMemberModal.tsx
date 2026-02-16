@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { Mail, Link } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Sub-components & Hooks
 import { InviteEmailTab } from "./add-member/InviteEmailTab";
@@ -21,6 +22,7 @@ interface AddMemberModalProps {
         id: number;
         apelido: string | null;
         catalogo: { nome: string };
+        vagasRestantes: number;
     }>;
     initialStreamingId?: number;
     initialTab?: "email" | "link";
@@ -119,7 +121,7 @@ export function AddMemberModal({
                                     shareLink.handleGenerate(parseInt(streamingId));
                                 }
                             }}
-                            disabled={isPending}
+                            disabled={isPending || (activeTab === "link" && streamingId !== "none" && currentStreaming?.vagasRestantes === 0)}
                             className="min-w-[140px]"
                         >
                             {isPending && <Spinner size="sm" color="white" className="mr-2" />}
@@ -157,9 +159,21 @@ export function AddMemberModal({
                                 </SelectContent>
                             </Select>
                             {streamingId !== "none" && (
-                                <p className="text-xs text-gray-500 ml-1">
-                                    O usuário será vinculado ao streaming <strong>{streamingName}</strong>.
-                                </p>
+                                <div className="flex flex-col gap-1 ml-1">
+                                    <p className="text-xs text-gray-500">
+                                        O usuário será vinculado ao streaming <strong>{streamingName}</strong>.
+                                    </p>
+                                    <p className={cn(
+                                        "text-[10px] font-bold uppercase tracking-wider",
+                                        currentStreaming?.vagasRestantes && currentStreaming.vagasRestantes > 0 ? "text-emerald-600" : "text-red-600"
+                                    )}>
+                                        {currentStreaming?.vagasRestantes !== undefined ? (
+                                            currentStreaming.vagasRestantes > 0
+                                                ? `${currentStreaming.vagasRestantes} vagas disponíveis`
+                                                : "Nenhuma vaga disponível"
+                                        ) : ""}
+                                    </p>
+                                </div>
                             )}
                         </div>
 

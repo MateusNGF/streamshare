@@ -4,6 +4,7 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Badge } from "@/components/ui/Badge";
 import { useCurrency } from "@/hooks/useCurrency";
 import { ShieldCheck, Users, Zap, CheckCircle2, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StreamingHeaderProps {
     streaming: any;
@@ -33,9 +34,15 @@ export function PublicStreamingHeader({ streaming }: StreamingHeaderProps) {
                     <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900">
                         {streaming.apelido || streaming.catalogo?.nome}
                     </h1>
-                    <Badge variant="success" className="bg-emerald-50 text-emerald-600 border-emerald-100 px-4 py-1.5 rounded-full font-bold animate-pulse">
-                        Vagas Abertas
-                    </Badge>
+                    {streaming.vagasRestantes > 0 ? (
+                        <Badge variant="success" className="bg-emerald-50 text-emerald-600 border-emerald-100 px-4 py-1.5 rounded-full font-bold animate-pulse">
+                            Vagas Abertas
+                        </Badge>
+                    ) : (
+                        <Badge variant="destructive" className="bg-red-50 text-red-600 border-red-100 px-4 py-1.5 rounded-full font-bold">
+                            Vagas Esgotadas
+                        </Badge>
+                    )}
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-gray-500 font-medium md:text-lg">
                     <p className="flex items-center justify-center md:justify-start gap-2">
@@ -43,9 +50,9 @@ export function PublicStreamingHeader({ streaming }: StreamingHeaderProps) {
                         Grupo Gerenciado
                     </p>
                     <span className="hidden md:inline text-gray-300">•</span>
-                    <p className="flex items-center justify-center md:justify-start gap-2 text-emerald-600">
+                    <p className="flex items-center justify-center md:justify-start gap-2 text-blue-600">
                         <Zap size={20} fill="currentColor" />
-                        Ativação Imediata
+                        Ativação após Pagamento
                     </p>
                 </div>
             </div>
@@ -101,14 +108,32 @@ export function PublicStreamingDetails({ streaming, valorPorPessoa }: StreamingD
                 </div>
 
                 <div className="space-y-4 pt-2">
-                    <div className="flex items-center gap-4 text-sm font-medium text-gray-700">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                    <div className={cn(
+                        "flex items-center gap-4 text-sm font-medium transition-all p-3 rounded-2xl border border-transparent",
+                        streaming.vagasRestantes === 0 ? "bg-red-50/50 border-red-100 text-red-700" : "text-gray-700"
+                    )}>
+                        <div className={cn(
+                            "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
+                            streaming.vagasRestantes === 0 ? "bg-red-100 text-red-600" : "bg-blue-50 text-blue-600"
+                        )}>
                             <Users size={20} strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col">
-                            <span>Vagas Limitadas</span>
-                            <span className="text-xs text-gray-400">{streaming.vagasRestantes} de {streaming.limiteParticipantes} restantes</span>
+                            <span className={streaming.vagasRestantes === 0 ? "font-bold text-red-900" : ""}>
+                                {streaming.vagasRestantes === 0 ? "Vagas Esgotadas" : "Vagas Limitadas"}
+                            </span>
+                            <span className={cn(
+                                "text-xs font-medium",
+                                streaming.vagasRestantes === 0 ? "text-red-500" : "text-gray-400"
+                            )}>
+                                {streaming.vagasRestantes} de {streaming.limiteParticipantes} restantes
+                            </span>
                         </div>
+                        {streaming.vagasRestantes === 0 && (
+                            <div className="ml-auto">
+                                <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter">Lotado</span>
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-4 text-sm font-medium text-gray-700">
                         <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">

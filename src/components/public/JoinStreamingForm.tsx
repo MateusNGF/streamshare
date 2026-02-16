@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Select, SelectGroup, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { FrequenciaPagamento } from "@prisma/client";
 import { useCurrency } from "@/hooks/useCurrency";
+import { QuantityInput } from "@/components/ui/QuantityInput";
 
 import { Modal } from "@/components/ui/Modal";
 import { User, LogOut, CheckCircle, Shield, Info } from "lucide-react";
@@ -26,6 +27,7 @@ interface JoinStreamingFormProps {
         whatsappNumero: string;
         cpf: string;
     } | null;
+    vagasRestantes?: number;
 }
 
 const INTERVALOS_MESES: Record<string, number> = {
@@ -58,7 +60,8 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
         email: loggedUser?.email || "",
         whatsappNumero: loggedUser?.whatsappNumero || "",
         cpf: loggedUser?.cpf || "",
-        frequencia: availableFrequencies[0] || "mensal" as FrequenciaPagamento
+        frequencia: availableFrequencies[0] || "mensal" as FrequenciaPagamento,
+        quantidade: 1
     });
 
     const handleConfirmSubmit = (e: React.FormEvent) => {
@@ -153,15 +156,27 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                             </SelectContent>
                         </Select>
                     </div>
+                </div>
 
-                    <div className="flex flex-col w-full bg-primary/[0.03] rounded-2xl px-4 py-2 border border-primary/10 flex items-center justify-between transition-all">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em]">Total do Ciclo</span>
-                            <span className="text-xs text-gray-400 font-medium">Cobrança recorrente {frequencyLabels[formData.frequencia].toLowerCase()}</span>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade de Vagas</label>
+                        <QuantityInput
+                            value={formData.quantidade}
+                            onValueChange={(val) => setFormData({ ...formData, quantidade: val })}
+                            min={1}
+                            max={vagasRestantes || 10}
+                            className="h-16"
+                        />
+                    </div>
+
+                    <div className="flex flex-col w-full bg-primary/[0.03] rounded-2xl px-4 py-2 border border-primary/10 flex items-center justify-center transition-all">
+                        <div className="flex flex-col items-center">
+                            <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em]">{formData.quantidade > 1 ? "Total do Ciclo" : "Valor do Ciclo"}</span>
+                            <p className="text-2xl font-black text-primary tracking-tighter">
+                                {format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1) * formData.quantidade)}
+                            </p>
                         </div>
-                        <p className="text-2xl font-black text-primary tracking-tighter">
-                            {format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1))}
-                        </p>
                     </div>
                 </div>
 
@@ -224,7 +239,11 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                         <li className="flex gap-3">
                             <div className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px] mt-0.5 shrink-0">✓</div>
                             <p className="text-sm text-gray-600">
-                                Uma cobrança de <span className="font-black text-gray-900">{format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1))}</span> será gerada imediatamente para iniciar seu acesso.
+                                {formData.quantidade > 1 ? (
+                                    <>Uma cobrança de <span className="font-black text-gray-900">{format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1) * formData.quantidade)}</span> será gerada referente às <span className="font-bold">{formData.quantidade} vagas</span>.</>
+                                ) : (
+                                    <>Uma cobrança de <span className="font-black text-gray-900">{format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1))}</span> será gerada imediatamente para iniciar seu acesso.</>
+                                )}
                             </p>
                         </li>
                         <li className="flex gap-3">

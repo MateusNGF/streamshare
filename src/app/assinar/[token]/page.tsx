@@ -79,6 +79,7 @@ export default async function PublicJoinPage({ params }: { params: { token: stri
                             valorPorVaga={valorPorPessoa}
                             enabledFrequencies={streaming.frequenciasHabilitadas}
                             loggedUser={userStats}
+                            vagasRestantes={streaming.vagasRestantes}
                         />
                     </div>
                 </div>
