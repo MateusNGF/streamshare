@@ -63,7 +63,7 @@ export function DashboardClient({ stats, recentSubscriptions, streamings, revenu
     })).sort((a, b) => b.ocupadas - a.ocupadas).slice(0, 5), [streamings]);
 
     return (
-        <div className="space-y-10 animate-fade-in pb-10">
+        <div className="space-y-10 animate-slide-in-from-bottom pb-10">
 
             {/* 1. Quick Access (Cognitive ease - put common tools first) */}
             <QuickActionsSection

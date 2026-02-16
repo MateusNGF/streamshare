@@ -51,7 +51,7 @@ function CustomTooltip({ active, payload, currencyCode = 'BRL' }: any) {
 
 export function RevenueHistoryChart({ data, currencyCode }: RevenueHistoryChartProps) {
     return (
-        <div className="w-full bg-white p-6 md:p-10 rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="w-full bg-white/70 backdrop-blur-xl p-6 md:p-10 rounded-[40px] border border-white/20 shadow-sm overflow-hidden animate-scale-in transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
                 <div>
                     <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Evolução da Receita & Crescimento</h3>

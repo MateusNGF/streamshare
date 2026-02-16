@@ -54,40 +54,24 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
             </div>
 
             {viewMode === "grid" ? (
-                <div className="space-y-6">
-                    {/* Linha 1: KPIs de Operação */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        <KPICard
-                            title="Receita Estimada"
-                            value={formatCurrency(financial.monthlyRevenue)}
-                            change={`${financial.revenueTrend >= 0 ? '+' : ''}${financial.revenueTrend.toFixed(1)}%`}
-                            trend={financial.revenueTrend >= 0 ? "up" : "down"}
-                            icon={TrendingUp}
-                        />
-                        <KPICard
-                            title="Assinantes Ativos"
-                            value={String(membership.activeParticipantsCount)}
-                            change={`${membership.participantsTrend >= 0 ? '+' : ''}${membership.participantsTrend}`}
-                            trend={membership.participantsTrend >= 0 ? "up" : "down"}
-                            icon={Users2}
-                        />
-                        <KPICard
-                            title="Taxa de Ocupação"
-                            value={`${occupancy.occupationRate.toFixed(1)}%`}
-                            change={occupancy.totalSlots > 0 ? `${occupancy.occupiedSlots}/${occupancy.totalSlots} vagas` : "0 vagas"}
-                            trend={occupancy.occupationRate > 80 ? "up" : "down"}
-                            icon={LineChart}
-                        />
-                        <KPICard
-                            title="Ticket Médio"
-                            value={formatCurrency(financial.averageTicket)}
-                            change="por usuário"
-                            trend="up"
-                            icon={AlertCircle}
-                        />
+                <div className="space-y-10">
+                    {/* Linha 1: KPIs de Operação - Mobile Carousel */}
+                    <div className="relative group">
+                        <div className="flex overflow-x-auto pb-4 md:grid md:pb-0 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 scrollbar-hide snap-x snap-mandatory">
+                            {[
+                                { title: "Receita Estimada", value: formatCurrency(financial.monthlyRevenue), change: `${financial.revenueTrend >= 0 ? '+' : ''}${financial.revenueTrend.toFixed(1)}%`, trend: (financial.revenueTrend >= 0 ? "up" : "down") as "up" | "down", icon: TrendingUp },
+                                { title: "Assinantes Ativos", value: String(membership.activeParticipantsCount), change: `${membership.participantsTrend >= 0 ? '+' : ''}${membership.participantsTrend}`, trend: (membership.participantsTrend >= 0 ? "up" : "down") as "up" | "down", icon: Users2 },
+                                { title: "Taxa de Ocupação", value: `${occupancy.occupationRate.toFixed(1)}%`, change: occupancy.totalSlots > 0 ? `${occupancy.occupiedSlots}/${occupancy.totalSlots} vagas` : "0 vagas", trend: (occupancy.occupationRate > 80 ? "up" : "down") as "up" | "down", icon: LineChart },
+                                { title: "Ticket Médio", value: formatCurrency(financial.averageTicket), change: "por usuário", trend: "up" as const, icon: AlertCircle },
+                            ].map((card, idx) => (
+                                <div key={idx} className="min-w-[280px] md:min-w-0 snap-center animate-scale-in" style={{ animationDelay: `${idx * 150}ms`, animationFillMode: 'both' }}>
+                                    <KPICard {...card} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Linha 2: KPIs Financeiros & Comparativos */}
+                    {/* Linha 2: KPIs Financeiros & Comparativos - Glass Effect & Staggered */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <KPIFinanceiroCard
                             titulo="Saldo Líquido"
@@ -113,17 +97,23 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                     </div>
                 </div>
             ) : (
-                <div className="space-y-8">
-                    {/* Linha 1: Faturamento & Crescimento (100% largura) */}
-                    <div className="w-full">
+                <div className="space-y-8 animate-fade-in">
+                    {/* Linha 1: Faturamento & Crescimento - Full Width with Float animation */}
+                    <div className="w-full transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 rounded-[40px]">
                         <RevenueHistoryChart data={revenueHistory} currencyCode={currencyCode} />
                     </div>
 
-                    {/* Linha 2: Distribuições e Saúde */}
+                    {/* Linha 2: Distribuições e Saúde - Staggered Fade-in */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <RevenueDistributionChart data={catalogs || []} currencyCode={currencyCode} />
-                        <OccupancyDistributionChart data={distributionData} />
-                        <PaymentStatusChart data={payments.paymentStatusData || []} />
+                        {[
+                            <RevenueDistributionChart key="dist" data={catalogs || []} currencyCode={currencyCode} />,
+                            <OccupancyDistributionChart key="occ" data={distributionData} />,
+                            <PaymentStatusChart key="pay" data={payments.paymentStatusData || []} />
+                        ].map((chart, idx) => (
+                            <div key={idx} className="animate-slide-in-from-bottom" style={{ animationDelay: `${(idx + 1) * 200}ms`, animationFillMode: 'both' }}>
+                                {chart}
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
