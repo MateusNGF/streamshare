@@ -118,3 +118,22 @@ export function calcularTotalCiclo(valorMensal: Prisma.Decimal | number | string
 export function calcularDataVencimentoPadrao(dataEmissao: Date = new Date()): Date {
     return addDays(dataEmissao, PRAZO_VENCIMENTO_PADRAO_DIAS);
 }
+/**
+ * Formata um valor numérico para moeda.
+ * 
+ * @param valor - Valor a ser formatado
+ * @param moeda - Código da moeda (ISO 4217)
+ * @returns String formatada (ex: R$ 1.234,56)
+ */
+export function formatarMoeda(valor: number | string | Prisma.Decimal, moeda: string = 'BRL'): string {
+    const numerico = typeof valor === 'number'
+        ? valor
+        : valor instanceof Prisma.Decimal
+            ? valor.toNumber()
+            : parseFloat(valor.toString());
+
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: moeda,
+    }).format(isNaN(numerico) ? 0 : numerico);
+}

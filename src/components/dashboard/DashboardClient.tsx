@@ -16,13 +16,16 @@ import { RecentSubscriptionsSection } from "./sections/RecentSubscriptionsSectio
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));
 
+import { DashboardStats, RevenueHistory } from "@/types/dashboard.types";
+
 interface DashboardClientProps {
-    stats: any;
+    stats: DashboardStats;
     recentSubscriptions: any[];
     streamings: any[];
+    revenueHistory: RevenueHistory[];
 }
 
-export function DashboardClient({ stats, recentSubscriptions, streamings }: DashboardClientProps) {
+export function DashboardClient({ stats, recentSubscriptions, streamings, revenueHistory }: DashboardClientProps) {
     const [isStreamingModalOpen, setIsStreamingModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -51,14 +54,6 @@ export function DashboardClient({ stats, recentSubscriptions, streamings }: Dash
         }
     };
 
-    // Data Preparation for Visualization - Memoized for performance
-    const revenueHistory = useMemo(() => [
-        { name: 'Jan', receita: stats.monthlyRevenue * 0.65, participantes: 12 },
-        { name: 'Fev', receita: stats.monthlyRevenue * 0.78, participantes: 15 },
-        { name: 'Mar', receita: stats.monthlyRevenue * 0.82, participantes: 18 },
-        { name: 'Abr', receita: stats.monthlyRevenue * 0.92, participantes: 22 },
-        { name: 'Mai', receita: stats.monthlyRevenue, participantes: stats.activeParticipantsCount },
-    ], [stats.monthlyRevenue, stats.activeParticipantsCount]);
 
     const distributionData = useMemo(() => streamings.map(s => ({
         name: s.apelido || s.catalogo.nome,
