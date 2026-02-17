@@ -6,6 +6,7 @@ import { ToastContainer } from "@/components/ui/ToastContainer";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { SupportButton } from "@/components/support/SupportButton";
 import "@/cron/init";
+import { BetaAnnouncement } from "@/components/layout/BetaAnnouncement";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -76,6 +77,9 @@ export const viewport: Viewport = {
   themeColor: "#7c3aed", // Cor primária (violet-600) para mobile browsers
 };
 
+
+// ... existing imports
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -83,9 +87,10 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} antialiased justify-center w-full flex bg-gray-50/50`}>
+      <body className={`${inter.className} antialiased justify-center w-full flex flex-col bg-gray-50/50`}>
         <ToastProvider>
           <TooltipProvider>
+            <BetaAnnouncement />
             {children}
             <SupportButton />
             <ToastContainer />
