@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { generateToken, setAuthCookie } from "@/lib/auth";
@@ -73,11 +74,17 @@ export async function POST(request: NextRequest) {
             };
         });
 
+        // Extract IP and User Agent
+        const headersList = await headers();
+        const forwardedFor = headersList.get("x-forwarded-for");
+        const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
+
         // Generate JWT token
         const token = generateToken({
             userId: user.id,
             email: user.email,
             sessionVersion: user.sessionVersion,
+            clientIp: clientIp,
         });
 
         // Set cookie
