@@ -288,7 +288,7 @@ model Participante {
   contaId        Int
   nome           String
   whatsappNumero String?
-  cpf            String?            @default("")
+  cpf            String?
   email          String?
   userId         Int?
   status         StatusParticipante @default(ativo)
