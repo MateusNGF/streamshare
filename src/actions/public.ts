@@ -32,7 +32,7 @@ export async function publicSubscribe(data: {
             : "Não há vagas disponíveis para este streaming.");
     }
 
-    return await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
         // 3. Garantir Participante
         const participante = await ParticipantService.findOrCreateParticipant(tx, {
             contaId: streaming.contaId,
