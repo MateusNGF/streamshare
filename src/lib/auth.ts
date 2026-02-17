@@ -16,6 +16,7 @@ export async function setAuthCookie(token: string) {
     });
 }
 
+
 export async function getAuthToken(): Promise<string | null> {
     const cookieStore = await cookies();
     return cookieStore.get("auth-token")?.value || null;
