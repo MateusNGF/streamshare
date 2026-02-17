@@ -24,7 +24,7 @@ export class SubscriptionService {
     ) {
         // 1. Lock the streaming row to prevent race conditions (Consistency & Isolation)
         // This prevents multiple transactions from over-occupying the limited spots
-        await tx.$executeRaw`SELECT id FROM "Streaming" WHERE id = ${streamingId} FOR UPDATE`;
+        await tx.$executeRaw`SELECT id FROM "streaming" WHERE id = ${streamingId} FOR UPDATE`;
 
         // 2. Fetch Streaming to get value and limits
         const streaming = await tx.streaming.findUnique({
