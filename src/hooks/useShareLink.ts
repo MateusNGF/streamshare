@@ -35,7 +35,8 @@ export function useShareLink() {
         startTransition(async () => {
             try {
                 const token = await generateStreamingShareLink(streamingId, expiration);
-                const url = `${window.location.origin}/assinar/${token}`;
+                const baseUrl = process.env.NEXT_PUBLIC_URL || window.location.origin;
+                const url = `${baseUrl}/assinar/${token}`;
                 setGeneratedLink(url);
 
                 // Auto copy
