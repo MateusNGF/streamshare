@@ -1,160 +1,211 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ScrollText, AlertTriangle, HelpCircle, FileCheck, Shield } from "lucide-react";
 
 export default function TermosDeUsoPage() {
     const router = useRouter();
 
-    const lastUpdate = "23 de Janeiro de 2026";
+    const lastUpdate = "16 de Fevereiro de 2026";
+
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-20">
-            <div className="container mx-auto px-6 max-w-4xl bg-white p-12 rounded-2xl shadow-sm border border-gray-100">
-                <button
-                    onClick={() => router.back()}
-                    className="text-primary hover:underline mb-8 inline-block flex items-center gap-2"
-                >
-                    &larr; Voltar
-                </button>
+        <div className="min-h-screen bg-[#FDFDFD] py-16 md:py-24 font-sans selection:bg-primary/10">
+            {/* Elegant Header / Navigation */}
+            <div className="container mx-auto px-6 max-w-3xl mb-16">
+                <div className="flex items-center justify-between mb-12">
+                    <button
+                        onClick={() => router.back()}
+                        className="group flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-primary transition-all"
+                    >
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                        Retornar
+                    </button>
 
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Termos de Uso</h1>
-                <p className="text-gray-500 mb-8">Última atualização: {lastUpdate}</p>
+                    <a
+                        href="/politica-de-privacidade"
+                        className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-primary transition-colors border-b border-transparent hover:border-primary pb-1"
+                    >
+                        Política de Privacidade
+                    </a>
+                </div>
 
-                <div className="prose prose-blue max-w-none text-gray-600 space-y-8">
-
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r">
-                        <p className="font-semibold text-blue-900 m-0">Resumo "Mastigado" (Para quem tem pressa)</p>
-                        <p className="text-blue-800 text-sm mt-2 m-0">
-                            Nós somos uma ferramenta de <strong>organização</strong>. Não vendemos contas de Netflix, Spotify ou qualquer outra. Nós ajudamos você a organizar seu grupo de amigos ou família para dividir os custos.
-                            <br /><br />
-                            Se você é <strong>Organizador</strong>: A conta do serviço é sua responsabilidade. Se pararem de pagar, a dívida com o serviço é sua. Use nossa plataforma para cobrar automaticamente.
-                            <br />
-                            Se você é <strong>Participante</strong>: Pague em dia para não perder acesso. Não compartilhe a senha com estranhos.
-                        </p>
+                <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10">
+                        <ScrollText size={12} className="text-primary" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Contrato de Adesão</span>
                     </div>
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                        Termos e Condições <span className="text-primary">de Uso</span>
+                    </h1>
+                    <p className="text-gray-400 text-sm font-medium">
+                        Atualizado em {lastUpdate} • Instrumento Jurídico
+                    </p>
+                </div>
+            </div>
 
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">1. Aceitação dos Termos</h2>
+            {/* Main Document Content */}
+            <div className="container mx-auto px-6 max-w-3xl">
+                {/* Subtle Table of Contents */}
+                <div className="bg-white border border-gray-100 rounded-[2rem] p-8 md:p-10 mb-20 shadow-sm">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+                        <FileCheck size={14} className="text-primary" />
+                        Sumário Executivo
+                    </h3>
+                    <nav className="grid md:grid-cols-2 gap-x-12 gap-y-3">
+                        {[
+                            { id: "resumo", label: "00. Disposições Iniciais" },
+                            { id: "definicoes", label: "01. Glossário e Definições" },
+                            { id: "aceitacao", label: "02. Adesão e Vigência" },
+                            { id: "organizadores", label: "03. Deveres do Organizador" },
+                            { id: "participantes", label: "04. Deveres do Participante" },
+                            { id: "fairplay", label: "05. Código de Conduta" },
+                            { id: "financeiro", label: "06. Gestão de Fluxo" },
+                            { id: "responsabilidade", label: "07. Limitação de Nexo" },
+                            { id: "bloqueios", label: "08. Políticas de Terceiros" },
+                        ].map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => scrollToSection(item.id)}
+                                className="text-left text-sm font-semibold text-gray-500 hover:text-primary transition-colors py-1 flex items-center gap-2 group"
+                            >
+                                <span className="w-1 h-1 rounded-full bg-gray-200 group-hover:bg-primary transition-colors" />
+                                {item.label}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+
+                <article className="prose prose-gray max-w-none text-gray-700 leading-loose text-justify space-y-24">
+
+                    <section id="resumo" className="bg-primary/[0.02] border-y border-primary/5 py-12 px-6 rounded-3xl">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-6">Resumo Executivo</h2>
+                        <div className="space-y-4 font-medium italic text-gray-600">
+                            <p>
+                                O StreamShare constitui uma plataforma tecnológica de intermediação organizacional, não comercializando, sob hipótese alguma, acesso a conteúdos proprietários de terceiros.
+                            </p>
+                            <p>
+                                Aos <strong>Organizadores</strong>: A titularidade e responsabilidade contratual perante os serviços de streaming subsistem integralmente sob sua alçada exclusiva.
+                            </p>
+                            <p>
+                                Aos <strong>Participantes</strong>: O adimplemento pontual das obrigações financeiras é condição <em>sine qua non</em> para a manutenção da fruição do serviço organizado.
+                            </p>
+                        </div>
+                    </section>
+
+                    <section id="definicoes">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8 flex items-center gap-3">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-950 text-white text-sm font-bold">01</span>
+                            Termos e Definições
+                        </h2>
+                        <div className="space-y-8">
+                            {[
+                                { term: "Kota (Cota)", def: "Unidade técnica de acesso correspondente a um perfil individual em um grupo de compartilhamento sob gestão da plataforma." },
+                                { term: "Streaming de Catálogo", def: "Serviços de provimento de conteúdo (ex: Netflix, Spotify) operados por terceiros sem vínculo jurídico com o StreamShare." },
+                                { term: "Membro Extra", def: "Funcionalidade oficial de determinadas plataformas para inclusão de beneficiários externos ao domicílio principal." },
+                                { term: "Gateway", def: "Entidade financeira responsável pelo processamento e liquidação das transações pecuniárias entre usuários." }
+                            ].map((item, i) => (
+                                <div key={i} className="border-b border-gray-50 pb-6 last:border-0">
+                                    <strong className="text-gray-900 block mb-2">{item.term}</strong>
+                                    <p className="text-gray-500 m-0 leading-relaxed">{item.def}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section id="aceitacao">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8 flex items-center gap-3">
+                            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-950 text-white text-sm font-bold">02</span>
+                            Adesão Irretratável
+                        </h2>
                         <p>
-                            Bem-vindo ao <strong>StreamShare</strong> ("Plataforma"). Ao criar uma conta, acessar ou utilizar qualquer parte dos nossos serviços, você concorda expressamente com estes Termos de Uso ("Termos").
-                        </p>
-                        <p className="mt-2 text-sm bg-gray-50 p-3 rounded border border-gray-100 italic">
-                            <strong>O que isso significa:</strong> Ao usar o StreamShare, você assina este contrato digital. Se não concordar, infelizmente não poderá usar nossos serviços.
+                            A utilização, cadastro ou acesso a quaisquer funcionalidades do <strong>StreamShare</strong> formaliza um contrato vinculativo entre o Usuário e a Plataforma. A manifestação de concordância eletrônica possui plena eficácia jurídica, sendo o silêncio ou a continuidade do uso interpretados como anuência tácita aos presentes Termos.
                         </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">2. O Que é o StreamShare?</h2>
-                        <p>
-                            O StreamShare é uma plataforma de gestão financeira e organizacional para grupos de compartilhamento de assinaturas ("Kotas").
-                        </p>
-                        <ul className="list-disc pl-6 space-y-2 mt-4">
-                            <li><strong>Não somos provedores de conteúdo:</strong> Não transmitimos filmes, músicas ou jogos.</li>
-                            <li><strong>Não vendemos contas:</strong> Não comercializamos logins ou senhas de terceiros.</li>
-                            <li><strong>Não temos vínculo oficial:</strong> Não somos afiliados à Netflix, Spotify, Youtube, etc.</li>
+                    <section id="organizadores">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">03. Deveres do Organizador</h2>
+                        <ul className="space-y-6 list-none pl-0">
+                            <li>
+                                <strong className="text-gray-900 block mb-1">Titularidade Primária</strong>
+                                O Organizador declara ser o titular legítimo e responsável financeiro originário pela assinatura compartilhada.
+                            </li>
+                            <li>
+                                <strong className="text-gray-900 block mb-1">Compliance Contratual</strong>
+                                É dever do Organizador assegurar que o compartilhamento de logins respeite rigorosamente as diretrizes do provedor final de conteúdo.
+                            </li>
+                            <li>
+                                <strong className="text-gray-900 block mb-1">Manutenção de Credenciais</strong>
+                                O Organizador obriga-se a manter os dados de acesso devidamente atualizados no sistema, sob pena de suspensão da conta.
+                            </li>
                         </ul>
-                        <p className="mt-4">
-                            Nossa função é puramente administrativa: fornecer ferramentas para que um <strong>Organizador</strong> possa gerenciar os pagamentos e o acesso de seus <strong>Participantes</strong> convidados.
-                        </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">3. Cadastro e Elegibilidade</h2>
-                        <p>
-                            Para usar o StreamShare, você precisa:
-                        </p>
-                        <ul className="list-disc pl-6 space-y-1 mt-2">
-                            <li>Ter pelo menos 18 anos ou ser emancipado legalmente.</li>
-                            <li>Fornecer informações verdadeiras e atualizadas (Nome, Email, Telefone/WhatsApp).</li>
-                            <li>Ser humano (contas criadas por "robôs" não são permitidas).</li>
+                    <section id="participantes">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">04. Deveres do Participante</h2>
+                        <ul className="space-y-6 list-none pl-0">
+                            <li>
+                                <strong className="text-gray-900 block mb-1">Pagamento Tempestivo</strong>
+                                O Participante compromete-se com a liquidação pontual das faturas geradas, ciente de que o atraso implica em suspensão imediata.
+                            </li>
+                            <li>
+                                <strong className="text-gray-900 block mb-1">Intransferibilidade</strong>
+                                As credenciais de acesso são de uso privativo do Participante, sendo expressamente vedada a sublocação ou cessão a terceiros.
+                            </li>
                         </ul>
                     </section>
 
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">4. Regras para Organizadores (Administradores de Grupo)</h2>
+                    <section id="financeiro">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">06. Gestão de Fluxo e Inadimplência</h2>
                         <p>
-                            Se você cria um grupo no StreamShare, você é o "Organizador". Suas responsabilidades são:
+                            A arquitetura da Plataforma opera sob monitoramento automatizado de fluxo financeiro. Faturas não liquidadas em até <strong>24 horas após o vencimento</strong> acarretarão a alteração sistêmica do status para inadimplente, autorizando o bloqueio técnico das credenciais até a purgação da mora.
                         </p>
-                        <ul className="list-disc pl-6 space-y-2 mt-2">
-                            <li><strong>Titularidade:</strong> Você deve ser o titular legítimo da assinatura do serviço de streaming que está compartilhando.</li>
-                            <li><strong>Compliance:</strong> Você deve garantir que o compartilhamento obedece aos Termos de Uso do serviço original (ex: muitas plataformas permitem compartilhamento apenas com pessoas da mesma residência/família). O StreamShare não fiscaliza isso, a responsabilidade é inteiramente sua.</li>
-                            <li><strong>Pagamento Original:</strong> O pagamento da fatura do serviço (Netflix, etc.) é responsabilidade 100% sua. Mesmo que um participante não lhe pague no StreamShare, você deve honrar seu compromisso com o serviço de streaming.</li>
-                        </ul>
                     </section>
 
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">5. Regras para Participantes (Membros)</h2>
+                    <section id="responsabilidade">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">07. Limitação de Responsabilidade</h2>
+                        <div className="bg-red-50/50 border-l-4 border-red-500 p-8 rounded-r-2xl my-8">
+                            <h4 className="text-red-900 font-bold mb-2 flex items-center gap-2">
+                                <AlertTriangle size={16} />
+                                Cláusula de Isenção de Nexo
+                            </h4>
+                            <p className="text-red-800 m-0 leading-relaxed italic">
+                                "O StreamShare não ostenta qualquer responsabilidade civil ou criminal por interrupções, bloqueios ou suspensões de contas impostos pelos provedores originais de streaming em decorrência de políticas de compartilhamento de senhas."
+                            </p>
+                        </div>
+                    </section>
+
+                    <section id="bloqueios">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">08. Políticas de Terceiros e "Crackdown"</h2>
                         <p>
-                            Se você entra em um grupo no StreamShare, você é um "Participante".
-                        </p>
-                        <ul className="list-disc pl-6 space-y-2 mt-2">
-                            <li><strong>Pagamentos:</strong> Você concorda em pagar sua parte da assinatura ("Cota") nas datas estipuladas. Atrasos podem resultar em suspensão do acesso ao grupo.</li>
-                            <li><strong>Uso Pessoal:</strong> As credenciais de acesso fornecidas pelo Organizador são para seu uso pessoal. É proibido revender, alugar ou expor publicamente essas senhas.</li>
-                            <li><strong>Respeito:</strong> Você deve respeitar os perfis (slots) definidos pelo grupo (ex: não usar o perfil do coleguinha na Netflix).</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">6. Pagamentos e Taxas da Plataforma</h2>
-                        <p>
-                            O StreamShare pode operar de duas formas financeiras:
-                        </p>
-                        <ol className="list-decimal pl-6 space-y-2 mt-2">
-                            <li><strong>Gestão Gratuita/Manual:</strong> O Organizador usa a plataforma apenas para organizar, recebendo os valores por fora (Pix direto, dinheiro). O StreamShare não cobra nada e não se envolve.</li>
-                            <li><strong>Gestão Automatizada (Futuro):</strong> O StreamShare processa o pagamento via gateway (ex: Stripe/Pix). Neste caso, poderemos cobrar uma <strong>Taxa de Administração</strong> sobre cada transação para cobrir custos bancários e manutenção do sistema. Essa taxa será exibida claramente antes da confirmação.</li>
-                        </ol>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">7. Proibições (O que NÃO fazer)</h2>
-                        <p>É estritamente proibido:</p>
-                        <ul className="list-disc pl-6 space-y-1 mt-2">
-                            <li>Usar a plataforma para aplicar golpes ou fraudes financeiras.</li>
-                            <li>Compartilhar conteúdo ilegal, pirata, ou que viole direitos autorais.</li>
-                            <li>Tentar invadir, copiar ou sobrecarregar nossos servidores.</li>
-                            <li>Revender acesso ao próprio StreamShare.</li>
-                        </ul>
-                        <p className="mt-2 text-red-600 text-sm font-medium">
-                            A violação destas regras resultará no banimento imediato e permanente da sua conta, sem aviso prévio.
+                            As plataformas de conteúdo reservam-se o direito de implementar restrições técnicas (e.g., geo-blocking, verificação de IP) de forma unilateral. O StreamShare não garante a perenidade da fruição caso ocorram mudanças estruturais nas políticas de acesso dos provedores originais.
                         </p>
                     </section>
 
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">8. Limitação de Responsabilidade</h2>
-                        <p className="font-semibold">LEIA COM ATENÇÃO:</p>
-                        <p className="mt-2">
-                            O StreamShare <strong>NÃO</strong> se responsabiliza por:
+                    <section id="contato" className="pt-12 border-t border-gray-100">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">Central de Atendimento Jurídico</h2>
+                        <p className="mb-8">
+                            Para esclarecimentos referentes ao presente instrumento ou notificações legais, solicitamos o contato exclusivo via correio eletrônico institucional:
                         </p>
-                        <ul className="list-disc pl-6 space-y-2 mt-2">
-                            <li><strong>Bloqueios de Conta:</strong> Se a Netflix/Spotify/etc. bloquear sua conta por compartilhamento indevido, a responsabilidade é do Organizador. Nós fornecemos a ferramenta de gestão, o risco do compartilhamento é do usuário.</li>
-                            <li><strong>Inadimplência:</strong> Não garantimos que os participantes pagarão. Oferecemos ferramentas de cobrança, mas não somos seguradora de crédito.</li>
-                            <li><strong>Instabilidade de Terceiros:</strong> Se o serviço de streaming sair do ar, não é culpa do StreamShare.</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">9. Disputas e Cancelamentos</h2>
-                        <p>
-                            Disputas entre Organizador e Participante (ex: "paguei e não recebi a senha") devem ser resolvidas primordialmente entre as partes. O StreamShare poderá atuar como mediador em casos extremos, reservando-se o direito de decidir pelo reembolso ou bloqueio com base nos registros da plataforma.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">10. Alterações nestes Termos</h2>
-                        <p>
-                            Podemos atualizar este documento. Avisaremos sobre mudanças importantes por e-mail ou aviso na plataforma. Continuar usando o StreamShare após as mudanças significa que você aceitou as novidades.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">11. Contato e Suporte</h2>
-                        <p>
-                            Dúvidas jurídicas ou sobre os termos? Entre em contato conosco:
-                        </p>
-                        <p className="mt-2 text-blue-600 font-medium">
+                        <a
+                            href="mailto:atendimento@streamshare.com.br"
+                            className="inline-block px-10 py-5 bg-gray-900 text-white rounded-[1.5rem] font-black hover:bg-primary transition-all shadow-xl hover:-translate-y-1 active:scale-95"
+                        >
                             atendimento@streamshare.com.br
-                        </p>
+                        </a>
                     </section>
+                </article>
+
+                <div className="mt-32 pb-16 text-center">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.4em]">
+                        StreamShare Institutional Legal Framework © 2026
+                    </p>
                 </div>
             </div>
         </div>
