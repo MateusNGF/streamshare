@@ -28,9 +28,13 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
     const handleViewDetails = async (subId: number) => {
         setLoadingDetails(true);
         try {
-            const fullSub = await getParticipantSubscriptionDetail(subId);
-            setSelectedAssinatura(fullSub);
-            setIsDetailsModalOpen(true);
+            const response = await getParticipantSubscriptionDetail(subId);
+            if (response.success) {
+                setSelectedAssinatura(response.data);
+                setIsDetailsModalOpen(true);
+            } else {
+                toast.error(response.error || "Erro ao carregar detalhes");
+            }
         } catch (error: any) {
             toast.error(error.message || "Erro ao carregar detalhes");
         } finally {
