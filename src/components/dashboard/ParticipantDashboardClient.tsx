@@ -13,7 +13,7 @@ const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal"
 const SupportModal = dynamic(() => import("@/components/support/SupportModal").then(mod => mod.SupportModal));
 
 interface ParticipantDashboardClientProps {
-    stats: ParticipantStats;
+    stats: ParticipantStats | null;
     subscriptions: ParticipantSubscription[];
     error?: string;
 }
@@ -24,6 +24,20 @@ export function ParticipantDashboardClient({ stats, subscriptions, error }: Part
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
     useActionError(error);
+
+    if (!stats) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+                <p className="text-gray-500 mb-4">Não foi possível carregar as estatísticas do dashboard.</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="text-primary font-bold hover:underline"
+                >
+                    Tentar Novamente
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-12 animate-slide-in-from-bottom pb-10">

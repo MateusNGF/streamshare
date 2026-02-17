@@ -40,11 +40,11 @@ export default async function ProviderDashboardPage() {
             />
 
             <DashboardClient
-                stats={statsRes.data!}
+                stats={statsRes.data || null}
                 recentSubscriptions={recentSubRes.data || []}
                 streamings={streamingsRes.data || []}
                 revenueHistory={revenueRes.data || []}
-                participantStats={pStatsRes.data!}
+                participantStats={pStatsRes.data || null}
                 participantSubscriptions={pSubRes.data || []}
                 initialView="provider"
                 hideSwitcher={true}

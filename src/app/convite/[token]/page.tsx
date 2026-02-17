@@ -2,7 +2,7 @@ import { validateInviteToken } from "@/actions/invites";
 import { getCurrentUser } from "@/lib/auth";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { CheckCircle, ShieldCheck } from "lucide-react";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { AcceptInviteButton } from "./AcceptInviteButton";
 import { Metadata } from "next";
 
@@ -16,7 +16,13 @@ export default async function ConvitePage({
 }: {
     params: { token: string }
 }) {
-    const invite = await validateInviteToken(params.token);
+    const response = await validateInviteToken(params.token);
+
+    if (!response.success || !response.data) {
+        notFound();
+    }
+
+    const invite = response.data;
     const user = await getCurrentUser();
 
     if (!user) {

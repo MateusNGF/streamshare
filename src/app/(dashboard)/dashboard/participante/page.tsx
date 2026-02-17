@@ -25,7 +25,7 @@ export default async function ParticipantDashboardPage() {
             />
 
             <ParticipantDashboardClient
-                stats={participantStats.data!}
+                stats={participantStats.data || null}
                 subscriptions={participantSubscriptions.data || []}
                 error={error}
             />

@@ -22,11 +22,11 @@ import { ParticipantDashboardClient } from "./ParticipantDashboardClient";
 import { Users2, UserRound, LayoutDashboard } from "lucide-react";
 
 interface DashboardClientProps {
-    stats: DashboardStats;
+    stats: DashboardStats | null;
     recentSubscriptions: any[];
     streamings: any[];
     revenueHistory: RevenueHistory[];
-    participantStats: ParticipantStats;
+    participantStats: ParticipantStats | null;
     participantSubscriptions: ParticipantSubscription[];
     initialView?: "provider" | "participant";
     hideSwitcher?: boolean;
@@ -132,11 +132,17 @@ export function DashboardClient({
                     />
 
                     {/* 2. KPIs & Advanced Analytics */}
-                    <DashboardAnalytics
-                        stats={stats}
-                        revenueHistory={revenueHistory}
-                        distributionData={distributionData}
-                    />
+                    {stats ? (
+                        <DashboardAnalytics
+                            stats={stats}
+                            revenueHistory={revenueHistory}
+                            distributionData={distributionData}
+                        />
+                    ) : (
+                        <div className="bg-white/50 backdrop-blur-sm p-8 rounded-[32px] border border-dashed border-gray-200 text-center">
+                            <p className="text-gray-500">Falha ao carregar métricas de análise.</p>
+                        </div>
+                    )}
 
                     {/* 3. Operational Data */}
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-10">

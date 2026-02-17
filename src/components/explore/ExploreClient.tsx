@@ -5,14 +5,17 @@ import { GenericFilter } from "@/components/ui/GenericFilter";
 import { StreamingCard } from "@/components/explore/StreamingCard";
 import { Search, Compass } from "lucide-react";
 import { useTransition } from "react";
+import { useActionError } from "@/hooks/useActionError";
 
 interface ExploreClientProps {
     streamings: any[];
     catalogos: any[];
     initialFilters: { search?: string; catalogoId?: string; onlyMyAccount?: string };
+    error?: string;
 }
 
-export function ExploreClient({ streamings, catalogos, initialFilters }: ExploreClientProps) {
+export function ExploreClient({ streamings, catalogos, initialFilters, error }: ExploreClientProps) {
+    useActionError(error);
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();

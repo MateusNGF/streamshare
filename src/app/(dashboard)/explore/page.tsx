@@ -24,7 +24,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
     };
 
     // Fetch data in parallel
-    const [streamings, catalogos] = await Promise.all([
+    const [streamingsRes, catalogosRes] = await Promise.all([
         getPublicStreamings({
             search: filters.search,
             catalogoId: filters.catalogoId ? parseInt(filters.catalogoId) : undefined,
@@ -32,6 +32,8 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         }),
         getCatalogos()
     ]);
+
+    const error = streamingsRes.error || catalogosRes.error;
 
     return (
         <div className="py-6 md:py-12">
@@ -52,9 +54,10 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             </div>
 
             <ExploreClient
-                streamings={streamings}
-                catalogos={catalogos}
+                streamings={streamingsRes.data || []}
+                catalogos={catalogosRes.data || []}
                 initialFilters={filters}
+                error={error}
             />
         </div>
     );

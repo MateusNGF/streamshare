@@ -22,8 +22,11 @@ export function SubscriptionAlert({ status }: SubscriptionAlertProps) {
         setLoading(true);
         try {
             const result = await createCustomerPortalSession();
-            if (result.url) {
-                window.location.href = result.url;
+            if (result.success && result.data?.url) {
+                window.location.href = result.data.url;
+            } else if (!result.success && result.error) {
+                alert(result.error);
+                setLoading(false);
             }
         } catch (error) {
             console.error(error);
