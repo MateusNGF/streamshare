@@ -14,6 +14,7 @@ export interface Streaming {
     id: number;
     apelido: string | null;
     catalogo: { nome: string };
+    vagasRestantes: number;
 }
 
 export interface PendingRequest {

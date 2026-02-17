@@ -52,7 +52,8 @@ export function StreamingDetailCard({
                 streamings={[{
                     id,
                     apelido: name,
-                    catalogo: { nome: catalogName || name }
+                    catalogo: { nome: catalogName || name },
+                    vagasRestantes: Math.max(0, slots.total - slots.occupied)
                 }]}
                 initialStreamingId={id}
                 initialTab="link"

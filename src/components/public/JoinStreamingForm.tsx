@@ -158,25 +158,23 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade de Vagas</label>
-                        <QuantityInput
-                            value={formData.quantidade}
-                            onValueChange={(val) => setFormData({ ...formData, quantidade: val })}
-                            min={1}
-                            max={vagasRestantes || 10}
-                            className="h-16"
-                        />
-                    </div>
+                <div className="space-y-2 w-full">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade de Vagas</label>
+                    <QuantityInput
+                        value={formData.quantidade}
+                        onValueChange={(val) => setFormData({ ...formData, quantidade: val })}
+                        min={1}
+                        max={vagasRestantes || 10}
+                        className="h-16"
+                    />
+                </div>
 
-                    <div className="flex flex-col w-full bg-primary/[0.03] rounded-2xl px-4 py-2 border border-primary/10 flex items-center justify-center transition-all">
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em]">{formData.quantidade > 1 ? "Total do Ciclo" : "Valor do Ciclo"}</span>
-                            <p className="text-2xl font-black text-primary tracking-tighter">
-                                {format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1) * formData.quantidade)}
-                            </p>
-                        </div>
+                <div className="flex flex-col w-full bg-primary/[0.03] rounded-2xl px-4 py-2 border border-primary/10 flex items-center justify-center transition-all">
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em]">{formData.quantidade > 1 ? "Total do Ciclo" : "Valor do Ciclo"}</span>
+                        <p className="text-2xl font-black text-primary tracking-tighter">
+                            {format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1) * formData.quantidade)}
+                        </p>
                     </div>
                 </div>
 
