@@ -91,7 +91,6 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
                 isOpen={isDetailsModalOpen}
                 onClose={() => setIsDetailsModalOpen(false)}
                 assinatura={selectedAssinatura}
-                isAdmin={false}
             />
         </section>
     );

@@ -28,7 +28,7 @@ export function DetalhesAssinaturaModal({
     isOpen,
     onClose,
     assinatura,
-    isAdmin = true
+    isAdmin = false
 }: DetalhesAssinaturaModalProps) {
     const { format } = useCurrency();
     const { formatDate } = useModalDetails();

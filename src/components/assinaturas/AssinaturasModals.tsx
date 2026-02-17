@@ -60,6 +60,7 @@ export function AssinaturasModals({
                 isOpen={detailsModalOpen}
                 onClose={onCloseDetails}
                 assinatura={selectedAssinatura}
+                isAdmin={true}
             />
         </>
     );
