@@ -448,7 +448,7 @@ export async function getParticipantSubscriptions() {
         const assinaturas = await prisma.assinatura.findMany({
             where: {
                 participante: { userId },
-                status: { in: ["ativa", "suspensa"] }
+                status: { in: ["ativa", "suspensa", "pendente"] }
             },
             include: {
                 streaming: {

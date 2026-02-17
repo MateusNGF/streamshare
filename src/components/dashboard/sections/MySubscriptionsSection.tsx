@@ -57,8 +57,8 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
                             <ShieldCheck className="w-8 h-8 text-gray-300" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">Nenhuma assinatura ativa</h3>
-                            <p className="text-gray-500 max-w-xs mx-auto">Você ainda não faz parte de nenhum grupo de streaming.</p>
+                            <h3 className="text-lg font-bold text-gray-900">Nenhuma assinatura</h3>
+                            <p className="text-gray-500 max-w-xs mx-auto">Você ainda não possui assinaturas ativas ou pendentes.</p>
                         </div>
                         <Link href="/explore">
                             <Button variant="outline" className="rounded-full px-8">
