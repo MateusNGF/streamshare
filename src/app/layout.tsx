@@ -5,29 +5,37 @@ import { ToastProvider } from "@/contexts/ToastContext";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { SupportButton } from "@/components/support/SupportButton";
-import "@/cron/init"; // Initialize cron jobs
+import "@/cron/init";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://streamshare.com.br"),
   title: {
-    default: "StreamShare | Gestão de Assinaturas",
+    default: "StreamShare | Economize 80% em Assinaturas",
     template: "%s | StreamShare",
   },
-  description: "Plataforma completa para gestão colaborativa de assinaturas de streaming. Economize compartilhando suas assinaturas com segurança.",
-  keywords: ["streaming", "assinaturas", "gestão", "compartilhamento", "netflix", "spotify", "economia"],
+  description: "Pare de pagar caro sozinho. Explore grupos, participe de assinaturas premium e economize até 80% hoje. Netflix, Spotify e mais, com gestão financeira automática.",
+  keywords: [
+    "compartilhar netflix",
+    "dividir spotify",
+    "economia colaborativa",
+    "gestão de assinaturas",
+    "pagar menos streaming",
+    "kotas alternativo",
+    "finanças pessoais"
+  ],
   authors: [{ name: "StreamShare Team" }],
   creator: "StreamShare",
   publisher: "StreamShare",
   icons: {
-    icon: "/assets/favicon.ico",
-    shortcut: "/assets/favicon.ico",
-    apple: "/assets/favicon.ico", // Ideally should be a png
+    icon: "/icon", // Aponta para o arquivo dinâmico gerado abaixo
+    shortcut: "/icon",
+    apple: "/apple-icon", // Opcional: se quiser criar um apple-icon.tsx similar
   },
   openGraph: {
-    title: "StreamShare | Gestão de Assinaturas",
-    description: "Plataforma completa para gestão colaborativa de assinaturas de streaming. Economize compartilhando suas assinaturas com segurança.",
+    title: "Você está pagando até 5x mais caro em seus streamings",
+    description: "Explore, Participe e gerencie suas assinaturas economizando até 80%. Junte-se a milhares de usuários que pararam de rasgar dinheiro.",
     url: "/",
     siteName: "StreamShare",
     images: [
@@ -35,7 +43,7 @@ export const metadata: Metadata = {
         url: "/assets/banner-dois.jpg",
         width: 1200,
         height: 630,
-        alt: "StreamShare Dashboard",
+        alt: "StreamShare - Economia Inteligente",
       },
     ],
     locale: "pt_BR",
@@ -43,9 +51,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "StreamShare | Gestão de Assinaturas",
-    description: "Economize compartilhando suas assinaturas de streaming com segurança.",
-    images: ["/assets/banner-dois.jpg"], // Using the same reliable image
+    title: "StreamShare | Pare de pagar o preço cheio",
+    description: "Sua conta de streaming está cara? Divida com segurança e economize 80% agora.",
+    images: ["/assets/banner-dois.jpg"],
   },
   robots: {
     index: true,
@@ -58,13 +66,14 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  category: "finance",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1.0,
   maximumScale: 1.0,
-  themeColor: "#ffffff", // Optional but good practice
+  themeColor: "#7c3aed", // Cor primária (violet-600) para mobile browsers
 };
 
 export default async function RootLayout({
@@ -72,7 +81,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} antialiased justify-center w-full flex bg-gray-50/50`}>
