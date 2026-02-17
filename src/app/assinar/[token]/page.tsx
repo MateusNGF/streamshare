@@ -35,11 +35,13 @@ async function getLoggedUserStats(userId: number) {
 
 export default async function PublicJoinPage({ params }: { params: { token: string } }) {
     const user = await getCurrentUser();
-    const streaming = await getStreamingByPublicToken(params.token) as any;
+    const response = await getStreamingByPublicToken(params.token);
 
-    if (!streaming) {
+    if (!response.success || !response.data) {
         notFound();
     }
+
+    const streaming = response.data as any;
 
     if (!user) {
         return redirect(`/login?mode=signup&callbackUrl=/assinar/${params.token}`);

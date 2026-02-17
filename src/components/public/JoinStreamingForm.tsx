@@ -186,10 +186,12 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                 <Button
                     type="submit"
                     className="w-full h-16 text-lg font-black mt-2 rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/30 group"
-                    disabled={loading}
+                    disabled={loading || (vagasRestantes !== undefined && vagasRestantes <= 0)}
                 >
                     {loading ? (
                         <Spinner size="sm" color="white" />
+                    ) : vagasRestantes !== undefined && vagasRestantes <= 0 ? (
+                        "Vagas Esgotadas"
                     ) : (
                         <div className="flex items-center gap-3">
                             Confirmar Assinatura
