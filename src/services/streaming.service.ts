@@ -8,8 +8,8 @@ export class StreamingService {
      * Get the count of occupied spots for a streaming service.
      * Includes active, suspended, and pending subscriptions.
      */
-    static async getOccupiedSpots(streamingId: number): Promise<number> {
-        return prisma.assinatura.count({
+    static async getOccupiedSpots(streamingId: number, tx = prisma): Promise<number> {
+        return tx.assinatura.count({
             where: {
                 streamingId,
                 status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa, StatusAssinatura.pendente] }
@@ -20,63 +20,84 @@ export class StreamingService {
     /**
      * Get the number of remaining spots for a streaming service.
      */
-    static async getRemainingSpots(streamingId: number): Promise<number> {
-        const streaming = await prisma.streaming.findUnique({
+    static async getRemainingSpots(streamingId: number, tx = prisma): Promise<number> {
+        const streaming = await tx.streaming.findUnique({
             where: { id: streamingId },
             select: { limiteParticipantes: true }
         });
 
         if (!streaming) return 0;
 
-        const occupied = await this.getOccupiedSpots(streamingId);
+        const occupied = await this.getOccupiedSpots(streamingId, tx);
         return Math.max(0, streaming.limiteParticipantes - occupied);
     }
 
     /**
      * Generate a new share token for a streaming service and save it as a public invite.
+     * ACID: Uses a transaction to ensure spots are checked and invite is created atomically.
      */
     static async generateShareLink(streamingId: number, expiration: string, contaId: number, userId: number): Promise<string> {
-        const streaming = await prisma.streaming.findUnique({
-            where: { id: streamingId, contaId },
-        });
+        return prisma.$transaction(async (tx) => {
+            const streaming = await tx.streaming.findUnique({
+                where: { id: streamingId, contaId },
+            });
 
-        if (!streaming) {
-            throw new Error("Streaming não encontrado");
-        }
-
-        const remaining = await this.getRemainingSpots(streamingId);
-        if (remaining <= 0) {
-            throw new Error("Não é possível gerar link de convite: todas as vagas estão preenchidas.");
-        }
-
-        const token = generateShareToken(streamingId, expiration);
-
-        // Calculate expiration date
-        const expiresAt = new Date();
-        if (expiration !== 'never') {
-            const value = parseInt(expiration);
-            const unit = expiration.slice(-1);
-            if (unit === 'm') expiresAt.setMinutes(expiresAt.getMinutes() + value);
-            else if (unit === 'h') expiresAt.setHours(expiresAt.getHours() + value);
-            else if (unit === 'd') expiresAt.setDate(expiresAt.getDate() + value);
-            else expiresAt.setDate(expiresAt.getDate() + 7); // Default
-        } else {
-            expiresAt.setFullYear(expiresAt.getFullYear() + 10); // Far future
-        }
-
-        await prisma.convite.create({
-            data: {
-                email: "public-link@system.internal",
-                contaId,
-                streamingId,
-                token,
-                status: "pendente",
-                expiresAt,
-                convidadoPorId: userId
+            if (!streaming) {
+                throw new Error("Streaming não encontrado");
             }
-        });
 
-        return token;
+            const remaining = await this.getRemainingSpots(streamingId, tx as any);
+            if (remaining <= 0) {
+                throw new Error("Não é possível gerar link de convite: todas as vagas estão preenchidas.");
+            }
+
+            const token = generateShareToken(streamingId, expiration);
+            const expiresAt = this.calculateExpirationDate(expiration);
+
+            await tx.convite.create({
+                data: {
+                    email: "public-link@system.internal",
+                    contaId,
+                    streamingId,
+                    token,
+                    status: "pendente",
+                    expiresAt,
+                    convidadoPorId: userId
+                }
+            });
+
+            return token;
+        });
+    }
+
+    /**
+     * Clean Code & SOLID: Extracted date calculation logic
+     */
+    private static calculateExpirationDate(expiration: string): Date {
+        const date = new Date();
+        if (expiration === 'never') {
+            date.setFullYear(date.getFullYear() + 10);
+            return date;
+        }
+
+        const value = parseInt(expiration);
+        const unit = expiration.slice(-1);
+
+        const units: Record<string, (d: Date, v: number) => void> = {
+            'm': (d, v) => d.setMinutes(d.getMinutes() + v),
+            'h': (d, v) => d.setHours(d.getHours() + v),
+            'd': (d, v) => d.setDate(d.getDate() + v),
+        };
+
+        const updateFn = units[unit];
+        if (updateFn) {
+            updateFn(date, value);
+        } else {
+            // Default to 7 days if unit is unknown
+            date.setDate(date.getDate() + 7);
+        }
+
+        return date;
     }
 
     /**
