@@ -41,6 +41,7 @@ export async function getCurrentUser(): Promise<JWTPayload | null> {
         });
 
         if (!user || user.sessionVersion !== payload.sessionVersion) {
+            await clearAuthCookie();
             return null; // Session invalid or user deleted
         }
 
