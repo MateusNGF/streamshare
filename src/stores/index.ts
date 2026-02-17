@@ -3,6 +3,7 @@
  */
 
 export { useStreamingStore } from "./useStreamingStore";
+export { useCatalogoStore } from "./useCatalogoStore";
 export { useAssinaturaStore } from "./useAssinaturaStore";
 export { useCobrancaStore } from "./useCobrancaStore";
 export { useDashboardStore } from "./useDashboardStore";

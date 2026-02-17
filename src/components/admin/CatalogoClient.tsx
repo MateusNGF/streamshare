@@ -1,101 +1,42 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useEffect } from "react";
 import { Plus, Search, Edit2, Trash2, ExternalLink } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { createCatalogoItem, updateCatalogoItem, deleteCatalogoItem } from "@/actions/streamings";
-import { useToast } from "@/hooks/useToast";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
-
-interface CatalogoItem {
-    id: number;
-    nome: string;
-    iconeUrl: string | null;
-    corPrimaria: string;
-    isAtivo: boolean;
-}
+import { useCatalogoActions } from "@/hooks/useCatalogoActions";
+import { useCatalogoStore, CatalogoItem } from "@/stores/useCatalogoStore";
 
 interface CatalogoClientProps {
     initialData: CatalogoItem[];
 }
 
 export function CatalogoClient({ initialData }: CatalogoClientProps) {
-    const toast = useToast();
-    const [data, setData] = useState(initialData);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<CatalogoItem | null>(null);
-    const [loading, setLoading] = useState(false);
+    const { setItems } = useCatalogoStore();
+    const {
+        filteredData,
+        searchTerm,
+        setSearchTerm,
+        isModalOpen,
+        setIsModalOpen,
+        isDeleteModalOpen,
+        setIsDeleteModalOpen,
+        selectedItem,
+        formData,
+        setFormData,
+        loading,
+        actions
+    } = useCatalogoActions();
 
-    const [formData, setFormData] = useState({
-        nome: "",
-        iconeUrl: "",
-        corPrimaria: "#000000",
-    });
-
-    const filteredData = useMemo(() => {
-        return data.filter((item) =>
-            item.nome.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [data, searchTerm]);
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            if (selectedItem) {
-                const result = await updateCatalogoItem(selectedItem.id, formData);
-                if (result.success && result.data) {
-                    setData(prev => prev.map(item => item.id === result.data.id ? result.data : item));
-                    toast.success("Serviço atualizado com sucesso!");
-                    setIsModalOpen(false);
-                    setSelectedItem(null);
-                    setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
-                } else if (result.error) {
-                    toast.error(result.error);
-                }
-            } else {
-                const result = await createCatalogoItem(formData);
-                if (result.success && result.data) {
-                    setData(prev => [...prev, result.data]);
-                    toast.success("Serviço adicionado ao catálogo!");
-                    setIsModalOpen(false);
-                    setSelectedItem(null);
-                    setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
-                } else if (result.error) {
-                    toast.error(result.error);
-                }
-            }
-        } catch (error) {
-            toast.error("Erro ao salvar item do catálogo");
-        } finally {
-            setLoading(false);
+    // Initialize store with server data
+    useEffect(() => {
+        if (initialData) {
+            setItems(initialData);
         }
-    };
-
-    const handleDelete = async () => {
-        if (!selectedItem) return;
-        setLoading(true);
-        try {
-            const result = await deleteCatalogoItem(selectedItem.id);
-            if (result.success) {
-                setData(prev => prev.filter(item => item.id !== selectedItem.id));
-                toast.success("Serviço removido do catálogo");
-                setIsDeleteModalOpen(false);
-                setSelectedItem(null);
-            } else if (result.error) {
-                toast.error(result.error);
-            }
-        } catch (error) {
-            toast.error("Erro ao excluir item do catálogo");
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [initialData, setItems]);
 
     return (
         <PageContainer>
@@ -104,11 +45,7 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                 description="Gerencie os serviços de streaming disponíveis no sistema"
                 action={
                     <button
-                        onClick={() => {
-                            setSelectedItem(null);
-                            setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
-                            setIsModalOpen(true);
-                        }}
+                        onClick={actions.handleOpenCreate}
                         aria-label="Adicionar novo serviço ao catálogo"
                         className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation"
                     >
@@ -148,24 +85,13 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                             />
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
-                                    onClick={() => {
-                                        setSelectedItem(item);
-                                        setFormData({
-                                            nome: item.nome,
-                                            iconeUrl: item.iconeUrl || "",
-                                            corPrimaria: item.corPrimaria,
-                                        });
-                                        setIsModalOpen(true);
-                                    }}
+                                    onClick={() => actions.handleOpenEdit(item)}
                                     className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 hover:text-primary transition-all"
                                 >
                                     <Edit2 size={18} />
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        setSelectedItem(item);
-                                        setIsDeleteModalOpen(true);
-                                    }}
+                                    onClick={() => actions.handleOpenDelete(item)}
                                     className="p-2 hover:bg-red-50 rounded-xl text-gray-400 hover:text-red-500 transition-all"
                                 >
                                     <Trash2 size={18} />
@@ -200,7 +126,7 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                             Cancelar
                         </button>
                         <button
-                            onClick={handleSave}
+                            onClick={() => actions.handleSave()}
                             disabled={loading}
                             className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
                         >
@@ -209,7 +135,13 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
                     </>
                 }
             >
-                <form onSubmit={handleSave} className="space-y-4">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        actions.handleSave();
+                    }}
+                    className="space-y-4"
+                >
                     <Input
                         label="Nome do Serviço"
                         value={formData.nome}
@@ -256,7 +188,7 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
             <DeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleDelete}
+                onConfirm={actions.handleDelete}
                 loading={loading}
                 title="Remover do Catálogo"
                 message={`Tem certeza que deseja remover ${selectedItem?.nome}? Isso o tornará indisponível para novos streamings.`}
