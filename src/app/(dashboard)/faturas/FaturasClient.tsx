@@ -5,20 +5,24 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { FaturasTable } from "@/components/faturas/FaturasTable";
 import { FaturaCard } from "@/components/faturas/FaturaCard";
 import { Wallet } from "lucide-react";
+import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
+import { useActionError } from "@/hooks/useActionError";
 import { useState } from "react";
 import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
 import { SectionHeader } from "@/components/layout/SectionHeader";
-import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 
 interface FaturasClientProps {
     faturas: any[];
     resumo: any;
+    error?: string;
 }
 
-export function FaturasClient({ faturas, resumo }: FaturasClientProps) {
+export function FaturasClient({ faturas, resumo, error }: FaturasClientProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const [selectedFatura, setSelectedFatura] = useState<any>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+    useActionError(error);
 
     const handleViewDetails = (id: number) => {
         const fatura = faturas.find(f => f.id === id);

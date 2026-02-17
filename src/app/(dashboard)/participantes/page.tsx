@@ -5,19 +5,25 @@ import { ParticipantesClient } from "@/components/participantes/ParticipantesCli
 import { getStreamings } from "@/actions/streamings";
 
 export default async function ParticipantesPage() {
-    const [participantes, pendingInvites, pendingRequests, streamings] = await Promise.all([
+    const results = await Promise.all([
         getParticipantes(),
         getPendingInvites(),
         getPendingRequests(),
         getStreamings()
     ]);
 
+    const [participantesRes, pendingInvitesRes, pendingRequestsRes, streamingsRes] = results;
+
+    const hasError = results.some(r => !r.success);
+    const errorMsg = hasError ? "Algumas informações de participantes não puderam ser carregadas." : undefined;
+
     return (
         <ParticipantesClient
-            initialData={participantes}
-            pendingInvites={pendingInvites}
-            pendingRequests={pendingRequests}
-            streamings={streamings}
+            initialData={participantesRes.data || []}
+            pendingInvites={pendingInvitesRes.data || []}
+            pendingRequests={pendingRequestsRes.data || []}
+            streamings={streamingsRes.data || []}
+            error={errorMsg}
         />
     );
 }

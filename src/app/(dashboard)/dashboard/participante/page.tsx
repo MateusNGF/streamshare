@@ -15,6 +15,8 @@ export default async function ParticipantDashboardPage() {
         getParticipantSubscriptions(),
     ]);
 
+    const error = (!participantStats.success || !participantSubscriptions.success) ? "Falha ao carregar algumas informações do dashboard." : undefined;
+
     return (
         <PageContainer>
             <PageHeader
@@ -23,8 +25,9 @@ export default async function ParticipantDashboardPage() {
             />
 
             <ParticipantDashboardClient
-                stats={participantStats}
-                subscriptions={participantSubscriptions}
+                stats={participantStats.data!}
+                subscriptions={participantSubscriptions.data || []}
+                error={error}
             />
         </PageContainer>
     );

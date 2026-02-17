@@ -7,6 +7,7 @@ import { type StreamingFormData } from "@/components/modals/StreamingModal";
 import { createStreaming } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
+import { useActionError } from "@/hooks/useActionError";
 
 // Sections
 import { QuickActionsSection } from "./sections/QuickActionsSection";
@@ -29,6 +30,7 @@ interface DashboardClientProps {
     participantSubscriptions: ParticipantSubscription[];
     initialView?: "provider" | "participant";
     hideSwitcher?: boolean;
+    error?: string;
 }
 
 export function DashboardClient({
@@ -39,9 +41,11 @@ export function DashboardClient({
     participantStats,
     participantSubscriptions,
     initialView = "provider",
-    hideSwitcher = false
+    hideSwitcher = false,
+    error: initialError
 }: DashboardClientProps) {
     const [view, setView] = useState<"provider" | "participant">(initialView);
+    useActionError(initialError);
     const [isStreamingModalOpen, setIsStreamingModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);

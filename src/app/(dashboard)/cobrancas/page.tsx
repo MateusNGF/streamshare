@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { PlanoConta } from "@prisma/client";
 
 export default async function CobrancasPage() {
-    const [kpis, cobrancas, whatsappConfig, streamings, accountData] = await Promise.all([
+    const results = await Promise.all([
         getKPIsFinanceiros(),
         getCobrancas(),
         checkWhatsAppConfig(),
@@ -14,13 +14,19 @@ export default async function CobrancasPage() {
         getAccountData()
     ]);
 
+    const [kpisRes, cobrancasRes, whatsappConfig, streamingsRes, accountData] = results;
+
+    const hasError = !kpisRes.success || !cobrancasRes.success || !streamingsRes.success;
+    const errorMsg = hasError ? "Algumas informações de cobranças não puderam ser carregadas." : undefined;
+
     return (
         <CobrancasClient
-            kpis={kpis}
-            cobrancasIniciais={cobrancas}
+            kpis={kpisRes.data || { totalPendente: 0, receitaConfirmada: 0, emAtraso: 0, totalCobrancas: 0 }}
+            cobrancasIniciais={cobrancasRes.data || []}
             whatsappConfigurado={whatsappConfig}
-            streamings={streamings}
+            streamings={streamingsRes.data || []}
             plano={accountData.plano as PlanoConta}
+            error={errorMsg}
         />
     );
 }

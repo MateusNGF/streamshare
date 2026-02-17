@@ -1,5 +1,7 @@
 "use client";
 import { Save, Mail, MessageSquare, Settings } from "lucide-react";
+import { useActionError } from "@/hooks/useActionError";
+import { useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
@@ -10,9 +12,11 @@ import { useParametrosActions, ConfigSection } from "@/hooks/useParametrosAction
 
 interface ParametrosClientProps {
     initialData: any[];
+    error?: string;
 }
 
-export function ParametrosClient({ initialData }: ParametrosClientProps) {
+export function ParametrosClient({ initialData, error }: ParametrosClientProps) {
+    useActionError(error);
     const {
         activeSection,
         setActiveSection,

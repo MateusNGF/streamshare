@@ -6,6 +6,7 @@ import { MySubscriptionsSection } from "./sections/MySubscriptionsSection";
 import { ParticipantQuickActions } from "./sections/ParticipantQuickActions";
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { useActionError } from "@/hooks/useActionError";
 
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));
@@ -14,12 +15,15 @@ const SupportModal = dynamic(() => import("@/components/support/SupportModal").t
 interface ParticipantDashboardClientProps {
     stats: ParticipantStats;
     subscriptions: ParticipantSubscription[];
+    error?: string;
 }
 
-export function ParticipantDashboardClient({ stats, subscriptions }: ParticipantDashboardClientProps) {
+export function ParticipantDashboardClient({ stats, subscriptions, error }: ParticipantDashboardClientProps) {
     const [isStreamingModalOpen, setIsStreamingModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+
+    useActionError(error);
 
     return (
         <div className="space-y-12 animate-slide-in-from-bottom pb-10">

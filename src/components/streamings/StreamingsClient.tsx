@@ -10,6 +10,7 @@ import { useStreamingStore } from "@/stores";
 import { useToast } from "@/hooks/useToast";
 import { useStreamingActions } from "@/hooks/useStreamingActions";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
+import { useActionError } from "@/hooks/useActionError";
 
 // Refactored Sub-components
 import { StreamingFilters } from "./StreamingFilters";
@@ -18,10 +19,12 @@ import { StreamingTable } from "./StreamingTable";
 
 interface StreamingsClientProps {
     initialData?: any[];
+    serverError?: string;
 }
 
-export function StreamingsClient({ initialData }: StreamingsClientProps) {
+export function StreamingsClient({ initialData, serverError }: StreamingsClientProps) {
     const toast = useToast();
+    useActionError(serverError);
     const [mounted, setMounted] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
 

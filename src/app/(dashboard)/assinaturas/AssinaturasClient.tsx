@@ -1,6 +1,8 @@
 "use client";
 
 import { Plus, Search, Users, Activity, TrendingUp } from "lucide-react";
+import { useEffect } from "react";
+import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -21,14 +23,17 @@ interface AssinaturasClientProps {
         receitaMensalEstimada: number;
         totalAssinaturas: number;
     };
+    error?: string;
 }
 
 export default function AssinaturasClient({
     initialSubscriptions,
     participantes,
     streamings,
-    kpis
+    kpis,
+    error
 }: AssinaturasClientProps) {
+    useActionError(error);
     const {
         isMultipleModalOpen, setIsMultipleModalOpen,
         cancelModalOpen, setCancelModalOpen,

@@ -8,7 +8,12 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ParametrosPage() {
-    const parametros = await getParametros();
+    const res = await getParametros();
 
-    return <ParametrosClient initialData={parametros} />;
+    return (
+        <ParametrosClient
+            initialData={('data' in res && res.data) ? res.data : []}
+            error={!res.success ? "Falha ao carregar parâmetros." : undefined}
+        />
+    );
 }

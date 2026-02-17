@@ -9,12 +9,15 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useCatalogoActions } from "@/hooks/useCatalogoActions";
 import { useCatalogoStore, CatalogoItem } from "@/stores/useCatalogoStore";
+import { useActionError } from "@/hooks/useActionError";
 
 interface CatalogoClientProps {
     initialData: CatalogoItem[];
+    error?: string;
 }
 
-export function CatalogoClient({ initialData }: CatalogoClientProps) {
+export function CatalogoClient({ initialData, error }: CatalogoClientProps) {
+    useActionError(error);
     const { setItems } = useCatalogoStore();
     const {
         filteredData,

@@ -11,14 +11,7 @@ import {
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export default async function ProviderDashboardPage() {
-    const [
-        stats,
-        recentSubscriptions,
-        streamings,
-        revenueHistory,
-        participantStats,
-        participantSubscriptions
-    ] = await Promise.all([
+    const results = await Promise.all([
         getDashboardStats(),
         getRecentSubscriptions(),
         getDashboardStreamings(),
@@ -26,6 +19,18 @@ export default async function ProviderDashboardPage() {
         getParticipantStats(),
         getParticipantSubscriptions(),
     ]);
+
+    const [
+        statsRes,
+        recentSubRes,
+        streamingsRes,
+        revenueRes,
+        pStatsRes,
+        pSubRes
+    ] = results;
+
+    const hasError = results.some(r => !r.success);
+    const errorMsg = hasError ? "Algumas informações não puderam ser carregadas." : undefined;
 
     return (
         <PageContainer>
@@ -35,14 +40,15 @@ export default async function ProviderDashboardPage() {
             />
 
             <DashboardClient
-                stats={stats}
-                recentSubscriptions={recentSubscriptions}
-                streamings={streamings}
-                revenueHistory={revenueHistory}
-                participantStats={participantStats}
-                participantSubscriptions={participantSubscriptions}
+                stats={statsRes.data!}
+                recentSubscriptions={recentSubRes.data || []}
+                streamings={streamingsRes.data || []}
+                revenueHistory={revenueRes.data || []}
+                participantStats={pStatsRes.data!}
+                participantSubscriptions={pSubRes.data || []}
                 initialView="provider"
                 hideSwitcher={true}
+                error={errorMsg}
             />
         </PageContainer>
     );

@@ -14,6 +14,8 @@ import { PlanoConta } from "@prisma/client";
 import { UpgradeFeatureOverlay } from "@/components/ui/UpgradeFeatureOverlay";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useActionError } from "@/hooks/useActionError";
+import { useEffect } from "react";
 
 interface CobrancasClientProps {
     kpis: {
@@ -26,10 +28,12 @@ interface CobrancasClientProps {
     whatsappConfigurado: boolean;
     streamings: any[];
     plano: PlanoConta;
+    error?: string;
 }
 
-export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings, plano }: CobrancasClientProps) {
+export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings, plano, error }: CobrancasClientProps) {
     const router = useRouter();
+    useActionError(error);
     const {
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,

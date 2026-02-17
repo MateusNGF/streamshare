@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Mail, Users, UserPlus } from "lucide-react";
+import { useActionError } from "@/hooks/useActionError";
 import { ParticipantModal, ParticipantFormData } from "@/components/modals/ParticipantModal";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -23,14 +24,17 @@ interface ParticipantesClientProps {
     pendingInvites: PendingInvite[];
     pendingRequests: PendingRequest[];
     streamings: Streaming[];
+    error?: string;
 }
 
 export function ParticipantesClient({
     initialData,
     pendingInvites: initialInvites,
     pendingRequests: initialRequests,
-    streamings
+    streamings,
+    error
 }: ParticipantesClientProps) {
+    useActionError(error);
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeTabFromUrl = searchParams.get("tab") || "participantes";

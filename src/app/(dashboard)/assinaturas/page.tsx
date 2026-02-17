@@ -19,7 +19,7 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
     const valorParam = searchParams.valor ? JSON.parse(searchParams.valor) : null;
     const hasWhatsapp = searchParams.hasWhatsapp === "true" ? true : searchParams.hasWhatsapp === "false" ? false : undefined;
 
-    const [assinaturas, participantes, streamings, kpis] = await Promise.all([
+    const results = await Promise.all([
         getAssinaturas({
             status: searchParams.status,
             streamingId: searchParams.streaming,
@@ -34,12 +34,18 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
         getAssinaturasKPIs()
     ]);
 
+    const [assinaturasRes, participantesRes, streamingsRes, kpisRes] = results;
+
+    const hasError = results.some(r => !r.success);
+    const errorMsg = hasError ? "Algumas informações de assinaturas não puderam ser carregadas." : undefined;
+
     return (
         <AssinaturasClient
-            initialSubscriptions={assinaturas}
-            participantes={participantes}
-            streamings={streamings}
-            kpis={kpis}
+            initialSubscriptions={assinaturasRes.data || []}
+            participantes={participantesRes.data || []}
+            streamings={streamingsRes.data || []}
+            kpis={kpisRes.data || { totalAtivas: 0, totalSuspensas: 0, receitaMensalEstimada: 0, totalAssinaturas: 0 }}
+            error={errorMsg}
         />
     );
 }

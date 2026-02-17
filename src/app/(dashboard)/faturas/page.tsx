@@ -13,10 +13,13 @@ export default async function FaturasPage() {
         getResumoFaturas()
     ]);
 
+    const error = (!faturas.success || !resumo.success) ? "Falha ao carregar algumas informações de faturas." : undefined;
+
     return (
         <FaturasClient
-            faturas={faturas}
-            resumo={resumo}
+            faturas={faturas.data || []}
+            resumo={resumo.data || {}}
+            error={error}
         />
     );
 }

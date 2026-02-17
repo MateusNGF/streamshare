@@ -7,7 +7,12 @@ export const metadata = {
 };
 
 export default async function GruposPage() {
-    const grupos = await getGrupos();
+    const res = await getGrupos();
 
-    return <GruposClient initialGrupos={grupos} />;
+    return (
+        <GruposClient
+            initialGrupos={res.data || []}
+            error={!res.success ? "Falha ao carregar grupos." : undefined}
+        />
+    );
 }

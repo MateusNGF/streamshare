@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Plus, Tv } from "lucide-react";
+import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -35,10 +36,12 @@ type Grupo = {
 
 interface GruposClientProps {
     initialGrupos: Grupo[];
+    error?: string;
 }
 
-export function GruposClient({ initialGrupos }: GruposClientProps) {
+export function GruposClient({ initialGrupos, error }: GruposClientProps) {
     const toast = useToast();
+    useActionError(error);
     const [grupos, setGrupos] = useState(initialGrupos);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
