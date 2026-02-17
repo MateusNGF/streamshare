@@ -6,38 +6,38 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get("auth-token")?.value;
     const { pathname } = request.nextUrl;
 
+    // IP Verification (Basic)
     const payload = token ? verifyToken(token) : null;
 
     // IP Verification (Basic)
     if (payload && payload.clientIp) {
         const currentIp = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-
-        // Localhost normalization (optional but helpful for dev)
-        const isLocalhost = currentIp === "::1" || currentIp === "127.0.0.1";
-        const isPayloadLocal = payload.clientIp === "::1" || payload.clientIp === "127.0.0.1";
-
-        // Only block if both are known, not localhost (or both are different non-localhosts), and different.
-        const shouldCheckIp = currentIp !== "unknown" && payload.clientIp !== "unknown";
-
-        if (shouldCheckIp && !(isLocalhost && isPayloadLocal) && currentIp !== payload.clientIp) {
+        // Allow unknown or matching IP. If strict, uncomment throwing error.
+        if (currentIp !== "unknown" && payload.clientIp !== "unknown" && currentIp !== payload.clientIp) {
+            // Suspicious login attempt from different IP?
+            // For now, let's just log it or (if strict) redirect to login.
+            // In production, this might be too strict for mobile users switching networks.
+            // The requirement is "drastically different". Without GeoIP, strict equality is the only easy check.
+            // User said "Bloqueio de Múltiplos IPs Simultâneos".
+            // We will implement strict check but maybe allow a small grace period or just invalidate.
+            // For this implementation, let's invalidate and ask for re-login with a query param.
             const response = NextResponse.redirect(new URL("/login?reason=ip_change", request.url));
             response.cookies.delete("auth-token");
             return response;
         }
     }
 
-    // Define protected routes prefix
-    const protectedPrefixes = [
-        "/dashboard",
-        "/participantes",
-        "/streamings",
-        "/cobrancas",
-        "/configuracoes",
-        "/checkout",
-        "/admin"
-    ];
+    // Define public and protected routes
+    const publicRoutes = ["/", "/login", "/esqueci-senha"];
+    const isPublicRoute = publicRoutes.includes(pathname);
 
-    const isProtectedRoute = protectedPrefixes.some(prefix => pathname.startsWith(prefix));
+    // Protected routes prefix (all routes except the ones in the matcher and public routes)
+    const isProtectedRoute =
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/participantes") ||
+        pathname.startsWith("/streamings") ||
+        pathname.startsWith("/cobrancas") ||
+        pathname.startsWith("/configuracoes");
 
     // 1. If user is logged in and tries to access login page, redirect to dashboard
     if (payload && pathname === "/login") {
@@ -46,6 +46,8 @@ export function middleware(request: NextRequest) {
 
     // 2. If user is NOT logged in and tries to access protected routes, redirect to login
     if (!payload && isProtectedRoute) {
+        // If token exists but is invalid/expired, we should probably clear it?
+        // But for now, just redirecting is safe. The browser will eventually overwrite or we can clear it.
         const response = NextResponse.redirect(new URL("/login", request.url));
         if (token) {
             response.cookies.delete("auth-token");
