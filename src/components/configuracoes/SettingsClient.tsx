@@ -142,8 +142,12 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         e.preventDefault();
         setLoadingProfile(true);
         try {
-            await updateProfile(profileData);
-            showToast("Perfil atualizado com sucesso!", "success");
+            const result = await updateProfile(profileData);
+            if (result.success) {
+                showToast("Perfil atualizado com sucesso!", "success");
+            } else if (result.error) {
+                showToast(result.error, "error");
+            }
         } catch (error: any) {
             const message = error?.message || "Erro ao atualizar perfil";
             showToast(message, "error");
@@ -166,8 +170,12 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
         setLoadingAccount(true);
         try {
-            await updateAccount(accountData);
-            showToast("Informações da conta atualizadas!", "success");
+            const result = await updateAccount(accountData);
+            if (result.success) {
+                showToast("Informações da conta atualizadas!", "success");
+            } else if (result.error) {
+                showToast(result.error, "error");
+            }
         } catch (error: any) {
             const message = error?.message || "Erro ao atualizar conta";
             showToast(message, "error");
@@ -179,9 +187,13 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const onUpdateCurrency = async (newCurrency: CurrencyCode) => {
         setLoadingCurrency(true);
         try {
-            await updateCurrency(newCurrency);
-            setCurrency(newCurrency);
-            showToast("Moeda atualizada com sucesso!", "success");
+            const result = await updateCurrency(newCurrency);
+            if (result.success) {
+                setCurrency(newCurrency);
+                showToast("Moeda atualizada com sucesso!", "success");
+            } else if (result.error) {
+                showToast(result.error, "error");
+            }
         } catch (error: any) {
             const message = error?.message || "Erro ao atualizar moeda";
             showToast(message, "error");
@@ -424,7 +436,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                             showToast("Assinatura cancelada com sucesso. O acesso continua até o fim do período.", "success");
                                             setIsCancelModalOpen(false);
                                             router.refresh();
-                                        } else {
+                                        } else if ('error' in result) {
                                             showToast(result.error || "Erro ao cancelar assinatura", "error");
                                         }
                                     } catch (error) {
@@ -441,7 +453,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                                         if (result.success) {
                                             showToast("Assinatura reativada com sucesso!", "success");
                                             router.refresh();
-                                        } else {
+                                        } else if ('error' in result) {
                                             showToast(result.error || "Erro ao reativar assinatura", "error");
                                         }
                                     } catch (error) {

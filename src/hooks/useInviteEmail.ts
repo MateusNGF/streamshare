@@ -27,12 +27,16 @@ export function useInviteEmail({ onSuccess }: UseInviteEmailProps) {
 
         startTransition(async () => {
             try {
-                await inviteUser({
+                const result = await inviteUser({
                     email,
                     streamingId
                 });
-                success("Convite enviado com sucesso!");
-                onSuccess();
+                if (result.success) {
+                    success("Convite enviado com sucesso!");
+                    onSuccess();
+                } else if (result.error) {
+                    error(result.error);
+                }
             } catch (err: any) {
                 error(err.message || "Erro ao enviar convite");
             }

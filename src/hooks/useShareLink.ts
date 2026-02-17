@@ -17,10 +17,15 @@ export function useShareLink() {
         if (!streamingId) return;
         setLoadingHistory(true);
         try {
-            const data = await getStreamingLinksHistory(streamingId);
-            setHistory(data);
+            const result = await getStreamingLinksHistory(streamingId);
+            if (result.success && result.data) {
+                setHistory(result.data);
+            } else if (result.error) {
+                error(result.error);
+            }
         } catch (err) {
             console.error("Erro ao buscar histórico:", err);
+            error("Erro ao buscar histórico");
         } finally {
             setLoadingHistory(false);
         }
@@ -34,16 +39,20 @@ export function useShareLink() {
 
         startTransition(async () => {
             try {
-                const token = await generateStreamingShareLink(streamingId, expiration);
-                const baseUrl = process.env.NEXT_PUBLIC_URL || window.location.origin;
-                const url = `${baseUrl}/assinar/${token}`;
-                setGeneratedLink(url);
+                const result = await generateStreamingShareLink(streamingId, expiration);
+                if (result.success && result.data) {
+                    const baseUrl = process.env.NEXT_PUBLIC_URL || window.location.origin;
+                    const url = `${baseUrl}/assinar/${result.data}`;
+                    setGeneratedLink(url);
 
-                // Auto copy
-                navigator.clipboard.writeText(url);
-                setCopied(true);
-                success("Link copiado para a área de transferência!");
-                fetchHistory(streamingId); // Refresh history
+                    // Auto copy
+                    navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    success("Link copiado para a área de transferência!");
+                    fetchHistory(streamingId); // Refresh history
+                } else if (result.error) {
+                    error(result.error);
+                }
             } catch (err: any) {
                 error(err.message || "Erro ao gerar link");
             }
@@ -53,9 +62,13 @@ export function useShareLink() {
     const handleRevoke = async (inviteId: string, streamingId: number) => {
         startTransition(async () => {
             try {
-                await revokeStreamingLink(inviteId);
-                success("Link revogado com sucesso");
-                fetchHistory(streamingId);
+                const result = await revokeStreamingLink(inviteId);
+                if (result.success) {
+                    success("Link revogado com sucesso");
+                    fetchHistory(streamingId);
+                } else if (result.error) {
+                    error(result.error);
+                }
             } catch (err: any) {
                 error(err.message || "Erro ao revogar link");
             }

@@ -48,17 +48,28 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
         setLoading(true);
         try {
             if (selectedItem) {
-                const updated = await updateCatalogoItem(selectedItem.id, formData);
-                setData(prev => prev.map(item => item.id === updated.id ? updated : item));
-                toast.success("Serviço atualizado com sucesso!");
+                const result = await updateCatalogoItem(selectedItem.id, formData);
+                if (result.success && result.data) {
+                    setData(prev => prev.map(item => item.id === result.data.id ? result.data : item));
+                    toast.success("Serviço atualizado com sucesso!");
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                    setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
+                } else if (result.error) {
+                    toast.error(result.error);
+                }
             } else {
-                const created = await createCatalogoItem(formData);
-                setData(prev => [...prev, created]);
-                toast.success("Serviço adicionado ao catálogo!");
+                const result = await createCatalogoItem(formData);
+                if (result.success && result.data) {
+                    setData(prev => [...prev, result.data]);
+                    toast.success("Serviço adicionado ao catálogo!");
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                    setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
+                } else if (result.error) {
+                    toast.error(result.error);
+                }
             }
-            setIsModalOpen(false);
-            setSelectedItem(null);
-            setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
         } catch (error) {
             toast.error("Erro ao salvar item do catálogo");
         } finally {
@@ -70,11 +81,15 @@ export function CatalogoClient({ initialData }: CatalogoClientProps) {
         if (!selectedItem) return;
         setLoading(true);
         try {
-            await deleteCatalogoItem(selectedItem.id);
-            setData(prev => prev.filter(item => item.id !== selectedItem.id));
-            toast.success("Serviço removido do catálogo");
-            setIsDeleteModalOpen(false);
-            setSelectedItem(null);
+            const result = await deleteCatalogoItem(selectedItem.id);
+            if (result.success) {
+                setData(prev => prev.filter(item => item.id !== selectedItem.id));
+                toast.success("Serviço removido do catálogo");
+                setIsDeleteModalOpen(false);
+                setSelectedItem(null);
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
             toast.error("Erro ao excluir item do catálogo");
         } finally {

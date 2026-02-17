@@ -54,15 +54,19 @@ export function DashboardClient({
     const handleCreateStreaming = async (data: StreamingFormData) => {
         setLoading(true);
         try {
-            await createStreaming({
+            const result = await createStreaming({
                 catalogoId: parseInt(data.catalogoId),
                 apelido: data.apelido,
                 valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
-            success("Streaming criado com sucesso!");
-            setIsStreamingModalOpen(false);
-            router.refresh();
+            if (result.success) {
+                success("Streaming criado com sucesso!");
+                setIsStreamingModalOpen(false);
+                router.refresh();
+            } else if (result.error) {
+                error(result.error);
+            }
         } catch (err: any) {
             error(err?.message || "Erro ao criar streaming");
         } finally {
@@ -87,8 +91,8 @@ export function DashboardClient({
                         <button
                             onClick={() => setView("provider")}
                             className={`flex items-center gap-2 px-6 py-2.5 rounded-[18px] text-sm font-black transition-all duration-300 ${view === "provider"
-                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
                                 }`}
                         >
                             <LayoutDashboard size={16} />
@@ -98,8 +102,8 @@ export function DashboardClient({
                         <button
                             onClick={() => setView("participant")}
                             className={`flex items-center gap-2 px-6 py-2.5 rounded-[18px] text-sm font-black transition-all duration-300 ${view === "participant"
-                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
                                 }`}
                         >
                             <UserRound size={16} />

@@ -44,14 +44,18 @@ export function ShareStreamingModal({
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            const token = await generateStreamingShareLink(streamingId, expiration);
-            const url = `${window.location.origin}/assinar/${token}`;
-            setGeneratedLink(url);
+            const result = await generateStreamingShareLink(streamingId, expiration);
+            if (result.success && result.data) {
+                const url = `${window.location.origin}/assinar/${result.data}`;
+                setGeneratedLink(url);
 
-            // Auto copy
-            navigator.clipboard.writeText(url);
-            setCopied(true);
-            success("Link copiado para a área de transferência!");
+                // Auto copy
+                navigator.clipboard.writeText(url);
+                setCopied(true);
+                success("Link copiado para a área de transferência!");
+            } else if (result.error) {
+                error(result.error);
+            }
         } catch (err) {
             error("Erro ao gerar link de compartilhamento");
             console.error(err);

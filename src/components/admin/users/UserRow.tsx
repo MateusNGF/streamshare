@@ -20,11 +20,15 @@ export function UserRow({ user }: UserRowProps) {
     const handleToggleAdmin = () => {
         startTransition(async () => {
             try {
-                await toggleAdminRole(user.id);
-                if (user.isAdmin) {
-                    toast.warning("Admin removido com sucesso");
-                } else {
-                    toast.success("Admin adicionado com sucesso");
+                const result = await toggleAdminRole(user.id);
+                if (result.success) {
+                    if (user.isAdmin) {
+                        toast.warning("Admin removido com sucesso");
+                    } else {
+                        toast.success("Admin adicionado com sucesso");
+                    }
+                } else if (result.error) {
+                    toast.error(result.error);
                 }
             } catch (error) {
                 toast.error("Erro ao alterar permissão");

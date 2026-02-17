@@ -76,12 +76,19 @@ export const useCobrancaStore = create<CobrancaStore>()(
                 set({ loading: true, error: null });
 
                 try {
-                    const cobrancas = await fetchCobrancasAction(state.filters);
-                    set({
-                        cobrancas: cobrancas as CobrancaWithRelations[],
-                        loading: false,
-                        lastFetched: Date.now(),
-                    });
+                    const result = await fetchCobrancasAction(state.filters);
+                    if (result.success && result.data) {
+                        set({
+                            cobrancas: result.data as CobrancaWithRelations[],
+                            loading: false,
+                            lastFetched: Date.now(),
+                        });
+                    } else {
+                        set({
+                            error: result.error || "Erro ao carregar cobranças",
+                            loading: false,
+                        });
+                    }
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : "Erro ao carregar cobranças",
@@ -101,12 +108,19 @@ export const useCobrancaStore = create<CobrancaStore>()(
                 set({ loadingKPIs: true });
 
                 try {
-                    const kpis = await fetchKPIsAction();
-                    set({
-                        kpis,
-                        loadingKPIs: false,
-                        lastFetchedKPIs: Date.now(),
-                    });
+                    const result = await fetchKPIsAction();
+                    if (result.success && result.data) {
+                        set({
+                            kpis: result.data,
+                            loadingKPIs: false,
+                            lastFetchedKPIs: Date.now(),
+                        });
+                    } else {
+                        set({
+                            error: result.error || "Erro ao carregar KPIs",
+                            loadingKPIs: false,
+                        });
+                    }
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : "Erro ao carregar KPIs",
@@ -137,15 +151,26 @@ export const useCobrancaStore = create<CobrancaStore>()(
                 }));
 
                 try {
-                    await confirmarPagamentoAction(cobrancaId, comprovanteUrl);
+                    const result = await confirmarPagamentoAction(cobrancaId, comprovanteUrl);
 
-                    set({
-                        loading: false,
-                        lastFetched: Date.now(),
-                    });
+                    if (result.success) {
+                        set({
+                            loading: false,
+                            lastFetched: Date.now(),
+                        });
 
-                    // Refresh KPIs after payment confirmation
-                    get().fetchKPIs(true);
+                        // Refresh KPIs after payment confirmation
+                        get().fetchKPIs(true);
+                    } else {
+                        const errorMsg = result.error || "Erro ao confirmar pagamento";
+                        // Rollback on error
+                        set({
+                            cobrancas: originalCobrancas,
+                            error: errorMsg,
+                            loading: false,
+                        });
+                        throw new Error(errorMsg);
+                    }
                 } catch (error) {
                     // Rollback on error
                     set({
@@ -164,11 +189,19 @@ export const useCobrancaStore = create<CobrancaStore>()(
                 try {
                     const result = await enviarNotificacaoAction(cobrancaId);
 
-                    set({
-                        loading: false,
-                    });
-
-                    return result;
+                    if (result.success) {
+                        set({
+                            loading: false,
+                        });
+                        return result;
+                    } else {
+                        const errorMsg = result.error || "Erro ao enviar notificação";
+                        set({
+                            error: errorMsg,
+                            loading: false,
+                        });
+                        throw new Error(errorMsg);
+                    }
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : "Erro ao enviar notificação",

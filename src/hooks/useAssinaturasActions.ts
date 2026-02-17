@@ -44,10 +44,14 @@ export function useAssinaturasActions(streamings: any[]) {
         setLoading(true);
         try {
             const result = await createBulkAssinaturas(data);
-            const message = `${result.created} assinatura${result.created > 1 ? 's' : ''} criada${result.created > 1 ? 's' : ''} com sucesso!`;
-            toast.success(message);
-            setIsMultipleModalOpen(false);
-            router.refresh();
+            if (result.success && result.data) {
+                const message = `${result.data.created} assinatura${result.data.created > 1 ? 's' : ''} criada${result.data.created > 1 ? 's' : ''} com sucesso!`;
+                toast.success(message);
+                setIsMultipleModalOpen(false);
+                router.refresh();
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error: any) {
             toast.error(error.message || 'Falha ao criar assinaturas');
         } finally {
@@ -59,11 +63,15 @@ export function useAssinaturasActions(streamings: any[]) {
         if (!selectedAssinatura) return;
         setCancelling(true);
         try {
-            await cancelarAssinatura(selectedAssinatura.id, reason);
-            toast.success('Assinatura cancelada com sucesso');
-            setCancelModalOpen(false);
-            setSelectedAssinatura(null);
-            router.refresh();
+            const result = await cancelarAssinatura(selectedAssinatura.id, reason);
+            if (result.success) {
+                toast.success('Assinatura cancelada com sucesso');
+                setCancelModalOpen(false);
+                setSelectedAssinatura(null);
+                router.refresh();
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error: any) {
             toast.error(error.message || 'Falha ao cancelar assinatura');
         } finally {

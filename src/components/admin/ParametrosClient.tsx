@@ -106,8 +106,12 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
                 );
             }
 
-            await upsertParametros(parametros);
-            toast.success("Configurações salvas com sucesso!");
+            const result = await upsertParametros(parametros);
+            if (result.success) {
+                toast.success("Configurações salvas com sucesso!");
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
             toast.error("Erro ao salvar configurações");
         } finally {
@@ -129,9 +133,9 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
             });
 
             if (result.success) {
-                toast.success(result.message);
+                toast.success(result.data?.message || "Conexão SMTP testada com sucesso!");
             } else {
-                toast.error(result.message);
+                toast.error(result.error || "Erro ao testar conexão SMTP");
             }
         } catch (error) {
             toast.error("Erro ao testar conexão SMTP");
@@ -150,9 +154,9 @@ export function ParametrosClient({ initialData }: ParametrosClientProps) {
             });
 
             if (result.success) {
-                toast.success(result.message);
+                toast.success(result.data?.message || "Conexão WhatsApp testada com sucesso!");
             } else {
-                toast.error(result.message);
+                toast.error(result.error || "Erro ao testar conexão WhatsApp");
             }
         } catch (error) {
             toast.error("Erro ao testar conexão WhatsApp");

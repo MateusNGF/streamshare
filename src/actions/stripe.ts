@@ -9,7 +9,7 @@ export async function cancelSubscriptionAction(contaId: number) {
     try {
         const user = await getCurrentUser();
         if (!user) {
-            throw new Error("Não autorizado");
+            return { success: false, error: "Não autorizado", code: "UNAUTHORIZED" };
         }
 
         const acesso = await prisma.contaUsuario.findFirst({
@@ -21,7 +21,7 @@ export async function cancelSubscriptionAction(contaId: number) {
         });
 
         if (!acesso) {
-            throw new Error("Permissão negada");
+            return { success: false, error: "Permissão negada", code: "FORBIDDEN" };
         }
 
         const conta = await prisma.conta.findUnique({
@@ -29,7 +29,7 @@ export async function cancelSubscriptionAction(contaId: number) {
         });
 
         if (!conta || !conta.stripeSubscriptionId) {
-            throw new Error("Conta não encontrada ou sem assinatura ativa.");
+            return { success: false, error: "Conta não encontrada ou sem assinatura ativa.", code: "NOT_FOUND" };
         }
 
         const subscription = await stripe.subscriptions.update(
@@ -71,7 +71,7 @@ export async function reactivateSubscriptionAction(contaId: number) {
     try {
         const user = await getCurrentUser();
         if (!user) {
-            throw new Error("Não autorizado");
+            return { success: false, error: "Não autorizado", code: "UNAUTHORIZED" };
         }
 
         const acesso = await prisma.contaUsuario.findFirst({
@@ -83,7 +83,7 @@ export async function reactivateSubscriptionAction(contaId: number) {
         });
 
         if (!acesso) {
-            throw new Error("Permissão negada");
+            return { success: false, error: "Permissão negada", code: "FORBIDDEN" };
         }
 
         const conta = await prisma.conta.findUnique({
@@ -91,7 +91,7 @@ export async function reactivateSubscriptionAction(contaId: number) {
         });
 
         if (!conta || !conta.stripeSubscriptionId) {
-            throw new Error("Conta não encontrada ou sem assinatura.");
+            return { success: false, error: "Conta não encontrada ou sem assinatura.", code: "NOT_FOUND" };
         }
 
         const subscription = await stripe.subscriptions.update(

@@ -79,10 +79,12 @@ export function StreamingModal({
     useEffect(() => {
         async function fetchCatalogos() {
             try {
-                const data = await getCatalogos();
-                setCatalogos(data);
-                if (!streaming && data.length > 0 && !formData.catalogoId) {
-                    setFormData(prev => ({ ...prev, catalogoId: String(data[0].id) }));
+                const result = await getCatalogos();
+                if (result.success && result.data) {
+                    setCatalogos(result.data);
+                    if (!streaming && result.data.length > 0 && !formData.catalogoId) {
+                        setFormData(prev => ({ ...prev, catalogoId: String(result.data![0].id) }));
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching catalogos:", error);
@@ -116,8 +118,10 @@ export function StreamingModal({
         if (step === 1 && !formData.apelido && selectedCatalogo) {
             try {
                 // Auto-fill apelido with count logic from server
-                const nextNumber = await getNextStreamingNumber(Number(formData.catalogoId));
-                setFormData(prev => ({ ...prev, apelido: `${selectedCatalogo.nome} ${nextNumber}` }));
+                const result = await getNextStreamingNumber(Number(formData.catalogoId));
+                if (result.success && result.data) {
+                    setFormData(prev => ({ ...prev, apelido: `${selectedCatalogo.nome} ${result.data}` }));
+                }
             } catch (error) {
                 console.error("Error fetching next streaming number:", error);
             }
@@ -220,8 +224,10 @@ export function StreamingModal({
                                     const selectedCat = catalogos.find(c => String(c.id) === val);
                                     if (selectedCat) {
                                         try {
-                                            const nextNumber = await getNextStreamingNumber(Number(val));
-                                            setFormData(prev => ({ ...prev, apelido: `${selectedCat.nome} ${nextNumber}` }));
+                                            const result = await getNextStreamingNumber(Number(val));
+                                            if (result.success && result.data) {
+                                                setFormData(prev => ({ ...prev, apelido: `${selectedCat.nome} ${result.data}` }));
+                                            }
                                         } catch (e) {
                                             console.error(e);
                                         }

@@ -79,11 +79,15 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         if (!selectedCobrancaId) return;
         setLoading(true);
         try {
-            await confirmarPagamento(selectedCobrancaId);
-            toast.success("Pagamento confirmado com sucesso!");
-            setConfirmPaymentModalOpen(false);
-            router.refresh();
-            setTimeout(() => window.location.reload(), 500);
+            const result = await confirmarPagamento(selectedCobrancaId);
+            if (result.success) {
+                toast.success("Pagamento confirmado com sucesso!");
+                setConfirmPaymentModalOpen(false);
+                router.refresh();
+                setTimeout(() => window.location.reload(), 500);
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
             toast.error("Erro ao confirmar pagamento");
         } finally {
@@ -100,11 +104,15 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         if (!selectedCobrancaId) return;
         setLoading(true);
         try {
-            await cancelarCobranca(selectedCobrancaId);
-            toast.success("Cobrança cancelada com sucesso!");
-            setCancelModalOpen(false);
-            router.refresh();
-            setTimeout(() => window.location.reload(), 500);
+            const result = await cancelarCobranca(selectedCobrancaId);
+            if (result.success) {
+                toast.success("Cobrança cancelada com sucesso!");
+                setCancelModalOpen(false);
+                router.refresh();
+                setTimeout(() => window.location.reload(), 500);
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error: any) {
             toast.error(error.message || "Erro ao cancelar cobrança");
         } finally {
@@ -115,11 +123,15 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const handleEnviarWhatsApp = async (cobrancaId: number) => {
         try {
             const result = await enviarNotificacaoCobranca(cobrancaId);
-            if (result.manualLink) {
-                window.open(result.manualLink, '_blank');
-                toast.info("Link do WhatsApp aberto! Envie a mensagem manualmente.");
-            } else {
-                toast.success("Notificação WhatsApp enviada automaticamente!");
+            if (result.success && result.data) {
+                if (result.data.manualLink) {
+                    window.open(result.data.manualLink, '_blank');
+                    toast.info("Link do WhatsApp aberto! Envie a mensagem manualmente.");
+                } else {
+                    toast.success("Notificação WhatsApp enviada automaticamente!");
+                }
+            } else if (result.error) {
+                toast.error(result.error);
             }
         } catch (error: any) {
             toast.error(error.message || "Erro ao enviar notificação");

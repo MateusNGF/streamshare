@@ -54,8 +54,13 @@ export function GrupoRenovacaoModal({
     const loadMensagem = async () => {
         setLoading(true);
         try {
-            const texto = await gerarMensagemRenovacao(grupoId, dataReferencia);
-            setMensagem(texto);
+            const result = await gerarMensagemRenovacao(grupoId, dataReferencia);
+            if (result.success && result.data) {
+                setMensagem(result.data);
+            } else if (result.error) {
+                toast.error(result.error);
+                setMensagem("");
+            }
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Erro ao gerar mensagem");
             setMensagem("");

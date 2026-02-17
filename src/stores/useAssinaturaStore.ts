@@ -69,12 +69,19 @@ export const useAssinaturaStore = create<AssinaturaStore>()(
                     set({ loading: true, error: null });
 
                     try {
-                        const assinaturas = await fetchAssinaturasAction();
-                        set({
-                            assinaturas: assinaturas as AssinaturaWithRelations[],
-                            loading: false,
-                            lastFetched: Date.now(),
-                        });
+                        const result = await fetchAssinaturasAction();
+                        if (result.success && result.data) {
+                            set({
+                                assinaturas: result.data as AssinaturaWithRelations[],
+                                loading: false,
+                                lastFetched: Date.now(),
+                            });
+                        } else {
+                            set({
+                                error: result.error || "Erro ao carregar assinaturas",
+                                loading: false,
+                            });
+                        }
                     } catch (error) {
                         set({
                             error: error instanceof Error ? error.message : "Erro ao carregar assinaturas",
@@ -88,19 +95,22 @@ export const useAssinaturaStore = create<AssinaturaStore>()(
                     set({ loading: true, error: null });
 
                     try {
-                        const newAssinatura = await createAssinaturaAction(data);
+                        const result = await createAssinaturaAction(data);
 
-                        // Add to local state
-                        set((state) => ({
-                            assinaturas: [newAssinatura as AssinaturaWithRelations, ...state.assinaturas],
-                            loading: false,
-                            lastFetched: Date.now(),
-                        }));
+                        if (result.success && result.data) {
+                            // Add to local state
+                            set((state) => ({
+                                assinaturas: [result.data as AssinaturaWithRelations, ...state.assinaturas],
+                                loading: false,
+                                lastFetched: Date.now(),
+                            }));
 
-                        // Sync with streaming store to update slot count
-                        // This will be handled by the component triggering a streaming refresh
-
-                        return newAssinatura as AssinaturaWithRelations;
+                            return result.data as AssinaturaWithRelations;
+                        } else {
+                            const errorMsg = result.error || "Erro ao criar assinatura";
+                            set({ error: errorMsg, loading: false });
+                            throw new Error(errorMsg);
+                        }
                     } catch (error) {
                         set({
                             error: error instanceof Error ? error.message : "Erro ao criar assinatura",

@@ -26,110 +26,120 @@ export async function getCobrancas(filters?: {
     valorMax?: number;
     hasWhatsapp?: boolean;
 }) {
-    const { contaId } = await getContext();
+    try {
+        const { contaId } = await getContext();
 
-    const where: any = {
-        assinatura: {
-            participante: { contaId }
-        }
-    };
-
-    if (filters?.status) {
-        where.status = filters.status;
-    }
-
-    if (filters?.participanteId) {
-        where.assinatura = {
-            ...where.assinatura,
-            participanteId: filters.participanteId
-        };
-    }
-
-    if (filters?.mes && filters?.ano) {
-        const startDate = new Date(filters.ano, filters.mes - 1, 1);
-        const endDate = new Date(filters.ano, filters.mes, 0, 23, 59, 59);
-        where.periodoFim = { gte: startDate, lte: endDate };
-    }
-
-    if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
-        where.valor = {};
-        if (filters.valorMin !== undefined) where.valor.gte = filters.valorMin;
-        if (filters.valorMax !== undefined) where.valor.lte = filters.valorMax;
-    }
-
-    if (filters?.hasWhatsapp !== undefined) {
-        where.assinatura = {
-            ...where.assinatura,
-            participante: {
-                ...where.assinatura?.participante,
-                whatsappNumero: filters.hasWhatsapp ? { not: null } : null
+        const where: any = {
+            assinatura: {
+                participante: { contaId }
             }
         };
-    }
 
-    const cobrancas = await prisma.cobranca.findMany({
-        where,
-        include: {
-            assinatura: {
-                include: {
-                    participante: true,
-                    streaming: {
-                        include: { catalogo: true }
+        if (filters?.status) {
+            where.status = filters.status;
+        }
+
+        if (filters?.participanteId) {
+            where.assinatura = {
+                ...where.assinatura,
+                participanteId: filters.participanteId
+            };
+        }
+
+        if (filters?.mes && filters?.ano) {
+            const startDate = new Date(filters.ano, filters.mes - 1, 1);
+            const endDate = new Date(filters.ano, filters.mes, 0, 23, 59, 59);
+            where.periodoFim = { gte: startDate, lte: endDate };
+        }
+
+        if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
+            where.valor = {};
+            if (filters.valorMin !== undefined) where.valor.gte = filters.valorMin;
+            if (filters.valorMax !== undefined) where.valor.lte = filters.valorMax;
+        }
+
+        if (filters?.hasWhatsapp !== undefined) {
+            where.assinatura = {
+                ...where.assinatura,
+                participante: {
+                    ...where.assinatura?.participante,
+                    whatsappNumero: filters.hasWhatsapp ? { not: null } : null
+                }
+            };
+        }
+
+        const cobrancas = await prisma.cobranca.findMany({
+            where,
+            include: {
+                assinatura: {
+                    include: {
+                        participante: true,
+                        streaming: {
+                            include: { catalogo: true }
+                        }
                     }
                 }
-            }
-        },
-        orderBy: { dataVencimento: "desc" }
-    });
+            },
+            orderBy: { dataVencimento: "desc" }
+        });
 
-    return cobrancas;
+        return { success: true, data: cobrancas };
+    } catch (error: any) {
+        console.error("[GET_COBRANCAS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar cobranças" };
+    }
 }
 
 /**
  * Create initial charge when subscription is created
  */
 export async function criarCobrancaInicial(assinaturaId: number) {
-    await getContext(); // Validate auth
+    try {
+        await getContext(); // Validate auth
 
-    const assinatura = await prisma.assinatura.findUnique({
-        where: { id: assinaturaId }
-    });
+        const assinatura = await prisma.assinatura.findUnique({
+            where: { id: assinaturaId }
+        });
 
-    if (!assinatura) {
-        throw new Error("Assinatura não encontrada");
-    }
-
-    const periodoInicio = assinatura.dataInicio;
-
-    // Check for existing charge (Idempotency)
-    const existing = await prisma.cobranca.findFirst({
-        where: {
-            assinaturaId,
-            periodoInicio
+        if (!assinatura) {
+            return { success: false, error: "Assinatura não encontrada" };
         }
-    });
 
-    if (existing) {
-        return existing;
-    }
+        const periodoInicio = assinatura.dataInicio;
 
-    const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia);
-    const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
+        // Check for existing charge (Idempotency)
+        const existing = await prisma.cobranca.findFirst({
+            where: {
+                assinaturaId,
+                periodoInicio
+            }
+        });
 
-    const cobranca = await prisma.cobranca.create({
-        data: {
-            assinaturaId,
-            valor,
-            periodoInicio,
-            periodoFim,
-            status: assinatura.cobrancaAutomaticaPaga ? "pago" : "pendente",
-            dataPagamento: assinatura.cobrancaAutomaticaPaga ? new Date() : null,
-            dataVencimento: calcularDataVencimentoPadrao()
+        if (existing) {
+            return { success: true, data: existing };
         }
-    });
 
-    revalidatePath("/cobrancas");
-    return cobranca;
+        const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia);
+        const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
+
+        const cobranca = await prisma.cobranca.create({
+            data: {
+                assinaturaId,
+                valor,
+                periodoInicio,
+                periodoFim,
+                status: assinatura.cobrancaAutomaticaPaga ? "pago" : "pendente",
+                dataPagamento: assinatura.cobrancaAutomaticaPaga ? new Date() : null,
+                dataVencimento: calcularDataVencimentoPadrao()
+            }
+        });
+
+        revalidatePath("/cobrancas");
+        return { success: true, data: cobranca };
+    } catch (error: any) {
+        console.error("[CRIAR_COBRANCA_INICIAL_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao criar cobrança inicial" };
+    }
 }
 
 /**
@@ -139,206 +149,229 @@ export async function confirmarPagamento(
     cobrancaId: number,
     comprovanteUrl?: string
 ) {
-    const { contaId, userId } = await getContext();
+    try {
+        const { contaId, userId } = await getContext();
 
-    // Verify ownership
-    const cobranca = await prisma.cobranca.findFirst({
-        where: {
-            id: cobrancaId,
-            assinatura: {
-                participante: { contaId }
-            }
-        }
-    });
-
-    if (!cobranca) {
-        throw new Error("Cobrança não encontrada");
-    }
-
-    if (cobranca.status === StatusCobranca.pago) {
-        throw new Error("Cobrança já foi confirmada");
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-        const result = await tx.cobranca.update({
-            where: { id: cobrancaId },
-            data: {
-                status: StatusCobranca.pago,
-                dataPagamento: new Date(),
-                comprovanteUrl
-            },
-            include: {
+        // Verify ownership
+        const cobranca = await prisma.cobranca.findFirst({
+            where: {
+                id: cobrancaId,
                 assinatura: {
-                    include: {
-                        participante: true,
-                        streaming: true
-                    }
+                    participante: { contaId }
                 }
             }
         });
 
-        const agora = new Date();
-        const assinatura = result.assinatura;
+        if (!cobranca) {
+            return { success: false, error: "Cobrança não encontrada" };
+        }
 
-        // Check for activation/reactivation (D-07)
-        await billingService.avaliarAtivacaoAposPagamento(tx, {
-            assinatura: result.assinatura,
-            cobranca: result,
-            contaId,
-            agora
-        });
+        if (cobranca.status === StatusCobranca.pago) {
+            return { success: false, error: "Cobrança já foi confirmada" };
+        }
 
-        // Create notification inside transaction for the payment itself (Broadcast to Admins)
-        await tx.notificacao.create({
-            data: {
+        const updated = await prisma.$transaction(async (tx) => {
+            const result = await tx.cobranca.update({
+                where: { id: cobrancaId },
+                data: {
+                    status: StatusCobranca.pago,
+                    dataPagamento: new Date(),
+                    comprovanteUrl
+                },
+                include: {
+                    assinatura: {
+                        include: {
+                            participante: true,
+                            streaming: true
+                        }
+                    }
+                }
+            });
+
+            const agora = new Date();
+            const assinatura = result.assinatura;
+
+            // Check for activation/reactivation (D-07)
+            await billingService.avaliarAtivacaoAposPagamento(tx, {
+                assinatura: result.assinatura,
+                cobranca: result,
                 contaId,
-                usuarioId: null,
-                tipo: "cobranca_confirmada",
-                titulo: `Pagamento confirmado`,
-                descricao: `Pagamento de ${result.assinatura.participante.nome} no valor de ${result.valor} foi confirmado.`,
-                entidadeId: cobrancaId,
-                lida: false
-            }
+                agora
+            });
+
+            // Create notification inside transaction for the payment itself (Broadcast to Admins)
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: null,
+                    tipo: "cobranca_confirmada",
+                    titulo: `Pagamento confirmado`,
+                    descricao: `Pagamento de ${result.assinatura.participante.nome} no valor de ${result.valor} foi confirmado.`,
+                    entidadeId: cobrancaId,
+                    lida: false
+                }
+            });
+
+            return result;
         });
 
-        return result;
-    });
-
-    revalidatePath("/cobrancas");
-    return updated;
+        revalidatePath("/cobrancas");
+        return { success: true, data: updated };
+    } catch (error: any) {
+        console.error("[CONFIRMAR_PAGAMENTO_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao confirmar pagamento" };
+    }
 }
 
 /**
  * Cancel a charge
  */
 export async function cancelarCobranca(cobrancaId: number) {
-    const { contaId, userId } = await getContext();
+    try {
+        const { contaId, userId } = await getContext();
 
-    // Verify ownership
-    const cobranca = await prisma.cobranca.findFirst({
-        where: {
-            id: cobrancaId,
-            assinatura: {
-                participante: { contaId }
-            }
-        }
-    });
-
-    if (!cobranca) {
-        throw new Error("Cobrança não encontrada");
-    }
-
-    if (cobranca.status === StatusCobranca.pago) {
-        throw new Error("Não é possível cancelar uma cobrança já paga");
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-        const result = await tx.cobranca.update({
-            where: { id: cobrancaId },
-            data: {
-                status: StatusCobranca.cancelado,
-                deletedAt: new Date()
-            },
-            include: {
+        // Verify ownership
+        const cobranca = await prisma.cobranca.findFirst({
+            where: {
+                id: cobrancaId,
                 assinatura: {
-                    include: {
-                        participante: true
-                    }
+                    participante: { contaId }
                 }
             }
         });
 
-        // Create notification inside transaction (Broadcast to Admins)
-        await tx.notificacao.create({
-            data: {
-                contaId,
-                usuarioId: null,
-                tipo: "cobranca_cancelada",
-                titulo: `Cobrança cancelada`,
-                descricao: `Cobrança de ${result.assinatura.participante.nome} foi cancelada.`,
-                entidadeId: cobrancaId,
-                lida: false
-            }
+        if (!cobranca) {
+            return { success: false, error: "Cobrança não encontrada" };
+        }
+
+        if (cobranca.status === StatusCobranca.pago) {
+            return { success: false, error: "Não é possível cancelar uma cobrança já paga" };
+        }
+
+        const updated = await prisma.$transaction(async (tx) => {
+            const result = await tx.cobranca.update({
+                where: { id: cobrancaId },
+                data: {
+                    status: StatusCobranca.cancelado,
+                    deletedAt: new Date()
+                },
+                include: {
+                    assinatura: {
+                        include: {
+                            participante: true
+                        }
+                    }
+                }
+            });
+
+            // Create notification inside transaction (Broadcast to Admins)
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: null,
+                    tipo: "cobranca_cancelada",
+                    titulo: `Cobrança cancelada`,
+                    descricao: `Cobrança de ${result.assinatura.participante.nome} foi cancelada.`,
+                    entidadeId: cobrancaId,
+                    lida: false
+                }
+            });
+
+            return result;
         });
 
-        return result;
-    });
-
-    revalidatePath("/cobrancas");
-    return updated;
+        revalidatePath("/cobrancas");
+        return { success: true, data: updated };
+    } catch (error: any) {
+        console.error("[CANCELAR_COBRANCA_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao cancelar cobrança" };
+    }
 }
 
 /**
  * Get financial KPIs for dashboard
  */
 export async function getKPIsFinanceiros() {
-    const { contaId } = await getContext();
-    const agora = new Date();
+    try {
+        const { contaId } = await getContext();
+        const agora = new Date();
 
-    // 1. Group by status to get counts and sums
-    const statsByStatus = await prisma.cobranca.groupBy({
-        by: ["status"],
-        where: {
-            assinatura: {
-                participante: { contaId }
-            }
-        },
-        _sum: {
-            valor: true
-        },
-        _count: {
-            _all: true
-        }
-    });
-
-    // 2. Specialized aggregate for "em atraso" (pendente/atrasado and expired)
-    const overdueStats = await prisma.cobranca.aggregate({
-        where: {
-            assinatura: {
-                participante: { contaId }
+        // 1. Group by status to get counts and sums
+        const statsByStatus = await prisma.cobranca.groupBy({
+            by: ["status"],
+            where: {
+                assinatura: {
+                    participante: { contaId }
+                }
             },
-            status: { in: [StatusCobranca.pendente, StatusCobranca.atrasado] },
-            dataVencimento: { lt: agora }
-        },
-        _sum: {
-            valor: true
-        }
-    });
+            _sum: {
+                valor: true
+            },
+            _count: {
+                _all: true
+            }
+        });
 
-    // Map results
-    const statusMap = statsByStatus.reduce((acc, curr) => {
-        acc[curr.status] = {
-            sum: curr._sum.valor?.toNumber() || 0,
-            count: curr._count._all
+        // 2. Specialized aggregate for "em atraso" (pendente/atrasado and expired)
+        const overdueStats = await prisma.cobranca.aggregate({
+            where: {
+                assinatura: {
+                    participante: { contaId }
+                },
+                status: { in: [StatusCobranca.pendente, StatusCobranca.atrasado] },
+                dataVencimento: { lt: agora }
+            },
+            _sum: {
+                valor: true
+            }
+        });
+
+        // Map results
+        const statusMap = statsByStatus.reduce((acc, curr) => {
+            acc[curr.status] = {
+                sum: curr._sum.valor?.toNumber() || 0,
+                count: curr._count._all
+            };
+            return acc;
+        }, {} as Record<StatusCobranca, { sum: number, count: number }>);
+
+        const receitaConfirmada = statusMap[StatusCobranca.pago]?.sum || 0;
+        const totalPendente = statusMap[StatusCobranca.pendente]?.sum || 0;
+        const emAtraso = overdueStats._sum.valor?.toNumber() || 0;
+        const totalCobrancas = statsByStatus.reduce((sum, curr) => sum + curr._count._all, 0);
+
+        return {
+            success: true,
+            data: {
+                totalPendente,
+                receitaConfirmada,
+                emAtraso,
+                totalCobrancas
+            }
         };
-        return acc;
-    }, {} as Record<StatusCobranca, { sum: number, count: number }>);
-
-    const receitaConfirmada = statusMap[StatusCobranca.pago]?.sum || 0;
-    const totalPendente = statusMap[StatusCobranca.pendente]?.sum || 0;
-    const emAtraso = overdueStats._sum.valor?.toNumber() || 0;
-    const totalCobrancas = statsByStatus.reduce((sum, curr) => sum + curr._count._all, 0);
-
-    return {
-        totalPendente,
-        receitaConfirmada,
-        emAtraso,
-        totalCobrancas
-    };
+    } catch (error: any) {
+        console.error("[GET_KPIS_FINANCEIROS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar KPIs financeiros" };
+    }
 }
 
 /**
  * Renew charges for active subscriptions (CRON job or manual trigger)
  */
 export async function renovarCobrancas() {
-    const { contaId } = await getContext();
-    const { billingService } = await import("@/services/billing-service");
+    try {
+        const { contaId } = await getContext();
+        const { billingService } = await import("@/services/billing-service");
 
-    const result = await billingService.processarRenovacoes(contaId);
+        const result = await billingService.processarRenovacoes(contaId);
 
-    revalidatePath("/cobrancas");
+        revalidatePath("/cobrancas");
 
-    return result;
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("[RENOVAR_COBRANCAS_ERROR]", error);
+        return { success: false, error: "Erro ao renovar cobranças" };
+    }
 }
 
 /**
@@ -349,163 +382,168 @@ export async function renovarCobrancas() {
  */
 export async function enviarNotificacaoCobranca(
     cobrancaId: number
-): Promise<EnviarNotificacaoResult> {
-    const { contaId } = await getContext();
+): Promise<any> {
+    try {
+        const { contaId } = await getContext();
 
-    // Buscar cobrança com todos os relacionamentos necessários
-    const cobranca = await prisma.cobranca.findUnique({
-        where: { id: cobrancaId },
-        include: {
-            assinatura: {
-                include: {
-                    participante: true,
-                    streaming: { include: { catalogo: true } },
+        // Buscar cobrança com todos os relacionamentos necessários
+        const cobranca = await prisma.cobranca.findUnique({
+            where: { id: cobrancaId },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: true,
+                        streaming: { include: { catalogo: true } },
+                    },
                 },
             },
-        },
-    });
+        });
 
-    if (!cobranca) {
-        throw new Error("Cobrança não encontrada");
-    }
-
-    if (cobranca.assinatura.participante.contaId !== contaId) {
-        throw new Error("Sem permissão para acessar esta cobrança");
-    }
-
-    // Verificar se participante tem WhatsApp
-    if (!cobranca.assinatura.participante.whatsappNumero) {
-        throw new Error("Participante não possui número de WhatsApp cadastrado");
-    }
-
-    // Buscar configuração do WhatsApp
-    const whatsappConfig = await prisma.whatsAppConfig.findUnique({
-        where: { contaId },
-        select: { id: true, isAtivo: true }
-    });
-
-    // Importar serviço WhatsApp
-    const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
-    const { TipoNotificacaoWhatsApp } = await import("@prisma/client");
-    const { differenceInDays } = await import("date-fns");
-
-    // Determinar tipo de notificação e mensagem baseado no status
-    let tipo: typeof TipoNotificacaoWhatsApp[keyof typeof TipoNotificacaoWhatsApp];
-    let mensagem: string;
-
-    const participante = cobranca.assinatura.participante.nome;
-    const streaming = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
-
-    // Fetch user's currency preference
-    const conta = await prisma.conta.findUnique({
-        where: { id: cobranca.assinatura.participante.contaId },
-        select: { moedaPreferencia: true }
-    });
-
-    const { formatCurrency } = await import("@/lib/formatCurrency");
-    const valor = formatCurrency(cobranca.valor.toNumber(), (conta?.moedaPreferencia as CurrencyCode) || 'BRL');
-
-    switch (cobranca.status) {
-        case 'pendente': {
-            const diasRestantes = differenceInDays(cobranca.dataVencimento, new Date());
-            tipo = 'cobranca_vencendo' as any;
-            mensagem = whatsappTemplates.cobrancaVencendo(participante, streaming, valor, diasRestantes);
-            break;
+        if (!cobranca) {
+            return { success: false, error: "Cobrança não encontrada" };
         }
 
-        case 'atrasado': {
-            const diasAtraso = differenceInDays(new Date(), cobranca.dataVencimento);
-            tipo = 'cobranca_atrasada' as any;
-            mensagem = whatsappTemplates.cobrancaAtrasada(participante, streaming, valor, diasAtraso);
-            break;
+        if (cobranca.assinatura.participante.contaId !== contaId) {
+            return { success: false, error: "Sem permissão para acessar esta cobrança" };
         }
 
-        case 'pago': {
-            tipo = 'pagamento_confirmado' as any;
-            mensagem = whatsappTemplates.pagamentoConfirmado(participante, streaming, valor);
-            break;
+        // Verificar se participante tem WhatsApp
+        if (!cobranca.assinatura.participante.whatsappNumero) {
+            return { success: false, error: "Participante não possui número de WhatsApp cadastrado" };
         }
 
-        default:
-            throw new Error("Status da cobrança não permite envio de notificação");
-    }
+        // Buscar configuração do WhatsApp
+        const whatsappConfig = await prisma.whatsAppConfig.findUnique({
+            where: { contaId },
+            select: { id: true, isAtivo: true }
+        });
 
-    // **SE NÃO CONFIGURADO: Retornar link wa.me para envio manual**
-    if (!whatsappConfig || !whatsappConfig.isAtivo) {
-        try {
-            const { generateWhatsAppLink } = await import("@/lib/whatsapp-link-utils");
-            const link = generateWhatsAppLink(
-                cobranca.assinatura.participante.whatsappNumero,
-                mensagem
-            );
+        // Importar serviço WhatsApp
+        const { sendWhatsAppNotification, whatsappTemplates } = await import("@/lib/whatsapp-service");
+        const { TipoNotificacaoWhatsApp } = await import("@prisma/client");
+        const { differenceInDays } = await import("date-fns");
 
-            // Criar log de tentativa manual (não bloqueia se falhar)
-            try {
-                if (whatsappConfig?.id) {
-                    await prisma.whatsAppLog.create({
-                        data: {
-                            configId: whatsappConfig.id,
-                            participanteId: cobranca.assinatura.participanteId,
-                            tipo,
-                            numeroDestino: cobranca.assinatura.participante.whatsappNumero,
-                            mensagem,
-                            enviado: false,
-                            erro: "Envio manual via wa.me - WhatsApp não configurado"
-                        }
-                    });
-                }
-            } catch (logError) {
-                console.error('[WhatsApp] Falha ao criar log de envio manual:', logError);
-                // Não bloqueia o fluxo - log é secundário
+        // Determinar tipo de notificação e mensagem baseado no status
+        let tipo: typeof TipoNotificacaoWhatsApp[keyof typeof TipoNotificacaoWhatsApp];
+        let mensagem: string;
+
+        const participante = cobranca.assinatura.participante.nome;
+        const streaming = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
+
+        // Fetch user's currency preference
+        const conta = await prisma.conta.findUnique({
+            where: { id: cobranca.assinatura.participante.contaId },
+            select: { moedaPreferencia: true }
+        });
+
+        const { formatCurrency } = await import("@/lib/formatCurrency");
+        const valor = formatCurrency(cobranca.valor.toNumber(), (conta?.moedaPreferencia as CurrencyCode) || 'BRL');
+
+        switch (cobranca.status) {
+            case 'pendente': {
+                const diasRestantes = differenceInDays(cobranca.dataVencimento, new Date());
+                tipo = 'cobranca_vencendo' as any;
+                mensagem = whatsappTemplates.cobrancaVencendo(participante, streaming, valor, diasRestantes);
+                break;
             }
 
-            return {
-                success: true,
-                manualLink: link,
-                message: "Abra o link para enviar manualmente pelo WhatsApp"
-            };
-        } catch (linkError) {
-            throw new Error(
-                `Erro ao gerar link WhatsApp: ${(linkError as Error).message}`
-            );
+            case 'atrasado': {
+                const diasAtraso = differenceInDays(new Date(), cobranca.dataVencimento);
+                tipo = 'cobranca_atrasada' as any;
+                mensagem = whatsappTemplates.cobrancaAtrasada(participante, streaming, valor, diasAtraso);
+                break;
+            }
+
+            case 'pago': {
+                tipo = 'pagamento_confirmado' as any;
+                mensagem = whatsappTemplates.pagamentoConfirmado(participante, streaming, valor);
+                break;
+            }
+
+            default:
+                return { success: false, error: "Status da cobrança não permite envio de notificação" };
         }
-    }
 
-    // **VERIFICAR LOGS RECENTES (Anti-spam)**
-    const { subHours, formatDistanceToNow } = await import("date-fns");
-    const { ptBR } = await import("date-fns/locale");
+        // **SE NÃO CONFIGURADO: Retornar link wa.me para envio manual**
+        if (!whatsappConfig || !whatsappConfig.isAtivo) {
+            try {
+                const { generateWhatsAppLink } = await import("@/lib/whatsapp-link-utils");
+                const link = generateWhatsAppLink(
+                    cobranca.assinatura.participante.whatsappNumero,
+                    mensagem
+                );
 
-    const ultimoLog = await prisma.whatsAppLog.findFirst({
-        where: {
-            configId: whatsappConfig.id,
-            participanteId: cobranca.assinatura.participanteId,
-            createdAt: { gte: subHours(new Date(), 24) },
-            enviado: true
-        },
-        orderBy: { createdAt: 'desc' }
-    });
+                // Criar log de tentativa manual (não bloqueia se falhar)
+                try {
+                    if (whatsappConfig?.id) {
+                        await prisma.whatsAppLog.create({
+                            data: {
+                                configId: whatsappConfig.id,
+                                participanteId: cobranca.assinatura.participanteId,
+                                tipo,
+                                numeroDestino: cobranca.assinatura.participante.whatsappNumero,
+                                mensagem,
+                                enviado: false,
+                                erro: "Envio manual via wa.me - WhatsApp não configurado"
+                            }
+                        });
+                    }
+                } catch (logError) {
+                    console.error('[WhatsApp] Falha ao criar log de envio manual:', logError);
+                    // Não bloqueia o fluxo - log é secundário
+                }
 
-    if (ultimoLog) {
-        const tempoDecorrido = formatDistanceToNow(new Date(ultimoLog.createdAt), {
-            addSuffix: true,
-            locale: ptBR
+                return {
+                    success: true,
+                    data: {
+                        manualLink: link,
+                        message: "Abra o link para enviar manualmente pelo WhatsApp"
+                    }
+                };
+            } catch (linkError: any) {
+                return { success: false, error: `Erro ao gerar link WhatsApp: ${linkError.message}` };
+            }
+        }
+
+        // **VERIFICAR LOGS RECENTES (Anti-spam)**
+        const { subHours, formatDistanceToNow } = await import("date-fns");
+        const { ptBR } = await import("date-fns/locale");
+
+        const ultimoLog = await prisma.whatsAppLog.findFirst({
+            where: {
+                configId: whatsappConfig.id,
+                participanteId: cobranca.assinatura.participanteId,
+                createdAt: { gte: subHours(new Date(), 24) },
+                enviado: true
+            },
+            orderBy: { createdAt: 'desc' }
         });
-        throw new Error(`Já foi enviada uma notificação WhatsApp ${tempoDecorrido}. Aguarde 24 horas para enviar novamente.`);
+
+        if (ultimoLog) {
+            const tempoDecorrido = formatDistanceToNow(new Date(ultimoLog.createdAt), {
+                addSuffix: true,
+                locale: ptBR
+            });
+            return { success: false, error: `Já foi enviada uma notificação WhatsApp ${tempoDecorrido}. Aguarde 24 horas para enviar novamente.` };
+        }
+
+        // **SE CONFIGURADO: Enviar via Twilio API**
+        const result = await sendWhatsAppNotification(
+            contaId,
+            tipo,
+            cobranca.assinatura.participanteId,
+            mensagem
+        );
+
+        if (!result.success) {
+            const errorMsg = ('error' in result ? result.error : undefined) || ('reason' in result ? result.reason : undefined) || "Erro ao enviar notificação";
+            return { success: false, error: errorMsg };
+        }
+
+        revalidatePath("/cobrancas");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[ENVIAR_NOTIFICACAO_COBRANCA_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao enviar notificação" };
     }
-
-    // **SE CONFIGURADO: Enviar via Twilio API**
-    const result = await sendWhatsAppNotification(
-        contaId,
-        tipo,
-        cobranca.assinatura.participanteId,
-        mensagem
-    );
-
-    if (!result.success) {
-        const errorMsg = ('error' in result ? result.error : undefined) || ('reason' in result ? result.reason : undefined) || "Erro ao enviar notificação";
-        throw new Error(errorMsg);
-    }
-
-    revalidatePath("/cobrancas");
-    return { success: true };
 }

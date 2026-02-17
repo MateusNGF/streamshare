@@ -24,14 +24,14 @@ export function useSupportForm({ onSuccess, isOpen }: UseSupportFormProps) {
     useEffect(() => {
         const loadUser = async () => {
             try {
-                const user = await getCurrentUserAction();
-                if (user) {
+                const result = await getCurrentUserAction();
+                if (result.success && result.data) {
                     setIsLoggedIn(true);
                     setFormData(prev => ({
                         ...prev,
-                        nome: user.nome || "",
-                        email: user.email || "",
-                        usuarioId: user.id
+                        nome: result.data.nome || "",
+                        email: result.data.email || "",
+                        usuarioId: result.data.id
                     }));
                 } else {
                     setIsLoggedIn(false);

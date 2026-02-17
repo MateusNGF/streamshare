@@ -72,11 +72,15 @@ export function GruposClient({ initialGrupos }: GruposClientProps) {
 
         startTransition(async () => {
             try {
-                await deleteGrupo(selectedGrupo.id);
-                setGrupos((prev) => prev.filter((g) => g.id !== selectedGrupo.id));
-                toast.success("Grupo excluído com sucesso!");
-                setIsDeleteModalOpen(false);
-                setSelectedGrupo(null);
+                const result = await deleteGrupo(selectedGrupo.id);
+                if (result.success) {
+                    setGrupos((prev) => prev.filter((g) => g.id !== selectedGrupo.id));
+                    toast.success("Grupo excluído com sucesso!");
+                    setIsDeleteModalOpen(false);
+                    setSelectedGrupo(null);
+                } else if (result.error) {
+                    toast.error(result.error);
+                }
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Erro ao excluir grupo");
             }

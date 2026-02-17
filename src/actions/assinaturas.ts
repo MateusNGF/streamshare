@@ -9,37 +9,42 @@ import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
 
 export async function getAssinaturasKPIs() {
-    const { contaId } = await getContext();
+    try {
+        const { contaId } = await getContext();
 
-    const stats = await prisma.assinatura.groupBy({
-        by: ['status'],
-        where: { participante: { contaId } },
-        _count: { id: true },
-        _sum: { valor: true }
-    });
+        const stats = await prisma.assinatura.groupBy({
+            by: ['status'],
+            where: { participante: { contaId } },
+            _count: { id: true },
+            _sum: { valor: true }
+        });
 
-    const kpis = {
-        totalAtivas: 0,
-        totalSuspensas: 0,
-        totalPendentes: 0,
-        receitaMensalEstimada: 0,
-        totalAssinaturas: 0
-    };
+        const kpis = {
+            totalAtivas: 0,
+            totalSuspensas: 0,
+            totalPendentes: 0,
+            receitaMensalEstimada: 0,
+            totalAssinaturas: 0
+        };
 
-    stats.forEach(stat => {
-        kpis.totalAssinaturas += stat._count.id;
-        if (stat.status === 'ativa') {
-            kpis.totalAtivas = stat._count.id;
-            kpis.receitaMensalEstimada += Number(stat._sum.valor || 0);
-        } else if (stat.status === 'suspensa') {
-            kpis.totalSuspensas = stat._count.id;
-        } else if (stat.status === 'pendente') {
-            kpis.totalPendentes = stat._count.id;
-            kpis.receitaMensalEstimada += Number(stat._sum.valor || 0);
-        }
-    });
+        stats.forEach(stat => {
+            kpis.totalAssinaturas += stat._count.id;
+            if (stat.status === 'ativa') {
+                kpis.totalAtivas = stat._count.id;
+                kpis.receitaMensalEstimada += Number(stat._sum.valor || 0);
+            } else if (stat.status === 'suspensa') {
+                kpis.totalSuspensas = stat._count.id;
+            } else if (stat.status === 'pendente') {
+                kpis.totalPendentes = stat._count.id;
+                kpis.receitaMensalEstimada += Number(stat._sum.valor || 0);
+            }
+        });
 
-    return kpis;
+        return { success: true, data: kpis };
+    } catch (error: any) {
+        console.error("[GET_ASSINATURAS_KPIS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar KPIs de assinaturas" };
+    }
 }
 import { subscriptionValidator } from "@/services/subscription-validator";
 
@@ -52,295 +57,307 @@ export async function getAssinaturas(filters?: {
     valorMax?: number;
     hasWhatsapp?: boolean;
 }) {
-    const { contaId } = await getContext();
+    try {
+        const { contaId } = await getContext();
 
-    const whereClause: any = {
-        participante: { contaId },
-    };
-
-    if (filters?.status && filters.status !== "all") {
-        whereClause.status = filters.status;
-    } else {
-        whereClause.status = { not: StatusAssinatura.cancelada };
-    }
-
-    if (filters?.streamingId && filters.streamingId !== "all") {
-        whereClause.streamingId = parseInt(filters.streamingId);
-    }
-
-    if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
-        whereClause.participante = {
-            ...whereClause.participante,
-            nome: {
-                contains: filters.searchTerm,
-                mode: 'insensitive'
-            }
+        const whereClause: any = {
+            participante: { contaId },
         };
-    }
 
-    if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
-        whereClause.valor = {};
-        if (filters.valorMin !== undefined) whereClause.valor.gte = filters.valorMin;
-        if (filters.valorMax !== undefined) whereClause.valor.lte = filters.valorMax;
-    }
-
-    if (filters?.hasWhatsapp !== undefined) {
-        whereClause.participante = {
-            ...whereClause.participante,
-            whatsappNumero: filters.hasWhatsapp ? { not: null } : null
-        };
-    }
-
-    if (filters?.dataInicioRange) {
-        try {
-            const range = JSON.parse(filters.dataInicioRange);
-            if (range.from || range.to) {
-                whereClause.dataInicio = {};
-                if (range.from) whereClause.dataInicio.gte = new Date(range.from);
-                if (range.to) whereClause.dataInicio.lte = new Date(range.to);
-            }
-        } catch (e) {
-            console.error("Error parsing dataInicioRange", e);
+        if (filters?.status && filters.status !== "all") {
+            whereClause.status = filters.status;
+        } else {
+            whereClause.status = { not: StatusAssinatura.cancelada };
         }
-    }
 
-    return prisma.assinatura.findMany({
-        where: whereClause,
-        include: {
-            participante: true,
-            streaming: {
-                include: { catalogo: true }
-            },
-            cobrancas: {
-                orderBy: { periodoFim: "desc" }
-            },
-            canceladoPor: {
-                select: {
-                    id: true,
-                    nome: true,
-                    email: true
+        if (filters?.streamingId && filters.streamingId !== "all") {
+            whereClause.streamingId = parseInt(filters.streamingId);
+        }
+
+        if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
+            whereClause.participante = {
+                ...whereClause.participante,
+                nome: {
+                    contains: filters.searchTerm,
+                    mode: 'insensitive'
                 }
+            };
+        }
+
+        if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
+            whereClause.valor = {};
+            if (filters.valorMin !== undefined) whereClause.valor.gte = filters.valorMin;
+            if (filters.valorMax !== undefined) whereClause.valor.lte = filters.valorMax;
+        }
+
+        if (filters?.hasWhatsapp !== undefined) {
+            whereClause.participante = {
+                ...whereClause.participante,
+                whatsappNumero: filters.hasWhatsapp ? { not: null } : null
+            };
+        }
+
+        if (filters?.dataInicioRange) {
+            try {
+                const range = JSON.parse(filters.dataInicioRange);
+                if (range.from || range.to) {
+                    whereClause.dataInicio = {};
+                    if (range.from) whereClause.dataInicio.gte = new Date(range.from);
+                    if (range.to) whereClause.dataInicio.lte = new Date(range.to);
+                }
+            } catch (e) {
+                console.error("Error parsing dataInicioRange", e);
             }
-        },
-        orderBy: { createdAt: "desc" },
-    });
+        }
+
+        const data = await prisma.assinatura.findMany({
+            where: whereClause,
+            include: {
+                participante: true,
+                streaming: {
+                    include: { catalogo: true }
+                },
+                cobrancas: {
+                    orderBy: { periodoFim: "desc" }
+                },
+                canceladoPor: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        email: true
+                    }
+                }
+            },
+            orderBy: { createdAt: "desc" },
+        });
+
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_ASSINATURAS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar assinaturas" };
+    }
 }
 
 export async function createAssinatura(data: CreateSubscriptionDTO) {
-    const { contaId, userId } = await getContext();
+    try {
+        const { contaId, userId } = await getContext();
 
-    // 1. Validations (SRP - Delegated to Validator)
-    subscriptionValidator.validateValues(data.valor);
+        // 1. Validations (SRP - Delegated to Validator)
+        subscriptionValidator.validateValues(data.valor);
 
-    // Ensure dataInicio is a Date object
-    const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
-    subscriptionValidator.validateDates(dataInicio);
+        // Ensure dataInicio is a Date object
+        const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
+        subscriptionValidator.validateDates(dataInicio);
 
-    // 2. Transaction (Atomicity)
-    const result = await prisma.$transaction(async (tx) => {
-        // Business Checks
-        const streaming = await subscriptionValidator.validateStreamingAccess(data.streamingId, contaId);
-        subscriptionValidator.validateSlotAvailability(streaming);
-        await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId);
+        // 2. Transaction (Atomicity)
+        const result = await prisma.$transaction(async (tx) => {
+            // Business Checks
+            const streaming = await subscriptionValidator.validateStreamingAccess(data.streamingId, contaId);
+            subscriptionValidator.validateSlotAvailability(streaming);
+            await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId);
 
-        // Create Subscription
-        const assinatura = await tx.assinatura.create({
-            data: {
-                participanteId: data.participanteId,
-                streamingId: data.streamingId,
+            // Create Subscription
+            const assinatura = await tx.assinatura.create({
+                data: {
+                    participanteId: data.participanteId,
+                    streamingId: data.streamingId,
+                    frequencia: data.frequencia,
+                    valor: data.valor,
+                    dataInicio: dataInicio,
+                    status: (data.cobrancaAutomaticaPaga ?? false) ? StatusAssinatura.ativa : StatusAssinatura.pendente,
+                    cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
+                },
+            });
+
+            // Create Initial Charge (Delegated to Billing Service)
+            const cobranca = await billingService.gerarCobrancaInicial(tx, {
+                assinaturaId: assinatura.id,
+                valorMensal: data.valor,
                 frequencia: data.frequencia,
-                valor: data.valor,
-                dataInicio: dataInicio,
-                status: (data.cobrancaAutomaticaPaga ?? false) ? StatusAssinatura.ativa : StatusAssinatura.pendente,
-                cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
-            },
+                dataInicio,
+                pago: !!data.cobrancaAutomaticaPaga
+            });
+
+            const participante = await tx.participante.findUnique({
+                where: { id: data.participanteId },
+                select: { nome: true, contaId: true, userId: true },
+            });
+
+            // System Notification
+            // User requested: Notifications must refer to the user (subscription owner)
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: participante?.userId || userId, // Target participant if linked, otherwise creator/admin
+                    tipo: "assinatura_criada",
+                    titulo: `Nova assinatura criada`,
+                    descricao: `Assinatura de ${streaming.catalogo.nome} para ${participante?.nome || 'participante'} foi criada.`,
+                    entidadeId: assinatura.id,
+                    lida: false
+                }
+            });
+
+            return { assinatura, cobranca, participante, streaming };
         });
 
-        // Create Initial Charge (Delegated to Billing Service)
-        const cobranca = await billingService.gerarCobrancaInicial(tx, {
-            assinaturaId: assinatura.id,
-            valorMensal: data.valor,
-            frequencia: data.frequencia,
-            dataInicio,
-            pago: !!data.cobrancaAutomaticaPaga
-        });
+        // 3. Side Effects (Async Notifications)
+        await sendWhatsAppSafely(result, data.valor, dataInicio);
 
-        const participante = await tx.participante.findUnique({
-            where: { id: data.participanteId },
-            select: { nome: true, contaId: true, userId: true },
-        });
-
-        // System Notification
-        // User requested: Notifications must refer to the user (subscription owner)
-        await tx.notificacao.create({
-            data: {
-                contaId,
-                usuarioId: participante?.userId || userId, // Target participant if linked, otherwise creator/admin
-                tipo: "assinatura_criada",
-                titulo: `Nova assinatura criada`,
-                descricao: `Assinatura de ${streaming.catalogo.nome} para ${participante?.nome || 'participante'} foi criada.`,
-                entidadeId: assinatura.id,
-                lida: false
-            }
-        });
-
-        return { assinatura, cobranca, participante, streaming };
-    });
-
-    // 3. Side Effects (Async Notifications)
-    await sendWhatsAppSafely(result, data.valor, dataInicio);
-
-    revalidateAllPaths();
-    return result.assinatura;
+        revalidateAllPaths();
+        return { success: true, data: result.assinatura };
+    } catch (error: any) {
+        console.error("[CREATE_ASSINATURA_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao criar assinatura" };
+    }
 }
 
 export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
-    const { contaId, userId } = await getContext();
-    const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
-    const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
+    try {
+        const { contaId, userId } = await getContext();
+        const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
+        const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
 
-    await prisma.$transaction(async (tx) => {
-        // Bulk validations logic...
-        // For brevity and considering the "turbo" nature, we'll keep the logic inline but clean it up if needed.
-        // Actually, let's reuse the validator where possible or keep specific bulk logic here.
+        await prisma.$transaction(async (tx) => {
+            const validStreamings = new Map();
 
-        // ... (preserving bulk logic flows but cleaning up)
-        // Note: Full refactor of bulk logic to use single-item validators in a loop or optimized batch checks.
-        // Given complexity, we will keep the optimized batch fetching pattern from original code but clean it up.
-
-        const validStreamings = new Map();
-
-        // 1. Validate Streamings & Slots
-        for (const ass of data.assinaturas) {
-            if (validStreamings.has(ass.streamingId)) continue;
-            // Uses standard validator but we need the object return, so we might need to adjust or call finding manually.
-            const streaming = await tx.streaming.findUnique({
-                where: { id: ass.streamingId },
-                include: { catalogo: true, _count: { select: { assinaturas: { where: { status: { in: ['ativa', 'suspensa', 'pendente'] } } } } } }
-            });
-
-            if (!streaming) throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
-            if (streaming.contaId !== contaId) throw new Error(`Sem permissão para ${streaming.catalogo.nome}`);
-
-            // Check capacity for ALL participants
-            const currentCount = streaming._count.assinaturas;
-            const needed = data.participanteIds.length;
-            if (currentCount + needed > streaming.limiteParticipantes) {
-                throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes.`);
-            }
-            validStreamings.set(ass.streamingId, streaming);
-        }
-
-        // 2. Create Subscriptions
-        for (const participanteId of data.participanteIds) {
+            // 1. Validate Streamings & Slots
             for (const ass of data.assinaturas) {
-                // Removed findFirst check to allow multiple subscriptions for same participant/streaming pairing (e.g. Marina x2)
-                const assinatura = await tx.assinatura.create({
-                    data: {
-                        participanteId,
-                        streamingId: ass.streamingId,
-                        frequencia: ass.frequencia,
-                        valor: ass.valor,
-                        dataInicio,
-                        status: (data.cobrancaAutomaticaPaga ?? false) ? 'ativa' : 'pendente',
-                        cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
-                    }
+                if (validStreamings.has(ass.streamingId)) continue;
+                const streaming = await tx.streaming.findUnique({
+                    where: { id: ass.streamingId },
+                    include: { catalogo: true, _count: { select: { assinaturas: { where: { status: { in: ['ativa', 'suspensa', 'pendente'] } } } } } }
                 });
 
-                // 3. Create Initial Charge (Delegated to Billing Service)
-                await billingService.gerarCobrancaInicial(tx, {
-                    assinaturaId: assinatura.id,
-                    valorMensal: ass.valor,
-                    frequencia: ass.frequencia,
-                    dataInicio,
-                    pago: !!data.cobrancaAutomaticaPaga
-                });
+                if (!streaming) throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
+                if (streaming.contaId !== contaId) throw new Error(`Sem permissão para ${streaming.catalogo.nome}`);
 
-                results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });
+                // Check capacity for ALL participants
+                const currentCount = streaming._count.assinaturas;
+                const needed = data.participanteIds.length;
+                if (currentCount + needed > streaming.limiteParticipantes) {
+                    throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes.`);
+                }
+                validStreamings.set(ass.streamingId, streaming);
             }
-        }
 
-        // 4. Notification
-        await tx.notificacao.create({
-            data: {
-                contaId,
-                usuarioId: userId,
-                tipo: "assinatura_criada",
-                titulo: `Assinaturas criadas em lote`,
-                descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
-                lida: false,
-                metadata: {
-                    assinaturasIds: results.map((a) => a.assinaturaId),
-                    participantesIds: data.participanteIds,
+            // 2. Create Subscriptions
+            for (const participanteId of data.participanteIds) {
+                for (const ass of data.assinaturas) {
+                    const assinatura = await tx.assinatura.create({
+                        data: {
+                            participanteId,
+                            streamingId: ass.streamingId,
+                            frequencia: ass.frequencia,
+                            valor: ass.valor,
+                            dataInicio,
+                            status: (data.cobrancaAutomaticaPaga ?? false) ? 'ativa' : 'pendente',
+                            cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
+                        }
+                    });
+
+                    // 3. Create Initial Charge (Delegated to Billing Service)
+                    await billingService.gerarCobrancaInicial(tx, {
+                        assinaturaId: assinatura.id,
+                        valorMensal: ass.valor,
+                        frequencia: ass.frequencia,
+                        dataInicio,
+                        pago: !!data.cobrancaAutomaticaPaga
+                    });
+
+                    results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });
                 }
             }
-        });
-    });
 
-    revalidateAllPaths();
-    return { created: results.length, assinaturas: results };
+            // 4. Notification
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: userId,
+                    tipo: "assinatura_criada",
+                    titulo: `Assinaturas criadas em lote`,
+                    descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
+                    lida: false,
+                    metadata: {
+                        assinaturasIds: results.map((a) => a.assinaturaId),
+                        participantesIds: data.participanteIds,
+                    }
+                }
+            });
+        });
+
+        revalidateAllPaths();
+        return { success: true, data: { created: results.length, assinaturas: results } };
+    } catch (error: any) {
+        console.error("[CREATE_BULK_ASSINATURAS_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao criar assinaturas em lote" };
+    }
 }
 
 export async function cancelarAssinatura(assinaturaId: number, motivo?: string) {
-    const { contaId, userId } = await getContext();
+    try {
+        const { contaId, userId } = await getContext();
 
-    const assinatura = await prisma.assinatura.findUnique({
-        where: { id: assinaturaId },
-        include: {
-            participante: true,
-            streaming: { include: { catalogo: true } },
-            cobrancas: { where: { status: "pago" }, orderBy: { periodoFim: "desc" }, take: 1 }
-        }
-    });
-
-    if (!assinatura) throw new Error("Assinatura não encontrada");
-    if (assinatura.participante.contaId !== contaId) throw new Error("Permissão negada");
-    if (assinatura.status === 'cancelada') throw new Error("Já cancelada");
-    if (!['ativa', 'suspensa'].includes(assinatura.status)) throw new Error("Status inválido para cancelamento");
-
-    const ultimaCobrancaPaga = assinatura.cobrancas[0];
-    const agora = new Date();
-
-    let novoStatus: StatusAssinatura = StatusAssinatura.cancelada;
-    let agendado = false;
-
-    if (ultimaCobrancaPaga && ultimaCobrancaPaga.periodoFim > agora) {
-        novoStatus = StatusAssinatura.ativa;
-        agendado = true;
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-        const res = await tx.assinatura.update({
+        const assinatura = await prisma.assinatura.findUnique({
             where: { id: assinaturaId },
-            data: {
-                status: novoStatus,
-                dataCancelamento: new Date(),
-                motivoCancelamento: motivo || "Não informado.",
-                canceladoPorId: userId,
-                updatedAt: new Date()
+            include: {
+                participante: true,
+                streaming: { include: { catalogo: true } },
+                cobrancas: { where: { status: "pago" }, orderBy: { periodoFim: "desc" }, take: 1 }
             }
         });
 
-        const dataFim = ultimaCobrancaPaga?.periodoFim ? ultimaCobrancaPaga.periodoFim.toLocaleDateString('pt-BR') : 'hoje';
+        if (!assinatura) return { success: false, error: "Assinatura não encontrada" };
+        if (assinatura.participante.contaId !== contaId) return { success: false, error: "Permissão negada" };
+        if (assinatura.status === 'cancelada') return { success: false, error: "Já cancelada" };
+        if (!['ativa', 'suspensa'].includes(assinatura.status)) return { success: false, error: "Status inválido para cancelamento" };
 
-        await tx.notificacao.create({
-            data: {
-                contaId,
-                tipo: "assinatura_cancelada",
-                usuarioId: assinatura.participante.userId || userId,
-                titulo: agendado ? "Cancelamento agendado" : "Assinatura cancelada",
-                descricao: agendado
-                    ? `O cancelamento da assinatura de ${assinatura.participante.nome} foi agendado. O acesso continua liberado até ${dataFim}.`
-                    : `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
-                entidadeId: assinaturaId,
-                lida: false
-            }
+        const ultimaCobrancaPaga = assinatura.cobrancas[0];
+        const agora = new Date();
+
+        let novoStatus: StatusAssinatura = StatusAssinatura.cancelada;
+        let agendado = false;
+
+        if (ultimaCobrancaPaga && ultimaCobrancaPaga.periodoFim > agora) {
+            novoStatus = StatusAssinatura.ativa;
+            agendado = true;
+        }
+
+        const updated = await prisma.$transaction(async (tx) => {
+            const res = await tx.assinatura.update({
+                where: { id: assinaturaId },
+                data: {
+                    status: novoStatus,
+                    dataCancelamento: new Date(),
+                    motivoCancelamento: motivo || "Não informado.",
+                    canceladoPorId: userId,
+                    updatedAt: new Date()
+                }
+            });
+
+            const dataFim = ultimaCobrancaPaga?.periodoFim ? ultimaCobrancaPaga.periodoFim.toLocaleDateString('pt-BR') : 'hoje';
+
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    tipo: "assinatura_cancelada",
+                    usuarioId: assinatura.participante.userId || userId,
+                    titulo: agendado ? "Cancelamento agendado" : "Assinatura cancelada",
+                    descricao: agendado
+                        ? `O cancelamento da assinatura de ${assinatura.participante.nome} foi agendado. O acesso continua liberado até ${dataFim}.`
+                        : `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
+                    entidadeId: assinaturaId,
+                    lida: false
+                }
+            });
+            return res;
         });
-        return res;
-    });
 
-    revalidateAllPaths();
-    return updated;
+        revalidateAllPaths();
+        return { success: true, data: updated };
+    } catch (error: any) {
+        console.error("[CANCELAR_ASSINATURA_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao cancelar assinatura" };
+    }
 }
 
 // --- Helpers ---

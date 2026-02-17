@@ -68,12 +68,19 @@ export const useDashboardStore = create<DashboardStore>()(
                 set({ loadingStats: true, error: null });
 
                 try {
-                    const stats = await fetchStatsAction();
-                    set({
-                        stats,
-                        loadingStats: false,
-                        lastFetchedStats: Date.now(),
-                    });
+                    const result = await fetchStatsAction();
+                    if (result.success && result.data) {
+                        set({
+                            stats: result.data,
+                            loadingStats: false,
+                            lastFetchedStats: Date.now(),
+                        });
+                    } else {
+                        set({
+                            error: result.error || "Erro ao carregar estatísticas",
+                            loadingStats: false,
+                        });
+                    }
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : "Erro ao carregar estatísticas",
@@ -93,12 +100,19 @@ export const useDashboardStore = create<DashboardStore>()(
                 set({ loadingSubscriptions: true, error: null });
 
                 try {
-                    const subscriptions = await fetchRecentSubscriptionsAction();
-                    set({
-                        recentSubscriptions: subscriptions as AssinaturaWithRelations[],
-                        loadingSubscriptions: false,
-                        lastFetchedSubscriptions: Date.now(),
-                    });
+                    const result = await fetchRecentSubscriptionsAction();
+                    if (result.success && result.data) {
+                        set({
+                            recentSubscriptions: result.data as AssinaturaWithRelations[],
+                            loadingSubscriptions: false,
+                            lastFetchedSubscriptions: Date.now(),
+                        });
+                    } else {
+                        set({
+                            error: result.error || "Erro ao carregar assinaturas",
+                            loadingSubscriptions: false,
+                        });
+                    }
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : "Erro ao carregar assinaturas",
@@ -118,12 +132,19 @@ export const useDashboardStore = create<DashboardStore>()(
                 set({ loadingStreamings: true, error: null });
 
                 try {
-                    const streamings = await fetchStreamingsAction();
-                    set({
-                        streamings: streamings as StreamingWithRelations[],
-                        loadingStreamings: false,
-                        lastFetchedStreamings: Date.now(),
-                    });
+                    const result = await fetchStreamingsAction();
+                    if (result.success && result.data) {
+                        set({
+                            streamings: result.data as StreamingWithRelations[],
+                            loadingStreamings: false,
+                            lastFetchedStreamings: Date.now(),
+                        });
+                    } else {
+                        set({
+                            error: result.error || "Erro ao carregar streamings",
+                            loadingStreamings: false,
+                        });
+                    }
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : "Erro ao carregar streamings",

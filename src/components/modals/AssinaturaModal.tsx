@@ -77,9 +77,9 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
 
     const loadData = async () => {
         try {
-            const [p, s] = await Promise.all([getParticipantes(), getStreamings()]);
-            setParticipantes(p);
-            setStreamings(s);
+            const [pResult, sResult] = await Promise.all([getParticipantes(), getStreamings()]);
+            if (pResult.success && pResult.data) setParticipantes(pResult.data);
+            if (sResult.success && sResult.data) setStreamings(sResult.data);
         } catch (error) {
             setError("Erro ao carregar dados.");
         }
@@ -101,7 +101,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            await createAssinatura({
+            const result = await createAssinatura({
                 participanteId: parseInt(formData.participanteId),
                 streamingId: parseInt(formData.streamingId),
                 frequencia: formData.frequencia as any,
@@ -109,9 +109,13 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                 dataInicio: formData.dataInicio,
                 cobrancaAutomaticaPaga: formData.cobrancaAutomaticaPaga,
             });
-            onClose();
+            if (result.success) {
+                onClose();
+            } else if (result.error) {
+                setError(result.error);
+            }
         } catch (error: any) {
-            setError(error.message);
+            setError(error.message || "Erro ao criar assinatura");
         } finally {
             setLoading(false);
         }

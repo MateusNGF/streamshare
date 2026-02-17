@@ -102,17 +102,21 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 }
             }
 
-            const data = await getNotificacoes({
+            const result = await getNotificacoes({
                 limite: 50,
                 apenasNaoLidas: currentFilter?.unread,
                 tipos: currentFilter?.types,
                 dataInicio
             });
 
-            setNotificacoes(data.notificacoes);
+            if (result.success && result.data) {
+                setNotificacoes(result.data.notificacoes);
 
-            if (activeFilter === 'all' && timeFilter === 'all') {
-                setNaoLidas(data.naoLidas);
+                if (activeFilter === 'all' && timeFilter === 'all') {
+                    setNaoLidas(result.data.naoLidas);
+                }
+            } else if (result.error) {
+                toast.error(result.error);
             }
         } catch (error) {
             toast.error("Erro ao carregar notificações");
@@ -130,12 +134,16 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
 
     const handleMarkAsRead = async (id: number) => {
         try {
-            await marcarComoLida(id);
-            setNotificacoes(prev =>
-                prev.map(n => n.id === id ? { ...n, lida: true } : n)
-            );
-            setNaoLidas(prev => Math.max(0, prev - 1));
-            toast.success("Notificação marcada como lida");
+            const result = await marcarComoLida(id);
+            if (result.success) {
+                setNotificacoes(prev =>
+                    prev.map(n => n.id === id ? { ...n, lida: true } : n)
+                );
+                setNaoLidas(prev => Math.max(0, prev - 1));
+                toast.success("Notificação marcada como lida");
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
             toast.error("Erro ao marcar notificação");
         }
@@ -143,10 +151,14 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
 
     const handleMarkAllAsRead = async () => {
         try {
-            await marcarTodasComoLidas();
-            setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
-            setNaoLidas(0);
-            toast.success("Todas as notificações marcadas como lidas");
+            const result = await marcarTodasComoLidas();
+            if (result.success) {
+                setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
+                setNaoLidas(0);
+                toast.success("Todas as notificações marcadas como lidas");
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
             toast.error("Erro ao marcar todas como lidas");
         }

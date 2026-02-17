@@ -121,15 +121,16 @@ export function ParticipantesClient({
         if (!selectedParticipant) return;
         setLoading(true);
         try {
-            await deleteParticipante(selectedParticipant.id);
-            toast.success("Participante excluído com sucesso!");
-            setIsDeleteModalOpen(false);
-        } catch (error) {
-            if (error instanceof Error) {
-                toast.error(error.message);
-            } else {
-                toast.error("Erro ao excluir participante");
+            const result = await deleteParticipante(selectedParticipant.id);
+            if (result.success) {
+                toast.success("Participante excluído com sucesso!");
+                setIsDeleteModalOpen(false);
+                router.refresh();
+            } else if (result.error) {
+                toast.error(result.error);
             }
+        } catch (error) {
+            toast.error("Erro ao excluir participante.");
         } finally {
             setLoading(false);
         }

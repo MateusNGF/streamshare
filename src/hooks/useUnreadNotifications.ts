@@ -6,8 +6,10 @@ export function useUnreadNotifications() {
 
     const loadUnreadCount = async () => {
         try {
-            const { naoLidas } = await getNotificacoes({ limite: 1 });
-            setUnreadCount(naoLidas);
+            const result = await getNotificacoes({ limite: 1 });
+            if (result.success && result.data) {
+                setUnreadCount(result.data.naoLidas);
+            }
         } catch (error) {
             console.error("Failed to load notification count", error);
         }

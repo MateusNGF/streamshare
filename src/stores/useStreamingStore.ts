@@ -86,12 +86,19 @@ export const useStreamingStore = create<StreamingStore>()(
                     set({ loading: true, error: null });
 
                     try {
-                        const streamings = await fetchStreamingsAction();
-                        set({
-                            streamings,
-                            loading: false,
-                            lastFetched: Date.now(),
-                        });
+                        const result = await fetchStreamingsAction();
+                        if (result.success && result.data) {
+                            set({
+                                streamings: result.data as StreamingWithRelations[],
+                                loading: false,
+                                lastFetched: Date.now(),
+                            });
+                        } else {
+                            set({
+                                error: result.error || "Erro ao carregar streamings",
+                                loading: false,
+                            });
+                        }
                     } catch (error) {
                         set({
                             error: error instanceof Error ? error.message : "Erro ao carregar streamings",
@@ -105,16 +112,22 @@ export const useStreamingStore = create<StreamingStore>()(
                     set({ loading: true, error: null });
 
                     try {
-                        const newStreaming = await createStreamingAction(data);
+                        const result = await createStreamingAction(data);
 
-                        // Add to local state
-                        set((state) => ({
-                            streamings: [...state.streamings, newStreaming as StreamingWithRelations],
-                            loading: false,
-                            lastFetched: Date.now(),
-                        }));
+                        if (result.success && result.data) {
+                            // Add to local state
+                            set((state) => ({
+                                streamings: [...state.streamings, result.data as StreamingWithRelations],
+                                loading: false,
+                                lastFetched: Date.now(),
+                            }));
 
-                        return newStreaming as StreamingWithRelations;
+                            return result.data as StreamingWithRelations;
+                        } else {
+                            const errorMsg = result.error || "Erro ao criar streaming";
+                            set({ error: errorMsg, loading: false });
+                            throw new Error(errorMsg);
+                        }
                     } catch (error) {
                         set({
                             error: error instanceof Error ? error.message : "Erro ao criar streaming",
@@ -152,19 +165,30 @@ export const useStreamingStore = create<StreamingStore>()(
                     try {
                         const result = await updateStreamingAction(id, data);
 
-                        // Update with server response
-                        set((state) => ({
-                            streamings: state.streamings.map((s) =>
-                                s.id === id ? { ...s, ...result.streaming } : s
-                            ),
-                            loading: false,
-                            lastFetched: Date.now(),
-                        }));
+                        if (result.success && result.data) {
+                            // Update with server response
+                            set((state) => ({
+                                streamings: state.streamings.map((s) =>
+                                    s.id === id ? { ...s, ...result.data.streaming } : s
+                                ),
+                                loading: false,
+                                lastFetched: Date.now(),
+                            }));
 
-                        return {
-                            streaming: result.streaming as StreamingWithRelations,
-                            updatedSubscriptions: result.updatedSubscriptions,
-                        };
+                            return {
+                                streaming: result.data.streaming as StreamingWithRelations,
+                                updatedSubscriptions: result.data.updatedSubscriptions,
+                            };
+                        } else {
+                            const errorMsg = result.error || "Erro ao atualizar streaming";
+                            // Rollback on error
+                            set({
+                                streamings: originalStreamings,
+                                error: errorMsg,
+                                loading: false,
+                            });
+                            throw new Error(errorMsg);
+                        }
                     } catch (error) {
                         // Rollback on error
                         set({
@@ -189,12 +213,22 @@ export const useStreamingStore = create<StreamingStore>()(
                     }));
 
                     try {
-                        await deleteStreamingAction(id);
+                        const result = await deleteStreamingAction(id);
 
-                        set({
-                            loading: false,
-                            lastFetched: Date.now(),
-                        });
+                        if (result.success) {
+                            set({
+                                loading: false,
+                                lastFetched: Date.now(),
+                            });
+                        } else {
+                            const errorMsg = result.error || "Erro ao deletar streaming";
+                            set({
+                                streamings: originalStreamings,
+                                error: errorMsg,
+                                loading: false,
+                            });
+                            throw new Error(errorMsg);
+                        }
                     } catch (error) {
                         // Rollback on error
                         set({

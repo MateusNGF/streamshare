@@ -8,15 +8,22 @@ import { getCurrentUser } from '@/lib/auth';
 import { criarNotificacao } from './notificacoes';
 
 export async function getCurrentUserAction() {
-    const session = await getCurrentUser();
-    if (!session) return null;
+    try {
+        const session = await getCurrentUser();
+        if (!session) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
 
-    const user = await prisma.usuario.findUnique({
-        where: { id: session.userId },
-        select: { id: true, nome: true, email: true }
-    });
+        const user = await prisma.usuario.findUnique({
+            where: { id: session.userId },
+            select: { id: true, nome: true, email: true }
+        });
 
-    return user;
+        if (!user) return { success: false, error: "Usuário não encontrado", code: "NOT_FOUND" };
+
+        return { success: true, data: user };
+    } catch (error: any) {
+        console.error("[GET_CURRENT_USER_ACTION_ERROR]", error);
+        return { success: false, error: "Erro ao buscar usuário" };
+    }
 }
 
 export interface SuporteInput {

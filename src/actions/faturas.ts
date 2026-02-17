@@ -5,75 +5,85 @@ import { getCurrentUser } from "@/lib/auth";
 import { StatusCobranca } from "@prisma/client";
 
 export async function getFaturasUsuario(filters?: { status?: StatusCobranca }) {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Não autenticado");
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
 
-    const cobrancas = await prisma.cobranca.findMany({
-        where: {
-            assinatura: {
-                participante: {
-                    userId: user.userId
-                }
-            },
-            ...(filters?.status ? { status: filters.status } : {})
-        },
-        include: {
-            assinatura: {
-                include: {
-                    streaming: {
-                        include: { catalogo: true }
-                    },
+        const cobrancas = await prisma.cobranca.findMany({
+            where: {
+                assinatura: {
                     participante: {
-                        include: {
-                            conta: {
-                                select: {
-                                    id: true,
-                                    nome: true,
-                                    chavePix: true,
+                        userId: user.userId
+                    }
+                },
+                ...(filters?.status ? { status: filters.status } : {})
+            },
+            include: {
+                assinatura: {
+                    include: {
+                        streaming: {
+                            include: { catalogo: true }
+                        },
+                        participante: {
+                            include: {
+                                conta: {
+                                    select: {
+                                        id: true,
+                                        nome: true,
+                                        chavePix: true,
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        },
-        orderBy: [
-            { status: 'asc' }, // Status might need better sort (pendente -> atrasado -> pago -> cancelado)
-            { dataVencimento: 'asc' }
-        ]
-    });
+            },
+            orderBy: [
+                { status: 'asc' }, // Status might need better sort (pendente -> atrasado -> pago -> cancelado)
+                { dataVencimento: 'asc' }
+            ]
+        });
 
-    return cobrancas;
+        return { success: true, data: cobrancas };
+    } catch (error: any) {
+        console.error("[GET_FATURAS_USUARIO_ERROR]", error);
+        return { success: false, error: "Erro ao buscar faturas do usuário" };
+    }
 }
 
 export async function getResumoFaturas() {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Não autenticado");
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
 
-    const stats = await prisma.cobranca.groupBy({
-        by: ["status"],
-        where: {
-            assinatura: {
-                participante: {
-                    userId: user.userId
+        const stats = await prisma.cobranca.groupBy({
+            by: ["status"],
+            where: {
+                assinatura: {
+                    participante: {
+                        userId: user.userId
+                    }
                 }
+            },
+            _sum: {
+                valor: true
+            },
+            _count: {
+                _all: true
             }
-        },
-        _sum: {
-            valor: true
-        },
-        _count: {
-            _all: true
-        }
-    });
+        });
 
-    const resumo = stats.reduce((acc, curr) => {
-        acc[curr.status] = {
-            total: curr._sum.valor?.toNumber() || 0,
-            count: curr._count._all
-        };
-        return acc;
-    }, {} as Record<StatusCobranca, { total: number; count: number }>);
+        const resumo = stats.reduce((acc, curr) => {
+            acc[curr.status] = {
+                total: curr._sum.valor?.toNumber() || 0,
+                count: curr._count._all
+            };
+            return acc;
+        }, {} as Record<StatusCobranca, { total: number; count: number }>);
 
-    return resumo;
+        return { success: true, data: resumo };
+    } catch (error: any) {
+        console.error("[GET_RESUMO_FATURAS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar resumo das faturas" };
+    }
 }

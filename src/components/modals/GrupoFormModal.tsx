@@ -61,7 +61,13 @@ export function GrupoFormModal({
         if (isOpen) {
             setLoading(true);
             getStreamingsParaGrupo()
-                .then((data) => setStreamings(data))
+                .then((result) => {
+                    if (result.success && result.data) {
+                        setStreamings(result.data);
+                    } else if (result.error) {
+                        toast.error(result.error);
+                    }
+                })
                 .catch(() => toast.error("Erro ao carregar streamings"))
                 .finally(() => setLoading(false));
         }
@@ -74,9 +80,11 @@ export function GrupoFormModal({
             setDescricao(grupo.descricao || "");
             // Fetch full grupo data to get streaming IDs
             getGrupoById(grupo.id)
-                .then((data) => {
-                    if (data) {
-                        setSelectedStreamingIds(data.streamings.map((gs) => gs.streaming.id));
+                .then((result) => {
+                    if (result.success && result.data) {
+                        setSelectedStreamingIds(result.data.streamings.map((gs) => gs.streaming.id));
+                    } else if (result.error) {
+                        toast.error(result.error);
                     }
                 })
                 .catch((err) => console.error(err));
@@ -119,21 +127,30 @@ export function GrupoFormModal({
         startTransition(async () => {
             try {
                 if (grupo) {
-                    await updateGrupo(grupo.id, {
+                    const result = await updateGrupo(grupo.id, {
                         nome,
                         descricao: descricao || undefined,
                         streamingIds: selectedStreamingIds,
                     });
-                    toast.success("Grupo atualizado com sucesso!");
+                    if (result.success) {
+                        toast.success("Grupo atualizado com sucesso!");
+                        onSuccess();
+                    } else if (result.error) {
+                        toast.error(result.error);
+                    }
                 } else {
-                    await createGrupo({
+                    const result = await createGrupo({
                         nome,
                         descricao: descricao || undefined,
                         streamingIds: selectedStreamingIds,
                     });
-                    toast.success("Grupo criado com sucesso!");
+                    if (result.success) {
+                        toast.success("Grupo criado com sucesso!");
+                        onSuccess();
+                    } else if (result.error) {
+                        toast.error(result.error);
+                    }
                 }
-                onSuccess();
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Erro ao salvar grupo");
             }

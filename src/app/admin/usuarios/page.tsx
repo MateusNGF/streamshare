@@ -15,7 +15,17 @@ export default async function UsersPage({
     const page = Number(searchParams.page) || 1;
     const search = searchParams.q || "";
 
-    const { data, metadata } = await getUsers(page, 10, search);
+    const result = await getUsers(page, 10, search);
+
+    if (!result.success || !result.data) {
+        return (
+            <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl border border-red-100">
+                {result.error || "Erro ao carregar usuários"}
+            </div>
+        );
+    }
+
+    const { data, metadata } = result.data;
 
     return (
         <Suspense

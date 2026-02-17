@@ -236,236 +236,287 @@ async function getChurnMetrics(contaId: number): Promise<ChurnMetrics> {
  * Public Actions (Server Actions)
  */
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-    const { contaId } = await getContext();
-    const agora = new Date();
+export async function getDashboardStats() {
+    try {
+        const { contaId } = await getContext();
+        const agora = new Date();
 
-    const [
-        financial,
-        membership,
-        occupancy,
-        payments,
-        churn,
-        catalogs,
-        conta
-    ] = await Promise.all([
-        getFinancialMetrics(contaId, agora),
-        getMembershipMetrics(contaId, agora),
-        getOccupancyMetrics(contaId),
-        getPaymentMetrics(contaId, agora),
-        getChurnMetrics(contaId),
-        getCatalogRevenue(contaId),
-        prisma.conta.findUnique({ where: { id: contaId }, select: { moedaPreferencia: true } })
-    ]);
+        const [
+            financial,
+            membership,
+            occupancy,
+            payments,
+            churn,
+            catalogs,
+            conta
+        ] = await Promise.all([
+            getFinancialMetrics(contaId, agora),
+            getMembershipMetrics(contaId, agora),
+            getOccupancyMetrics(contaId),
+            getPaymentMetrics(contaId, agora),
+            getChurnMetrics(contaId),
+            getCatalogRevenue(contaId),
+            prisma.conta.findUnique({ where: { id: contaId }, select: { moedaPreferencia: true } })
+        ]);
 
-    return {
-        financial,
-        membership,
-        occupancy,
-        payments,
-        churn,
-        catalogs,
-        currencyCode: conta?.moedaPreferencia || 'BRL'
-    };
+        return {
+            success: true,
+            data: {
+                financial,
+                membership,
+                occupancy,
+                payments,
+                churn,
+                catalogs,
+                currencyCode: conta?.moedaPreferencia || 'BRL'
+            }
+        };
+    } catch (error: any) {
+        console.error("[GET_DASHBOARD_STATS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar estatísticas do dashboard" };
+    }
 }
 
-export async function getRevenueHistory(): Promise<RevenueHistory[]> {
-    const { contaId } = await getContext();
-    const agora = new Date();
-    const seisMesesAtras = new Date(agora.getFullYear(), agora.getMonth() - 5, 1);
+export async function getRevenueHistory() {
+    try {
+        const { contaId } = await getContext();
+        const agora = new Date();
+        const seisMesesAtras = new Date(agora.getFullYear(), agora.getMonth() - 5, 1);
 
-    const [cobrancas, novasAssinaturas] = await Promise.all([
-        prisma.cobranca.findMany({
-            where: {
-                assinatura: { streaming: { contaId } },
-                status: "pago",
-                dataPagamento: { gte: seisMesesAtras }
-            },
-            select: {
-                valor: true,
-                dataPagamento: true,
-                assinatura: { select: { participanteId: true } }
-            },
-            orderBy: { dataPagamento: 'asc' }
-        }),
-        prisma.assinatura.findMany({
-            where: {
-                streaming: { contaId },
-                createdAt: { gte: seisMesesAtras }
-            },
-            select: { createdAt: true }
-        })
-    ]);
+        const [cobrancas, novasAssinaturas] = await Promise.all([
+            prisma.cobranca.findMany({
+                where: {
+                    assinatura: { streaming: { contaId } },
+                    status: "pago",
+                    dataPagamento: { gte: seisMesesAtras }
+                },
+                select: {
+                    valor: true,
+                    dataPagamento: true,
+                    assinatura: { select: { participanteId: true } }
+                },
+                orderBy: { dataPagamento: 'asc' }
+            }),
+            prisma.assinatura.findMany({
+                where: {
+                    streaming: { contaId },
+                    createdAt: { gte: seisMesesAtras }
+                },
+                select: { createdAt: true }
+            })
+        ]);
 
-    const mesesLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const historyMap = new Map();
+        const mesesLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const historyMap = new Map();
 
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${d.getMonth()}`;
-        historyMap.set(key, { name: mesesLabels[d.getMonth()], receita: 0, participantes: new Set(), novosMembros: 0 });
-    }
-
-    cobrancas.forEach(c => {
-        if (!c.dataPagamento) return;
-        const key = `${c.dataPagamento.getFullYear()}-${c.dataPagamento.getMonth()}`;
-        const data = historyMap.get(key);
-        if (data) {
-            data.receita += c.valor.toNumber();
-            data.participantes.add(c.assinatura.participanteId);
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+            const key = `${d.getFullYear()}-${d.getMonth()}`;
+            historyMap.set(key, { name: mesesLabels[d.getMonth()], receita: 0, participantes: new Set(), novosMembros: 0 });
         }
-    });
 
-    novasAssinaturas.forEach(a => {
-        const key = `${a.createdAt.getFullYear()}-${a.createdAt.getMonth()}`;
-        const data = historyMap.get(key);
-        if (data) data.novosMembros += 1;
-    });
+        cobrancas.forEach(c => {
+            if (!c.dataPagamento) return;
+            const key = `${c.dataPagamento.getFullYear()}-${c.dataPagamento.getMonth()}`;
+            const data = historyMap.get(key);
+            if (data) {
+                data.receita += c.valor.toNumber();
+                data.participantes.add(c.assinatura.participanteId);
+            }
+        });
 
-    return Array.from(historyMap.values()).map(item => ({
-        ...item,
-        participantes: item.participantes.size
-    }));
+        novasAssinaturas.forEach(a => {
+            const key = `${a.createdAt.getFullYear()}-${a.createdAt.getMonth()}`;
+            const data = historyMap.get(key);
+            if (data) data.novosMembros += 1;
+        });
+
+        const data = Array.from(historyMap.values()).map(item => ({
+            ...item,
+            participantes: item.participantes.size
+        }));
+
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_REVENUE_HISTORY_ERROR]", error);
+        return { success: false, error: "Erro ao buscar histórico de receita" };
+    }
 }
 
 export async function getRecentSubscriptions() {
-    const { contaId } = await getContext();
+    try {
+        const { contaId } = await getContext();
 
-    return prisma.assinatura.findMany({
-        where: { streaming: { contaId } },
-        include: {
-            participante: true,
-            streaming: { include: { catalogo: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-    });
+        const data = await prisma.assinatura.findMany({
+            where: { streaming: { contaId } },
+            include: {
+                participante: true,
+                streaming: { include: { catalogo: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+        });
+
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_RECENT_SUBSCRIPTIONS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar assinaturas recentes" };
+    }
 }
 
 export async function getDashboardStreamings() {
-    const { contaId } = await getContext();
+    try {
+        const { contaId } = await getContext();
 
-    return prisma.streaming.findMany({
-        where: { contaId, isAtivo: true },
-        include: {
-            catalogo: true,
-            _count: {
-                select: { assinaturas: { where: { status: "ativa" } } }
+        const data = await prisma.streaming.findMany({
+            where: { contaId, isAtivo: true },
+            include: {
+                catalogo: true,
+                _count: {
+                    select: { assinaturas: { where: { status: "ativa" } } }
+                },
             },
-        },
-        orderBy: { catalogo: { nome: "asc" } },
-        take: 3,
-    });
+            orderBy: { catalogo: { nome: "asc" } },
+            take: 3,
+        });
+
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_DASHBOARD_STREAMINGS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar streamings do dashboard" };
+    }
 }
 
-export async function getParticipantStats(): Promise<ParticipantStats> {
-    const { userId } = await getContext();
-    const agora = new Date();
+export async function getParticipantStats() {
+    try {
+        const { userId } = await getContext();
+        const agora = new Date();
 
-    const assinaturas = await prisma.assinatura.findMany({
-        where: {
-            participante: { userId },
-            status: "ativa"
-        },
-        include: {
-            streaming: true,
-            cobrancas: {
-                where: { status: "pendente", dataVencimento: { gte: agora } },
-                orderBy: { dataVencimento: "asc" },
-                take: 1
+        const assinaturas = await prisma.assinatura.findMany({
+            where: {
+                participante: { userId },
+                status: "ativa"
+            },
+            include: {
+                streaming: true,
+                cobrancas: {
+                    where: { status: "pendente", dataVencimento: { gte: agora } },
+                    orderBy: { dataVencimento: "asc" },
+                    take: 1
+                }
             }
-        }
-    });
+        });
 
-    const activeSubscriptions = assinaturas.length;
-    const monthlySpending = assinaturas.reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
-    const totalSavings = assinaturas.reduce((sum, sub) => sum + (sub.streaming.valorIntegral.toNumber() - sub.valor.toNumber()), 0);
+        const activeSubscriptions = assinaturas.length;
+        const monthlySpending = assinaturas.reduce((sum, sub) => sum + sub.valor.toNumber(), 0);
+        const totalSavings = assinaturas.reduce((sum, sub) => sum + (sub.streaming.valorIntegral.toNumber() - sub.valor.toNumber()), 0);
 
-    const nextPaymentDates = assinaturas
-        .map(sub => sub.cobrancas[0]?.dataVencimento)
-        .filter(Boolean) as Date[];
+        const nextPaymentDates = assinaturas
+            .map(sub => sub.cobrancas[0]?.dataVencimento)
+            .filter(Boolean) as Date[];
 
-    const nextPaymentDate = nextPaymentDates.length > 0
-        ? new Date(Math.min(...nextPaymentDates.map(d => d.getTime())))
-        : null;
+        const nextPaymentDate = nextPaymentDates.length > 0
+            ? new Date(Math.min(...nextPaymentDates.map(d => d.getTime())))
+            : null;
 
-    const conta = await prisma.contaUsuario.findFirst({
-        where: { usuarioId: userId },
-        include: { conta: { select: { moedaPreferencia: true } } }
-    });
+        const conta = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: userId },
+            include: { conta: { select: { moedaPreferencia: true } } }
+        });
 
-    return {
-        activeSubscriptions,
-        monthlySpending,
-        totalSavings,
-        nextPaymentDate,
-        currencyCode: conta?.conta.moedaPreferencia || 'BRL'
-    };
-}
-
-export async function getParticipantSubscriptions(): Promise<ParticipantSubscription[]> {
-    const { userId } = await getContext();
-    const agora = new Date();
-
-    const assinaturas = await prisma.assinatura.findMany({
-        where: {
-            participante: { userId },
-            status: { in: ["ativa", "suspensa"] }
-        },
-        include: {
-            streaming: {
-                include: { catalogo: true }
-            },
-            cobrancas: {
-                where: { status: "pendente", dataVencimento: { gte: agora } },
-                orderBy: { dataVencimento: "asc" },
-                take: 1
+        return {
+            success: true,
+            data: {
+                activeSubscriptions,
+                monthlySpending,
+                totalSavings,
+                nextPaymentDate,
+                currencyCode: conta?.conta.moedaPreferencia || 'BRL'
             }
-        },
-        orderBy: { createdAt: "desc" }
-    });
-
-    return assinaturas.map(sub => ({
-        id: sub.id,
-        streamingId: sub.streamingId,
-        streamingName: sub.streaming.apelido || sub.streaming.catalogo.nome,
-        streamingLogo: sub.streaming.catalogo.iconeUrl,
-        streamingColor: sub.streaming.catalogo.corPrimaria,
-        status: sub.status,
-        valor: sub.valor.toNumber(),
-        valorIntegral: sub.streaming.valorIntegral.toNumber(),
-        proximoVencimento: sub.cobrancas[0]?.dataVencimento || null,
-        credenciaisLogin: sub.status === "ativa" ? sub.streaming.credenciaisLogin : null,
-        credenciaisSenha: sub.status === "ativa" ? sub.streaming.credenciaisSenha : null,
-    }));
+        };
+    } catch (error: any) {
+        console.error("[GET_PARTICIPANT_STATS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar estatísticas do participante" };
+    }
 }
-export async function getParticipantSubscriptionDetail(assinaturaId: number): Promise<any> {
-    const { userId } = await getContext();
 
-    const assinatura = await prisma.assinatura.findFirst({
-        where: {
-            id: assinaturaId,
-            participante: { userId }
-        },
-        include: {
-            streaming: {
-                include: { catalogo: true }
+export async function getParticipantSubscriptions() {
+    try {
+        const { userId } = await getContext();
+        const agora = new Date();
+
+        const assinaturas = await prisma.assinatura.findMany({
+            where: {
+                participante: { userId },
+                status: { in: ["ativa", "suspensa"] }
             },
-            cobrancas: {
-                orderBy: { periodoFim: "desc" }
-            },
-            canceladoPor: {
-                select: {
-                    id: true,
-                    nome: true,
-                    email: true
+            include: {
+                streaming: {
+                    include: { catalogo: true }
+                },
+                cobrancas: {
+                    where: { status: "pendente", dataVencimento: { gte: agora } },
+                    orderBy: { dataVencimento: "asc" },
+                    take: 1
                 }
             },
-            participante: true
+            orderBy: { createdAt: "desc" }
+        });
+
+        const data = assinaturas.map(sub => ({
+            id: sub.id,
+            streamingId: sub.streamingId,
+            streamingName: sub.streaming.apelido || sub.streaming.catalogo.nome,
+            streamingLogo: sub.streaming.catalogo.iconeUrl,
+            streamingColor: sub.streaming.catalogo.corPrimaria,
+            status: sub.status,
+            valor: sub.valor.toNumber(),
+            valorIntegral: sub.streaming.valorIntegral.toNumber(),
+            proximoVencimento: sub.cobrancas[0]?.dataVencimento || null,
+            credenciaisLogin: sub.status === "ativa" ? sub.streaming.credenciaisLogin : null,
+            credenciaisSenha: sub.status === "ativa" ? sub.streaming.credenciaisSenha : null,
+        }));
+
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_PARTICIPANT_SUBSCRIPTIONS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar assinaturas do participante" };
+    }
+}
+export async function getParticipantSubscriptionDetail(assinaturaId: number) {
+    try {
+        const { userId } = await getContext();
+
+        const assinatura = await prisma.assinatura.findFirst({
+            where: {
+                id: assinaturaId,
+                participante: { userId }
+            },
+            include: {
+                streaming: {
+                    include: { catalogo: true }
+                },
+                cobrancas: {
+                    orderBy: { periodoFim: "desc" }
+                },
+                canceladoPor: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        email: true
+                    }
+                },
+                participante: true
+            }
+        });
+
+        if (!assinatura) {
+            return { success: false, error: "Assinatura não encontrada ou sem permissão" };
         }
-    });
 
-    if (!assinatura) throw new Error("Assinatura não encontrada ou sem permissão");
-
-    return assinatura;
+        return { success: true, data: assinatura };
+    } catch (error: any) {
+        console.error("[GET_PARTICIPANT_SUBSCRIPTION_DETAIL_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao buscar detalhes da assinatura" };
+    }
 }
