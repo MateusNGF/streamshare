@@ -74,16 +74,21 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
         setLoading(true);
 
         try {
-            await publicSubscribe({
+            const result = await publicSubscribe({
                 token,
                 userId: loggedUser?.userId,
                 ...formData
             });
-            success("Inscrição realizada com sucesso! O administrador entrará em contato.");
-            router.push("/faturas");
-            router.refresh();
+
+            if (result?.success) {
+                success("Inscrição realizada com sucesso! O administrador entrará em contato.");
+                router.push("/faturas");
+                router.refresh();
+            } else {
+                toastError(result?.error || "Erro ao realizar inscrição");
+            }
         } catch (err: any) {
-            toastError(err.message || "Erro ao realizar inscrição");
+            toastError("Ocorreu um erro ao processar sua solicitação.");
         } finally {
             setLoading(false);
         }

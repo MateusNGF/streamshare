@@ -17,68 +17,94 @@ export async function publicSubscribe(data: {
     frequencia?: FrequenciaPagamento;
     quantidade?: number;
 }) {
-    // 1. Validar Streaming e Token
-    const streaming = await StreamingService.validatePublicToken(data.token.trim());
+    try {
+        // 1. Validar Streaming e Token
+        const streaming = await StreamingService.validatePublicToken(data.token.trim());
 
-    if (!streaming) {
-        throw new Error("Streaming não disponível ou link inválido.");
-    }
-
-    // 2. Verificar Vagas
-    const quantidade = data.quantidade || 1;
-    if (streaming.vagasRestantes < quantidade) {
-        throw new Error(streaming.vagasRestantes > 0
-            ? `Não há vagas suficientes. Restam apenas ${streaming.vagasRestantes} vaga(s).`
-            : "Não há vagas disponíveis para este streaming.");
-    }
-
-    await prisma.$transaction(async (tx) => {
-        // 3. Garantir Participante
-        const participante = await ParticipantService.findOrCreateParticipant(tx, {
-            contaId: streaming.contaId,
-            nome: data.nome,
-            email: data.email,
-            whatsappNumero: data.whatsappNumero,
-            userId: data.userId,
-            cpf: data.cpf
-        });
-
-        // 4. Verificar duplicidade (exceto se permitir múltiplas do mesmo usuário, mas aqui validamos se já tem a mesma no streaming)
-        const existingSub = await tx.assinatura.findFirst({
-            where: {
-                participanteId: participante.id,
-                streamingId: streaming.id,
-                status: { not: "cancelada" }
-            }
-        });
-
-        if (existingSub && quantidade === 1) {
-            throw new Error("Você já possui uma assinatura ativa para este streaming.");
+        if (!streaming) {
+            return { success: false, error: "Streaming não disponível ou link inválido." };
         }
 
-        // 5. Criar Assinatura(s)
-        for (let i = 0; i < quantidade; i++) {
-            await SubscriptionService.createFromStreaming(tx, participante.id, streaming.id, data.frequencia);
+        // 2. Verificar Vagas
+        const quantidade = data.quantidade || 1;
+        if (streaming.vagasRestantes < quantidade) {
+            return {
+                success: false,
+                error: streaming.vagasRestantes > 0
+                    ? `Não há vagas suficientes. Restam apenas ${streaming.vagasRestantes} vaga(s).`
+                    : "Não há vagas disponíveis para este streaming."
+            };
         }
 
-        // 6. Notificar Admin
-        await tx.notificacao.create({
-            data: {
+        const result = await prisma.$transaction(async (tx) => {
+            // 3. Garantir Participante
+            const participante = await ParticipantService.findOrCreateParticipant(tx, {
                 contaId: streaming.contaId,
-                tipo: "assinatura_criada",
-                titulo: "Nova Assinatura Pública",
-                descricao: `${data.nome} se inscreveu via link público no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
-                metadata: {
+                nome: data.nome,
+                email: data.email,
+                whatsappNumero: data.whatsappNumero,
+                userId: data.userId,
+                cpf: data.cpf
+            });
+
+            // 4. Verificar duplicidade
+            const existingSub = await tx.assinatura.findFirst({
+                where: {
                     participanteId: participante.id,
                     streamingId: streaming.id,
-                    quantidade
+                    status: { not: "cancelada" }
                 }
+            });
+
+            if (existingSub && data.quantidade === 1) {
+                if (existingSub.status === "pendente") {
+                    return {
+                        success: false,
+                        error: "Você já possui uma inscrição pendente para este streaming. Verifique suas faturas para realizar o pagamento.",
+                        code: "PENDING_SUBSCRIPTION"
+                    };
+                }
+                return {
+                    success: false,
+                    error: "Você já possui uma assinatura ativa para este streaming.",
+                    code: "ACTIVE_SUBSCRIPTION"
+                };
             }
+
+            // 5. Criar Assinatura(s)
+            for (let i = 0; i < (data.quantidade || 1); i++) {
+                await SubscriptionService.createFromStreaming(tx, participante.id, streaming.id, data.frequencia);
+            }
+
+            // 6. Notificar Admin
+            await tx.notificacao.create({
+                data: {
+                    contaId: streaming.contaId,
+                    tipo: "assinatura_criada",
+                    titulo: "Nova Assinatura Pública",
+                    descricao: `${data.nome} se inscreveu via link público no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
+                    metadata: {
+                        participanteId: participante.id,
+                        streamingId: streaming.id,
+                        quantidade: data.quantidade || 1
+                    }
+                }
+            });
+
+            return { success: true };
         });
 
-        return { success: true };
-    });
+        if (result.success) {
+            revalidatePath("/assinaturas");
+            revalidatePath("/participantes");
+        }
 
-    revalidatePath("/assinaturas");
-    revalidatePath("/participantes");
+        return result;
+    } catch (error: any) {
+        console.error("[PUBLIC_SUBSCRIBE_ERROR]", error);
+        return {
+            success: false,
+            error: error.message || "Ocorreu um erro inesperado ao processar sua inscrição."
+        };
+    }
 }
