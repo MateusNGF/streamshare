@@ -26,6 +26,7 @@ interface CobrancasTableProps {
     statusFilter?: string;
     variant?: "default" | "compact";
     fallbackValorMensal?: number | string;
+    isAdmin?: boolean;
 }
 
 export function CobrancasTable({
@@ -37,7 +38,8 @@ export function CobrancasTable({
     searchTerm = "",
     statusFilter = "all",
     variant = "default",
-    fallbackValorMensal
+    fallbackValorMensal,
+    isAdmin = true
 }: CobrancasTableProps) {
     const isCompact = variant === "compact";
 
@@ -138,7 +140,7 @@ export function CobrancasTable({
                                     icon: <Eye size={16} />,
                                     onClick: () => onViewDetails(cobranca.id)
                                 },
-                                ...(!isPaid && !isCancelled ? [
+                                ...(!isPaid && !isCancelled && isAdmin ? [
                                     { type: "separator" as const },
                                     {
                                         label: "Confirmar Pagamento",

@@ -21,12 +21,14 @@ interface DetalhesAssinaturaModalProps {
     isOpen: boolean;
     onClose: () => void;
     assinatura: SubscriptionWithCharges | null;
+    isAdmin?: boolean;
 }
 
 export function DetalhesAssinaturaModal({
     isOpen,
     onClose,
-    assinatura
+    assinatura,
+    isAdmin = true
 }: DetalhesAssinaturaModalProps) {
     const { format } = useCurrency();
     const { formatDate } = useModalDetails();
@@ -202,6 +204,7 @@ export function DetalhesAssinaturaModal({
                         onConfirmPayment={() => { }}
                         onSendWhatsApp={() => { }}
                         onCancel={() => { }}
+                        isAdmin={isAdmin}
                     />
                 </div>
 
