@@ -56,6 +56,7 @@ export function ParticipantesTab({ participants, onEdit, onDelete, onView }: Pro
                                 cpf={p.cpf}
                                 subscriptionsCount={p._count.assinaturas}
                                 status={p._count.assinaturas > 0 ? "ativa" : "inativo"}
+                                userId={p.userId}
                                 onEdit={() => onEdit(p)}
                                 onDelete={() => onDelete(p)}
                                 onView={() => onView(p)}

@@ -14,7 +14,11 @@ export interface Participante {
 export interface Streaming {
     id: number;
     apelido: string | null;
-    catalogo: { nome: string };
+    catalogo: {
+        nome: string;
+        corPrimaria?: string | null;
+        iconeUrl?: string | null;
+    };
     vagasRestantes: number;
 }
 
@@ -30,6 +34,8 @@ export interface PendingRequest {
         apelido: string | null;
         catalogo: {
             nome: string;
+            corPrimaria?: string | null;
+            iconeUrl?: string | null;
         };
     } | null;
 }
@@ -40,6 +46,10 @@ export interface PendingInvite {
     streamingId?: number | null;
     streaming?: {
         apelido: string | null;
-        catalogo: { nome: string };
+        catalogo: {
+            nome: string;
+            corPrimaria?: string | null;
+            iconeUrl?: string | null;
+        };
     } | null;
 }
