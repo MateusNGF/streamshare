@@ -2,14 +2,17 @@
 
 import { Modal } from "@/components/ui/Modal";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Phone, Mail, CreditCard, User, AlertCircle, Edit, Calendar, UserCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Phone, Mail, CreditCard, User, AlertCircle, Edit, Calendar, UserCheck, ChevronRight, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getParticipanteById } from "@/actions/participantes";
+import { getDetailsParticipanteById } from "@/actions/participantes";
 import { Spinner } from "@/components/ui/Spinner";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatarMoeda } from "@/lib/financeiro-utils";
 import { Participante } from "@/types/participante";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import Link from "next/link";
+import { useToast } from "@/hooks/useToast";
 
 interface DetalhesParticipanteModalProps {
     isOpen: boolean;
@@ -24,6 +27,7 @@ export function DetalhesParticipanteModal({
     participantId,
     onEdit,
 }: DetalhesParticipanteModalProps) {
+    const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [participant, setParticipant] = useState<any>(null);
 
@@ -33,11 +37,17 @@ export function DetalhesParticipanteModal({
         }
     }, [isOpen, participantId]);
 
+    const handleCopy = (text: string, label: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        toast.info(`${label} copiado!`);
+    };
+
     const fetchParticipant = async () => {
         if (!participantId) return;
         setLoading(true);
         try {
-            const result = await getParticipanteById(participantId);
+            const result = await getDetailsParticipanteById(participantId);
             if (result.success) {
                 setParticipant(result.data);
             }
@@ -147,6 +157,7 @@ export function DetalhesParticipanteModal({
                             icon={Phone}
                             loading={loading}
                             placeholder="Não informado"
+                            onCopy={() => handleCopy(participant?.whatsappNumero, "WhatsApp")}
                         />
                         <InfoItem
                             label="E-mail"
@@ -154,6 +165,7 @@ export function DetalhesParticipanteModal({
                             icon={Mail}
                             loading={loading}
                             placeholder="Não informado"
+                            onCopy={() => handleCopy(participant?.email, "E-mail")}
                         />
                         <InfoItem
                             label="CPF"
@@ -161,6 +173,7 @@ export function DetalhesParticipanteModal({
                             icon={CreditCard}
                             loading={loading}
                             placeholder="Não cadastrado"
+                            onCopy={() => handleCopy(participant?.cpf, "CPF")}
                         />
                         <InfoItem
                             label="Membro desde"
@@ -192,9 +205,18 @@ export function DetalhesParticipanteModal({
                         </div>
                     ) : participant?.assinaturas?.length > 0 ? (
                         <div className="grid grid-cols-1 gap-3">
-                            {participant.assinaturas.map((sub: any) => (
+                            {participant.assinaturas.slice(0, 5).map((sub: any) => (
                                 <SubscriptionItem key={sub.id} sub={sub} />
                             ))}
+                            {participant.assinaturas.length > 5 && (
+                                <Link
+                                    href={`/assinaturas?participanteId=${participant.id}`}
+                                    className="flex items-center justify-center gap-2 p-3 text-sm font-bold text-primary hover:bg-primary/5 rounded-xl border border-dashed border-primary/20 transition-all hover:border-primary/40 group/link"
+                                >
+                                    Ver todas as {participant.assinaturas.length} assinaturas
+                                    <ChevronRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
+                                </Link>
+                            )}
                         </div>
                     ) : (
                         <div className="bg-gray-50 border border-dashed border-gray-200 p-10 rounded-[32px] text-center">
@@ -208,20 +230,36 @@ export function DetalhesParticipanteModal({
     );
 }
 
-function InfoItem({ label, value, icon: Icon, loading, placeholder }: any) {
+function InfoItem({ label, value, icon: Icon, loading, placeholder, onCopy }: any) {
     return (
         <div className="space-y-1.5 flex flex-col">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none px-1">{label}</p>
             {loading ? (
                 <Skeleton variant="text" className="w-3/4 h-5 mt-1" />
             ) : (
-                <div className="flex items-center gap-2.5 text-gray-900 font-bold group">
-                    <div className="bg-gray-50 p-1.5 rounded-lg group-hover:bg-violet-50 transition-colors">
+                <div
+                    className={cn(
+                        "flex items-center gap-3 p-1 rounded-xl border border-transparent transition-all group",
+                        onCopy && value ? "cursor-pointer hover:bg-gray-50/50 hover:border-gray-100" : ""
+                    )}
+                    onClick={onCopy}
+                >
+                    <div className="flex-shrink-0 bg-gray-50 p-2 rounded-lg group-hover:bg-violet-50 transition-colors shadow-sm">
                         <Icon size={16} className="text-primary" />
                     </div>
-                    <span className={!value ? "text-gray-400 font-medium" : "truncate"}>
-                        {value || placeholder}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                        <span className={cn(
+                            "text-sm font-bold block truncate",
+                            !value ? "text-gray-400 font-medium" : "text-gray-900"
+                        )}>
+                            {value || placeholder}
+                        </span>
+                    </div>
+                    {onCopy && value && (
+                        <div className="flex-shrink-0 p-1.5 text-gray-300 group-hover:text-primary group-hover:bg-white rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all">
+                            <Copy size={14} />
+                        </div>
+                    )}
                 </div>
             )}
         </div>

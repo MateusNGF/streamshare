@@ -21,7 +21,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { DetalhesParticipanteModal } from "../modals/DetalhesParticipanteModal";
 import { KPICard } from "../dashboard/KPICard";
 import { KPIGrid, KPIGridItem } from "../dashboard/KPIGrid";
-import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { PlanoConta } from "@prisma/client";
 
 interface ParticipantesClientProps {

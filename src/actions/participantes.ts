@@ -252,7 +252,7 @@ export async function deleteParticipante(id: number) {
     }
 }
 
-export async function getParticipanteById(id: number) {
+export async function getDetailsParticipanteById(id: number) {
     try {
         const { contaId } = await getContext();
 
@@ -260,7 +260,10 @@ export async function getParticipanteById(id: number) {
             where: { id, contaId },
             include: {
                 assinaturas: {
-                    where: { deletedAt: null },
+                    where: {
+                        deletedAt: null,
+                        status: { in: ["ativa", "suspensa"] }
+                    },
                     include: {
                         streaming: {
                             include: {
@@ -268,7 +271,8 @@ export async function getParticipanteById(id: number) {
                             }
                         }
                     },
-                    orderBy: { createdAt: "desc" }
+                    take: 5,
+                    orderBy: { createdAt: "asc" }
                 }
             }
         });
