@@ -55,7 +55,7 @@ export function StepStreamings({
                 </div>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {filtered.map(streaming => {
                     const isSelected = selectedIds.has(streaming.id);
                     const isFull = streaming.ocupados >= streaming.limiteParticipantes;
@@ -82,7 +82,8 @@ export function StepStreamings({
                                 color={streaming.cor}
                                 iconeUrl={streaming.iconeUrl}
                                 size="lg"
-                                className="shadow-sm group-hover:scale-105 transition-transform"
+                                rounded="2xl"
+                                className="shadow-sm group-hover:scale-110 transition-transform"
                             />
                             <h4 className="font-bold text-gray-900 text-sm mb-1 mt-2">{streaming.nome}</h4>
                             <p className="text-xs text-gray-500">

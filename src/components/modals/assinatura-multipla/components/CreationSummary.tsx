@@ -2,8 +2,10 @@
 
 import { Wallet } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { FrequenciaPagamento } from "@prisma/client";
-import { INTERVALOS_MESES, calcularTotalCiclo } from "@/lib/financeiro-utils";
+import { Prisma, FrequenciaPagamento } from "@prisma/client";
+import { INTERVALOS_MESES, calcularTotalCiclo, calcularCustoBase, calcularLucroMensal } from "@/lib/financeiro-utils";
+import { ProfitBadge } from "./ProfitBadge";
+import { ProfitMicroBadge } from "./ProfitMicroBadge";
 import { StreamingOption, ParticipanteOption, SelectedStreaming } from "../types";
 
 interface CreationSummaryProps {
@@ -29,6 +31,17 @@ export function CreationSummary({
 }: CreationSummaryProps) {
     const { format } = useCurrency();
 
+    const totalVagas = Array.from(participanteVagasMap.values()).reduce((acc, qty) => acc + qty, 0);
+
+    const totalLucroMensal = Array.from(configurations.values()).reduce((acc, config) => {
+        const streaming = selectedStreamings.find(s => s.id === config.streamingId);
+        if (!streaming) return acc;
+
+        const custoBase = calcularCustoBase(streaming.valorIntegral, streaming.limiteParticipantes);
+        const lucroPorVaga = calcularLucroMensal(config.valor, custoBase);
+        return acc.plus(lucroPorVaga.mul(totalVagas));
+    }, new Prisma.Decimal(0));
+
     if (selectedStreamingIds.size === 0) return null;
 
     return (
@@ -39,8 +52,11 @@ export function CreationSummary({
                 className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-black text-gray-500 hover:bg-white transition-colors uppercase tracking-widest"
             >
                 <div className="flex items-center gap-2">
-                    <Wallet size={14} className="text-primary" />
-                    <span>Detalhes da Lote</span>
+                    <div className="flex items-center gap-2 mr-2">
+                        <Wallet size={14} className="text-primary" />
+                        <span>Detalhes da Lote</span>
+                    </div>
+                    <ProfitBadge amount={totalLucroMensal.toNumber()} />
                 </div>
                 <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-[9px] tracking-normal">
                     {isOpen ? 'Fechar' : 'Expandir'}
@@ -57,11 +73,20 @@ export function CreationSummary({
                                 const val = parseFloat(config?.valor || "0");
                                 const mult = INTERVALOS_MESES[config?.frequencia as FrequenciaPagamento] || 1;
 
+                                const custoBase = calcularCustoBase(s.valorIntegral, s.limiteParticipantes);
+                                const lucroPorVaga = calcularLucroMensal(config?.valor || 0, custoBase);
+                                const lucroNoCiclo = config?.frequencia === 'mensal'
+                                    ? lucroPorVaga
+                                    : lucroPorVaga.mul(mult);
+
                                 return (
                                     <div key={s.id} className="flex items-center justify-between text-[11px] pb-1.5 last:border-0 last:pb-0">
                                         <div className="flex flex-col">
                                             <span className="text-gray-900 font-bold truncate max-w-[140px] leading-tight">{s.nome}</span>
-                                            <span className="text-[9px] text-gray-400 font-bold uppercase">{config?.frequencia}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] text-gray-400 font-bold uppercase">{config?.frequencia}</span>
+                                                <ProfitMicroBadge amount={lucroNoCiclo.toNumber()} />
+                                            </div>
                                         </div>
                                         <div className="text-right">
                                             <span className="text-gray-800 font-black block leading-none">{format(val)}/mês</span>

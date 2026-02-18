@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { FrequenciaPagamento } from "@prisma/client";
-import { calcularCustoBase } from "@/lib/financeiro-utils";
+import { FrequenciaPagamento, Prisma } from "@prisma/client";
+import { calcularCustoBase, calcularTotalCiclo, arredondarMoeda } from "@/lib/financeiro-utils";
 import { StreamingOption, ParticipanteOption, SelectedStreaming, ModalStep } from "./types";
 
 interface UseAssinaturaMultiplaProps {
@@ -56,23 +56,6 @@ export function useAssinaturaMultipla({
         });
     }, [streamings, configurations]);
 
-    const handleToggleParticipante = useCallback((id: number) => {
-        setSelectedParticipanteIds(prev => {
-            const next = new Set(prev);
-            const nextQuantities = new Map(quantities);
-
-            if (next.has(id)) {
-                next.delete(id);
-                nextQuantities.delete(id);
-            } else {
-                next.add(id);
-                nextQuantities.set(id, 1);
-            }
-            setQuantities(nextQuantities);
-            return next;
-        });
-    }, [quantities]);
-
     const totalVagasSelecionadas = useMemo(() =>
         Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0),
         [quantities]);
@@ -83,22 +66,50 @@ export function useAssinaturaMultipla({
             .filter(Boolean) as StreamingOption[],
         [selectedStreamingIds, streamings]);
 
+    const minAvailableSlots = useMemo(() => {
+        if (selectedStreamingIds.size === 0) return 0;
+        const slots = selectedStreamings.map(s => s.limiteParticipantes - s.ocupados);
+        const minTotal = Math.min(...slots);
+        return Math.max(0, minTotal - totalVagasSelecionadas);
+    }, [selectedStreamings, selectedStreamingIds, totalVagasSelecionadas]);
+
+    const handleToggleParticipante = useCallback((id: number) => {
+        setSelectedParticipanteIds(prev => {
+            const next = new Set(prev);
+            const nextQuantities = new Map(quantities);
+
+            if (next.has(id)) {
+                next.delete(id);
+                nextQuantities.delete(id);
+            } else if (minAvailableSlots > 0) {
+                next.add(id);
+                nextQuantities.set(id, 1);
+            }
+            setQuantities(nextQuantities);
+            return next;
+        });
+    }, [quantities, minAvailableSlots]);
+
     const handleQuantityChange = useCallback((id: number, delta: number) => {
         const currentQty = quantities.get(id) || 1;
-        const newQty = Math.max(1, currentQty + delta);
+        const newQty = currentQty + delta;
+
+        if (newQty <= 0) {
+            handleToggleParticipante(id);
+            return;
+        }
 
         let totalUsedOther = 0;
         quantities.forEach((qty, pid) => {
             if (pid !== id) totalUsedOther += qty;
         });
 
-        // Tightest constraint among selected streamings
         const minAvailable = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
 
         if (totalUsedOther + newQty <= minAvailable) {
             setQuantities(prev => new Map(prev).set(id, newQty));
         }
-    }, [quantities, selectedStreamings]);
+    }, [quantities, selectedStreamings, handleToggleParticipante]);
 
     const handleSelectAllParticipantes = useCallback(() => {
         const filtered = !participanteSearchTerm
@@ -108,26 +119,40 @@ export function useAssinaturaMultipla({
                 p.whatsappNumero.includes(participanteSearchTerm)
             );
 
-        if (selectedParticipanteIds.size === filtered.length) {
-            setSelectedParticipanteIds(new Set());
-            setQuantities(new Map());
-        } else {
-            const minAvailable = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
-            const nextSet = new Set(selectedParticipanteIds);
-            const nextQuantities = new Map(quantities);
+        const allFilteredSelected = filtered.length > 0 && filtered.every(p => selectedParticipanteIds.has(p.id));
 
-            let currentTotal = Array.from(nextQuantities.values()).reduce((a, b) => a + b, 0);
-
-            filtered.forEach(p => {
-                if (!nextSet.has(p.id) && currentTotal < minAvailable) {
-                    nextSet.add(p.id);
-                    nextQuantities.set(p.id, 1);
-                    currentTotal++;
-                }
+        if (allFilteredSelected) {
+            // Deselect ONLY filtered
+            setSelectedParticipanteIds(prev => {
+                const next = new Set(prev);
+                filtered.forEach(p => next.delete(p.id));
+                return next;
             });
+            setQuantities(prev => {
+                const next = new Map(prev);
+                filtered.forEach(p => next.delete(p.id));
+                return next;
+            });
+        } else {
+            // Select missing filtered until limit
+            const minAvailableSlotsGlobal = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
+            let currentTotal = Array.from(quantities.values()).reduce((a, b) => a + b, 0);
 
-            setSelectedParticipanteIds(nextSet);
-            setQuantities(nextQuantities);
+            setSelectedParticipanteIds(prev => {
+                const nextSet = new Set(prev);
+                const nextQuantities = new Map(quantities);
+
+                filtered.forEach(p => {
+                    if (!nextSet.has(p.id) && currentTotal < minAvailableSlotsGlobal) {
+                        nextSet.add(p.id);
+                        nextQuantities.set(p.id, 1);
+                        currentTotal++;
+                    }
+                });
+
+                setQuantities(nextQuantities);
+                return nextSet;
+            });
         }
     }, [participanteSearchTerm, participantes, selectedParticipanteIds, selectedStreamings, quantities]);
 
@@ -163,13 +188,6 @@ export function useAssinaturaMultipla({
 
     const isOverloaded = streamingsSemVagas.length > 0;
 
-    const minAvailableSlots = useMemo(() => {
-        if (selectedStreamingIds.size === 0) return 0;
-        const slots = selectedStreamings.map(s => s.limiteParticipantes - s.ocupados);
-        const minTotal = Math.min(...slots);
-        return Math.max(0, minTotal - totalVagasSelecionadas);
-    }, [selectedStreamings, selectedStreamingIds, totalVagasSelecionadas]);
-
     const canNext = useCallback(() => {
         switch (step) {
             case ModalStep.STREAMING: return selectedStreamingIds.size > 0;
@@ -184,6 +202,43 @@ export function useAssinaturaMultipla({
     }, [canNext]);
 
     const handleBack = useCallback(() => setStep(prev => prev - 1), []);
+
+    const financialAnalysis = useMemo(() => {
+        let revenueMensalPerSlot = new Prisma.Decimal(0);
+        let custoMensalPerSlot = new Prisma.Decimal(0);
+        let nextCycleTotal = new Prisma.Decimal(0);
+
+        configurations.forEach((config) => {
+            const streaming = selectedStreamings.find(s => s.id === config.streamingId);
+            if (!streaming) return;
+
+            const valorCobrado = new Prisma.Decimal(config.valor || 0);
+            const custoBase = calcularCustoBase(streaming.valorIntegral, streaming.limiteParticipantes);
+
+            revenueMensalPerSlot = revenueMensalPerSlot.plus(valorCobrado);
+            custoMensalPerSlot = custoMensalPerSlot.plus(custoBase);
+
+            const cycleTotalPerSeat = calcularTotalCiclo(config.valor, config.frequencia as FrequenciaPagamento);
+            nextCycleTotal = nextCycleTotal.plus(cycleTotalPerSeat.mul(totalVagasSelecionadas));
+        });
+
+        const receitaMensalTotal = revenueMensalPerSlot.mul(totalVagasSelecionadas);
+        const custoMensalTotal = custoMensalPerSlot.mul(totalVagasSelecionadas);
+        const lucroLiquidoMensal = receitaMensalTotal.minus(custoMensalTotal);
+
+        const margemLucro = receitaMensalTotal.gt(0)
+            ? lucroLiquidoMensal.div(receitaMensalTotal).mul(100).toNumber()
+            : 0;
+
+        return {
+            receitaMensalTotal: arredondarMoeda(receitaMensalTotal).toNumber(),
+            custoMensalTotal: arredondarMoeda(custoMensalTotal).toNumber(),
+            lucroLiquidoMensal: arredondarMoeda(lucroLiquidoMensal).toNumber(),
+            totalProximaFatura: arredondarMoeda(nextCycleTotal).toNumber(),
+            margemLucro: Math.round(margemLucro),
+            totalAssinaturas: selectedStreamingIds.size * totalVagasSelecionadas
+        };
+    }, [configurations, totalVagasSelecionadas, selectedStreamings, selectedStreamingIds.size]);
 
     const handleSubmit = useCallback(() => {
         if (selectedParticipanteIds.size === 0 || configurations.size === 0 || isOverloaded) return;
@@ -232,6 +287,7 @@ export function useAssinaturaMultipla({
         handleQuantityChange,
         handleSelectAllParticipantes,
         handleUpdateConfig,
+        financialAnalysis,
         handleClose,
         handleNext,
         handleBack,

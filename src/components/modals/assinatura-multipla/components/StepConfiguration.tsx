@@ -23,7 +23,7 @@ export function StepConfiguration({
                 </p>
             </div>
 
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4">
                 {selectedStreamings.map(streaming => (
                     <StreamingConfigItem
                         key={streaming.id}

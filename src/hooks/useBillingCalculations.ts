@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { FrequenciaPagamento } from '@prisma/client';
-import { calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from '@/lib/financeiro-utils';
+import { calcularCustoBase, calcularLucroMensal, calcularTotalCiclo, INTERVALOS_MESES } from '@/lib/financeiro-utils';
 
 interface UseBillingCalculationsProps {
     valorIntegral: number;
@@ -27,11 +27,13 @@ export function useBillingCalculations({
         const valorNumerico = typeof valorAtual === 'string' ? parseFloat(valorAtual) || 0 : valorAtual;
 
         const lucroMensalDecimal = calcularLucroMensal(valorNumerico, custoBaseDecimal);
+        const lucroCicloDecimal = lucroMensalDecimal.mul(INTERVALOS_MESES[frequencia]);
         const totalCicloDecimal = calcularTotalCiclo(valorNumerico, frequencia);
 
         return {
             custoBase: custoBaseDecimal.toNumber(),
             lucroMensal: lucroMensalDecimal.toNumber(),
+            lucroCiclo: lucroCicloDecimal.toNumber(),
             totalCiclo: totalCicloDecimal.toNumber(),
             temLucro: lucroMensalDecimal.gt(0)
         };

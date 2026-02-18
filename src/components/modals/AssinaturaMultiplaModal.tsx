@@ -167,6 +167,7 @@ export function AssinaturaMultiplaModal({
                         cobrancaAutomatica={logic.cobrancaAutomaticaPaga}
                         onCobrancaChange={logic.setCobrancaAutomaticaPaga}
                         overloadedStreamings={logic.streamingsSemVagas}
+                        financialAnalysis={logic.financialAnalysis}
                     />
                 )}
             </div>

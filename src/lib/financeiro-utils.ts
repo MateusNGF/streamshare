@@ -88,7 +88,8 @@ export function arredondarMoeda(valor: Prisma.Decimal | number | string): Prisma
  */
 export function calcularCustoBase(valorIntegral: Prisma.Decimal | number | string, limiteParticipantes: number): Prisma.Decimal {
     if (limiteParticipantes <= 0) return new Prisma.Decimal(0);
-    const total = new Prisma.Decimal(valorIntegral.toString());
+    const valStr = valorIntegral?.toString() || "0";
+    const total = new Prisma.Decimal(valStr === "" ? "0" : valStr);
     return arredondarMoeda(total.div(limiteParticipantes));
 }
 
@@ -96,8 +97,10 @@ export function calcularCustoBase(valorIntegral: Prisma.Decimal | number | strin
  * Calculates the monthly profit based on current value and base cost.
  */
 export function calcularLucroMensal(valorAtual: Prisma.Decimal | number | string, custoBase: Prisma.Decimal | number | string): Prisma.Decimal {
-    const atual = new Prisma.Decimal(valorAtual.toString());
-    const custo = new Prisma.Decimal(custoBase.toString());
+    const atualStr = valorAtual?.toString() || "0";
+    const custoStr = custoBase?.toString() || "0";
+    const atual = new Prisma.Decimal(atualStr === "" ? "0" : atualStr);
+    const custo = new Prisma.Decimal(custoStr === "" ? "0" : custoStr);
     return arredondarMoeda(atual.minus(custo));
 }
 
@@ -105,7 +108,8 @@ export function calcularLucroMensal(valorAtual: Prisma.Decimal | number | string
  * Calculates the total value for a billing cycle (multiple months).
  */
 export function calcularTotalCiclo(valorMensal: Prisma.Decimal | number | string, frequencia: FrequenciaPagamento): Prisma.Decimal {
-    const valor = new Prisma.Decimal(valorMensal.toString());
+    const valStr = valorMensal?.toString() || "0";
+    const valor = new Prisma.Decimal(valStr === "" ? "0" : valStr);
     const multiplier = INTERVALOS_MESES[frequencia];
     return arredondarMoeda(valor.mul(multiplier));
 }

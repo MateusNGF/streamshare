@@ -89,7 +89,10 @@ export function StreamingConfigItem({
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
                             Valor Mensal ({currencyInfo.symbol})
                         </label>
-                        <ProfitBadge amount={billing.lucroMensal} />
+                        <ProfitBadge
+                            amount={config.frequencia === 'mensal' ? billing.lucroMensal : billing.lucroCiclo}
+                            frequency={config.frequencia}
+                        />
                     </div>
                     <CurrencyInput
                         value={config.valor}

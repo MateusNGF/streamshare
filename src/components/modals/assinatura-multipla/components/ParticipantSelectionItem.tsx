@@ -8,21 +8,28 @@ export function ParticipantSelectionItem({
     isSelected,
     qty,
     onToggle,
-    onQuantityChange
+    onQuantityChange,
+    canAddMore
 }: {
     p: ParticipanteOption;
     isSelected: boolean;
     qty: number;
     onToggle: (id: number) => void;
     onQuantityChange: (id: number, delta: number) => void;
+    canAddMore: boolean;
 }) {
+    // A item is blocked for selection if it's NOT selected AND there are no slots left
+    const isBlockedForSelection = !isSelected && !canAddMore;
+
     return (
         <div
-            className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all cursor-pointer border ${isSelected
-                ? "bg-primary/5 border-primary/20"
-                : "hover:bg-gray-50 border-transparent"
+            className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all border ${isSelected
+                ? "bg-primary/5 border-primary/20 cursor-default"
+                : isBlockedForSelection
+                    ? "opacity-40 grayscale cursor-not-allowed border-transparent"
+                    : "hover:bg-gray-50 border-transparent cursor-pointer"
                 }`}
-            onClick={() => onToggle(p.id)}
+            onClick={() => !isBlockedForSelection && onToggle(p.id)}
         >
             <div className="flex items-center gap-2 overflow-hidden flex-1">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold shrink-0 ${isSelected ? "bg-primary text-white shadow-sm" : "bg-gray-200 text-gray-600"
@@ -44,9 +51,8 @@ export function ParticipantSelectionItem({
                     <button
                         type="button"
                         onClick={() => onQuantityChange(p.id, -1)}
-                        className="p-1 hover:bg-gray-200 rounded text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                        disabled={qty <= 1}
-                        title="Diminuir quantidade"
+                        className="p-1 hover:bg-gray-200 rounded text-gray-600 transition-colors"
+                        title="Diminuir quantidade (zerar desmarca)"
                     >
                         <Minus size={14} />
                     </button>
@@ -54,8 +60,9 @@ export function ParticipantSelectionItem({
                     <button
                         type="button"
                         onClick={() => onQuantityChange(p.id, 1)}
-                        className="p-1 hover:bg-gray-200 rounded text-gray-600 transition-colors"
-                        title="Aumentar quantidade"
+                        className={`p-1 rounded transition-colors ${canAddMore ? "hover:bg-gray-200 text-gray-600" : "opacity-20 cursor-not-allowed text-gray-400"}`}
+                        disabled={!canAddMore}
+                        title={canAddMore ? "Aumentar quantidade" : "Limite de vagas atingido"}
                     >
                         <Plus size={14} />
                     </button>
