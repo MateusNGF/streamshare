@@ -38,6 +38,8 @@ export function StepParticipants({
 
     const isAllFilteredSelected = filtered.length > 0 && filtered.every(p => selectedIds.has(p.id));
 
+    const totalVagas = useMemo(() => Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0), [quantities]);
+
     return (
         <div className="space-y-4 h-[60vh] md:h-[460px] flex flex-col">
             <div>
@@ -62,7 +64,7 @@ export function StepParticipants({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <span className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1.5 rounded-lg ${selectedIds.size > 0 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
-                            {selectedIds.size} selecionados
+                            {totalVagas} {totalVagas === 1 ? 'vaga' : 'vagas'} {totalVagas === 1 ? 'selecionada' : 'selecionadas'}
                         </span>
                         <button
                             type="button"
@@ -91,7 +93,9 @@ export function StepParticipants({
                             <span className="font-medium">
                                 {capacityInfo.isOverloaded
                                     ? `Existem mais participantes do que vagas em alguns serviços selecionados.`
-                                    : `Você ainda pode adicionar até ${capacityInfo.minSlots} vagas.`}
+                                    : capacityInfo.minSlots === 0
+                                        ? "Não há mais vagas disponíveis nos streamings selecionados."
+                                        : `Você ainda pode adicionar até ${capacityInfo.minSlots} ${capacityInfo.minSlots === 1 ? 'vaga' : 'vagas'}.`}
                             </span>
                         </div>
                     </div>

@@ -164,10 +164,11 @@ export function useAssinaturaMultipla({
     const isOverloaded = streamingsSemVagas.length > 0;
 
     const minAvailableSlots = useMemo(() => {
-        if (selectedStreamingIds.size === 0) return Infinity;
+        if (selectedStreamingIds.size === 0) return 0;
         const slots = selectedStreamings.map(s => s.limiteParticipantes - s.ocupados);
-        return Math.min(...slots);
-    }, [selectedStreamings, selectedStreamingIds]);
+        const minTotal = Math.min(...slots);
+        return Math.max(0, minTotal - totalVagasSelecionadas);
+    }, [selectedStreamings, selectedStreamingIds, totalVagasSelecionadas]);
 
     const canNext = useCallback(() => {
         switch (step) {
