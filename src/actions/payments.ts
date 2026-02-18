@@ -112,3 +112,39 @@ export async function getPaymentsData() {
         return { success: false, error: "Erro ao buscar dados de pagamentos" };
     }
 }
+
+/**
+ * Realiza o estorno de um pagamento via MercadoPago.
+ */
+export async function refundPaymentAction(paymentId: string) {
+    try {
+        const { nivelAcesso } = await getContext();
+
+        // Apenas o proprietário ou admin pode estornar.
+        if (nivelAcesso !== 'owner' && nivelAcesso !== 'admin') {
+            return { success: false, error: "Permissão insuficiente para realizar estornos." };
+        }
+
+        if (!paymentId) {
+            return { success: false, error: "ID do pagamento não fornecido." };
+        }
+
+        const { refundPayment } = await import("@/lib/mercado-pago");
+        const result = await refundPayment(paymentId);
+
+        if (result.success) {
+            // Atualizar status da cobrança no banco
+            await prisma.cobranca.updateMany({
+                where: { gatewayId: paymentId },
+                data: { status: "estornado" }
+            });
+
+            return { success: true, message: "Estorno realizado com sucesso pelo MercadoPago." };
+        }
+
+        return { success: false, error: result.error || "Erro ao processar estorno no gateway." };
+    } catch (error: any) {
+        console.error("[REFUND_PAYMENT_ERROR]", error);
+        return { success: false, error: "Erro interno ao processar estorno." };
+    }
+}

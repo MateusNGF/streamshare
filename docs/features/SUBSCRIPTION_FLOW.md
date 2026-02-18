@@ -107,9 +107,9 @@ Decidimos que o **MercadoPago é a fonte da verdade** para o estado financeiro d
 
 ### 2. Identificação de Contas
 
-Como ligar o pagamento do Stripe à conta correta no Postgres?
--   Usamos o campo `client_reference_id` na criação da Sessão de Checkout.
--   Passamos o `conta.id` (interno) nesse campo.
+Como ligar o pagamento do MercadoPago à conta correta no Postgres?
+-   Usamos o campo `external_reference` na criação da Sessão de Checkout ou Assinatura.
+-   Passamos o ID único (ex: `saas_{conta.id}_{plano}`) nesse campo.
 -   O Webhook lê esse ID e sabe exatamente qual conta atualizar.
 
 #### 3. Gestão de Faturas

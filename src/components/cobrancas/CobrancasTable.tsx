@@ -158,6 +158,22 @@ export function CobrancasTable({
                                         onClick: () => onCancel(cobranca.id),
                                         variant: "danger" as const
                                     }
+                                ] : []),
+                                ...(isPaid && cobranca.gatewayTransactionId && isAdmin ? [
+                                    { type: "separator" as const },
+                                    {
+                                        label: "Estornar Pagamento",
+                                        icon: <History size={16} />,
+                                        onClick: async () => {
+                                            if (confirm("Deseja estornar este pagamento? O valor retornará ao cliente.")) {
+                                                const { refundPaymentAction } = await import("@/actions/payments");
+                                                const res = await refundPaymentAction(cobranca.gatewayTransactionId);
+                                                if (res.success) alert(res.message);
+                                                else alert(res.error);
+                                            }
+                                        },
+                                        variant: "danger" as const
+                                    }
                                 ] : [])
                             ];
 

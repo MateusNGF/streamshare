@@ -185,6 +185,27 @@ export function DetalhesCobrancaModal({
 
                 {/* Ações do Footer */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-50">
+                    {cobranca.status === 'pago' && cobranca.gatewayId && (
+                        <Button
+                            variant="outline"
+                            className="w-full text-red-600 border-red-100 hover:bg-red-50 hover:border-red-200"
+                            onClick={async () => {
+                                if (confirm("Deseja realmente estornar este pagamento? O valor será devolvido ao cliente e a cobrança será marcada como estornada.")) {
+                                    const { refundPaymentAction } = await import("@/actions/payments");
+                                    const res = await refundPaymentAction(cobranca.gatewayId);
+                                    if (res.success) {
+                                        alert(res.message);
+                                        onClose();
+                                    } else {
+                                        alert(res.error);
+                                    }
+                                }
+                            }}
+                        >
+                            <AlertOctagon size={16} className="mr-2" />
+                            Estornar Pagamento
+                        </Button>
+                    )}
                     <Button onClick={onClose} variant="outline" className="w-full">
                         Fechar
                     </Button>

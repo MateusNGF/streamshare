@@ -56,6 +56,10 @@ export function PendingInvoiceModal({ isOpen, onClose, checkoutData }: PendingIn
                         </div>
 
                         <div className="text-center space-y-2">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Aguardando Pagamento...</span>
+                            </div>
                             <h3 className="font-black text-gray-900 text-lg">Acesse o app do seu banco</h3>
                             <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
                                 Escaneie o QR Code acima ou copie o código abaixo para pagar.
