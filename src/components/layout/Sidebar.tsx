@@ -74,10 +74,10 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
             items: [
                 { icon: LayoutDashboard, label: "Visão Provedor", href: "/dashboard/provedor" },
                 { icon: Tv, label: "Streamings", href: "/streamings" },
-                { icon: FolderOpen, label: "Grupos", href: "/grupos" },
-                { icon: Users, label: "Participantes", href: "/participantes" },
                 { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
                 { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
+                { icon: Users, label: "Participantes", href: "/participantes" },
+                { icon: FolderOpen, label: "Grupos", href: "/grupos" },
             ]
         }] : []),
         {
