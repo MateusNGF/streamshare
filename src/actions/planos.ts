@@ -4,51 +4,44 @@ import { prisma } from "@/lib/db";
 import { PlanoConta } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { PLANS } from "@/config/plans";
-import { getStripeUrl, stripe } from "@/lib/stripe";
+import { createSaaSSubscription, cancelSaaSSubscription, reactivateSaaSSubscription } from "@/lib/mercado-pago";
 import { getContext } from "@/lib/action-context";
 
 export async function createCheckoutSession(plano: PlanoConta) {
     try {
-        const { userId, contaId } = await getContext();
+        const { userId, contaId, userEmail } = await getContext();
 
         const planConfig = PLANS[plano];
         if (!planConfig) {
             return { success: false, error: "Plano inválido" };
         }
 
-        if (!planConfig.stripePriceId) {
+        if (!planConfig.mpPlanId) {
             if (planConfig.price === 0) {
                 return internalUpdateToFree(userId, contaId, plano);
             }
             return { success: false, error: "Configuração de preço ausente para este plano" };
         }
 
-        // Fetch account details needed for stripe
+        // Fetch account details
         const conta = await prisma.conta.findUnique({
             where: { id: contaId },
-            select: { gatewayCustomerId: true, id: true }
+            select: { id: true }
         });
 
         if (!conta) return { success: false, error: "Conta não encontrada" };
 
-        const checkoutSession = await stripe.checkout.sessions.create({
-            mode: "subscription",
-            payment_method_types: ["card"],
-            customer: conta.gatewayCustomerId || undefined,
-            line_items: [{ price: planConfig.stripePriceId, quantity: 1 }],
-            metadata: {
-                contaId: conta.id.toString(),
-                plano: plano,
-            },
-            success_url: getStripeUrl("/planos?success=true"),
-            cancel_url: getStripeUrl("/planos?canceled=true"),
-        });
+        const subscription = await createSaaSSubscription(
+            planConfig.mpPlanId,
+            userEmail,
+            `saas_${conta.id}_${plano}`
+        );
 
-        if (!checkoutSession.url) {
-            return { success: false, error: "Erro ao criar sessão de checkout" };
+        if (!subscription.success || !subscription.init_point) {
+            return { success: false, error: subscription.error || "Erro ao criar assinatura" };
         }
 
-        return { success: true, data: { url: checkoutSession.url } };
+        return { success: true, data: { url: subscription.init_point } };
     } catch (error: any) {
         console.error("[CREATE_CHECKOUT_SESSION_ERROR]", error);
         return { success: false, error: error.message || "Erro ao criar sessão de checkout" };
@@ -75,26 +68,67 @@ async function internalUpdateToFree(userId: number, contaId: number, plano: Plan
 
 export async function createCustomerPortalSession() {
     try {
-        const { contaId } = await getContext();
-
-        const conta = await prisma.conta.findUnique({
-            where: { id: contaId },
-            select: { gatewayCustomerId: true }
-        });
-
-        if (!conta || !conta.gatewayCustomerId) {
-            return { success: false, error: "ID Gateway não encontrado", code: "NOT_FOUND" };
-        }
-
-        const portalSession = await stripe.billingPortal.sessions.create({
-            customer: conta.gatewayCustomerId,
-            return_url: getStripeUrl("/dashboard"),
-        });
-
-        return { success: true, data: { url: portalSession.url } };
+        // MercadoPago pre-approvals can be managed by the user in their MP account.
+        // For now, we return a link to the MercadoPago dashboard or a custom page.
+        return {
+            success: true,
+            data: { url: "https://www.mercadopago.com.br/subscriptions" }
+        };
     } catch (error: any) {
         console.error("[CREATE_CUSTOMER_PORTAL_SESSION_ERROR]", error);
-        return { success: false, error: error.message || "Erro ao criar sessão de portal" };
+        return { success: false, error: "Erro ao direcionar para o portal financeiro" };
+    }
+}
+
+export async function cancelSubscriptionAction() {
+    try {
+        const { contaId } = await getContext();
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { gatewaySubscriptionId: true }
+        });
+
+        if (!conta?.gatewaySubscriptionId) {
+            return { success: false, error: "Assinatura não encontrada" };
+        }
+
+        const result = await cancelSaaSSubscription(conta.gatewaySubscriptionId);
+        if (result.success) {
+            await prisma.conta.update({
+                where: { id: contaId },
+                data: { gatewaySubscriptionStatus: 'cancelled' }
+            });
+            revalidatePath("/configuracoes");
+        }
+        return result;
+    } catch (error: any) {
+        return { success: false, error: "Erro ao processar cancelamento" };
+    }
+}
+
+export async function reactivateSubscriptionAction() {
+    try {
+        const { contaId } = await getContext();
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { gatewaySubscriptionId: true }
+        });
+
+        if (!conta?.gatewaySubscriptionId) {
+            return { success: false, error: "Assinatura não encontrada" };
+        }
+
+        const result = await reactivateSaaSSubscription(conta.gatewaySubscriptionId);
+        if (result.success) {
+            await prisma.conta.update({
+                where: { id: contaId },
+                data: { gatewaySubscriptionStatus: 'authorized' }
+            });
+            revalidatePath("/configuracoes");
+        }
+        return result;
+    } catch (error: any) {
+        return { success: false, error: "Erro ao processar reativação" };
     }
 }
 

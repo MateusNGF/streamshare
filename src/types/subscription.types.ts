@@ -30,6 +30,7 @@ export interface ChargeCreationData {
     pixQrCode?: string;
     pixCopiaECola?: string;
     gatewayId?: string;
+    externalReference?: string;
 }
 
 export type BillingDecision =

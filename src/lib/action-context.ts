@@ -28,6 +28,7 @@ export async function getContext() {
 
     return {
         userId: session.userId,
+        userEmail: session.email,
         contaId: userAccount.contaId,
         nivelAcesso: userAccount.nivelAcesso
     };

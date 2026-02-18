@@ -2,11 +2,13 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
+import { StatusAssinatura, StatusCobranca } from "@prisma/client";
 import { billingService } from "@/services/billing-service";
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
+import { refundPayment } from "@/lib/mercado-pago";
+import { subscriptionValidator } from "@/services/subscription-validator";
 
 export async function getAssinaturasKPIs() {
     try {
@@ -46,7 +48,6 @@ export async function getAssinaturasKPIs() {
         return { success: false, error: "Erro ao buscar KPIs de assinaturas" };
     }
 }
-import { subscriptionValidator } from "@/services/subscription-validator";
 
 export async function getAssinaturas(filters?: {
     status?: string;
@@ -334,6 +335,27 @@ export async function cancelarAssinatura(assinaturaId: number, motivo?: string) 
                 }
             });
 
+            // Se for cancelamento IMEDIATO (sem período restante ou solicitado reembolso)
+            // Vamos verificar se existe uma cobrança PAGA para estornar
+            if (novoStatus === StatusAssinatura.cancelada && ultimaCobrancaPaga?.gatewayId) {
+                // Tenta realizar o estorno direto no gateway
+                const refundRes = await refundPayment(ultimaCobrancaPaga.gatewayId);
+
+                if (refundRes.success) {
+                    await tx.cobranca.update({
+                        where: { id: ultimaCobrancaPaga.id },
+                        data: {
+                            status: StatusCobranca.estornado,
+                            metadataJson: {
+                                ...(ultimaCobrancaPaga.metadataJson as any || {}),
+                                refundedAt: new Date().toISOString(),
+                                refundData: refundRes.data
+                            }
+                        }
+                    });
+                }
+            }
+
             const dataFim = ultimaCobrancaPaga?.periodoFim ? ultimaCobrancaPaga.periodoFim.toLocaleDateString('pt-BR') : 'hoje';
 
             await tx.notificacao.create({
@@ -344,7 +366,7 @@ export async function cancelarAssinatura(assinaturaId: number, motivo?: string) 
                     titulo: agendado ? "Cancelamento agendado" : "Assinatura cancelada",
                     descricao: agendado
                         ? `O cancelamento da assinatura de ${assinatura.participante.nome} foi agendado. O acesso continua liberado até ${dataFim}.`
-                        : `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.`,
+                        : `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.${ultimaCobrancaPaga?.gatewayId ? " Estorno solicitado à origem." : ""}`,
                     entidadeId: assinaturaId,
                     lida: false
                 }

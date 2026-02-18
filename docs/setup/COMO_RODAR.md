@@ -19,7 +19,12 @@ Este guia auxilia na configuração do ambiente de desenvolvimento local para o 
    ```
 
 3. **Configure as variáveis de ambiente**:
-   Um arquivo `.env` foi criado na raiz com a `DATABASE_URL`. Certifique-se de que ele aponta para o seu banco local.
+   Um arquivo `.env` deve conter os seguintes campos:
+   - `DATABASE_URL`: Conexão do banco.
+   - `MERCADOPAGO_ACCESS_TOKEN`: Token da sua aplicação MP.
+   - `MERCADOPAGO_WEBHOOK_SECRET`: Segredo para validação do webhook.
+   - `NEXT_PUBLIC_MP_PLAN_PRO`: ID do plano recorrente PRO no MP.
+   - `NEXT_PUBLIC_MP_PLAN_BUSINESS`: ID do plano recorrente BUSINESS no MP.
 
 4. **Suba o Banco de Dados**:
    Utilize o Docker Compose para iniciar o PostgreSQL:

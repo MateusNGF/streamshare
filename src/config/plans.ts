@@ -20,7 +20,7 @@ export interface PlanDefinition {
     highlighted?: boolean;
     comingSoon?: boolean;
     color: string;
-    stripePriceId?: string;
+    mpPlanId?: string;
 }
 
 export const PLANS: Record<PlanoConta, PlanDefinition> = {
@@ -56,7 +56,7 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
 
         highlighted: true,
         color: "primary",
-        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
+        mpPlanId: process.env.NEXT_PUBLIC_MP_PLAN_PRO,
         features: [
             { text: "20 Streamings", included: true },
             { text: "Participantes Ilimitados", included: true },
@@ -79,7 +79,7 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
         comingSoon: true,
 
         color: "purple", // Distinct color
-        stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
+        mpPlanId: process.env.NEXT_PUBLIC_MP_PLAN_BUSINESS,
         features: [
             { text: "Streamings Ilimitados", included: true },
             { text: "Participantes Ilimitados", included: true },

@@ -3,9 +3,10 @@
 import { prisma } from "@/lib/db";
 import { SubscriptionService } from "@/services/subscription.service";
 import { revalidatePath } from "next/cache";
-import { FrequenciaPagamento } from "@prisma/client";
+import { FrequenciaPagamento, MetodoPagamento } from "@prisma/client";
 import { StreamingService } from "@/services/streaming.service";
 import { ParticipantService } from "@/services/participant.service";
+import { createPixPayment, createCheckoutPreference } from "@/lib/mercado-pago";
 
 export async function publicSubscribe(data: {
     token: string;
@@ -16,6 +17,7 @@ export async function publicSubscribe(data: {
     cpf?: string;
     frequencia?: FrequenciaPagamento;
     quantidade?: number;
+    metodoPagamento?: MetodoPagamento;
 }) {
     try {
         // 1. Validar Streaming e Token
@@ -72,11 +74,66 @@ export async function publicSubscribe(data: {
             }
 
             // 5. Criar Assinatura(s)
+            const assinaturas = [];
             for (let i = 0; i < (data.quantidade || 1); i++) {
-                await SubscriptionService.createFromStreaming(tx, participante.id, streaming.id, data.frequencia);
+                const ass = await SubscriptionService.createFromStreaming(tx, participante.id, streaming.id, data.frequencia);
+                assinaturas.push(ass);
             }
 
-            // 6. Notificar Admin
+            const primeiraAssinatura = assinaturas[0];
+            const valorTotalCiclo = Number(primeiraAssinatura.valor) * (data.quantidade || 1);
+
+            // 6. Gerar Pagamento Inicial no Gateway (PIX ou CARTÃO)
+            let checkoutData = null;
+            if (data.metodoPagamento === MetodoPagamento.PIX) {
+                const res = await createPixPayment({
+                    id: `pub_sub_${primeiraAssinatura.id}`,
+                    title: `Assinatura ${streaming.catalogo.nome}`,
+                    description: `Inscrição para ${data.nome}`,
+                    unit_price: valorTotalCiclo,
+                    email: data.email,
+                    external_reference: `assinatura_${primeiraAssinatura.id}`
+                });
+
+                if (res.success) {
+                    // Buscar a cobrança gerada pelo SubscriptionService (createFromStreaming gera cobrança inicial)
+                    // Como o SubscriptionService gera uma cobrança para cada assinatura, precisamos atualizar as cobranças iniciais
+                    // Para simplificar, o checkout público foca na primeira assinatura (o lote é menos comum aqui)
+                    await tx.cobranca.updateMany({
+                        where: { assinaturaId: { in: assinaturas.map(a => a.id) }, status: 'pendente' },
+                        data: {
+                            metodoPagamento: MetodoPagamento.PIX,
+                            gatewayId: res.id,
+                            pixQrCode: res.qr_code_base64,
+                            pixCopiaECola: res.qr_code
+                        }
+                    });
+
+                    checkoutData = {
+                        type: 'PIX',
+                        qrCode: res.qr_code_base64,
+                        copyPaste: res.qr_code
+                    };
+                }
+            } else if (data.metodoPagamento === MetodoPagamento.CREDIT_CARD) {
+                const res = await createCheckoutPreference({
+                    id: `pub_sub_${primeiraAssinatura.id}`,
+                    title: `Assinatura ${streaming.catalogo.nome}`,
+                    description: `Inscrição para ${data.nome}`,
+                    unit_price: valorTotalCiclo,
+                    email: data.email,
+                    external_reference: `assinatura_${primeiraAssinatura.id}`
+                });
+
+                if (res.success) {
+                    checkoutData = {
+                        type: 'CARD',
+                        url: res.init_point
+                    };
+                }
+            }
+
+            // 7. Notificar Admin
             await tx.notificacao.create({
                 data: {
                     contaId: streaming.contaId,
@@ -86,12 +143,13 @@ export async function publicSubscribe(data: {
                     metadata: {
                         participanteId: participante.id,
                         streamingId: streaming.id,
-                        quantidade: data.quantidade || 1
+                        quantidade: data.quantidade || 1,
+                        metodo: data.metodoPagamento
                     }
                 }
             });
 
-            return { success: true };
+            return { success: true, checkoutData };
         });
 
         if (result.success) {

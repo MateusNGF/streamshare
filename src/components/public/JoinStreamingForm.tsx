@@ -12,8 +12,9 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { QuantityInput } from "@/components/ui/QuantityInput";
 
 import { Modal } from "@/components/ui/Modal";
-import { User, LogOut, CheckCircle, Shield, Info } from "lucide-react";
+import { User, LogOut, CheckCircle, Shield, Info, CreditCard, QrCode } from "lucide-react";
 import Link from "next/link";
+import { PendingInvoiceModal } from "@/components/modals/PendingInvoiceModal";
 
 interface JoinStreamingFormProps {
     token: string;
@@ -50,6 +51,8 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
     const { format } = useCurrency();
     const [loading, setLoading] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showPendingModal, setShowPendingModal] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<any>(null);
 
     const availableFrequencies = (enabledFrequencies || "mensal")
         .split(",")
@@ -61,7 +64,8 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
         whatsappNumero: loggedUser?.whatsappNumero || "",
         cpf: loggedUser?.cpf || "",
         frequencia: availableFrequencies[0] || "mensal" as FrequenciaPagamento,
-        quantidade: 1
+        quantidade: 1,
+        metodoPagamento: 'PIX' as 'PIX' | 'CREDIT_CARD'
     });
 
     const handleConfirmSubmit = (e: React.FormEvent) => {
@@ -78,12 +82,18 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                 token,
                 userId: loggedUser?.userId,
                 ...formData
-            });
+            }) as any;
 
             if (result?.success) {
-                success("Inscrição realizada com sucesso! O administrador entrará em contato.");
-                router.push("/faturas");
-                router.refresh();
+                if (result.checkoutData) {
+                    setCheckoutData(result.checkoutData);
+                    setShowPendingModal(true);
+                    success("Inscrição realizada! Aguardando pagamento.");
+                } else {
+                    success("Inscrição realizada com sucesso! O administrador entrará em contato.");
+                    router.push("/faturas");
+                    router.refresh();
+                }
             } else {
                 toastError(result?.error || "Erro ao realizar inscrição");
             }
@@ -160,6 +170,34 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                                 </SelectGroup>
                             </SelectContent>
                         </Select>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Método de Pagamento</label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, metodoPagamento: 'PIX' })}
+                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2 ${formData.metodoPagamento === 'PIX'
+                                ? 'border-primary bg-primary/[0.03] text-primary shadow-lg shadow-primary/5'
+                                : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
+                                }`}
+                        >
+                            <QrCode size={24} className={formData.metodoPagamento === 'PIX' ? 'opacity-100' : 'opacity-40'} />
+                            <span className="text-xs font-black uppercase tracking-wider">PIX</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, metodoPagamento: 'CREDIT_CARD' })}
+                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2 ${formData.metodoPagamento === 'CREDIT_CARD'
+                                ? 'border-primary bg-primary/[0.03] text-primary shadow-lg shadow-primary/5'
+                                : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
+                                }`}
+                        >
+                            <CreditCard size={24} className={formData.metodoPagamento === 'CREDIT_CARD' ? 'opacity-100' : 'opacity-40'} />
+                            <span className="text-xs font-black uppercase tracking-wider">Cartão</span>
+                        </button>
                     </div>
                 </div>
 
@@ -272,6 +310,16 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     </div>
                 </div>
             </Modal>
+
+            <PendingInvoiceModal
+                isOpen={showPendingModal}
+                onClose={() => {
+                    setShowPendingModal(false);
+                    router.push("/faturas");
+                    router.refresh();
+                }}
+                checkoutData={checkoutData}
+            />
         </>
     );
 }

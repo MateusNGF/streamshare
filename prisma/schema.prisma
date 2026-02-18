@@ -42,6 +42,7 @@ enum StatusCobranca {
   pago
   atrasado
   cancelado
+  estornado
 }
 
 enum StatusParticipante {

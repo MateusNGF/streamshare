@@ -5,7 +5,7 @@ import { Building2, User, Crown, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { PLANS } from "@/config/plans";
-import { cancelSubscriptionAction, reactivateSubscriptionAction } from "@/actions/stripe";
+import { cancelSubscriptionAction, reactivateSubscriptionAction } from "@/actions/planos";
 import { CancelSubscriptionModal } from "../modals/CancelSubscriptionModal";
 import { ToastVariant } from "@/components/ui/Toast";
 
@@ -29,7 +29,7 @@ export function PlanCardSettings({ conta, showToast }: PlanCardSettingsProps) {
     const handleCancelSubscription = async () => {
         setIsLoadingSubscription(true);
         try {
-            const result = await cancelSubscriptionAction(conta.id);
+            const result = await cancelSubscriptionAction();
             if (result.success) {
                 showToast("Assinatura cancelada com sucesso. O acesso continua até o fim do período.", "success");
                 setIsCancelModalOpen(false);
@@ -47,7 +47,7 @@ export function PlanCardSettings({ conta, showToast }: PlanCardSettingsProps) {
     const handleReactivateSubscription = async () => {
         setIsLoadingSubscription(true);
         try {
-            const result = await reactivateSubscriptionAction(conta.id);
+            const result = await reactivateSubscriptionAction();
             if (result.success) {
                 showToast("Assinatura reativada com sucesso!", "success");
                 router.refresh();

@@ -78,7 +78,7 @@ The system intelligently routes notifications based on who *needs* to know. This
 *   **Examples**:
     *   A new group was created.
     *   A global setting was changed.
-    *   A new billing plan was selected for the account.
+    *   A new billing plan was selected for the account via MercadoPago.
 
 ### 2. User Level (Direct)
 *   **Trigger**: `usuarioId = {id}`
