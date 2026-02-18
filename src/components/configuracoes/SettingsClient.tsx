@@ -1,24 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, User, Bell, Shield, CreditCard, LogOut, MessageSquare, DollarSign, Check, Crown, Zap, BarChart, TrendingUp } from "lucide-react";
+import { Building2, User, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
-
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
-import { Input } from "@/components/ui/Input";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Toast, ToastVariant } from "@/components/ui/Toast";
 import { updateProfile, updateAccount, updateCurrency } from "@/actions/settings";
-import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { CurrencyCode } from "@/types/currency.types";
 import NotificationsTab from "@/components/settings/NotificationsTab";
-import { PhoneInput } from "@/components/ui/PhoneInput";
-import { PLANS } from "@/config/plans";
-import { cancelSubscriptionAction, reactivateSubscriptionAction } from "@/actions/stripe";
-import { CancelSubscriptionModal } from "../modals/CancelSubscriptionModal";
+import { ProfileTab } from "./ProfileTab";
+import { AccountTab } from "./AccountTab";
 
 interface SettingsClientProps {
     initialData: {
@@ -52,7 +47,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
-    // Loading states separados
+    // Loading states
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [loadingAccount, setLoadingAccount] = useState(false);
     const [loadingLogout, setLoadingLogout] = useState(false);
@@ -89,7 +84,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         accountData.email !== (initialData.conta?.email || "") ||
         accountData.chavePix !== (initialData.conta?.chavePix || "");
 
-    // Validação de email no frontend
+    // Validação de email
     const validateEmail = (email: string): string | null => {
         if (!email) return null;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -111,7 +106,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         setLoadingRemoteLogout(true);
         try {
             await fetch("/api/auth/logout-remote", { method: "POST" });
-            // Also call local logout to clear current cookie
             await fetch("/api/auth/logout", { method: "POST" });
 
             showToast("Desconectado de todos os dispositivos.", "success");
@@ -158,8 +152,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
     const onUpdateAccount = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Validação frontend
         if (accountData.email) {
             const emailError = validateEmail(accountData.email);
             if (emailError) {
@@ -202,389 +194,43 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         }
     };
 
-    // Conteúdo das tabs
     const tabsData: TabItem[] = [
         {
             id: "perfil",
             label: "Meu Perfil",
             icon: User,
             content: (
-                <div className="space-y-6">
-                    {/* Perfil do Usuário */}
-                    <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                            <User className="text-primary" size={24} />
-                            <h2 className="text-xl font-bold text-gray-900">Dados Pessoais</h2>
-                        </div>
-                        <form onSubmit={onUpdateProfile} className="space-y-4">
-                            <Input
-                                label="Nome"
-                                type="text"
-                                value={profileData.nome}
-                                onChange={(e) => setProfileData({ ...profileData, nome: e.target.value })}
-                                required
-                                minLength={3}
-                                disabled={loadingProfile}
-                            />
-                            <Input
-                                label="Email de Login"
-                                type="email"
-                                value={profileData.email}
-                                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                disabled
-                                className="bg-gray-50 cursor-not-allowed"
-                            />
-                            <PhoneInput
-                                label="WhatsApp"
-                                value={profileData.whatsapp}
-                                onChange={(value) => setProfileData({ ...profileData, whatsapp: value })}
-                                placeholder="(11) 99999-9999"
-                                disabled={loadingProfile}
-                            />
-                            <p className="text-xs text-gray-400 mt-1">
-                                * O email de login não pode ser alterado por segurança.
-                            </p>
-                            <div className="pt-4">
-                                <button
-                                    type="submit"
-                                    disabled={loadingProfile || !hasProfileChanges}
-                                    className={`
-                                        ${hasProfileChanges ? "bg-accent" : "bg-primary"}
-                                        hover:bg-accent text-white px-6 py-3 rounded-2xl 
-                                        font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                                    `}
-                                >
-                                    {loadingProfile
-                                        ? "Salvando..."
-                                        : hasProfileChanges
-                                            ? "Salvar Alterações ✓"
-                                            : "Atualizar Perfil"}
-                                </button>
-                            </div>
-                        </form>
-                    </section>
-
-                    {/* Segurança */}
-                    <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Shield className="text-primary" size={24} />
-                            <h2 className="text-xl font-bold text-gray-900">Segurança</h2>
-                        </div>
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => setIsChangePasswordModalOpen(true)}
-                                className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
-                            >
-                                <p className="font-semibold text-gray-900">Alterar Senha</p>
-                                <p className="text-sm text-gray-500">Modifique sua senha de acesso</p>
-                            </button>
-                            <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all opacity-50 cursor-not-allowed">
-                                <p className="font-semibold text-gray-900">Autenticação 2FA</p>
-                                <p className="text-sm text-gray-500">Em breve</p>
-                            </button>
-                            <button
-                                onClick={handleRemoteLogout}
-                                disabled={loadingRemoteLogout}
-                                className="w-full text-left px-4 py-3 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-100 transition-all group"
-                            >
-                                <p className="font-semibold text-gray-900 group-hover:text-red-700">Sair de todos os dispositivos</p>
-                                <p className="text-sm text-gray-500 group-hover:text-red-500">
-                                    {loadingRemoteLogout ? "Processando..." : "Descontentar todas as sessões ativas (incluindo esta)"}
-                                </p>
-                            </button>
-                        </div>
-                    </section>
-
-                    {/* Logout */}
-                    <button
-                        onClick={() => setIsLogoutModalOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-6 py-3 rounded-2xl font-bold transition-all"
-                    >
-                        <LogOut size={20} />
-                        Sair da Conta
-                    </button>
-                </div>
-            ),
+                <ProfileTab
+                    profileData={profileData}
+                    setProfileData={setProfileData}
+                    onUpdateProfile={onUpdateProfile}
+                    loadingProfile={loadingProfile}
+                    hasProfileChanges={hasProfileChanges}
+                    setIsChangePasswordModalOpen={setIsChangePasswordModalOpen}
+                    handleRemoteLogout={handleRemoteLogout}
+                    loadingRemoteLogout={loadingRemoteLogout}
+                    setIsLogoutModalOpen={setIsLogoutModalOpen}
+                />
+            )
         },
         {
             id: "conta",
             label: "Conta",
             icon: Building2,
             content: (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    {/* Coluna Principal */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Informações da Conta */}
-                        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3 mb-6">
-                                <Building2 className="text-primary" size={24} />
-                                <h2 className="text-xl font-bold text-gray-900">Informações da Conta</h2>
-                            </div>
-                            <form onSubmit={onUpdateAccount} className="space-y-4">
-                                <Input
-                                    label="Nome da Conta"
-                                    type="text"
-                                    value={accountData.nome}
-                                    onChange={(e) => setAccountData({ ...accountData, nome: e.target.value })}
-                                    placeholder="Ex: Minha Família"
-                                    required
-                                    minLength={3}
-                                    disabled={loadingAccount}
-                                />
-                                <Input
-                                    label="Email de Contato"
-                                    type="email"
-                                    value={accountData.email}
-                                    onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
-                                    placeholder="Ex: financeiro@email.com"
-                                    disabled={loadingAccount}
-                                />
-                                <Input
-                                    label="Chave PIX"
-                                    type="text"
-                                    value={accountData.chavePix}
-                                    onChange={(e) => setAccountData({ ...accountData, chavePix: e.target.value })}
-                                    placeholder="Ex: CPF, Email, Telefone ou Chave Aleatória"
-                                    disabled={loadingAccount}
-                                />
-                                <div className="pt-4">
-                                    <button
-                                        type="submit"
-                                        disabled={loadingAccount || !hasAccountChanges}
-                                        className={`
-                                            ${hasAccountChanges ? "bg-accent" : "bg-primary"}
-                                            hover:bg-accent text-white px-6 py-3 rounded-2xl 
-                                            font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                                        `}
-                                    >
-                                        {loadingAccount
-                                            ? "Salvando..."
-                                            : hasAccountChanges
-                                                ? "Salvar Alterações ✓"
-                                                : "Atualizar Conta"}
-                                    </button>
-                                </div>
-                            </form>
-                        </section>
-
-                        {/* Preferências de Moeda */}
-                        <section className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3 mb-6">
-                                <DollarSign className="text-primary" size={24} />
-                                <h2 className="text-xl font-bold text-gray-900">Preferências de Moeda</h2>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Moeda Padrão
-                                    </label>
-                                    <Select value={currency} onValueChange={(value) => onUpdateCurrency(value as CurrencyCode)} disabled={loadingCurrency}>
-                                        <SelectTrigger className="w-full h-auto py-3">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-2xl">{SUPPORTED_CURRENCIES[currency].symbol}</span>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-semibold text-gray-900">{SUPPORTED_CURRENCIES[currency].name}</p>
-                                                    <p className="text-xs text-gray-500">{SUPPORTED_CURRENCIES[currency].code}</p>
-                                                </div>
-                                            </div>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
-                                                <SelectItem key={code} value={code}>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-2xl">{info.symbol}</span>
-                                                        <div className="text-left">
-                                                            <span className="block text-sm font-semibold text-gray-900">
-                                                                {info.name}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500">{info.code}</span>
-                                                        </div>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <p className="text-xs text-gray-500">
-                                    Esta moeda será usada para exibir todos os valores no sistema.
-                                </p>
-                            </div>
-                        </section>
-                    </div>
-
-
-                    {/* Sidebar */}
-                    <div className="space-y-6">
-                        {/* Plano Atual */}
-                        <section className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden relative">
-                            {(() => {
-                                const currentPlanKey = (initialData.conta?.plano || "free") as keyof typeof PLANS;
-                                const planDetails = PLANS[currentPlanKey];
-                                const isPro = currentPlanKey === "pro";
-                                const usage = initialData.conta?._count || { grupos: 0, streamings: 0, participantes: 0 };
-                                const isActive = initialData.conta?.isAtivo;
-                                const isCanceled = initialData.conta?.stripeCancelAtPeriodEnd;
-
-                                const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
-                                const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-
-                                const handleCancelSubscription = async () => {
-                                    setIsLoadingSubscription(true);
-                                    try {
-                                        const result = await cancelSubscriptionAction(initialData.conta.id);
-                                        if (result.success) {
-                                            showToast("Assinatura cancelada com sucesso. O acesso continua até o fim do período.", "success");
-                                            setIsCancelModalOpen(false);
-                                            router.refresh();
-                                        } else if ('error' in result) {
-                                            showToast(result.error || "Erro ao cancelar assinatura", "error");
-                                        }
-                                    } catch (error) {
-                                        showToast("Erro ao processar solicitação", "error");
-                                    } finally {
-                                        setIsLoadingSubscription(false);
-                                    }
-                                };
-
-                                const handleReactivateSubscription = async () => {
-                                    setIsLoadingSubscription(true);
-                                    try {
-                                        const result = await reactivateSubscriptionAction(initialData.conta.id);
-                                        if (result.success) {
-                                            showToast("Assinatura reativada com sucesso!", "success");
-                                            router.refresh();
-                                        } else if ('error' in result) {
-                                            showToast(result.error || "Erro ao reativar assinatura", "error");
-                                        }
-                                    } catch (error) {
-                                        showToast("Erro ao processar solicitação", "error");
-                                    } finally {
-                                        setIsLoadingSubscription(false);
-                                    }
-                                };
-
-                                return (
-                                    <>
-                                        {/* Header */}
-                                        <div className={`p-8 ${isPro ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white' : 'bg-gray-50 text-gray-900 border-b border-gray-100'}`}>
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-2xl ${isPro ? 'bg-white/20 backdrop-blur-sm' : 'bg-white border border-gray-200'}`}>
-                                                        {isPro ? <Crown size={28} className="text-yellow-300" /> : <User size={28} className="text-gray-500" />}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <h2 className="text-xl font-bold">Plano {planDetails.label}</h2>
-                                                            {isPro && <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-200 text-[10px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/30">PRO</span>}
-                                                        </div>
-                                                        <div className={`flex items-center gap-2 text-sm mt-1 ${isPro ? 'text-indigo-100' : 'text-gray-500'}`}>
-                                                            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-400' : 'bg-red-400'}`} />
-                                                            {isActive ? 'Assinatura Ativa' : 'Assinatura Inativa'}
-                                                        </div>
-                                                        {isCanceled && (
-                                                            <div className="mt-2 text-xs bg-red-500/20 border border-red-500/30 text-white px-2 py-1 rounded-lg">
-                                                                Cancelada (expira no fim do ciclo)
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="p-8 space-y-8">
-                                            {/* Usage Stats */}
-                                            {/* Usage Stats - Streamings Only now */}
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-600 flex items-center gap-2 font-medium">
-                                                        <Building2 size={16} /> Streamings Criados
-                                                    </span>
-                                                    <span className="font-semibold text-gray-900">
-                                                        {usage.streamings} <span className="text-gray-400 font-normal">/ {planDetails.maxStreamings === 0 ? '-' : (planDetails.maxStreamings === 9999 ? '∞' : planDetails.maxStreamings)}</span>
-                                                    </span>
-                                                </div>
-                                                {planDetails.maxStreamings > 0 && planDetails.maxStreamings < 9999 && (
-                                                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-500 ${isPro ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-primary'}`}
-                                                            style={{ width: `${Math.min((usage.streamings / planDetails.maxStreamings) * 100, 100)}%` }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Features Preview */}
-                                            <div className="space-y-3">
-                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Incluso no plano</p>
-                                                <div className="grid grid-cols-1 gap-3">
-                                                    {planDetails.features.slice(0, 4).map((feature, idx) => (
-                                                        <div key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                                                            <div className={`mt-0.5 p-0.5 rounded-full ${isPro ? 'bg-indigo-50 text-indigo-600' : 'bg-green-50 text-green-600'}`}>
-                                                                <Check size={12} strokeWidth={3} />
-                                                            </div>
-                                                            <span className="leading-tight">{feature.text}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Action Button */}
-                                            <div className="pt-2 space-y-3">
-                                                {!isPro ? (
-                                                    <button
-                                                        onClick={() => router.push("/planos")}
-                                                        className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transform hover:-translate-y-0.5"
-                                                    >
-                                                        <Crown size={18} className="text-yellow-300" />
-                                                        <span className="group-hover:tracking-wide transition-all">Fazer Upgrade para PRO</span>
-                                                    </button>
-                                                ) : isCanceled ? (
-                                                    <button
-                                                        onClick={handleReactivateSubscription}
-                                                        disabled={isLoadingSubscription}
-                                                        className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-                                                    >
-                                                        {isLoadingSubscription ? "Processando..." : "Reativar Assinatura"}
-                                                    </button>
-                                                ) : (
-                                                    <>
-                                                        <button
-                                                            onClick={() => router.push("/planos")}
-                                                            className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group bg-gray-50 text-gray-900 hover:bg-gray-100 border border-gray-200"
-                                                        >
-                                                            Gerenciar Assinatura
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setIsCancelModalOpen(true)}
-                                                            className="w-full py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                                                        >
-                                                            Cancelar Assinatura
-                                                        </button>
-                                                    </>
-                                                )}
-
-                                                {initialData.conta?.createdAt && (
-                                                    <p className="text-center text-xs text-gray-400 mt-4">
-                                                        Membro desde {new Date(initialData.conta.createdAt).toLocaleDateString('pt-BR')}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <CancelSubscriptionModal
-                                                isOpen={isCancelModalOpen}
-                                                onClose={() => setIsCancelModalOpen(false)}
-                                                onConfirm={handleCancelSubscription}
-                                                loading={isLoadingSubscription}
-                                            />
-                                        </div>
-                                    </>
-                                );
-                            })()}
-                        </section>
-                    </div >
-                </div >
-            ),
+                <AccountTab
+                    accountData={accountData}
+                    setAccountData={setAccountData}
+                    onUpdateAccount={onUpdateAccount}
+                    loadingAccount={loadingAccount}
+                    hasAccountChanges={hasAccountChanges}
+                    currency={currency}
+                    onUpdateCurrency={onUpdateCurrency}
+                    loadingCurrency={loadingCurrency}
+                    conta={initialData.conta}
+                    showToast={showToast}
+                />
+            )
         },
         {
             id: "notificacoes",
@@ -603,7 +249,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
             <Tabs tabs={tabsData} defaultTab="perfil" />
 
-            {/* Toast */}
             {toast && (
                 <Toast
                     message={toast.message}
@@ -612,7 +257,6 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                 />
             )}
 
-            {/* Modals */}
             <LogoutModal
                 isOpen={isLogoutModalOpen}
                 onClose={() => setIsLogoutModalOpen(false)}
