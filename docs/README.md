@@ -7,6 +7,7 @@ Esta central organiza todo o conhecimento técnico e de negócio do ecossistema 
 Portal técnico para desenvolvedores.
 
 - **[Guia de Setup](./setup/COMO_RODAR.md)**: Comece por aqui para rodar o projeto localmente.
+- **[Configuração Mercado Pago](./setup/MERCADO_PAGO.md)**: Passos para habilitar o gateway de pagamentos.
 - **[Auditoria & Viabilidade](./AUDITORIA_E_DOCUMENTACAO.md)**: Análise profunda de arquitetura, fluxos e regras de negócio.
 - **[Modelo de Dados](./DATABASE.md)**: Schema Prisma, relacionamentos e isolamento multi-tenant.
 - **[Changelog Guidelines](./CHANGELOG_GUIDELINES.md)**: Padrões para escrita de atualizações públicas e internas.
