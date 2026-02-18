@@ -1,4 +1,4 @@
-import { Phone, Mail, CreditCard, Edit, Trash2 } from "lucide-react";
+import { Phone, Mail, CreditCard, Edit, Trash2, Eye } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 interface ParticipantCardProps {
@@ -11,6 +11,7 @@ interface ParticipantCardProps {
     status: "ativa" | "suspensa" | "inativo";
     onEdit: () => void;
     onDelete: () => void;
+    onView: () => void;
 }
 
 export function ParticipantCard({
@@ -22,38 +23,49 @@ export function ParticipantCard({
     status,
     onEdit,
     onDelete,
+    onView,
 }: ParticipantCardProps) {
     const initial = name.charAt(0).toUpperCase();
 
     return (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-all group">
             <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-violet-100 text-primary flex items-center justify-center font-bold text-xl">
+                <div
+                    className="flex items-center gap-4 cursor-pointer flex-1"
+                    onClick={onView}
+                >
+                    <div className="w-14 h-14 rounded-full bg-violet-100 text-primary flex items-center justify-center font-bold text-xl group-hover:bg-primary group-hover:text-white transition-colors">
                         {initial}
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-gray-900 text-base md:text-lg">{name}</h3>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={onEdit}
-                                    aria-label={`Editar ${name}`}
-                                    className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-primary transition-all touch-manipulation"
-                                >
-                                    <Edit size={20} className="md:w-4 md:h-4" />
-                                </button>
-                                <button
-                                    onClick={onDelete}
-                                    aria-label={`Excluir ${name}`}
-                                    className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-red-500 transition-all touch-manipulation"
-                                >
-                                    <Trash2 size={20} className="md:w-4 md:h-4" />
-                                </button>
-                            </div>
                         </div>
                         <StatusBadge status={status} />
                     </div>
+                </div>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={onView}
+                        aria-label={`Visualizar ${name}`}
+                        className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-primary transition-all touch-manipulation"
+                    >
+                        <Eye size={20} className="md:w-4 md:h-4" />
+                    </button>
+                    <button
+                        onClick={onEdit}
+                        aria-label={`Editar ${name}`}
+                        className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-primary transition-all touch-manipulation"
+                    >
+                        <Edit size={20} className="md:w-4 md:h-4" />
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        aria-label={`Excluir ${name}`}
+                        className="p-2 md:p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-red-500 transition-all touch-manipulation"
+                    >
+                        <Trash2 size={20} className="md:w-4 md:h-4" />
+                    </button>
                 </div>
             </div>
 

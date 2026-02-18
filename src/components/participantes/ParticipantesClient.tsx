@@ -18,6 +18,7 @@ import { ParticipantesTab } from "./tabs/ParticipantesTab";
 import { SolicitacoesTab } from "./tabs/SolicitacoesTab";
 import { ConvitesTab } from "./tabs/ConvitesTab";
 import { useRouter, useSearchParams } from "next/navigation";
+import { DetalhesParticipanteModal } from "../modals/DetalhesParticipanteModal";
 
 interface ParticipantesClientProps {
     initialData: Participante[];
@@ -44,11 +45,37 @@ export function ParticipantesClient({
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedParticipant, setSelectedParticipant] = useState<Participante | null>(null);
     const [loading, setLoading] = useState(false);
 
+    // Sync details modal with URL
+    useEffect(() => {
+        const participantId = searchParams.get("participantId");
+        if (participantId) {
+            setIsDetailsModalOpen(true);
+        } else {
+            setIsDetailsModalOpen(false);
+        }
+    }, [searchParams]);
+
     const handleTabChange = (tab: string) => {
-        router.push(`/participantes?tab=${tab}`, { scroll: false });
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", tab);
+        router.push(`/participantes?${params.toString()}`, { scroll: false });
+    };
+
+    const handleOpenDetails = (p: Participante) => {
+        setSelectedParticipant(p);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("participantId", p.id.toString());
+        router.push(`/participantes?${params.toString()}`, { scroll: false });
+    };
+
+    const handleCloseDetails = () => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("participantId");
+        router.push(`/participantes?${params.toString()}`, { scroll: false });
     };
 
     // Active participants only for the main list
@@ -156,6 +183,7 @@ export function ParticipantesClient({
                         setSelectedParticipant(p);
                         setIsDeleteModalOpen(true);
                     }}
+                    onView={handleOpenDetails}
                 />
             )
         },
@@ -244,9 +272,20 @@ export function ParticipantesClient({
                             whatsappNumero: selectedParticipant.whatsappNumero || "",
                             cpf: selectedParticipant.cpf ?? "",
                             email: selectedParticipant.email || "",
+                            userId: selectedParticipant.userId,
                         }
                         : undefined
                 }
+            />
+
+            <DetalhesParticipanteModal
+                isOpen={isDetailsModalOpen}
+                onClose={handleCloseDetails}
+                participantId={searchParams.get("participantId") ? Number(searchParams.get("participantId")) : null}
+                onEdit={(p) => {
+                    setSelectedParticipant(p);
+                    setIsEditModalOpen(true);
+                }}
             />
             <DeleteModal
                 isOpen={isDeleteModalOpen}

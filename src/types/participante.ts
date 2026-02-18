@@ -4,6 +4,7 @@ export interface Participante {
     whatsappNumero: string | null;
     cpf: string | null;
     email?: string | null;
+    userId?: number | null;
     status: string;
     _count: {
         assinaturas: number;

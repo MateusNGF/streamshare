@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MaskedInput } from "@/components/ui/MaskedInput";
 import { Spinner } from "@/components/ui/Spinner";
+import { AlertCircle } from "lucide-react";
 import { validateCPF, validatePhone, validateEmail, ValidationMessages } from "@/lib/validation";
 
 interface ParticipantModalProps {
@@ -17,6 +18,7 @@ interface ParticipantModalProps {
         whatsappNumero: string;
         cpf?: string;
         email?: string;
+        userId?: number | null;
     };
     loading?: boolean;
 }
@@ -126,6 +128,15 @@ export function ParticipantModal({
             }
         >
             <form onSubmit={handleSubmit} className="space-y-4">
+                {participant?.userId && (
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex gap-3 items-start mb-4">
+                        <AlertCircle className="text-blue-500 shrink-0 mt-0.5" size={20} />
+                        <div className="text-sm text-blue-800">
+                            <p className="font-bold mb-1">Perfil Vinculado</p>
+                            <p>Este participante gerencia o próprio perfil. Apenas o nome pode ser editado aqui para fins de organização interna.</p>
+                        </div>
+                    </div>
+                )}
                 <Input
                     label="Nome Completo"
                     type="text"
@@ -140,6 +151,7 @@ export function ParticipantModal({
                     value={formData.whatsappNumero || ""}
                     onChange={(value) => handleChange("whatsappNumero", value)}
                     error={errors.whatsappNumero}
+                    disabled={!!participant?.userId}
                 />
                 <MaskedInput
                     label="CPF"
@@ -149,6 +161,7 @@ export function ParticipantModal({
                     onValueChange={(value) => handleChange("cpf", value)}
                     placeholder="123.456.789-00"
                     error={errors.cpf}
+                    disabled={!!participant?.userId}
                 />
                 <Input
                     label="Email"
@@ -157,6 +170,7 @@ export function ParticipantModal({
                     onChange={(e) => handleChange("email", e.target.value)}
                     placeholder="maria@email.com"
                     error={errors.email}
+                    disabled={!!participant?.userId}
                 />
             </form>
         </Modal>

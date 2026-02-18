@@ -9,9 +9,10 @@ interface Props {
     participants: Participante[];
     onEdit: (p: Participante) => void;
     onDelete: (p: Participante) => void;
+    onView: (p: Participante) => void;
 }
 
-export function ParticipantesTab({ participants, onEdit, onDelete }: Props) {
+export function ParticipantesTab({ participants, onEdit, onDelete, onView }: Props) {
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredParticipants = useMemo(() => {
@@ -57,6 +58,7 @@ export function ParticipantesTab({ participants, onEdit, onDelete }: Props) {
                                 status={p._count.assinaturas > 0 ? "ativa" : "inativo"}
                                 onEdit={() => onEdit(p)}
                                 onDelete={() => onDelete(p)}
+                                onView={() => onView(p)}
                             />
                         ))}
                     </div>

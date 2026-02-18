@@ -125,15 +125,15 @@ export function calcularDataVencimentoPadrao(dataEmissao: Date = new Date()): Da
  * @param moeda - Código da moeda (ISO 4217)
  * @returns String formatada (ex: R$ 1.234,56)
  */
-export function formatarMoeda(valor: number | string | Prisma.Decimal, moeda: string = 'BRL'): string {
-    const numerico = typeof valor === 'number'
+export function formatarMoeda(valor: number | string | Prisma.Decimal | any, moeda: string = 'BRL'): string {
+    const amount = typeof valor === "number"
         ? valor
-        : valor instanceof Prisma.Decimal
+        : typeof valor?.toNumber === "function"
             ? valor.toNumber()
-            : parseFloat(valor.toString());
+            : parseFloat(valor?.toString() || "0");
 
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
         currency: moeda,
-    }).format(isNaN(numerico) ? 0 : numerico);
+    }).format(isNaN(amount) ? 0 : amount);
 }

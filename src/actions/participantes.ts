@@ -251,3 +251,35 @@ export async function deleteParticipante(id: number) {
         return { success: false, error: error.message || "Erro ao deletar participante" };
     }
 }
+
+export async function getParticipanteById(id: number) {
+    try {
+        const { contaId } = await getContext();
+
+        const data = await prisma.participante.findUnique({
+            where: { id, contaId },
+            include: {
+                assinaturas: {
+                    where: { deletedAt: null },
+                    include: {
+                        streaming: {
+                            include: {
+                                catalogo: true
+                            }
+                        }
+                    },
+                    orderBy: { createdAt: "desc" }
+                }
+            }
+        });
+
+        if (!data) {
+            return { success: false, error: "Participante não encontrado" };
+        }
+
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_PARTICIPANTE_BY_ID_ERROR]", error);
+        return { success: false, error: "Erro ao buscar detalhes do participante" };
+    }
+}
