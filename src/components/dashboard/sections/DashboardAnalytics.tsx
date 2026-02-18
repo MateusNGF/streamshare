@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
+import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { Spinner } from "@/components/ui/Spinner";
 import { TrendingUp, LineChart, AlertCircle, Wallet, Sparkles, LayoutPanelLeft, Coins } from "lucide-react";
 import { DashboardStats, RevenueHistory } from "@/types/dashboard.types";
@@ -93,49 +94,46 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
                 </div>
             ) : viewMode === "grid" ? (
                 <div className="">
-                    {/* Linha 1: KPIs de Operação - Mobile Carousel */}
-                    <div className="relative overflow-visible">
-                        <div className="flex overflow-x-auto md:grid md:pb-0 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 scrollbar-hide snap-x snap-mandatory">
-                            {[
-                                {
-                                    title: "Receita Estimada",
-                                    value: formatCurrency(financial.monthlyRevenue),
-                                    change: `${financial.revenueTrend >= 0 ? '+' : ''}${financial.revenueTrend.toFixed(1)}%`,
-                                    trend: (financial.revenueTrend >= 0 ? "up" : "down") as "up" | "down",
-                                    icon: TrendingUp,
-                                    tooltip: "Soma total dos valores das assinaturas ativas que devem ser pagos este mês."
-                                },
-                                {
-                                    title: "Ticket Médio",
-                                    value: formatCurrency(financial.averageTicket),
-                                    change: "por participante",
-                                    trend: "up" as "up" | "down",
-                                    icon: Coins,
-                                    tooltip: "Valor médio que cada participante paga. Ajuda a avaliar a saúde financeira individual das assinaturas."
-                                },
-                                {
-                                    title: "Taxa de Ocupação",
-                                    value: `${occupancy.occupationRate.toFixed(1)}%`,
-                                    change: occupancy.totalSlots > 0 ? `${occupancy.occupiedSlots}/${occupancy.totalSlots} vagas` : "0 vagas",
-                                    trend: (occupancy.occupationRate > 80 ? "up" : "down") as "up" | "down",
-                                    icon: LineChart,
-                                    tooltip: "Percentual de vagas preenchidas. Vagas vazias representam custos que você está cobrindo sozinho."
-                                },
-                                {
-                                    title: "Risco de Churn",
-                                    value: `${churn.riskRate.toFixed(1)}%`,
-                                    change: "baseado em atrasos",
-                                    trend: (churn.riskRate < 20 ? "up" : "down") as "up" | "down",
-                                    icon: AlertCircle,
-                                    tooltip: "Probabilidade de cancelamento calculada com base em atrasos e falhas de pagamento nos últimos 6 meses."
-                                },
-                            ].map((card, idx) => (
-                                <div key={idx} className="min-w-[280px] py-10 md:min-w-0 snap-center animate-scale-in" style={{ animationDelay: `${idx * 150}ms`, animationFillMode: 'both' }}>
-                                    <KPICard {...card} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <KPIGrid cols={4} className="mb-6">
+                        {[
+                            {
+                                title: "Receita Estimada",
+                                value: formatCurrency(financial.monthlyRevenue),
+                                change: `${financial.revenueTrend >= 0 ? '+' : ''}${financial.revenueTrend.toFixed(1)}%`,
+                                trend: (financial.revenueTrend >= 0 ? "up" : "down") as "up" | "down",
+                                icon: TrendingUp,
+                                tooltip: "Soma total dos valores das assinaturas ativas que devem ser pagos este mês."
+                            },
+                            {
+                                title: "Ticket Médio",
+                                value: formatCurrency(financial.averageTicket),
+                                change: "por participante",
+                                trend: "up" as "up" | "down",
+                                icon: Coins,
+                                tooltip: "Valor médio que cada participante paga. Ajuda a avaliar a saúde financeira individual das assinaturas."
+                            },
+                            {
+                                title: "Taxa de Ocupação",
+                                value: `${occupancy.occupationRate.toFixed(1)}%`,
+                                change: occupancy.totalSlots > 0 ? `${occupancy.occupiedSlots}/${occupancy.totalSlots} vagas` : "0 vagas",
+                                trend: (occupancy.occupationRate > 80 ? "up" : "down") as "up" | "down",
+                                icon: LineChart,
+                                tooltip: "Percentual de vagas preenchidas. Vagas vazias representam custos que você está cobrindo sozinho."
+                            },
+                            {
+                                title: "Risco de Churn",
+                                value: `${churn.riskRate.toFixed(1)}%`,
+                                change: "baseado em atrasos",
+                                trend: (churn.riskRate < 20 ? "up" : "down") as "up" | "down",
+                                icon: AlertCircle,
+                                tooltip: "Probabilidade de cancelamento calculada com base em atrasos e falhas de pagamento nos últimos 6 meses."
+                            },
+                        ].map((card, idx) => (
+                            <KPIGridItem key={idx} className="animate-scale-in" style={{ animationDelay: `${idx * 150}ms`, animationFillMode: 'both' }}>
+                                <KPICard {...card} />
+                            </KPIGridItem>
+                        ))}
+                    </KPIGrid>
 
                     {/* Linha 2: KPIs Financeiros & Comparativos - Glass Effect & Staggered */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

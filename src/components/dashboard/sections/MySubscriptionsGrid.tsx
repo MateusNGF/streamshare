@@ -42,37 +42,39 @@ export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails
                         className="group bg-white rounded-[24px] border border-gray-100 shadow-sm p-6 hover:shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom"
                         style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}
                     >
-                        <div className="flex items-start justify-between mb-4">
-                            <StreamingLogo
-                                name={sub.streamingName}
-                                iconeUrl={sub.streamingLogo}
-                                color={sub.streamingColor}
-                                size="md"
-                                rounded="2xl"
-                                className="shadow-md group-hover:scale-110 transition-transform duration-300"
-                            />
-                            <div className="flex items-center gap-2">
-                                <StatusBadge status={sub.status} className="scale-90" />
-                                <Dropdown
-                                    options={menuOptions}
-                                    trigger={
-                                        <div className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-400 hover:text-gray-600">
-                                            <MoreHorizontal size={18} />
-                                        </div>
-                                    }
+                        <div className="flex items-start justify-between mb-6">
+                            <div className="flex items-center gap-4">
+                                <StreamingLogo
+                                    name={sub.streamingName}
+                                    iconeUrl={sub.streamingLogo}
+                                    color={sub.streamingColor}
+                                    size="md"
+                                    rounded="2xl"
+                                    className="shadow-md group-hover:rotate-6 transition-transform duration-300"
                                 />
+                                <div className="flex flex-col">
+                                    <h3 className="text-base font-bold text-primary leading-tight group-hover:underline decoration-2 underline-offset-4 transition-all">
+                                        {sub.streamingName}
+                                    </h3>
+                                    <span className="font-black text-xl text-gray-900">
+                                        {formatarMoeda(sub.valor, currencyCode)}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">
-                                {sub.streamingName}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="font-black text-xl text-gray-900">
-                                    {formatarMoeda(sub.valor, currencyCode)}
-                                </span>
-                                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                            <div className="flex flex-col items-end gap-2">
+                                <div className="flex items-center gap-1">
+                                    <StatusBadge status={sub.status} className="scale-75 origin-right" />
+                                    <Dropdown
+                                        options={menuOptions}
+                                        trigger={
+                                            <div className="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer text-gray-400 hover:text-gray-600">
+                                                <MoreHorizontal size={18} />
+                                            </div>
+                                        }
+                                    />
+                                </div>
+                                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full whitespace-nowrap border border-green-100 shadow-sm">
                                     Economia: {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)}
                                 </span>
                             </div>

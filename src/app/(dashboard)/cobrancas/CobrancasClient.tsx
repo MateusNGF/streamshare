@@ -5,6 +5,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
+import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { useCobrancasActions } from "@/hooks/useCobrancasActions";
 import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
 import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
@@ -67,29 +68,35 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 description="Controle de pagamentos e envios de cobrança."
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <KPIFinanceiroCard
-                    titulo="Total a Receber"
-                    valor={kpis.totalPendente}
-                    icone={DollarSign}
-                    cor="primary"
-                    index={0}
-                />
-                <KPIFinanceiroCard
-                    titulo="Receita Confirmada"
-                    valor={kpis.receitaConfirmada}
-                    icone={CheckCircle}
-                    cor="green"
-                    index={1}
-                />
-                <KPIFinanceiroCard
-                    titulo="Em Atraso"
-                    valor={kpis.emAtraso}
-                    icone={AlertCircle}
-                    cor="red"
-                    index={2}
-                />
-            </div>
+            <KPIGrid cols={3} className="mb-10">
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Total a Receber"
+                        valor={kpis.totalPendente}
+                        icone={DollarSign}
+                        cor="primary"
+                        index={0}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Receita Confirmada"
+                        valor={kpis.receitaConfirmada}
+                        icone={CheckCircle}
+                        cor="green"
+                        index={1}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Em Atraso"
+                        valor={kpis.emAtraso}
+                        icone={AlertCircle}
+                        cor="red"
+                        index={2}
+                    />
+                </KPIGridItem>
+            </KPIGrid>
 
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6">
                 <GenericFilter

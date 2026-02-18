@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
+import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
 import { AssinaturasTable } from "@/components/assinaturas/AssinaturasTable";
@@ -120,39 +121,47 @@ export default function AssinaturasClient({
                 }
             />
 
-            <div className="space-y-5 gap-6 mb-10">
-                <KPIFinanceiroCard
-                    titulo="Receita Estimada"
-                    valor={kpis.receitaMensalEstimada}
-                    icone={TrendingUp}
-                    cor="primary"
-                    index={0}
-                />
-                <KPIFinanceiroCard
-                    titulo="Assinaturas Ativas"
-                    valor={kpis.totalAtivas}
-                    icone={Activity}
-                    cor="green"
-                    isMoeda={false}
-                    index={1}
-                />
-                <KPIFinanceiroCard
-                    titulo="Suspensas"
-                    valor={kpis.totalSuspensas}
-                    icone={Users}
-                    cor="red"
-                    isMoeda={false}
-                    index={2}
-                />
-                <KPIFinanceiroCard
-                    titulo="Total Histórico"
-                    valor={kpis.totalAssinaturas}
-                    icone={Users}
-                    cor="primary"
-                    isMoeda={false}
-                    index={3}
-                />
-            </div>
+            <KPIGrid cols={4} className="mb-10">
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Receita Estimada"
+                        valor={kpis.receitaMensalEstimada}
+                        icone={TrendingUp}
+                        cor="primary"
+                        index={0}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Assinaturas Ativas"
+                        valor={kpis.totalAtivas}
+                        icone={Activity}
+                        cor="green"
+                        isMoeda={false}
+                        index={1}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Suspensas"
+                        valor={kpis.totalSuspensas}
+                        icone={Users}
+                        cor="red"
+                        isMoeda={false}
+                        index={2}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPIFinanceiroCard
+                        titulo="Total Histórico"
+                        valor={kpis.totalAssinaturas}
+                        icone={Users}
+                        cor="primary"
+                        isMoeda={false}
+                        index={3}
+                    />
+                </KPIGridItem>
+            </KPIGrid>
 
             <div className="space-y-10">
                 <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">

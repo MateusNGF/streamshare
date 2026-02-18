@@ -106,6 +106,40 @@ interface SectionHeaderProps {
 
 ---
 
+### KPIGrid & KPIGridItem
+
+**Localização**: `src/components/dashboard/KPIGrid.tsx`
+
+**Propósito**: Container para cards de métricas (KPIs) com scroll horizontal automático no mobile e grid responsivo no desktop. Ideal para visibilidade financeira sem poluir o scroll vertical no celular.
+
+**Props (KPIGrid)**:
+```typescript
+interface KPIGridProps {
+    children: ReactNode;
+    cols?: 1 | 2 | 3 | 4; // Número de colunas no desktop (Padrão: 4)
+    className?: string;
+}
+```
+
+**Uso**:
+```tsx
+<KPIGrid cols={4}>
+    <KPIGridItem>
+        <KPIFinanceiroCard {...props} />
+    </KPIGridItem>
+    <KPIGridItem className="animate-scale-in" style={{ animationDelay: '150ms' }}>
+        <KPICard {...props} />
+    </KPIGridItem>
+</KPIGrid>
+```
+
+**Características**:
+- Scroll horizontal com `snap scrolling` no mobile.
+- Padding vertical de segurança (`py-10`) para não cortar sombras dos cards.
+- Suporte nativo a animações de entrada via `KPIGridItem`.
+
+---
+
 ### ViewModeToggle
 
 **Localização**: `src/components/ui/ViewModeToggle.tsx`
