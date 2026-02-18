@@ -16,7 +16,7 @@ interface MySubscriptionsGridProps {
 
 export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails, onViewCredentials }: MySubscriptionsGridProps) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {subscriptions.map((sub, idx) => {
                 const isActive = sub.status === 'ativa';
 
@@ -34,29 +34,34 @@ export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails
                         className="group bg-white rounded-[24px] border border-gray-100 shadow-sm p-6 hover:shadow-xl transition-all duration-300 animate-in fade-in slide-in-from-bottom"
                         style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}
                     >
-                        <div className="flex items-start justify-between mb-6">
-                            <div className="flex items-center gap-4">
-                                <StreamingLogo
-                                    name={sub.streamingName}
-                                    iconeUrl={sub.streamingLogo}
-                                    color={sub.streamingColor}
-                                    size="md"
-                                    rounded="2xl"
-                                    className="shadow-md group-hover:rotate-6 transition-transform duration-300"
-                                />
-                                <div className="flex flex-col">
-                                    <h3 className="text-base font-bold text-primary leading-tight group-hover:underline decoration-2 underline-offset-4 transition-all">
-                                        {sub.streamingName}
-                                    </h3>
-                                    <span className="font-black text-xl text-gray-900">
-                                        {formatarMoeda(sub.valor, currencyCode)}
-                                    </span>
+                        <div className="flex items-start justify-between">
+                            <div className="flex flex-col w-full justify-start items-start gap-4">
+                                <div className="flex flex-row gap-3  items-center">
+                                    <StreamingLogo
+                                        name={sub.streamingName}
+                                        iconeUrl={sub.streamingLogo}
+                                        color={sub.streamingColor}
+                                        size="md"
+                                        rounded="2xl"
+                                        className="shadow-md group-hover:rotate-6 transition-transform duration-300"
+                                    />
+                                    <div className="flex flex-col">
+                                        <h3 className="text-base font-bold text-primary leading-tight group-hover:underline decoration-2 underline-offset-4 transition-all">
+                                            {sub.streamingName}
+                                        </h3>
+                                        <span className="font-black text-xl text-gray-900">
+                                            {formatarMoeda(sub.valor, currencyCode)}
+                                        </span>
+                                    </div>
                                 </div>
+                                <span className="text-[10px]  font-bold text-green-600 bg-green-50/50 px-2.5 py-1 rounded-full whitespace-nowrap border border-green-100 shadow-sm">
+                                    {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)} economizados
+                                </span>
                             </div>
 
                             <div className="flex flex-col items-end gap-2">
                                 <div className="flex items-center gap-1">
-                                    <StatusBadge status={sub.status} className="scale-75 origin-right" />
+
                                     <Dropdown
                                         options={menuOptions}
                                         trigger={
@@ -66,9 +71,7 @@ export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails
                                         }
                                     />
                                 </div>
-                                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full whitespace-nowrap border border-green-100 shadow-sm">
-                                    Economia: {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)}
-                                </span>
+                                <StatusBadge status={sub.status} className="scale-75 origin-right" />
                             </div>
                         </div>
 

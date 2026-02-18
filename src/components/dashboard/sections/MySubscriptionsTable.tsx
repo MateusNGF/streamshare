@@ -22,19 +22,16 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider py-5 px-6">
+                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider py-5 px-6 min-w-[200px]">
                                 Serviço
                             </TableHead>
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                Status
-                            </TableHead>
-                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[160px]">
                                 Investimento
                             </TableHead>
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[120px]">
                                 Vencimento
                             </TableHead>
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[180px]">
+                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[190px]">
                                 Acesso
                             </TableHead>
                             <TableHead className="w-[80px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
@@ -68,48 +65,53 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                                                 rounded="xl"
                                                 className="shadow-sm group-hover:scale-110 transition-transform duration-300"
                                             />
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col justify-center items-start w-full">
                                                 <span className="font-bold text-gray-900 group-hover:text-primary transition-colors">
                                                     {sub.streamingName}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-green-600 uppercase tracking-tight">
-                                                    Economia: {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)}
+                                                <StatusBadge status={sub.status} className="scale-75" />
+                                            </div>
+                                        </div>
+                                    </TableCell>
+
+                                    <TableCell className="text-right">
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="font-black text-gray-900 text-base whitespace-nowrap">
+                                                    {formatarMoeda(sub.valor, currencyCode)}
+                                                </span>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase">/mês</span>
+                                            </div>
+                                            <div className="mt-0.5">
+                                                <span className="text-[10px] font-medium text-green-600 whitespace-nowrap">
+                                                    {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)} economizados
                                                 </span>
                                             </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <StatusBadge status={sub.status} className="scale-75" />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex flex-col items-end">
-                                            <span className="font-black text-gray-900">
-                                                {formatarMoeda(sub.valor, currencyCode)}
-                                            </span>
-                                            <span className="text-[9px] font-bold text-gray-400 uppercase">por mês</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex items-center justify-center gap-2 font-bold text-gray-600 text-xs">
+                                        <div className="flex items-center justify-center gap-2 font-bold text-gray-600 text-xs whitespace-nowrap">
                                             <Calendar size={12} className="text-primary/60" />
                                             {sub.proximoVencimento ? new Date(sub.proximoVencimento).toLocaleDateString() : 'A definir'}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {isActive && sub.hasCredentials ? (
-                                            <button
-                                                onClick={() => onViewCredentials(sub)}
-                                                className="flex items-center gap-2 px-3 py-2 bg-primary/5 hover:bg-primary/10 rounded-xl border border-primary/10 hover:border-primary/20 transition-all group/btn active:scale-[0.98]"
-                                            >
-                                                <KeyRound size={12} className="text-primary group-hover/btn:rotate-12 transition-transform" />
-                                                <span className="text-[10px] font-bold text-primary uppercase tracking-wide">Ver Credenciais</span>
-                                            </button>
-                                        ) : (
-                                            <div className="flex items-center gap-2 text-gray-300">
-                                                <ShieldCheck size={14} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest">Acesso Restrito</span>
-                                            </div>
-                                        )}
+                                        <div className="whitespace-nowrap">
+                                            {isActive && sub.hasCredentials ? (
+                                                <button
+                                                    onClick={() => onViewCredentials(sub)}
+                                                    className="inline-flex items-center gap-2 px-3 py-2 bg-primary/5 hover:bg-primary/10 rounded-xl border border-primary/10 hover:border-primary/20 transition-all group/btn active:scale-[0.98]"
+                                                >
+                                                    <KeyRound size={12} className="text-primary group-hover/btn:rotate-12 transition-transform" />
+                                                    <span className="text-[10px] font-bold text-primary uppercase tracking-wide">Ver Credenciais</span>
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-gray-300">
+                                                    <ShieldCheck size={14} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Acesso Restrito</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Dropdown
