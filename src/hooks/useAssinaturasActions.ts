@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { createBulkAssinaturas, cancelarAssinatura } from "@/actions/assinaturas";
@@ -79,18 +79,20 @@ export function useAssinaturasActions(streamings: any[]) {
         }
     };
 
-    const streamingsWithOcupados = streamings.map(s => ({
-        id: s.id,
-        nome: s.apelido || s.catalogo.nome,
-        apelido: s.apelido,
-        catalogoNome: s.catalogo.nome,
-        valorIntegral: Number(s.valorIntegral),
-        limiteParticipantes: s.limiteParticipantes,
-        ocupados: s._count?.assinaturas || 0,
-        cor: s.catalogo.corPrimaria,
-        iconeUrl: s.catalogo.iconeUrl,
-        frequenciasHabilitadas: s.frequenciasHabilitadas
-    }));
+    const streamingsWithOcupados = useMemo(() => {
+        return streamings.map(s => ({
+            id: s.id,
+            nome: s.apelido || s.catalogo.nome,
+            apelido: s.apelido,
+            catalogoNome: s.catalogo.nome,
+            valorIntegral: Number(s.valorIntegral),
+            limiteParticipantes: s.limiteParticipantes,
+            ocupados: s._count?.assinaturas || 0,
+            cor: s.catalogo.corPrimaria,
+            iconeUrl: s.catalogo.iconeUrl,
+            frequenciasHabilitadas: s.frequenciasHabilitadas
+        }));
+    }, [streamings]);
 
     return {
         // States & Modals

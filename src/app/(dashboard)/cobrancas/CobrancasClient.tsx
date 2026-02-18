@@ -11,6 +11,7 @@ import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
+import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { UpgradeFeatureOverlay } from "@/components/ui/UpgradeFeatureOverlay";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -172,23 +173,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 <SectionHeader title="Listagem de Cobranças" className="mb-0" />
 
                 {!whatsappCheck.enabled && (
-                    <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white p-2 rounded-xl text-primary shadow-sm">
-                                <Sparkles size={20} />
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-bold text-gray-900">Automatize suas cobranças via WhatsApp</h4>
-                                <p className="text-xs text-gray-600">No plano Business, o sistema envia cobranças automaticamente para você.</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => router.push("/planos")}
-                            className="text-xs font-bold text-primary hover:underline"
-                        >
-                            Conhecer planos
-                        </button>
-                    </div>
+                    <UpgradeBanner
+                        title="Automatize suas cobranças via WhatsApp"
+                        description="No plano Business, o sistema envia cobranças automaticamente para você."
+                        className="mb-4"
+                    />
                 )}
 
                 <CobrancasTable

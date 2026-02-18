@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Search, Users, Activity, TrendingUp } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -12,6 +12,9 @@ import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
 import { AssinaturasTable } from "@/components/assinaturas/AssinaturasTable";
 import { AssinaturasModals } from "@/components/assinaturas/AssinaturasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { FeatureGuards } from "@/lib/feature-guards";
+import { PlanoConta } from "@prisma/client";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -23,6 +26,7 @@ interface AssinaturasClientProps {
         receitaMensalEstimada: number;
         totalAssinaturas: number;
     };
+    plano: PlanoConta;
     error?: string;
 }
 
@@ -31,6 +35,7 @@ export default function AssinaturasClient({
     participantes,
     streamings,
     kpis,
+    plano,
     error
 }: AssinaturasClientProps) {
     useActionError(error);
@@ -48,7 +53,7 @@ export default function AssinaturasClient({
         streamingsWithOcupados
     } = useAssinaturasActions(streamings);
 
-    const filterConfig: FilterConfig[] = [
+    const filterConfig: FilterConfig[] = useMemo(() => [
         {
             key: "search",
             type: "text",
@@ -96,7 +101,7 @@ export default function AssinaturasClient({
             label: "Apenas com WhatsApp",
             className: "md:w-auto"
         }
-    ];
+    ], [streamings]);
 
     return (
         <PageContainer>
@@ -115,7 +120,7 @@ export default function AssinaturasClient({
                 }
             />
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div className="space-y-5 gap-6 mb-10">
                 <KPIFinanceiroCard
                     titulo="Receita Estimada"
                     valor={kpis.receitaMensalEstimada}
@@ -168,6 +173,15 @@ export default function AssinaturasClient({
 
                 <div className="space-y-6">
                     <SectionHeader title="Listagem de Assinaturas" className="mb-0" />
+                    {!FeatureGuards.isFeatureEnabled(plano, "automatic_billing").enabled && (
+                        <UpgradeBanner
+                            variant="glass"
+                            size="normal"
+                            title="Gestão de Assinaturas Inteligente"
+                            description="Automatize o controle de períodos e receba alertas de renovação para nunca perder o prazo."
+                            className="mb-8"
+                        />
+                    )}
                     <AssinaturasTable
                         subscriptions={initialSubscriptions}
                         onViewDetails={(sub) => {

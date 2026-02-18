@@ -1,7 +1,7 @@
-
 import { getAssinaturas, getAssinaturasKPIs } from "@/actions/assinaturas";
 import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
+import { getCurrentPlan } from "@/actions/planos";
 import AssinaturasClient from "./AssinaturasClient";
 
 interface AssinaturasPageProps {
@@ -31,10 +31,11 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
         }),
         getParticipantes(),
         getStreamings(),
-        getAssinaturasKPIs()
+        getAssinaturasKPIs(),
+        getCurrentPlan()
     ]);
 
-    const [assinaturasRes, participantesRes, streamingsRes, kpisRes] = results;
+    const [assinaturasRes, participantesRes, streamingsRes, kpisRes, planoRes] = results;
 
     const hasError = results.some(r => !r.success);
     const errorMsg = hasError ? "Algumas informações de assinaturas não puderam ser carregadas." : undefined;
@@ -44,6 +45,7 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
             initialSubscriptions={assinaturasRes.data || []}
             participantes={participantesRes.data || []}
             streamings={streamingsRes.data || []}
+            plano={planoRes.data || "free"}
             kpis={kpisRes.data || { totalAtivas: 0, totalSuspensas: 0, receitaMensalEstimada: 0, totalAssinaturas: 0 }}
             error={errorMsg}
         />

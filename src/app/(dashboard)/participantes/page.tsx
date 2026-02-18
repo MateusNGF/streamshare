@@ -3,16 +3,18 @@ import { getPendingInvites } from "@/actions/invites";
 import { getPendingRequests } from "@/actions/requests";
 import { ParticipantesClient } from "@/components/participantes/ParticipantesClient";
 import { getStreamings } from "@/actions/streamings";
+import { getCurrentPlan } from "@/actions/planos";
 
 export default async function ParticipantesPage() {
     const results = await Promise.all([
         getParticipantes(),
         getPendingInvites(),
         getPendingRequests(),
-        getStreamings()
+        getStreamings(),
+        getCurrentPlan()
     ]);
 
-    const [participantesRes, pendingInvitesRes, pendingRequestsRes, streamingsRes] = results;
+    const [participantesRes, pendingInvitesRes, pendingRequestsRes, streamingsRes, planoRes] = results;
 
     const hasError = results.some(r => !r.success);
     const errorMsg = hasError ? "Algumas informações de participantes não puderam ser carregadas." : undefined;
@@ -23,6 +25,7 @@ export default async function ParticipantesPage() {
             pendingInvites={pendingInvitesRes.data || []}
             pendingRequests={pendingRequestsRes.data || []}
             streamings={streamingsRes.data || []}
+            plano={planoRes.data || "free"}
             error={errorMsg}
         />
     );

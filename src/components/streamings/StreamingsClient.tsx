@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/useToast";
 import { useStreamingActions } from "@/hooks/useStreamingActions";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { useActionError } from "@/hooks/useActionError";
+import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { PlanoConta } from "@prisma/client";
 
 // Refactored Sub-components
 import { StreamingFilters } from "./StreamingFilters";
@@ -19,10 +21,11 @@ import { StreamingTable } from "./StreamingTable";
 
 interface StreamingsClientProps {
     initialData?: any[];
+    plano: PlanoConta;
     serverError?: string;
 }
 
-export function StreamingsClient({ initialData, serverError }: StreamingsClientProps) {
+export function StreamingsClient({ initialData, plano, serverError }: StreamingsClientProps) {
     const toast = useToast();
     useActionError(serverError);
     const [mounted, setMounted] = useState(false);
@@ -87,6 +90,16 @@ export function StreamingsClient({ initialData, serverError }: StreamingsClientP
                     <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
                 </div>
             </div>
+
+            {plano !== PlanoConta.business && (
+                <UpgradeBanner
+                    variant="gold"
+                    size="normal"
+                    title="Catálogo Business Ilimitado"
+                    description="Crie quantos serviços desejar e habilite o faturamento automático por streaming."
+                    className="mb-10"
+                />
+            )}
 
             {/* List/Grid */}
             {viewMode === "grid" ? (

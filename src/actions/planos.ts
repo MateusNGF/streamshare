@@ -2,18 +2,14 @@
 
 import { prisma } from "@/lib/db";
 import { PlanoConta } from "@prisma/client";
-import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { PLANS } from "@/config/plans";
-
 import { getStripeUrl, stripe } from "@/lib/stripe";
+import { getContext } from "@/lib/action-context";
 
 export async function createCheckoutSession(plano: PlanoConta) {
     try {
-        const session = await getCurrentUser();
-        if (!session) {
-            return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
-        }
+        const { userId, contaId } = await getContext();
 
         const planConfig = PLANS[plano];
         if (!planConfig) {
@@ -22,36 +18,24 @@ export async function createCheckoutSession(plano: PlanoConta) {
 
         if (!planConfig.stripePriceId) {
             if (planConfig.price === 0) {
-                // Free plan logic (downgrade/cancel logic if needed, or just simple internal update)
-                // For now, let's just update internally for free plan or throw error
-                return internalUpdateToFree(session.userId, plano);
+                return internalUpdateToFree(userId, contaId, plano);
             }
             return { success: false, error: "Configuração de preço ausente para este plano" };
         }
 
-        // Get Account
-        const userAccount = await prisma.contaUsuario.findFirst({
-            where: { usuarioId: session.userId, isAtivo: true, nivelAcesso: "owner" },
-            include: { conta: true },
+        // Fetch account details needed for stripe
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { stripeCustomerId: true, id: true }
         });
 
-        if (!userAccount) {
-            return { success: false, error: "Conta não encontrada ou sem permissão de dono", code: "FORBIDDEN" };
-        }
+        if (!conta) return { success: false, error: "Conta não encontrada" };
 
-        const { conta } = userAccount;
-
-        // Create Stripe Session
         const checkoutSession = await stripe.checkout.sessions.create({
             mode: "subscription",
             payment_method_types: ["card"],
             customer: conta.stripeCustomerId || undefined,
-            line_items: [
-                {
-                    price: planConfig.stripePriceId,
-                    quantity: 1,
-                },
-            ],
+            line_items: [{ price: planConfig.stripePriceId, quantity: 1 }],
             metadata: {
                 contaId: conta.id.toString(),
                 plano: plano,
@@ -71,20 +55,13 @@ export async function createCheckoutSession(plano: PlanoConta) {
     }
 }
 
-async function internalUpdateToFree(userId: number, plano: PlanoConta) {
+async function internalUpdateToFree(userId: number, contaId: number, plano: PlanoConta) {
     try {
-        const userAccount = await prisma.contaUsuario.findFirst({
-            where: { usuarioId: userId, isAtivo: true, nivelAcesso: "owner" },
-            select: { contaId: true },
-        });
-
-        if (!userAccount) return { success: false, error: "Conta não encontrada" };
-
         await prisma.conta.update({
-            where: { id: userAccount.contaId },
+            where: { id: contaId },
             data: {
                 plano: plano,
-                stripeSubscriptionStatus: 'active', // Free is always active
+                stripeSubscriptionStatus: 'active',
             }
         });
 
@@ -98,28 +75,43 @@ async function internalUpdateToFree(userId: number, plano: PlanoConta) {
 
 export async function createCustomerPortalSession() {
     try {
-        const session = await getCurrentUser();
-        if (!session) {
-            return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
-        }
+        const { contaId } = await getContext();
 
-        const userAccount = await prisma.contaUsuario.findFirst({
-            where: { usuarioId: session.userId, isAtivo: true, nivelAcesso: "owner" },
-            include: { conta: true },
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { stripeCustomerId: true }
         });
 
-        if (!userAccount || !userAccount.conta.stripeCustomerId) {
-            return { success: false, error: "Conta não encontrada ou sem ID Stripe", code: "NOT_FOUND" };
+        if (!conta || !conta.stripeCustomerId) {
+            return { success: false, error: "ID Stripe não encontrado", code: "NOT_FOUND" };
         }
 
         const portalSession = await stripe.billingPortal.sessions.create({
-            customer: userAccount.conta.stripeCustomerId,
+            customer: conta.stripeCustomerId,
             return_url: getStripeUrl("/dashboard"),
         });
 
         return { success: true, data: { url: portalSession.url } };
     } catch (error: any) {
         console.error("[CREATE_CUSTOMER_PORTAL_SESSION_ERROR]", error);
-        return { success: false, error: error.message || "Erro ao criar sessão de portal do cliente" };
+        return { success: false, error: error.message || "Erro ao criar sessão de portal" };
+    }
+}
+
+export async function getCurrentPlan() {
+    try {
+        const { contaId } = await getContext();
+
+        const account = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { plano: true }
+        });
+
+        if (!account) return { success: false, error: "Conta não encontrada" };
+
+        return { success: true, data: account.plano };
+    } catch (error: any) {
+        console.error("[GET_CURRENT_PLAN_ERROR]", error);
+        return { success: false, error: "Erro ao buscar plano atual" };
     }
 }

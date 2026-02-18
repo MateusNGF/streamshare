@@ -23,6 +23,7 @@ import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { MobileMenuButton } from "./MobileMenuButton";
 import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { PlanoConta } from "@prisma/client";
 
 interface SidebarProps {
@@ -199,6 +200,19 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
                         ))}
                     </div>
                 </nav>
+
+                {isFreePlan && (
+                    <div className="px-4 mb-4">
+                        <UpgradeBanner
+                            variant="primary"
+                            size="compact"
+                            title="Desbloquear Gestão"
+                            description="Gerencie streamings e cobranças."
+                            buttonText="Upgrade"
+                            className="shadow-none border-indigo-50/50 bg-indigo-50/20"
+                        />
+                    </div>
+                )}
 
                 <div className="p-4 border-t border-gray-100 flex flex-col gap-1">
                     {/* Desktop Notification Button */}

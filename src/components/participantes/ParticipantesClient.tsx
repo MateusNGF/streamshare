@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Mail, Users, UserPlus, Send, Clock, ShieldCheck } from "lucide-react";
 import { useActionError } from "@/hooks/useActionError";
 import { ParticipantModal, ParticipantFormData } from "@/components/modals/ParticipantModal";
@@ -20,12 +20,16 @@ import { ConvitesTab } from "./tabs/ConvitesTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DetalhesParticipanteModal } from "../modals/DetalhesParticipanteModal";
 import { KPICard } from "../dashboard/KPICard";
+import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { FeatureGuards } from "@/lib/feature-guards";
+import { PlanoConta } from "@prisma/client";
 
 interface ParticipantesClientProps {
     initialData: Participante[];
     pendingInvites: PendingInvite[];
     pendingRequests: PendingRequest[];
     streamings: Streaming[];
+    plano: PlanoConta;
     error?: string;
 }
 
@@ -34,6 +38,7 @@ export function ParticipantesClient({
     pendingInvites: initialInvites,
     pendingRequests: initialRequests,
     streamings,
+    plano,
     error
 }: ParticipantesClientProps) {
     useActionError(error);
@@ -80,7 +85,9 @@ export function ParticipantesClient({
     };
 
     // Active participants only for the main list
-    const activeParticipants = initialData.filter(p => p.status === "ativo");
+    const activeParticipants = useMemo(() => {
+        return initialData.filter(p => p.status === "ativo");
+    }, [initialData]);
 
     // Actions
     const handleAdd = async (data: ParticipantFormData) => {
@@ -240,6 +247,15 @@ export function ParticipantesClient({
                     </div>
                 }
             />
+
+            {plano !== PlanoConta.business && (
+                <UpgradeBanner
+                    variant="gold"
+                    title="Gestão Profissional de Membros"
+                    description="Habilite relatórios avançados de uso e controle de dispositivos para cada participante."
+                    className="mb-8"
+                />
+            )}
 
             {/* Summary KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
