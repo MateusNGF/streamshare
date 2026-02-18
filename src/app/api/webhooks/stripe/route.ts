@@ -37,12 +37,11 @@ export async function POST(req: Request) {
             await tx.conta.update({
                 where: { id: contaId },
                 data: {
-                    stripeCustomerId: session.customer as string,
-                    stripeSubscriptionId: session.subscription as string,
-                    stripeSubscriptionStatus: "active",
-                    stripeCancelAtPeriodEnd: false,
+                    gatewayCustomerId: session.customer as string,
+                    gatewaySubscriptionId: session.subscription as string,
+                    gatewaySubscriptionStatus: "active",
+                    gatewayCancelAtPeriodEnd: false,
                     plano: plano,
-
                 },
             });
 
@@ -61,7 +60,7 @@ export async function POST(req: Request) {
     if (event.type === "customer.subscription.updated") {
         const subscription = event.data.object as Stripe.Subscription;
         const account = await prisma.conta.findFirst({
-            where: { stripeSubscriptionId: subscription.id },
+            where: { gatewaySubscriptionId: subscription.id },
         });
 
         if (account) {
@@ -72,8 +71,8 @@ export async function POST(req: Request) {
                 await tx.conta.update({
                     where: { id: account.id },
                     data: {
-                        stripeSubscriptionStatus: subscription.status,
-                        stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
+                        gatewaySubscriptionStatus: subscription.status,
+                        gatewayCancelAtPeriodEnd: subscription.cancel_at_period_end,
                         ...(planConfig && {
                             plano: planConfig.id
                         })
@@ -98,7 +97,7 @@ export async function POST(req: Request) {
     if (event.type === "customer.subscription.deleted") {
         const subscription = event.data.object as Stripe.Subscription;
         const account = await prisma.conta.findFirst({
-            where: { stripeSubscriptionId: subscription.id },
+            where: { gatewaySubscriptionId: subscription.id },
         });
 
         if (account) {
@@ -106,10 +105,9 @@ export async function POST(req: Request) {
                 await tx.conta.update({
                     where: { id: account.id },
                     data: {
-                        stripeSubscriptionStatus: subscription.status,
-                        stripeCancelAtPeriodEnd: false,
+                        gatewaySubscriptionStatus: subscription.status,
+                        gatewayCancelAtPeriodEnd: false,
                         plano: "free",
-
                     },
                 });
 

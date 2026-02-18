@@ -21,7 +21,7 @@ export function PlanCardSettings({ conta, showToast }: PlanCardSettingsProps) {
     const isPro = currentPlanKey === "pro";
     const usage = conta?._count || { grupos: 0, streamings: 0, participantes: 0 };
     const isActive = conta?.isAtivo;
-    const isCanceled = conta?.stripeCancelAtPeriodEnd;
+    const isCanceled = conta?.gatewayCancelAtPeriodEnd;
 
     const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);

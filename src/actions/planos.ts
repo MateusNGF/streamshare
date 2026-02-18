@@ -26,7 +26,7 @@ export async function createCheckoutSession(plano: PlanoConta) {
         // Fetch account details needed for stripe
         const conta = await prisma.conta.findUnique({
             where: { id: contaId },
-            select: { stripeCustomerId: true, id: true }
+            select: { gatewayCustomerId: true, id: true }
         });
 
         if (!conta) return { success: false, error: "Conta não encontrada" };
@@ -34,7 +34,7 @@ export async function createCheckoutSession(plano: PlanoConta) {
         const checkoutSession = await stripe.checkout.sessions.create({
             mode: "subscription",
             payment_method_types: ["card"],
-            customer: conta.stripeCustomerId || undefined,
+            customer: conta.gatewayCustomerId || undefined,
             line_items: [{ price: planConfig.stripePriceId, quantity: 1 }],
             metadata: {
                 contaId: conta.id.toString(),
@@ -61,7 +61,7 @@ async function internalUpdateToFree(userId: number, contaId: number, plano: Plan
             where: { id: contaId },
             data: {
                 plano: plano,
-                stripeSubscriptionStatus: 'active',
+                gatewaySubscriptionStatus: 'active',
             }
         });
 
@@ -79,15 +79,15 @@ export async function createCustomerPortalSession() {
 
         const conta = await prisma.conta.findUnique({
             where: { id: contaId },
-            select: { stripeCustomerId: true }
+            select: { gatewayCustomerId: true }
         });
 
-        if (!conta || !conta.stripeCustomerId) {
-            return { success: false, error: "ID Stripe não encontrado", code: "NOT_FOUND" };
+        if (!conta || !conta.gatewayCustomerId) {
+            return { success: false, error: "ID Gateway não encontrado", code: "NOT_FOUND" };
         }
 
         const portalSession = await stripe.billingPortal.sessions.create({
-            customer: conta.stripeCustomerId,
+            customer: conta.gatewayCustomerId,
             return_url: getStripeUrl("/dashboard"),
         });
 

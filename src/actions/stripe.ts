@@ -28,12 +28,12 @@ export async function cancelSubscriptionAction(contaId: number) {
             where: { id: contaId },
         });
 
-        if (!conta || !conta.stripeSubscriptionId) {
+        if (!conta || !conta.gatewaySubscriptionId) {
             return { success: false, error: "Conta não encontrada ou sem assinatura ativa.", code: "NOT_FOUND" };
         }
 
         const subscription = await stripe.subscriptions.update(
-            conta.stripeSubscriptionId,
+            conta.gatewaySubscriptionId,
             {
                 cancel_at_period_end: true,
             }
@@ -43,7 +43,7 @@ export async function cancelSubscriptionAction(contaId: number) {
             await tx.conta.update({
                 where: { id: contaId },
                 data: {
-                    stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
+                    gatewayCancelAtPeriodEnd: subscription.cancel_at_period_end,
                 },
             });
 
@@ -90,12 +90,12 @@ export async function reactivateSubscriptionAction(contaId: number) {
             where: { id: contaId },
         });
 
-        if (!conta || !conta.stripeSubscriptionId) {
+        if (!conta || !conta.gatewaySubscriptionId) {
             return { success: false, error: "Conta não encontrada ou sem assinatura.", code: "NOT_FOUND" };
         }
 
         const subscription = await stripe.subscriptions.update(
-            conta.stripeSubscriptionId,
+            conta.gatewaySubscriptionId,
             {
                 cancel_at_period_end: false,
             }
@@ -105,7 +105,7 @@ export async function reactivateSubscriptionAction(contaId: number) {
             await tx.conta.update({
                 where: { id: contaId },
                 data: {
-                    stripeCancelAtPeriodEnd: subscription.cancel_at_period_end,
+                    gatewayCancelAtPeriodEnd: subscription.cancel_at_period_end,
                 },
             });
 

@@ -141,6 +141,11 @@ model Suporte {
 // MODELS
 //////////////////////////////////////////////////
 
+enum MetodoPagamento {
+  CREDIT_CARD
+  PIX
+}
+
 model Conta {
   id    Int        @id @default(autoincrement())
   nome  String?
@@ -161,10 +166,10 @@ model Conta {
   notificacoes   Notificacao[]
   convites       Convite[]
 
-  stripeCustomerId         String? @unique
-  stripeSubscriptionId     String? @unique
-  stripeSubscriptionStatus String?
-  stripeCancelAtPeriodEnd  Boolean @default(false)
+  gatewayCustomerId         String? @unique
+  gatewaySubscriptionId     String? @unique
+  gatewaySubscriptionStatus String?
+  gatewayCancelAtPeriodEnd  Boolean @default(false)
 
   @@map("conta")
 }
@@ -339,6 +344,7 @@ model Assinatura {
   deletedAt              DateTime?
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
+  autoRenovacao          Boolean             @default(true)
 
   participante Participante @relation(fields: [participanteId], references: [id])
   streaming    Streaming    @relation(fields: [streamingId], references: [id])
@@ -349,22 +355,26 @@ model Assinatura {
 }
 
 model Cobranca {
-  id                   Int            @id @default(autoincrement())
+  id                   Int              @id @default(autoincrement())
   assinaturaId         Int
   valor                Decimal
   periodoInicio        DateTime
   periodoFim           DateTime
   dataPagamento        DateTime?
-  status               StatusCobranca @default(pendente)
+  status               StatusCobranca   @default(pendente)
   dataVencimento       DateTime
   comprovanteUrl       String?
   gatewayTransactionId String?
   gatewayProvider      String?
-  tentativas           Int            @default(0)
+  gatewayId            String?
+  metodoPagamento      MetodoPagamento?
+  pixQrCode            String?
+  pixCopiaECola        String?
+  tentativas           Int              @default(0)
   metadataJson         Json?
   deletedAt            DateTime?
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 
   assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
 
