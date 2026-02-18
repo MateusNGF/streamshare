@@ -11,7 +11,6 @@ import { StepStreamings } from "./assinatura-multipla/components/StepStreamings"
 import { StepConfiguration } from "./assinatura-multipla/components/StepConfiguration";
 import { StepParticipants } from "./assinatura-multipla/components/StepParticipants";
 import { StepSummary } from "./assinatura-multipla/components/StepSummary";
-import { CreationSummary } from "./assinatura-multipla/components/CreationSummary";
 
 interface AssinaturaMultiplaModalProps {
     isOpen: boolean;
@@ -39,20 +38,9 @@ export function AssinaturaMultiplaModal({
 
     const renderFooter = () => (
         <div className="w-full space-y-4">
-            <CreationSummary
-                isOpen={logic.isOperationReviewOpen}
-                onToggle={() => logic.setIsOperationReviewOpen(!logic.isOperationReviewOpen)}
-                selectedStreamingIds={logic.selectedStreamingIds}
-                selectedStreamings={logic.selectedStreamings}
-                configurations={logic.configurations}
-                selectedParticipanteIds={logic.selectedParticipanteIds}
-                participantes={participantes}
-                participanteVagasMap={logic.participanteVagasMap}
-            />
-
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-6 sm:gap-0">
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-6 sm:gap-4">
                 {/* Step Indicators */}
-                <div className="flex gap-2 mb-2 sm:mb-0">
+                <div className="flex gap-2">
                     {[1, 2, 3, 4].map(s => (
                         <div
                             key={s}
@@ -62,16 +50,16 @@ export function AssinaturaMultiplaModal({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col-reverse sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
                     {logic.step > ModalStep.STREAMING && (
                         <button
                             type="button"
                             onClick={logic.handleBack}
-                            className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                            className="px-4 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center"
                             disabled={loading}
                         >
-                            <ChevronLeft size={18} />
-                            <span>Voltar</span>
+                            <ChevronLeft size={20} />
+                            <span className="hidden sm:inline ml-2">Voltar</span>
                         </button>
                     )}
 
@@ -80,7 +68,7 @@ export function AssinaturaMultiplaModal({
                             type="button"
                             onClick={logic.handleNext}
                             disabled={!logic.canNext()}
-                            className="w-full sm:w-auto px-8 py-3 bg-primary hover:bg-accent text-white rounded-xl font-black shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="flex-1 sm:flex-none sm:px-8 py-3 bg-primary hover:bg-accent text-white rounded-xl font-black shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             Próximo
                         </button>
@@ -89,17 +77,18 @@ export function AssinaturaMultiplaModal({
                             type="button"
                             onClick={logic.handleSubmit}
                             disabled={logic.selectedParticipanteIds.size === 0 || loading || logic.isOverloaded}
-                            className="w-full sm:w-auto px-8 py-3 bg-primary hover:bg-accent text-white rounded-xl font-black shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="flex-1 sm:flex-none sm:px-8 py-3 bg-primary hover:bg-accent text-white rounded-xl font-black shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading ? (
                                 <>
                                     <Spinner size="sm" color="white" />
-                                    <span>Criando Assinaturas...</span>
+                                    <span className="hidden sm:inline">Criando Assinaturas...</span>
+                                    <span className="sm:hidden">Criando...</span>
                                 </>
                             ) : (
                                 <>
-                                    <Check size={18} />
-                                    <span>Finalizar e Criar</span>
+                                    <Check size={18} className="hidden sm:inline" />
+                                    <span>Finalizar</span>
                                 </>
                             )}
                         </button>
