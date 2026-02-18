@@ -46,6 +46,28 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-18",
+        date: "18/02/2026",
+        changes: [
+            { category: "Interface", description: "Refatoração completa do portal de **Configurações**, adotando um design mais fluido e integrado, otimizando o aproveitamento de espaço em telas grandes e dispositivos móveis." },
+            { category: "Experiência", description: "Implementação de **Sub-módulos de Gestão** para Perfil e Conta, permitindo uma organização mais intuitiva das informações e carregamento seletivo de recursos." },
+            { category: "Performance", description: "Otimização do motor de renderização da interface financeira, reduzindo o tempo de processamento visual em dashboards complexos e volumosos." },
+            { category: "Segurança", description: "Reforço no sistema de **Sessões Ativas**, permitindo o controle centralizado e encerramento remoto de conexões em múltiplos dispositivos por parte do usuário." },
+            { category: "Precisão", description: "Padronização do sistema de **Preferências Regionais**, garantindo que todos os cálculos e exibições financeiras sigam rigorosamente a moeda base da conta." },
+        ],
+    },
+    {
+        id: "2026-02-17",
+        date: "17/02/2026",
+        changes: [
+            { category: "Interface", description: "Lançamento da **Interface de Documentação Legal**, centralizando Termos de Uso e Políticas de Privacidade com navegação interativa e sumários dinâmicos." },
+            { category: "Experiência", description: "Implementação do sistema de **Banners Informativos**, facilitando a comunicação de status do sistema e atualizações críticas diretamente no painel do usuário." },
+            { category: "Interface", description: "Novo portal de **Histórico de Links**, oferecendo uma visão detalhada de convites gerados e controle total sobre o ciclo de vida de acessos externos." },
+            { category: "Segurança", description: "Upgrade no **Protocolo de Autenticação**, com refatoração das rotas de acesso e gestão de identidade para maior proteção contra acessos não autorizados." },
+            { category: "Interface", description: "Lançamento do **Sumário Financeiro Detalhado**, permitindo a visualização granular de métricas de rentabilidade e projeções de faturamento." },
+        ],
+    },
+    {
         id: "2026-02-16",
         date: "16/02/2026",
         changes: [
