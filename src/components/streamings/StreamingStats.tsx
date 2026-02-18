@@ -2,6 +2,7 @@
 
 import { LayoutGrid, Users, TrendingUp, Wallet } from "lucide-react";
 import { KPICard } from "@/components/dashboard/KPICard";
+import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { useCurrency } from "@/hooks/useCurrency";
 
 interface StreamingStatsProps {
@@ -26,35 +27,47 @@ export function StreamingStats({ streamings }: StreamingStatsProps) {
     const occupancyRate = stats.totalSlots > 0 ? (stats.totalOccupied / stats.totalSlots) * 100 : 0;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-            <KPICard
-                title="Total de Serviços"
-                value={String(stats.totalServices)}
-                change="Ativos"
-                icon={LayoutGrid}
-                trend="up"
-            />
-            <KPICard
-                title="Vagas Ocupadas"
-                value={`${stats.totalOccupied}/${stats.totalSlots}`}
-                change={`${occupancyRate.toFixed(0)}% ocupação`}
-                icon={Users}
-                trend={occupancyRate >= 80 ? "up" : "down"}
-            />
-            <KPICard
-                title="Receita Estimada"
-                value={format(stats.estimatedRevenue)}
-                change="Mensal"
-                icon={Wallet}
-                trend="up"
-            />
-            <KPICard
-                title="Taxa de Crescimento"
-                value="--%"
-                change="Em breve"
-                icon={TrendingUp}
-                trend="up"
-            />
-        </div>
+        <KPIGrid cols={4} className="mb-8">
+            <KPIGridItem>
+                <KPICard
+                    title="Total de Serviços"
+                    value={String(stats.totalServices)}
+                    change="Ativos"
+                    icon={LayoutGrid}
+                    trend="up"
+                    index={0}
+                />
+            </KPIGridItem>
+            <KPIGridItem>
+                <KPICard
+                    title="Vagas Ocupadas"
+                    value={`${stats.totalOccupied}/${stats.totalSlots}`}
+                    change={`${occupancyRate.toFixed(0)}% ocupação`}
+                    icon={Users}
+                    trend={occupancyRate >= 80 ? "up" : "down"}
+                    index={1}
+                />
+            </KPIGridItem>
+            <KPIGridItem>
+                <KPICard
+                    title="Receita Estimada"
+                    value={format(stats.estimatedRevenue)}
+                    change="Mensal"
+                    icon={Wallet}
+                    trend="up"
+                    index={2}
+                />
+            </KPIGridItem>
+            <KPIGridItem>
+                <KPICard
+                    title="Taxa de Crescimento"
+                    value="--%"
+                    change="Em breve"
+                    icon={TrendingUp}
+                    trend="up"
+                    index={3}
+                />
+            </KPIGridItem>
+        </KPIGrid>
     );
 }

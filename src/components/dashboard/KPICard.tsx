@@ -17,7 +17,7 @@ export function KPICard({ title, value, change, icon: Icon, trend, index = 0, to
 
     return (
         <div
-            className={`relative overflow-hidden h-full bg-white/70 backdrop-blur-xs border border-white/20 rounded-[32px] p-7 shadow-sm hover:shadow-xl ${shadowColor} hover:-translate-y-1.5 transition-all duration-500 group animate-scale-in flex flex-col justify-between cursor-default`}
+            className={`relative overflow-hidden h-full bg-white/70 backdrop-blur-xs border border-white/20 rounded-[32px] p-4 shadow-sm hover:shadow-xl ${shadowColor} hover:-translate-y-1.5 transition-all duration-500 group animate-scale-in flex flex-col justify-between cursor-default`}
             style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'both' }}
             role="region"
             aria-label={`${title}: ${value}`}
@@ -39,7 +39,7 @@ export function KPICard({ title, value, change, icon: Icon, trend, index = 0, to
                     {change}
                 </div>
             </div>
-            <div className="relative">
+            <div className="relative mt-2">
                 <h3 className="text-3xl font-black text-gray-900 tracking-tighter leading-none mb-2">{value}</h3>
                 <div className="flex items-center gap-1.5">
                     <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{title}</p>

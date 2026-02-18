@@ -18,6 +18,7 @@ import { PlanoConta } from "@prisma/client";
 import { StreamingFilters } from "./StreamingFilters";
 import { StreamingGrid } from "./StreamingGrid";
 import { StreamingTable } from "./StreamingTable";
+import { SectionHeader } from "../layout/SectionHeader";
 
 interface StreamingsClientProps {
     initialData?: any[];
@@ -78,7 +79,7 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
 
 
             {/* Filters & View Toggle */}
-            <div className="space-y-4">
+            <div className="py-5">
                 <StreamingFilters
                     streamings={streamings}
                     filters={filters}
@@ -100,6 +101,10 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
                     className="mb-10"
                 />
             )}
+
+            <SectionHeader
+                title="Lista de catálogos"
+            />
 
             {/* List/Grid */}
             {viewMode === "grid" ? (

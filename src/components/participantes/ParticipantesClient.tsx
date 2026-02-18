@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Mail, Users, UserPlus, Send, Clock, ShieldCheck } from "lucide-react";
+import { Plus, Mail, Users, UserPlus, Send, ShieldCheck } from "lucide-react";
 import { useActionError } from "@/hooks/useActionError";
 import { ParticipantModal, ParticipantFormData } from "@/components/modals/ParticipantModal";
 import { DeleteModal } from "@/components/modals/DeleteModal";
@@ -11,7 +11,7 @@ import { createParticipante, updateParticipante, deleteParticipante } from "@/ac
 import { useToast } from "@/hooks/useToast";
 import { Tabs } from "@/components/ui/Tabs";
 import { AddMemberModal } from "@/components/modals/AddMemberModal";
-import { inviteUser, cancelInvite } from "@/actions/invites";
+import { cancelInvite } from "@/actions/invites";
 import { approveRequest, rejectRequest } from "@/actions/requests";
 import { Participante, PendingInvite, PendingRequest, Streaming } from "@/types/participante";
 import { ParticipantesTab } from "./tabs/ParticipantesTab";
@@ -20,8 +20,8 @@ import { ConvitesTab } from "./tabs/ConvitesTab";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DetalhesParticipanteModal } from "../modals/DetalhesParticipanteModal";
 import { KPICard } from "../dashboard/KPICard";
+import { KPIGrid, KPIGridItem } from "../dashboard/KPIGrid";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
-import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 
 interface ParticipantesClientProps {
@@ -248,56 +248,65 @@ export function ParticipantesClient({
                 }
             />
 
-            {plano !== PlanoConta.business && (
+            <KPIGrid cols={4} className="">
+                <KPIGridItem>
+                    <KPICard
+                        title="Total de Membros"
+                        value={initialData.length.toString()}
+                        change="+0%"
+                        icon={Users}
+                        trend="up"
+                        index={0}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPICard
+                        title="Membros Ativos"
+                        value={activeParticipants.length.toString()}
+                        change="Online"
+                        icon={ShieldCheck}
+                        trend="up"
+                        index={1}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPICard
+                        title="Solicitações"
+                        value={initialRequests.length.toString()}
+                        change="Pendente"
+                        icon={UserPlus}
+                        trend={initialRequests.length > 0 ? "down" : "up"}
+                        index={2}
+                    />
+                </KPIGridItem>
+                <KPIGridItem>
+                    <KPICard
+                        title="Convites Enviados"
+                        value={initialInvites.length.toString()}
+                        change="Aguardando"
+                        icon={Send}
+                        trend="up"
+                        index={3}
+                    />
+                </KPIGridItem>
+            </KPIGrid>
+
+
+            {/* {plano !== PlanoConta.business && (
                 <UpgradeBanner
-                    variant="gold"
+                    variant="glass"
                     title="Gestão Profissional de Membros"
                     description="Habilite relatórios avançados de uso e controle de dispositivos para cada participante."
                     className="mb-8"
                 />
-            )}
-
-            {/* Summary KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                <KPICard
-                    title="Total de Membros"
-                    value={initialData.length.toString()}
-                    change="+0%"
-                    icon={Users}
-                    trend="up"
-                    index={0}
-                />
-                <KPICard
-                    title="Membros Ativos"
-                    value={activeParticipants.length.toString()}
-                    change="Online"
-                    icon={ShieldCheck}
-                    trend="up"
-                    index={1}
-                />
-                <KPICard
-                    title="Solicitações"
-                    value={initialRequests.length.toString()}
-                    change="Pendente"
-                    icon={UserPlus}
-                    trend={initialRequests.length > 0 ? "down" : "up"}
-                    index={2}
-                />
-                <KPICard
-                    title="Convites Enviados"
-                    value={initialInvites.length.toString()}
-                    change="Aguardando"
-                    icon={Send}
-                    trend="up"
-                    index={3}
-                />
-            </div>
+            )} */}
 
             <Tabs
                 tabs={tabs}
                 value={activeTabFromUrl}
                 onValueChange={handleTabChange}
             />
+
 
             {/* Modals */}
             <ParticipantModal
