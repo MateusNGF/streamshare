@@ -26,7 +26,7 @@ export function KPIGrid({ children, cols = 4, className }: KPIGridProps) {
             <div className={cn(
                 "flex overflow-x-auto md:grid md:grid-cols-2 gap-4 md:gap-6",
                 "scrollbar-hide snap-x snap-mandatory items-stretch",
-                "py-10 px-4 -mx-4",
+                "pb-10 px-4",
                 gridCols
             )}>
                 {children}

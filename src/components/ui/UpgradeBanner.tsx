@@ -15,6 +15,7 @@ interface UpgradeBannerProps {
     className?: string;
     variant?: UpgradeBannerVariant;
     size?: UpgradeBannerSize;
+    layout?: 'auto' | 'vertical' | 'horizontal';
 }
 
 const VARIANTS: Record<UpgradeBannerVariant, { container: string; iconContainer: string; button: string; iconDefault: LucideIcon }> = {
@@ -98,7 +99,8 @@ export function UpgradeBanner({
     onClick,
     className = "",
     variant = 'primary',
-    size = 'normal'
+    size = 'normal',
+    layout = 'auto'
 }: UpgradeBannerProps) {
     const router = useRouter();
     const currentVariant = VARIANTS[variant];
@@ -113,14 +115,34 @@ export function UpgradeBanner({
         }
     };
 
+    const getLayoutClasses = () => {
+        if (layout === 'vertical') return 'flex-col';
+        if (layout === 'horizontal') return 'flex-row';
+        return 'flex-col sm:flex-row';
+    };
+
+    const getAlignmentClasses = () => {
+        if (layout === 'vertical') return 'items-start';
+        if (layout === 'horizontal') return 'items-center';
+        return 'items-center sm:items-center'; // Default responsive behavior
+    };
+
+    const getWidthClasses = () => {
+        if (layout === 'vertical') return 'w-full';
+        if (layout === 'horizontal') return 'w-auto';
+        return 'w-full sm:w-auto';
+    };
+
     return (
         <div className={`
-            rounded-2xl border flex flex-col sm:flex-row items-center justify-between group transition-all duration-300
+            rounded-2xl border flex justify-between group transition-all duration-300
+            ${getLayoutClasses()}
+            ${getAlignmentClasses()}
             ${currentVariant.container}
             ${currentSize.wrapper}
             ${className}
         `}>
-            <div className={`flex items-center ${currentSize.content} w-full sm:w-auto`}>
+            <div className={`flex items-center ${currentSize.content} ${getWidthClasses()}`}>
                 <div className={`
                     rounded-2xl shadow-sm group-hover:scale-110 transition-transform flex-shrink-0 ring-4
                     ${currentVariant.iconContainer}
@@ -147,7 +169,7 @@ export function UpgradeBanner({
             <button
                 onClick={handleClick}
                 className={`
-                    w-full sm:w-auto font-bold rounded-xl shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 flex-shrink-0
+                    ${getWidthClasses()} font-bold rounded-xl shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 flex-shrink-0
                     ${currentVariant.button}
                     ${currentSize.btn}
                 `}

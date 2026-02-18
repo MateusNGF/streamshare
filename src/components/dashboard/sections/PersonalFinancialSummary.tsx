@@ -17,7 +17,7 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
 
     return (
         <section className="space-y-6">
-            <SectionHeader title="Resumo Pessoal" className="mb-0" />
+            <SectionHeader title="Resumo Pessoal" />
 
             <KPIGrid cols={4}>
                 <KPIGridItem>

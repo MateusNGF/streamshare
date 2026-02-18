@@ -209,6 +209,7 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
                             title="Desbloquear Gestão"
                             description="Gerencie streamings e cobranças."
                             buttonText="Upgrade"
+                            layout="vertical"
                             className="shadow-none border-indigo-50/50 bg-indigo-50/20"
                         />
                     </div>
