@@ -16,11 +16,7 @@ export function CurrencyInitializer({ currencyCode }: CurrencyInitializerProps) 
     const setCurrency = useCurrencyStore((state) => state.setCurrency);
     const initialized = useRef(false);
 
-    // Use immediate execution for hydration if possible, or useEffect
-    if (!initialized.current && currencyCode) {
-        setCurrency(currencyCode as CurrencyCode);
-        initialized.current = true;
-    }
+
 
     useEffect(() => {
         if (currencyCode) {
