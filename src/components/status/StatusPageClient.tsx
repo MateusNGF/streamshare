@@ -49,8 +49,11 @@ const changelogData = [
         id: "2026-02-18",
         date: "18/02/2026",
         changes: [
+            { category: "Interface", description: "Design de alta densidade para o **Painel de Participantes**, otimizando a visualização horizontal e a navegação em dispositivos móveis para uma gestão mais ágil." },
+            { category: "Experiência", description: "Implementação de **Atalhos de Cópia Rápida** em múltiplos painéis, facilitando o acesso a dados de contato e identificação com feedback visual instantâneo." },
             { category: "Interface", description: "Refatoração completa do portal de **Configurações**, adotando um design mais fluido e integrado, otimizando o aproveitamento de espaço em telas grandes e dispositivos móveis." },
             { category: "Experiência", description: "Implementação de **Sub-módulos de Gestão** para Perfil e Conta, permitindo uma organização mais intuitiva das informações e carregamento seletivo de recursos." },
+            { category: "Precisão", description: "Aperfeiçoamento no motor de filtros do **Resumo Financeiro Individual**, garantindo que apenas assinaturas em vigor sejam contabilizadas nos painéis de detalhes." },
             { category: "Performance", description: "Otimização do motor de renderização da interface financeira, reduzindo o tempo de processamento visual em dashboards complexos e volumosos." },
             { category: "Segurança", description: "Reforço no sistema de **Sessões Ativas**, permitindo o controle centralizado e encerramento remoto de conexões em múltiplos dispositivos por parte do usuário." },
             { category: "Precisão", description: "Padronização do sistema de **Preferências Regionais**, garantindo que todos os cálculos e exibições financeiras sigam rigorosamente a moeda base da conta." },
