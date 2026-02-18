@@ -7,6 +7,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import Link from "next/link";
 import { useState } from "react";
 import { InsectInteractive } from "../backgrounds/InsectInteractive";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface StatusPageClientProps {
     session: any;
@@ -258,11 +259,11 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
             <section className="py-12 md:py-20 bg-gray-50/50">
                 <div className="container mx-auto px-3 md:px-6">
                     <div className="max-w-4xl mx-auto">
-                        <div className="flex items-center gap-4 mb-8 md:mb-12">
-                            <div className="h-px flex-1 bg-gray-200"></div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 px-4">Histórico de Atualizações</h2>
-                            <div className="h-px flex-1 bg-gray-200"></div>
-                        </div>
+                        <SectionHeader
+                            title="Histórico de Atualizações"
+                            description="Explore as evoluções contínuas, novos recursos e melhorias técnicas do StreamShare."
+                            className="mb-12"
+                        />
 
                         <div className="space-y-8 md:space-y-12">
                             {changelogData.map((log, logIdx) => (
