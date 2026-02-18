@@ -3,15 +3,17 @@
 import { ScrollText } from "lucide-react";
 import { LegalHeader } from "@/components/legal/LegalHeader";
 import { LegalSection } from "@/components/legal/LegalSection";
+import { CURRENT_TERMS_VERSION, LAST_TERMS_UPDATED_DATE } from "@/config/legal";
 
 export default function TermosDeUsoPage() {
-    const lastUpdate = "18 de Fevereiro de 2026";
+    const lastUpdate = LAST_TERMS_UPDATED_DATE;
+    const version = CURRENT_TERMS_VERSION;
 
     return (
         <div className="min-h-screen bg-[#FDFDFD] py-16 md:py-24 font-sans selection:bg-primary/10">
             <LegalHeader
                 title="Termos e Condições Gerais de Uso"
-                subtitle={`Publicado em ${lastUpdate} • Instrumento Particular de Contrato de Adesão`}
+                subtitle={`Publicado em ${lastUpdate} • Versão ${version} • Instrumento Particular de Contrato de Adesão`}
                 badgeText="Contrato de Adesão"
                 badgeIcon={ScrollText}
                 otherLinkText="Política de Privacidade"
@@ -314,7 +316,7 @@ export default function TermosDeUsoPage() {
                             StreamShare — Termos e Condições Gerais de Uso © 2026
                         </p>
                         <p className="text-[10px] text-gray-300 mt-1 tracking-[0.2em]">
-                            Documento publicado em {lastUpdate} • Revisão 4.0
+                            Documento publicado em {lastUpdate} • Revisão {version}
                         </p>
                     </div>
                 </article>

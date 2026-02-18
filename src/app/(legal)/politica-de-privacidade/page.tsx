@@ -3,15 +3,17 @@
 import { Shield, Mail } from "lucide-react";
 import { LegalHeader } from "@/components/legal/LegalHeader";
 import { LegalSection } from "@/components/legal/LegalSection";
+import { CURRENT_PRIVACY_VERSION, LAST_PRIVACY_UPDATED_DATE } from "@/config/legal";
 
 export default function PoliticaDePrivacidadePage() {
-    const lastUpdate = "18 de Fevereiro de 2026";
+    const lastUpdate = LAST_PRIVACY_UPDATED_DATE;
+    const version = CURRENT_PRIVACY_VERSION;
 
     return (
         <div className="min-h-screen bg-[#FDFDFD] py-16 md:py-24 font-sans selection:bg-primary/10">
             <LegalHeader
                 title="Política de Privacidade e Proteção de Dados Pessoais"
-                subtitle={`Instrumento vigente a partir de ${lastUpdate} • Revisão 4.0 — Em conformidade com a LGPD`}
+                subtitle={`Instrumento vigente a partir de ${lastUpdate} • Revisão ${version} — Em conformidade com a LGPD`}
                 badgeText="Documento Oficial"
                 badgeIcon={Shield}
                 otherLinkText="Termos de Uso"
@@ -295,7 +297,7 @@ export default function PoliticaDePrivacidadePage() {
                             StreamShare — Política de Privacidade e Proteção de Dados Pessoais © 2026
                         </p>
                         <p className="text-[10px] text-gray-300 mt-1 tracking-[0.2em]">
-                            Documento publicado em {lastUpdate} • Revisão 4.0 • Em conformidade com a Lei nº 13.709/2018 (LGPD)
+                            Documento publicado em {lastUpdate} • Revisão {version} • Em conformidade com a Lei nº 13.709/2018 (LGPD)
                         </p>
                     </div>
                 </article>

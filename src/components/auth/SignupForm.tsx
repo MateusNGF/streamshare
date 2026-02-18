@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Chrome } from "lucide-react";
+import { CURRENT_TERMS_VERSION } from "@/config/legal";
 
 export function SignupForm() {
     const router = useRouter();
@@ -42,7 +43,13 @@ export function SignupForm() {
             const res = await fetch("/api/auth/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, email, senha: password }),
+                body: JSON.stringify({
+                    nome,
+                    email,
+                    senha: password,
+                    termsAccepted: true,
+                    termsVersion: CURRENT_TERMS_VERSION
+                }),
             });
 
             const data = await res.json();
