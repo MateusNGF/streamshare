@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { calcularProximoVencimento, calcularValorPeriodo, calcularDataVencimentoPadrao } from "@/lib/financeiro-utils";
 import { BillingDecision, ChargeCreationData, SubscriptionWithCharges } from "@/types/subscription.types";
 import { isBefore, differenceInDays } from "date-fns";
+import { createPixPayment } from "@/lib/mercado-pago";
+import { MetodoPagamento } from "@prisma/client";
 
 /**
  * Service responsible for billing logic independent of user session.
@@ -220,13 +222,18 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
         return checkScheduledCancellation(ultimaCobranca, agora);
     }
 
-    // 2. Check for overdue issues (Inadimplência)
+    // 2. Check for auto-renewal flag - if false and period ended, it's effectively a cancellation wait
+    if (!assinatura.autoRenovacao && isBefore(ultimaCobranca.periodoFim, agora)) {
+        return { action: 'CANCEL_SCHEDULED' };
+    }
+
+    // 3. Check for overdue issues (Inadimplência)
     const inadimplenciaDecision = checkInadimplencia(assinatura, agora);
     if (inadimplenciaDecision.action !== 'NONE') {
         return inadimplenciaDecision;
     }
 
-    // 3. Check if it's time to generate a new charge (Renewal)
+    // 4. Check if it's time to generate a new charge (Renewal)
     return checkRenewalOpportunity(assinatura, ultimaCobranca, agora);
 }
 
@@ -245,7 +252,7 @@ function checkScheduledCancellation(ultimaCobranca: any, agora: Date): BillingDe
  */
 function checkInadimplencia(assinatura: SubscriptionWithCharges, agora: Date): BillingDecision {
     const cobrancasVencidas = assinatura.cobrancas.filter(c =>
-        (c.status === "pendente" || c.status === "atrasado") && isBefore(c.dataVencimento, agora)
+        (c.status === "pendente" || c.status === "atrasado" || c.status === "vencida") && isBefore(c.dataVencimento, agora)
     );
 
     if (cobrancasVencidas.length > 0) {
@@ -270,6 +277,8 @@ function checkInadimplencia(assinatura: SubscriptionWithCharges, agora: Date): B
  * SRP: Decide if it's time to create a new charge for the next cycle
  */
 function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobranca: any, agora: Date): BillingDecision {
+    if (!assinatura.autoRenovacao) return { action: 'NONE' };
+
     const diasParaFimPeriodo = differenceInDays(ultimaCobranca.periodoFim, agora);
 
     // Renew 5 days before the PREVIOUS period ends
@@ -278,6 +287,10 @@ function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobr
         const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia, assinatura.dataInicio);
         const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
 
+        // Determine payment method: if cobrancaAutomaticaPaga is true, it's likely Stripe/CC.
+        // If not, we assume PIX for manual renewal flow.
+        const metodoPagamento = assinatura.cobrancaAutomaticaPaga ? 'CREDIT_CARD' : 'PIX';
+
         return {
             action: 'CREATE_CHARGE',
             data: {
@@ -285,7 +298,8 @@ function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobr
                 valor,
                 periodoInicio,
                 periodoFim,
-                dataVencimento: calcularDataVencimentoPadrao(agora) // 5 days from emission (agora)
+                dataVencimento: calcularDataVencimentoPadrao(agora),
+                metodoPagamento
             }
         };
     }
@@ -367,14 +381,57 @@ async function executeBillingTransactionWithTx(
         const assinatura = assinaturasSource.find(a => a.id === data.assinaturaId);
         const shouldAutoPay = assinatura?.cobrancaAutomaticaPaga ?? false;
 
-        await tx.cobranca.create({
+        let pixData = null;
+        if (!shouldAutoPay && data.metodoPagamento === 'PIX' && assinatura) {
+            const res = await createPixPayment({
+                id: `sub_${assinatura.id}_${data.periodoInicio.getTime()}`,
+                title: `Renovação de Assinatura - ${assinatura.streaming.catalogo.nome}`,
+                description: `Mensalidade para ${assinatura.participante.nome}`,
+                unit_price: data.valor.toNumber(),
+                email: assinatura.participante.email || 'financeiro@streamshare.com.br',
+                external_reference: `assinatura_${assinatura.id}`
+            });
+
+            if (res.success) {
+                pixData = {
+                    gatewayId: res.id,
+                    pixQrCode: res.qr_code_base64,
+                    pixCopiaECola: res.qr_code
+                };
+            }
+        }
+
+        const cobranca = await tx.cobranca.create({
             data: {
                 ...data,
                 status: shouldAutoPay ? "pago" : "pendente",
                 dataPagamento: shouldAutoPay ? new Date() : null,
-                dataVencimento: data.dataVencimento
+                dataVencimento: data.dataVencimento,
+                metodoPagamento: shouldAutoPay ? MetodoPagamento.CREDIT_CARD : MetodoPagamento.PIX,
+                gatewayId: pixData?.gatewayId,
+                pixQrCode: pixData?.pixQrCode,
+                pixCopiaECola: pixData?.pixCopiaECola,
             }
         });
+
+        if (!shouldAutoPay && assinatura) {
+            // Disparar notificação de cobrança gerada
+            await tx.notificacao.create({
+                data: {
+                    contaId: assinatura.participante.contaId,
+                    usuarioId: assinatura.participante.userId,
+                    tipo: "cobranca_gerada",
+                    titulo: "Sua Fatura foi Gerada",
+                    descricao: `A cobrança para o serviço ${assinatura.streaming.catalogo.nome} está disponível para pagamento via PIX.`,
+                    entidadeId: cobranca.id,
+                    metadata: {
+                        pixCopiaECola: cobranca.pixCopiaECola,
+                        valor: data.valor.toString(),
+                        dataVencimento: data.dataVencimento.toISOString()
+                    }
+                }
+            });
+        }
         renovadas++;
     }
 
