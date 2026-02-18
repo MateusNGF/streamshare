@@ -251,8 +251,6 @@ model Streaming {
   apelido                String?   @default("")
   valorIntegral          Decimal
   limiteParticipantes    Int
-  credenciaisLogin       String?
-  credenciaisSenha       String?
   frequenciasHabilitadas String    @default("mensal,trimestral,semestral,anual")
   publicToken            String    @unique @default(uuid())
   isAtivo                Boolean   @default(true)
@@ -261,13 +259,27 @@ model Streaming {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
-  conta       Conta             @relation(fields: [contaId], references: [id])
-  catalogo    StreamingCatalogo @relation(fields: [streamingCatalogoId], references: [id])
+  conta       Conta                 @relation(fields: [contaId], references: [id])
+  catalogo    StreamingCatalogo     @relation(fields: [streamingCatalogoId], references: [id])
+  credenciais StreamingCredenciais?
   grupos      GrupoStreaming[]
   assinaturas Assinatura[]
   convites    Convite[]
 
   @@map("streaming")
+}
+
+model StreamingCredenciais {
+  id             Int      @id @default(autoincrement())
+  streamingId    Int      @unique
+  login          String?
+  senhaEncrypted String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  streaming Streaming @relation(fields: [streamingId], references: [id], onDelete: Cascade)
+
+  @@map("streaming_credenciais")
 }
 
 model GrupoStreaming {

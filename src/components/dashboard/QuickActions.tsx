@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Plus } from "lucide-react";
 import { StreamingModal, StreamingFormData } from "@/components/modals/StreamingModal";
-import { createStreaming } from "@/actions/streamings";
+import { createStreaming, upsertStreamingCredentials } from "@/actions/streamings";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 
@@ -16,16 +16,24 @@ export function QuickActions() {
     const handleCreateStreaming = async (data: StreamingFormData) => {
         setLoading(true);
         try {
-            await createStreaming({
+            const result = await createStreaming({
                 catalogoId: parseInt(data.catalogoId),
                 apelido: data.apelido,
                 valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
 
+            // Save credentials if provided
+            if (result.success && result.data && (data.credLogin || data.credSenha)) {
+                await upsertStreamingCredentials(result.data.id, {
+                    login: data.credLogin || null,
+                    senha: data.credSenha || null,
+                });
+            }
+
             toast.success("Streaming criado com sucesso!");
             setIsModalOpen(false);
-            router.refresh(); // Refresh dashboard data
+            router.refresh();
         } catch (error: any) {
             console.error(error);
             toast.error(error?.message || "Erro ao criar streaming");

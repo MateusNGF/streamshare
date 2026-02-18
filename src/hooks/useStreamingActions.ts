@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { useStreamingStore } from "@/stores";
 import { StreamingFormData } from "@/components/modals/StreamingModal";
+import { upsertStreamingCredentials } from "@/actions/streamings";
 
 export function useStreamingActions() {
     const toast = useToast();
@@ -20,13 +21,22 @@ export function useStreamingActions() {
 
     const handleAdd = async (data: StreamingFormData) => {
         try {
-            await createStore({
+            const result = await createStore({
                 catalogoId: parseInt(data.catalogoId),
                 apelido: data.apelido,
                 valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
                 isPublico: data.isPublico,
             });
+
+            // Save credentials if provided
+            if (result && (data.credLogin || data.credSenha)) {
+                await upsertStreamingCredentials(result.id, {
+                    login: data.credLogin || null,
+                    senha: data.credSenha || null,
+                });
+            }
+
             toast.success("Streaming criado com sucesso!");
             setIsAddModalOpen(false);
         } catch (error) {
@@ -46,6 +56,14 @@ export function useStreamingActions() {
                 isPublico: data.isPublico,
                 updateExistingSubscriptions: data.updateExistingSubscriptions,
             });
+
+            // Save credentials if provided
+            if (data.credLogin !== undefined || data.credSenha !== undefined) {
+                await upsertStreamingCredentials(selectedStreaming.id, {
+                    login: data.credLogin || null,
+                    senha: data.credSenha || null,
+                });
+            }
 
             if (result.updatedSubscriptions && result.updatedSubscriptions > 0) {
                 toast.success(`Streaming atualizado! ${result.updatedSubscriptions} assinatura(s) atualizadas.`);

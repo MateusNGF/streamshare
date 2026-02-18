@@ -11,6 +11,7 @@ import { billingService } from "@/services/billing-service";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 import { StreamingService } from "@/services/streaming.service";
+import { encrypt, safeDecrypt } from "@/lib/encryption";
 
 export async function getCatalogos() {
     try {
@@ -712,5 +713,103 @@ export async function getStreamingByPublicToken(token: string) {
     } catch (error: any) {
         console.error("[GET_STREAMING_BY_PUBLIC_TOKEN_ERROR]", error);
         return { success: false, error: "Token inválido ou expirado" };
+    }
+}
+
+// ───────────────────────────────────────────────
+// Credential CRUD (Admin)
+// ───────────────────────────────────────────────
+
+export async function getStreamingCredentials(streamingId: number) {
+    try {
+        const { contaId } = await getContext();
+
+        const streaming = await prisma.streaming.findUnique({
+            where: { id: streamingId, contaId },
+            select: { id: true }
+        });
+
+        if (!streaming) {
+            return { success: false, error: "Streaming não encontrado" };
+        }
+
+        const credenciais = await prisma.streamingCredenciais.findUnique({
+            where: { streamingId }
+        });
+
+        return {
+            success: true,
+            data: credenciais ? {
+                login: credenciais.login || null,
+                senha: safeDecrypt(credenciais.senhaEncrypted) || null
+            } : null
+        };
+    } catch (error: any) {
+        console.error("[GET_STREAMING_CREDENTIALS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar credenciais" };
+    }
+}
+
+export async function upsertStreamingCredentials(
+    streamingId: number,
+    data: { login?: string | null; senha?: string | null }
+) {
+    try {
+        const { contaId } = await getContext();
+
+        const streaming = await prisma.streaming.findUnique({
+            where: { id: streamingId, contaId },
+            select: { id: true }
+        });
+
+        if (!streaming) {
+            return { success: false, error: "Streaming não encontrado" };
+        }
+
+        const senhaEncrypted = data.senha ? encrypt(data.senha) : null;
+
+        await prisma.streamingCredenciais.upsert({
+            where: { streamingId },
+            create: {
+                streamingId,
+                login: data.login || null,
+                senhaEncrypted,
+            },
+            update: {
+                login: data.login || null,
+                senhaEncrypted,
+            }
+        });
+
+        revalidatePath("/streamings");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[UPSERT_STREAMING_CREDENTIALS_ERROR]", error);
+        return { success: false, error: "Erro ao salvar credenciais" };
+    }
+}
+
+export async function deleteStreamingCredentials(streamingId: number) {
+    try {
+        const { contaId } = await getContext();
+
+        const streaming = await prisma.streaming.findUnique({
+            where: { id: streamingId, contaId },
+            select: { id: true }
+        });
+
+        if (!streaming) {
+            return { success: false, error: "Streaming não encontrado" };
+        }
+
+        await prisma.streamingCredenciais.deleteMany({
+            where: { streamingId }
+        });
+
+        revalidatePath("/streamings");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[DELETE_STREAMING_CREDENTIALS_ERROR]", error);
+        return { success: false, error: "Erro ao remover credenciais" };
     }
 }

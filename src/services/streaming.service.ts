@@ -153,12 +153,10 @@ export class StreamingService {
 
         if (!streaming) return null;
 
-        const { credenciaisLogin, credenciaisSenha, ...safeStreaming } = streaming;
-
         return {
-            ...safeStreaming,
-            valorIntegral: (safeStreaming.valorIntegral as any).toNumber(),
-            vagasRestantes: Math.max(0, safeStreaming.limiteParticipantes - safeStreaming._count.assinaturas)
+            ...streaming,
+            valorIntegral: (streaming.valorIntegral as any).toNumber(),
+            vagasRestantes: Math.max(0, streaming.limiteParticipantes - streaming._count.assinaturas)
         };
     }
 }

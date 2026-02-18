@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { DashboardStreamingList } from "./DashboardStreamingList";
 import { type StreamingFormData } from "@/components/modals/StreamingModal";
-import { createStreaming } from "@/actions/streamings";
+import { createStreaming, upsertStreamingCredentials } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
@@ -64,7 +64,14 @@ export function DashboardClient({
                 valorIntegral: typeof data.valorIntegral === 'string' ? parseFloat(data.valorIntegral) : data.valorIntegral,
                 limiteParticipantes: parseInt(data.limiteParticipantes),
             });
-            if (result.success) {
+            if (result.success && result.data) {
+                // Save credentials if provided
+                if (data.credLogin || data.credSenha) {
+                    await upsertStreamingCredentials(result.data.id, {
+                        login: data.credLogin || null,
+                        senha: data.credSenha || null,
+                    });
+                }
                 success("Streaming criado com sucesso!");
                 setIsStreamingModalOpen(false);
                 router.refresh();

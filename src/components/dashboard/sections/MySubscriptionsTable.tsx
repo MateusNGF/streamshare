@@ -5,23 +5,17 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { formatarMoeda } from "@/lib/financeiro-utils";
-import { Eye, EyeOff, Calendar, ShieldCheck, MoreHorizontal } from "lucide-react";
+import { Eye, Calendar, ShieldCheck, MoreHorizontal, KeyRound } from "lucide-react";
 import { ParticipantSubscription } from "@/types/dashboard.types";
-import { useState } from "react";
 
 interface MySubscriptionsTableProps {
     subscriptions: ParticipantSubscription[];
     currencyCode: string;
     onViewDetails: (id: number) => void;
+    onViewCredentials: (sub: ParticipantSubscription) => void;
 }
 
-export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetails }: MySubscriptionsTableProps) {
-    const [visibleCredentials, setVisibleCredentials] = useState<Record<number, boolean>>({});
-
-    const toggleCredentials = (id: number) => {
-        setVisibleCredentials(prev => ({ ...prev, [id]: !prev[id] }));
-    };
-
+export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetails, onViewCredentials }: MySubscriptionsTableProps) {
     return (
         <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto overflow-y-hidden">
@@ -48,7 +42,6 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                     </TableHeader>
                     <TableBody>
                         {subscriptions.map((sub, idx) => {
-                            const isVisible = visibleCredentials[sub.id];
                             const isActive = sub.status === 'ativa';
 
                             const menuOptions = [
@@ -103,26 +96,14 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {isActive ? (
-                                            <div className="bg-gray-50/80 rounded-xl p-2 flex items-center justify-between gap-2 border border-transparent group-hover:border-primary/10 group-hover:bg-primary/[0.02] transition-all">
-                                                <div className="flex flex-col min-w-0">
-                                                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Login / Senha</div>
-                                                    <div className="text-[11px] font-bold text-gray-700 truncate">
-                                                        {isVisible ? sub.credenciaisLogin : '••••••••••••'}
-                                                    </div>
-                                                    {isVisible && (
-                                                        <div className="text-[11px] font-bold text-gray-400 truncate mt-0.5">
-                                                            {sub.credenciaisSenha}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    onClick={() => toggleCredentials(sub.id)}
-                                                    className="p-1.5 text-gray-400 hover:text-primary hover:bg-white rounded-lg transition-all shadow-sm active:scale-95"
-                                                >
-                                                    {isVisible ? <EyeOff size={14} /> : <Eye size={14} />}
-                                                </button>
-                                            </div>
+                                        {isActive && sub.hasCredentials ? (
+                                            <button
+                                                onClick={() => onViewCredentials(sub)}
+                                                className="flex items-center gap-2 px-3 py-2 bg-primary/5 hover:bg-primary/10 rounded-xl border border-primary/10 hover:border-primary/20 transition-all group/btn active:scale-[0.98]"
+                                            >
+                                                <KeyRound size={12} className="text-primary group-hover/btn:rotate-12 transition-transform" />
+                                                <span className="text-[10px] font-bold text-primary uppercase tracking-wide">Ver Credenciais</span>
+                                            </button>
                                         ) : (
                                             <div className="flex items-center gap-2 text-gray-300">
                                                 <ShieldCheck size={14} />

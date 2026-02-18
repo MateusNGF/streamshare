@@ -98,7 +98,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 </KPIGridItem>
             </KPIGrid>
 
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6">
+            <div className="py-6">
                 <GenericFilter
                     filters={[
                         {

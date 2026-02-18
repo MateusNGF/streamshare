@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { getContext } from "@/lib/action-context";
+import { safeDecrypt } from "@/lib/encryption";
 import {
     DashboardStats,
     FinancialMetrics,
@@ -452,7 +453,10 @@ export async function getParticipantSubscriptions() {
             },
             include: {
                 streaming: {
-                    include: { catalogo: true }
+                    include: {
+                        catalogo: true,
+                        credenciais: { select: { id: true } }
+                    }
                 },
                 cobrancas: {
                     where: { status: "pendente", dataVencimento: { gte: agora } },
@@ -473,8 +477,7 @@ export async function getParticipantSubscriptions() {
             valor: sub.valor.toNumber(),
             valorIntegral: sub.streaming.valorIntegral.toNumber(),
             proximoVencimento: sub.cobrancas[0]?.dataVencimento || null,
-            credenciaisLogin: sub.status === "ativa" ? sub.streaming.credenciaisLogin : null,
-            credenciaisSenha: sub.status === "ativa" ? sub.streaming.credenciaisSenha : null,
+            hasCredentials: sub.status === "ativa" && !!sub.streaming.credenciais,
         }));
 
         return { success: true, data };
@@ -518,5 +521,42 @@ export async function getParticipantSubscriptionDetail(assinaturaId: number) {
     } catch (error: any) {
         console.error("[GET_PARTICIPANT_SUBSCRIPTION_DETAIL_ERROR]", error);
         return { success: false, error: error.message || "Erro ao buscar detalhes da assinatura" };
+    }
+}
+
+export async function getSubscriptionCredentials(assinaturaId: number) {
+    try {
+        const { userId } = await getContext();
+
+        const assinatura = await prisma.assinatura.findFirst({
+            where: {
+                id: assinaturaId,
+                participante: { userId },
+                status: "ativa"
+            },
+            include: {
+                streaming: {
+                    include: {
+                        credenciais: true
+                    }
+                }
+            }
+        });
+
+        if (!assinatura) {
+            return { success: false, error: "Assinatura não encontrada, inativa ou sem permissão" };
+        }
+
+        const cred = assinatura.streaming.credenciais;
+        return {
+            success: true,
+            data: {
+                login: cred?.login || null,
+                senha: safeDecrypt(cred?.senhaEncrypted) || null
+            }
+        };
+    } catch (error: any) {
+        console.error("[GET_SUBSCRIPTION_CREDENTIALS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar credenciais" };
     }
 }

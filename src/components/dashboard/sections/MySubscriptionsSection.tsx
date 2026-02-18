@@ -12,6 +12,7 @@ import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { MySubscriptionsTable } from "./MySubscriptionsTable";
 import { MySubscriptionsGrid } from "./MySubscriptionsGrid";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { CredentialsModal } from "@/components/modals/CredentialsModal";
 
 interface MySubscriptionsSectionProps {
     subscriptions: ParticipantSubscription[];
@@ -24,6 +25,10 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const toast = useToast();
+
+    // Credentials modal state
+    const [credentialsSub, setCredentialsSub] = useState<ParticipantSubscription | null>(null);
+    const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
 
     const handleViewDetails = async (subId: number) => {
         setLoadingDetails(true);
@@ -40,6 +45,11 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
         } finally {
             setLoadingDetails(false);
         }
+    };
+
+    const handleViewCredentials = (sub: ParticipantSubscription) => {
+        setCredentialsSub(sub);
+        setIsCredentialsModalOpen(true);
     };
 
     return (
@@ -77,12 +87,14 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
                         subscriptions={subscriptions}
                         currencyCode={currencyCode}
                         onViewDetails={handleViewDetails}
+                        onViewCredentials={handleViewCredentials}
                     />
                 ) : (
                     <MySubscriptionsGrid
                         subscriptions={subscriptions}
                         currencyCode={currencyCode}
                         onViewDetails={handleViewDetails}
+                        onViewCredentials={handleViewCredentials}
                     />
                 )
             )}
@@ -91,6 +103,15 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
                 isOpen={isDetailsModalOpen}
                 onClose={() => setIsDetailsModalOpen(false)}
                 assinatura={selectedAssinatura}
+            />
+
+            <CredentialsModal
+                isOpen={isCredentialsModalOpen}
+                onClose={() => setIsCredentialsModalOpen(false)}
+                subscriptionId={credentialsSub?.id ?? null}
+                streamingName={credentialsSub?.streamingName ?? ""}
+                streamingLogo={credentialsSub?.streamingLogo ?? null}
+                streamingColor={credentialsSub?.streamingColor ?? ""}
             />
         </section>
     );

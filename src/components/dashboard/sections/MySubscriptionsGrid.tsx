@@ -5,27 +5,19 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { formatarMoeda } from "@/lib/financeiro-utils";
-import { Eye, EyeOff, Calendar, ShieldCheck, MoreHorizontal, TrendingUp } from "lucide-react";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Eye, Calendar, ShieldCheck, MoreHorizontal, KeyRound } from "lucide-react";
 
 interface MySubscriptionsGridProps {
     subscriptions: ParticipantSubscription[];
     currencyCode: string;
     onViewDetails: (id: number) => void;
+    onViewCredentials: (sub: ParticipantSubscription) => void;
 }
 
-export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails }: MySubscriptionsGridProps) {
-    const [visibleCredentials, setVisibleCredentials] = useState<Record<number, boolean>>({});
-
-    const toggleCredentials = (id: number) => {
-        setVisibleCredentials(prev => ({ ...prev, [id]: !prev[id] }));
-    };
-
+export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails, onViewCredentials }: MySubscriptionsGridProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {subscriptions.map((sub, idx) => {
-                const isVisible = visibleCredentials[sub.id];
                 const isActive = sub.status === 'ativa';
 
                 const menuOptions = [
@@ -90,34 +82,14 @@ export function MySubscriptionsGrid({ subscriptions, currencyCode, onViewDetails
                                 </span>
                             </div>
 
-                            {isActive ? (
-                                <div className="bg-gray-50/80 rounded-xl p-3 border border-transparent group-hover:border-primary/10 group-hover:bg-primary/[0.02] transition-all">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Credenciais de Acesso</div>
-                                        <button
-                                            onClick={() => toggleCredentials(sub.id)}
-                                            className="p-1.5 text-gray-400 hover:text-primary hover:bg-white rounded-lg transition-all shadow-sm active:scale-95"
-                                        >
-                                            {isVisible ? <EyeOff size={14} /> : <Eye size={14} />}
-                                        </button>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs text-gray-500 font-medium">Login</span>
-                                            <span className="text-xs font-bold text-gray-700 select-all">
-                                                {isVisible ? sub.credenciaisLogin : '••••••••••••'}
-                                            </span>
-                                        </div>
-                                        {isVisible && (
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs text-gray-500 font-medium">Senha</span>
-                                                <span className="text-xs font-bold text-gray-700 select-all">
-                                                    {sub.credenciaisSenha}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                            {isActive && sub.hasCredentials ? (
+                                <button
+                                    onClick={() => onViewCredentials(sub)}
+                                    className="w-full flex items-center justify-center gap-2 p-3 bg-primary/5 hover:bg-primary/10 rounded-xl border border-primary/10 hover:border-primary/20 transition-all group/btn active:scale-[0.98]"
+                                >
+                                    <KeyRound size={14} className="text-primary group-hover/btn:rotate-12 transition-transform" />
+                                    <span className="text-xs font-bold text-primary uppercase tracking-wide">Ver Credenciais</span>
+                                </button>
                             ) : (
                                 <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-xl text-gray-400 border border-dashed border-gray-200">
                                     <ShieldCheck size={16} />

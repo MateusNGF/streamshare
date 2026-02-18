@@ -82,6 +82,5 @@ export interface ParticipantSubscription {
     valor: number;
     valorIntegral: number;
     proximoVencimento: Date | null;
-    credenciaisLogin?: string | null;
-    credenciaisSenha?: string | null;
+    hasCredentials: boolean;
 }

@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Globe, Info, Lock, LockOpen } from "lucide-react";
+import { Globe, Info, Lock, LockOpen, KeyRound, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import { CatalogoPicker } from "@/components/streamings/CatalogoPicker";
-import { getCatalogos } from "@/actions/streamings";
+import { getCatalogos, getStreamingCredentials, upsertStreamingCredentials, deleteStreamingCredentials } from "@/actions/streamings";
 import { cn } from "@/lib/utils";
 import { StreamingSchema } from "@/lib/schemas";
 import { ZodIssue } from "zod";
@@ -17,6 +17,7 @@ import { getNextStreamingNumber } from "@/actions/streamings";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Switch } from "@/components/ui/Switch";
 import { QuantityInput } from "@/components/ui/QuantityInput";
+import { useToast } from "@/hooks/useToast";
 
 interface StreamingModalProps {
     isOpen: boolean;
@@ -31,8 +32,10 @@ export interface StreamingFormData {
     apelido: string;
     valorIntegral: number | string;
     limiteParticipantes: string;
-    isPublico?: boolean; // Added optional field
+    isPublico?: boolean;
     activeSubscriptions?: number;
+    credLogin?: string;
+    credSenha?: string;
 }
 
 export function StreamingModal({
@@ -57,6 +60,15 @@ export function StreamingModal({
     const [updateExistingSubscriptions, setUpdateExistingSubscriptions] = useState(false);
     const [errors, setErrors] = useState<Partial<Record<keyof StreamingFormData, string>>>({});
     const { currencyInfo } = useCurrency();
+    const toast = useToast();
+
+    // Credential state
+    const [credLogin, setCredLogin] = useState("");
+    const [credSenha, setCredSenha] = useState("");
+    const [showCredSenha, setShowCredSenha] = useState(false);
+    const [credLoading, setCredLoading] = useState(false);
+    const [hasCredentials, setHasCredentials] = useState(false);
+    const [showCredSection, setShowCredSection] = useState(false);
 
     const validate = () => {
         const result = StreamingSchema.safeParse(formData);
@@ -112,6 +124,34 @@ export function StreamingModal({
         }
     }, [streaming, isOpen]);
 
+    // Fetch credentials when editing a streaming
+    useEffect(() => {
+        if (streaming && isOpen && (streaming as any).id) {
+            setCredLoading(true);
+            getStreamingCredentials((streaming as any).id)
+                .then(res => {
+                    if (res.success && res.data) {
+                        setCredLogin(res.data.login || "");
+                        setCredSenha(res.data.senha || "");
+                        setHasCredentials(true);
+                        setShowCredSection(true);
+                    } else {
+                        setCredLogin("");
+                        setCredSenha("");
+                        setHasCredentials(false);
+                        setShowCredSection(false);
+                    }
+                })
+                .finally(() => setCredLoading(false));
+        } else if (isOpen && !streaming) {
+            setCredLogin("");
+            setCredSenha("");
+            setShowCredSenha(false);
+            setHasCredentials(false);
+            setShowCredSection(false);
+        }
+    }, [streaming, isOpen]);
+
     const selectedCatalogo = catalogos.find(c => String(c.id) === formData.catalogoId);
 
     const handleNextStep = async () => {
@@ -129,11 +169,16 @@ export function StreamingModal({
         setStep(2);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (loading) return; // Prevent double submit
+        if (loading) return;
         if (validate()) {
-            onSave({ ...formData, updateExistingSubscriptions });
+            onSave({
+                ...formData,
+                updateExistingSubscriptions,
+                credLogin: showCredSection ? credLogin : undefined,
+                credSenha: showCredSection ? credSenha : undefined,
+            });
         }
     };
 
@@ -363,6 +408,97 @@ export function StreamingModal({
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* ─── Credenciais Section ─── */}
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowCredSection(!showCredSection)}
+                                className={cn(
+                                    "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                                    showCredSection
+                                        ? "bg-amber-50 border-amber-200"
+                                        : "bg-gray-50 border-gray-100 hover:bg-gray-100"
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <KeyRound size={16} className={showCredSection ? "text-amber-600" : "text-gray-400"} />
+                                    <span className={cn(
+                                        "text-sm font-bold",
+                                        showCredSection ? "text-amber-900" : "text-gray-700"
+                                    )}>
+                                        Credenciais de Acesso
+                                    </span>
+                                </div>
+                                {hasCredentials && (
+                                    <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                                        Configurado
+                                    </span>
+                                )}
+                            </button>
+
+                            {showCredSection && (
+                                <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {credLoading ? (
+                                        <div className="flex items-center justify-center gap-2 py-4">
+                                            <Spinner size="sm" />
+                                            <span className="text-xs text-gray-400">Carregando credenciais...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Input
+                                                label="Login"
+                                                type="text"
+                                                value={credLogin}
+                                                onChange={(e) => setCredLogin(e.target.value)}
+                                                placeholder="email@exemplo.com"
+                                            />
+                                            <div className="relative">
+                                                <Input
+                                                    label="Senha"
+                                                    type={showCredSenha ? "text" : "password"}
+                                                    value={credSenha}
+                                                    onChange={(e) => setCredSenha(e.target.value)}
+                                                    placeholder="••••••••"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCredSenha(!showCredSenha)}
+                                                    className="absolute right-3 top-[34px] p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    {showCredSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 leading-relaxed">
+                                                As credenciais são criptografadas (AES-256) antes de serem armazenadas. Somente participantes com assinatura ativa podem visualizá-las.
+                                            </p>
+                                            {hasCredentials && (
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (!streaming || !(streaming as any).id) return;
+                                                        const res = await deleteStreamingCredentials((streaming as any).id);
+                                                        if (res.success) {
+                                                            setCredLogin("");
+                                                            setCredSenha("");
+                                                            setHasCredentials(false);
+                                                            setShowCredSection(false);
+                                                            toast.success("Credenciais removidas");
+                                                        } else {
+                                                            toast.error(res.error || "Erro ao remover credenciais");
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-bold transition-colors"
+                                                >
+                                                    <Trash2 size={12} />
+                                                    Remover credenciais
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
