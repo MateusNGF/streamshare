@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Globe, Info, Lock, LockOpen, KeyRound, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Globe, Info, Lock, LockOpen, KeyRound, Eye, EyeOff, Trash2, ChevronDown } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
@@ -312,7 +312,7 @@ export function StreamingModal({
                             className="mb-4"
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 items-start">
                             <CurrencyInput
                                 label="Valor Integral (Mensal)"
                                 value={formData.valorIntegral}
@@ -411,88 +411,119 @@ export function StreamingModal({
                         </div>
 
                         {/* ─── Credenciais Section ─── */}
-                        <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="mt-6">
                             <button
                                 type="button"
                                 onClick={() => setShowCredSection(!showCredSection)}
                                 className={cn(
-                                    "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                                    "w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
                                     showCredSection
-                                        ? "bg-amber-50 border-amber-200"
-                                        : "bg-gray-50 border-gray-100 hover:bg-gray-100"
+                                        ? "bg-amber-50/50 border-amber-200 shadow-sm shadow-amber-100"
+                                        : "bg-gray-50 border-gray-100 hover:bg-gray-100/80"
                                 )}
                             >
-                                <div className="flex items-center gap-2">
-                                    <KeyRound size={16} className={showCredSection ? "text-amber-600" : "text-gray-400"} />
-                                    <span className={cn(
-                                        "text-sm font-bold",
-                                        showCredSection ? "text-amber-900" : "text-gray-700"
+                                <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                        "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                        showCredSection ? "bg-amber-100 text-amber-600" : "bg-white border border-gray-200 text-gray-400"
                                     )}>
-                                        Credenciais de Acesso
-                                    </span>
+                                        <KeyRound size={18} />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="flex items-center gap-2">
+                                            <span className={cn(
+                                                "text-sm font-bold",
+                                                showCredSection ? "text-amber-900" : "text-gray-700"
+                                            )}>
+                                                Credenciais de Acesso
+                                            </span>
+                                            {hasCredentials && (
+                                                <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                                                    Configurado
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-gray-400 font-medium">Opcional para faturamento e gestão</p>
+                                    </div>
                                 </div>
-                                {hasCredentials && (
-                                    <span className="text-[9px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
-                                        Configurado
-                                    </span>
-                                )}
+                                <ChevronDown
+                                    size={18}
+                                    className={cn(
+                                        "text-gray-400 transition-transform duration-300",
+                                        showCredSection && "rotate-180 text-amber-600"
+                                    )}
+                                />
                             </button>
 
                             {showCredSection && (
-                                <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="mt-2 ml-4 pl-7 border-l-2 border-amber-100 space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 relative">
+                                    {/* Tree Connector Dots */}
+                                    <div className="absolute -left-[9px] top-6 w-4 h-[2px] bg-amber-100" />
+                                    <div className="absolute -left-[9px] top-[104px] w-4 h-[2px] bg-amber-100" />
+
                                     {credLoading ? (
-                                        <div className="flex items-center justify-center gap-2 py-4">
+                                        <div className="flex items-center gap-3 py-4">
                                             <Spinner size="sm" />
-                                            <span className="text-xs text-gray-400">Carregando credenciais...</span>
+                                            <span className="text-xs text-gray-400 font-medium">Buscando credenciais seguras...</span>
                                         </div>
                                     ) : (
                                         <>
-                                            <Input
-                                                label="Login"
-                                                type="text"
-                                                value={credLogin}
-                                                onChange={(e) => setCredLogin(e.target.value)}
-                                                placeholder="email@exemplo.com"
-                                            />
-                                            <div className="relative">
+                                            <div className="space-y-4">
                                                 <Input
-                                                    label="Senha"
-                                                    type={showCredSenha ? "text" : "password"}
-                                                    value={credSenha}
-                                                    onChange={(e) => setCredSenha(e.target.value)}
-                                                    placeholder="••••••••"
+                                                    label="Email / Nome de Usuário"
+                                                    type="text"
+                                                    value={credLogin}
+                                                    onChange={(e) => setCredLogin(e.target.value)}
+                                                    placeholder="email@exemplo.com"
+                                                    className="bg-gray-50/30"
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowCredSenha(!showCredSenha)}
-                                                    className="absolute right-3 top-[34px] p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                                >
-                                                    {showCredSenha ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                </button>
+                                                <div className="relative">
+                                                    <Input
+                                                        label="Senha da Conta"
+                                                        type={showCredSenha ? "text" : "password"}
+                                                        value={credSenha}
+                                                        onChange={(e) => setCredSenha(e.target.value)}
+                                                        placeholder="••••••••"
+                                                        className="bg-gray-50/30"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowCredSenha(!showCredSenha)}
+                                                        className="absolute right-3 top-[37px] p-2 text-gray-400 hover:text-gray-600 transition-colors bg-white/50 rounded-lg"
+                                                    >
+                                                        {showCredSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <p className="text-[10px] text-gray-400 leading-relaxed">
-                                                As credenciais são criptografadas (AES-256) antes de serem armazenadas. Somente participantes com assinatura ativa podem visualizá-las.
-                                            </p>
+
+                                            <div className="flex items-start gap-2.5 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                                                <Info size={14} className="text-blue-500 mt-0.5" />
+                                                <p className="text-[10px] text-blue-700 leading-relaxed font-medium">
+                                                    As credenciais são criptografadas (AES-256) antes de serem armazenadas. Somente participantes ativos podem visualizá-las.
+                                                </p>
+                                            </div>
+
                                             {hasCredentials && (
                                                 <button
                                                     type="button"
                                                     onClick={async () => {
                                                         if (!streaming || !(streaming as any).id) return;
+                                                        if (!confirm("Tem certeza que deseja remover permanentemente estas credenciais?")) return;
                                                         const res = await deleteStreamingCredentials((streaming as any).id);
                                                         if (res.success) {
                                                             setCredLogin("");
                                                             setCredSenha("");
                                                             setHasCredentials(false);
                                                             setShowCredSection(false);
-                                                            toast.success("Credenciais removidas");
+                                                            toast.success("Credenciais removidas com sucesso");
                                                         } else {
                                                             toast.error(res.error || "Erro ao remover credenciais");
                                                         }
                                                     }}
-                                                    className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-bold transition-colors"
+                                                    className="flex items-center gap-2 text-xs text-red-500 hover:text-red-600 font-bold transition-colors w-fit px-2 py-1 hover:bg-red-50 rounded-lg"
                                                 >
-                                                    <Trash2 size={12} />
-                                                    Remover credenciais
+                                                    <Trash2 size={14} />
+                                                    Remover credenciais salvas
                                                 </button>
                                             )}
                                         </>
