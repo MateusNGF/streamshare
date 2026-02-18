@@ -18,7 +18,7 @@ export default function TermosDeUsoPage() {
                 otherLinkHref="/politica-de-privacidade"
             />
 
-            <div className="container mx-auto px-6 max-w-3xl">
+            <div className="container mx-auto px-6 max-w-5xl">
                 <article className="space-y-16">
 
                     {/* ── PREÂMBULO ── */}
