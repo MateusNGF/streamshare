@@ -38,7 +38,9 @@ export async function POST(req: Request) {
         if (type === 'payment' || type === 'payment.updated' || type === 'payment.created') {
             const payment = await mpPayment.get({ id: dataId });
 
+            // B7 FIX: Log non-approved statuses for observability
             if (payment.status !== 'approved') {
+                console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} status: ${payment.status} — skipping`);
                 return new Response(`Payment status: ${payment.status}`, { status: 200 });
             }
 
@@ -47,7 +49,12 @@ export async function POST(req: Request) {
             });
 
             if (cobranca) {
-                const agora = new Date();
+                // B9 FIX: Idempotency — skip if already paid to prevent double-processing on re-delivery
+                if (cobranca.status === StatusCobranca.pago) {
+                    console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} already processed — idempotent skip`);
+                    return new Response(null, { status: 200 });
+                }
+
                 await prisma.$transaction(async (tx) => {
                     await tx.cobranca.update({
                         where: { id: cobranca.id },
@@ -88,31 +95,45 @@ export async function POST(req: Request) {
         }
 
         // CASO 2: ASSINATURA DE CONTA SaaS (PRE-APPROVAL)
+        // B5 FIX: Wrap in $transaction for atomicity (conta update + notificacao)
         if (type === 'subscription_preapproval') {
             const preApproval = await mpPreApproval.get({ id: dataId });
             const externalRef = preApproval.external_reference; // format: saas_{contaId}_{plano}
 
             if (externalRef?.startsWith('saas_')) {
-                const [, contaIdStr, plano] = externalRef.split('_');
+                const parts = externalRef.split('_');
+                if (parts.length < 3) {
+                    console.error(`[MERCADOPAGO_WEBHOOK] Invalid externalRef format: ${externalRef}`);
+                    return new Response(null, { status: 200 });
+                }
+
+                const [, contaIdStr, plano] = parts;
                 const contaId = parseInt(contaIdStr);
 
-                await prisma.conta.update({
-                    where: { id: contaId },
-                    data: {
-                        gatewaySubscriptionId: dataId,
-                        gatewaySubscriptionStatus: preApproval.status as string,
-                        plano: plano as PlanoConta
-                    }
-                });
+                if (isNaN(contaId) || !Object.values(PlanoConta).includes(plano as PlanoConta)) {
+                    console.error(`[MERCADOPAGO_WEBHOOK] Invalid contaId or plano in externalRef: ${externalRef}`);
+                    return new Response(null, { status: 200 });
+                }
 
-                await prisma.notificacao.create({
-                    data: {
-                        contaId,
-                        tipo: "plano_alterado",
-                        titulo: "Sua assinatura Pro foi ativada!",
-                        descricao: `A assinatura do plano ${plano} foi processada com sucesso no MercadoPago.`,
-                        metadata: { preApprovalId: dataId, status: preApproval.status }
-                    }
+                await prisma.$transaction(async (tx) => {
+                    await tx.conta.update({
+                        where: { id: contaId },
+                        data: {
+                            gatewaySubscriptionId: dataId,
+                            gatewaySubscriptionStatus: preApproval.status as string,
+                            plano: plano as PlanoConta
+                        }
+                    });
+
+                    await tx.notificacao.create({
+                        data: {
+                            contaId,
+                            tipo: "plano_alterado",
+                            titulo: "Sua assinatura Pro foi ativada!",
+                            descricao: `A assinatura do plano ${plano} foi processada com sucesso no MercadoPago.`,
+                            metadata: { preApprovalId: dataId, status: preApproval.status }
+                        }
+                    });
                 });
             }
         }
@@ -123,3 +144,4 @@ export async function POST(req: Request) {
         return new Response('Internal Server Error', { status: 500 });
     }
 }
+

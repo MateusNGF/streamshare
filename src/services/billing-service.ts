@@ -255,6 +255,40 @@ function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobr
 async function executeBillingTransactionWithTx(tx: any, cobrancas: ChargeCreationData[], cancelamentos: number[], suspensoes: number[], source: SubscriptionWithCharges[]) {
     let renovadas = 0, canceladas = 0, suspensas = 0;
 
+    // B2 FIX: Pre-generate all PIX payments BEFORE opening DB transaction.
+    // External HTTP calls to Mercado Pago must NOT happen inside a $transaction
+    // to avoid holding a PG connection open during a slow/failing HTTP request.
+    // Pattern: reserve-then-commit (all MP calls first, then a single fast DB write).
+    const gatewayDataMap = new Map<string, any>();
+
+    for (const data of cobrancas) {
+        const { externalReference, ...prismaData } = data;
+        if (prismaData.metodoPagamento !== 'PIX') continue;
+
+        const ass = source.find(a => a.id === prismaData.assinaturaId);
+        if (!ass) continue;
+
+        const res = await createPixPayment({
+            id: externalReference!,
+            title: `Renovação ${ass.streaming.catalogo.nome}`,
+            description: `Mensalidade ${ass.participante.nome}`,
+            unit_price: prismaData.valor.toNumber(),
+            email: ass.participante.email || 'financeiro@streamshare.com.br',
+            external_reference: externalReference!
+        });
+
+        if (res.success) {
+            gatewayDataMap.set(externalReference!, {
+                gatewayId: res.id,
+                pixQrCode: res.qr_code_base64,
+                pixCopiaECola: res.qr_code
+            });
+        } else {
+            console.error(`[BILLING] Failed to create PIX for ${externalReference}:`, res.error);
+        }
+    }
+
+    // Now persist all results in the DB (fast path — no external calls)
     for (const id of suspensoes) {
         await tx.assinatura.update({ where: { id }, data: { status: "suspensa", dataSuspensao: new Date() } });
         suspensas++;
@@ -271,26 +305,7 @@ async function executeBillingTransactionWithTx(tx: any, cobrancas: ChargeCreatio
         });
         if (exists) continue;
 
-        const ass = source.find(a => a.id === prismaData.assinaturaId);
-        let gatewayData: any = {};
-
-        if (prismaData.metodoPagamento === 'PIX' && ass) {
-            const res = await createPixPayment({
-                id: externalReference!,
-                title: `Renovação ${ass.streaming.catalogo.nome}`,
-                description: `Mensalidade ${ass.participante.nome}`,
-                unit_price: prismaData.valor.toNumber(),
-                email: ass.participante.email || 'financeiro@streamshare.com.br',
-                external_reference: externalReference!
-            });
-            if (res.success) {
-                gatewayData = {
-                    gatewayId: res.id,
-                    pixQrCode: res.qr_code_base64,
-                    pixCopiaECola: res.qr_code
-                };
-            }
-        }
+        const gatewayData = gatewayDataMap.get(externalReference!) ?? {};
 
         await tx.cobranca.create({
             data: {

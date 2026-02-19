@@ -56,7 +56,7 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
 
         highlighted: true,
         color: "primary",
-        mpPlanId: process.env.NEXT_PUBLIC_MP_PLAN_PRO,
+        mpPlanId: process.env.MERCADOPAGO_PLAN_PRO,
         features: [
             { text: "20 Streamings", included: true },
             { text: "Participantes Ilimitados", included: true },
@@ -79,7 +79,7 @@ export const PLANS: Record<PlanoConta, PlanDefinition> = {
         comingSoon: true,
 
         color: "purple", // Distinct color
-        mpPlanId: process.env.NEXT_PUBLIC_MP_PLAN_BUSINESS,
+        mpPlanId: process.env.MERCADOPAGO_PLAN_BUSINESS,
         features: [
             { text: "Streamings Ilimitados", included: true },
             { text: "Participantes Ilimitados", included: true },

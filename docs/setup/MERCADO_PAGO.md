@@ -35,19 +35,37 @@ Para que o StreamShare possa processar pagamentos, você precisará de um **Acce
 
 ## 🏗️ 2. Configuração de Variáveis de Ambiente
 
-No seu arquivo `.env` (ou no painel da Vercel/Hospedagem), adicione as seguintes chaves:
+No seu arquivo `.env` (ou no painel da Vercel/Hospedagem), configure todas as chaves abaixo:
 
 ```env
-# Mercado Pago API
-MERCADOPAGO_ACCESS_TOKEN=APP_USR-xxxxxx-xxxxxx-xxxxxx
+# ── Autenticação SDK (server-only) ──────────────────────────────
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-xxxxxx
 
-# Mercado Pago Webhooks (Segurança)
-MERCADOPAGO_WEBHOOK_SECRET=seu_segredo_do_webhook
+# ── Webhooks ─────────────────────────────────────────────────────
+MERCADOPAGO_WEBHOOK_SECRET=seu_segredo_gerado_pelo_mp
+MERCADOPAGO_WEBHOOK_URL=https://seudominio.com.br/api/webhooks/mercado-pago
 
-# URLs do Aplicativo
-NEXT_PUBLIC_APP=https://seu-dominio.com.br
-MERCADOPAGO_WEBHOOK_URL=https://seu-dominio.com.br/api/webhooks/mercado-pago
+# ── Planos SaaS — IDs do PreApproval ─────────────────────────────
+# ⚠️  Use MERCADOPAGO_PLAN_* (server-only), nunca NEXT_PUBLIC_ para IDs de plano
+MERCADOPAGO_PLAN_PRO=2c938084...
+MERCADOPAGO_PLAN_BUSINESS=2c938084...
+
+# ── URL pública do app — obrigatória nas back_urls do MP ─────────
+NEXT_PUBLIC_URL=https://seudominio.com.br
+
+# ── Cron Job — protege /api/cron/billing ─────────────────────────
+CRON_SECRET=senha-forte-aqui
 ```
+
+| Variável | Obrigatória | Para quê |
+|----------|:-----------:|---------|
+| `MERCADOPAGO_ACCESS_TOKEN` | ✅ | Autenticação de todas as chamadas ao SDK |
+| `MERCADOPAGO_WEBHOOK_SECRET` | ✅ | Validação HMAC-SHA256 dos eventos recebidos |
+| `MERCADOPAGO_WEBHOOK_URL` | ✅ | URL de notificação registrada no painel MP |
+| `MERCADOPAGO_PLAN_PRO` | ✅ | ID do PreApproval Plan do Plano Pro |
+| `MERCADOPAGO_PLAN_BUSINESS` | ⚠️ | ID do PreApproval Plan do Plano Business |
+| `NEXT_PUBLIC_URL` | ✅ | `back_urls` de sucesso/erro/pendente |
+| `CRON_SECRET` | ✅ | Autorização Bearer do endpoint de cron |
 
 ---
 
@@ -58,17 +76,8 @@ Para vender os planos **Pro** e **Business** dentro do StreamShare, você precis
 1.  Acesse a [seção de Assinaturas](https://www.mercadopago.com.br/subscriptions/plans) no Mercado Pago.
 2.  Crie dois planos com as seguintes recomendações:
     *   **Plano Pro**: Mensal - R$ 29,90.
-    *   **Plano Business**: Mensal - R$ 99,90.
-3.  Após criar, copie o **ID do Plano** (ex: `2c938084xxxxxx`) e configure-os no arquivo `src/config/plans.ts` ou como variáveis de ambiente, se o seu código as utilizar:
-
-```env
-NEXT_PUBLIC_MP_PLAN_PRO=PLAN_ID_PRO
-NEXT_PUBLIC_MP_PLAN_BUSINESS=PLAN_ID_BUSINESS
-```
-
----
-
-## ⚓ 4. Configuração de Webhooks (Crucial para Automação)
+MERCADOPAGO_PLAN_PRO=PLAN_ID_PRO
+MERCADOPAGO_PLAN_BUSINESS=PLAN_ID_BUSINESS
 
 O Webhook é o que permite ao StreamShare saber quando um pagamento foi aprovado instantaneamente.
 
@@ -81,7 +90,23 @@ O Webhook é o que permite ao StreamShare saber quando um pagamento foi aprovado
 
 ---
 
-## 🛠️ 5. Modo de Teste (Sandbox)
+## ⏰ 5. Configuração do Cron Job (Faturamento Automático)
+
+Para que as cobranças de renovação sejam geradas automaticamente, você precisa configurar um disparador para o endpoint de cron:
+
+1.  No seu `.env`, defina uma senha forte em `CRON_SECRET`.
+2.  O endpoint é: `https://seu-dominio.com.br/api/cron/billing`.
+3.  **Vercel Cron:** Adicione ao seu `vercel.json`:
+    ```json
+    {
+      "crons": [{ "path": "/api/cron/billing", "schedule": "0 8 * * *" }]
+    }
+    ```
+4.  **Manual/Outros:** Dispare uma requisição GET com o header: `Authorization: Bearer seu_cron_secret`.
+
+---
+
+## 🛠️ 6. Modo de Teste (Sandbox)
 
 Antes de ir para produção, você pode usar as **Credenciais de Teste**:
 

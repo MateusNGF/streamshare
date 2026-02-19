@@ -49,9 +49,9 @@ export async function createCheckoutPreference(data: CreatePreferenceData) {
                 external_reference: data.external_reference,
                 notification_url: process.env.MERCADOPAGO_WEBHOOK_URL,
                 back_urls: {
-                    success: `${process.env.NEXT_PUBLIC_APP}/financas?success=true`,
-                    failure: `${process.env.NEXT_PUBLIC_APP}/financas?error=true`,
-                    pending: `${process.env.NEXT_PUBLIC_APP}/financas?pending=true`,
+                    success: `${process.env.NEXT_PUBLIC_URL}/financas?success=true`,
+                    failure: `${process.env.NEXT_PUBLIC_URL}/financas?error=true`,
+                    pending: `${process.env.NEXT_PUBLIC_URL}/financas?pending=true`,
                 },
                 auto_return: 'approved',
                 payment_methods: {
@@ -175,7 +175,7 @@ export async function createSaaSSubscription(planId: string, email: string, exte
                 preapproval_plan_id: planId,
                 payer_email: email,
                 external_reference: externalReference,
-                back_url: `${process.env.NEXT_PUBLIC_APP}/planos?success=true`,
+                back_url: `${process.env.NEXT_PUBLIC_URL}/planos?success=true`,
                 status: 'pending',
             }
         });

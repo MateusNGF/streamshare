@@ -363,7 +363,10 @@ export async function renovarCobrancas() {
         const { contaId } = await getContext();
         const { billingService } = await import("@/services/billing-service");
 
-        const result = await billingService.processarRenovacoes(contaId);
+        // executarRenovacoesStreamings must run inside a transaction (advisory lock is used internally)
+        const result = await prisma.$transaction(async (tx) => {
+            return await billingService.executarRenovacoesStreamings(tx, contaId);
+        }, { timeout: 60000 });
 
         revalidatePath("/cobrancas");
 
