@@ -3,6 +3,9 @@ import { create } from "zustand";
 export interface CatalogoItem {
     id: number;
     nome: string;
+    categoria: string;
+    isConteudoAdulto: boolean;
+    siteOficial: string | null;
     iconeUrl: string | null;
     corPrimaria: string;
     isAtivo: boolean;

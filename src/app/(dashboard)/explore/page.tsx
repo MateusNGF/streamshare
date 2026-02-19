@@ -12,6 +12,7 @@ interface PageProps {
     searchParams: {
         search?: string;
         catalogoId?: string;
+        categoria?: string;
         onlyMyAccount?: string;
     };
 }
@@ -20,6 +21,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
     const filters = {
         search: searchParams.search,
         catalogoId: searchParams.catalogoId,
+        categoria: searchParams.categoria,
         onlyMyAccount: searchParams.onlyMyAccount
     };
 
@@ -28,6 +30,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         getPublicStreamings({
             search: filters.search,
             catalogoId: filters.catalogoId ? parseInt(filters.catalogoId) : undefined,
+            categoria: filters.categoria,
             onlyMyAccount: filters.onlyMyAccount === 'true'
         }),
         getCatalogos()

@@ -233,13 +233,16 @@ model Grupo {
 }
 
 model StreamingCatalogo {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  iconeUrl    String?
-  corPrimaria String   @default("#000000")
-  isAtivo     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  nome             String
+  categoria        String   @default("video")
+  isConteudoAdulto Boolean  @default(false)
+  siteOficial      String?
+  iconeUrl         String?
+  corPrimaria      String   @default("#000000")
+  isAtivo          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   streamings Streaming[]
 

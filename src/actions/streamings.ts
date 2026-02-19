@@ -28,6 +28,9 @@ export async function getCatalogos() {
 
 export async function createCatalogoItem(data: {
     nome: string;
+    categoria: string;
+    isConteudoAdulto: boolean;
+    siteOficial?: string;
     iconeUrl?: string;
     corPrimaria?: string;
 }) {
@@ -40,6 +43,9 @@ export async function createCatalogoItem(data: {
         const item = await prisma.streamingCatalogo.create({
             data: {
                 nome: data.nome,
+                categoria: data.categoria,
+                isConteudoAdulto: data.isConteudoAdulto,
+                siteOficial: data.siteOficial,
                 iconeUrl: data.iconeUrl,
                 corPrimaria: data.corPrimaria || "#000000",
                 isAtivo: true,
@@ -59,6 +65,9 @@ export async function updateCatalogoItem(
     id: number,
     data: {
         nome?: string;
+        categoria?: string;
+        isConteudoAdulto?: boolean;
+        siteOficial?: string | null;
         iconeUrl?: string;
         corPrimaria?: string;
         isAtivo?: boolean;
@@ -228,6 +237,7 @@ export async function updateExistingSubscriptionValues(streamingId: number, newV
 export async function getPublicStreamings(filters?: {
     search?: string;
     catalogoId?: number;
+    categoria?: string;
     onlyMyAccount?: boolean;
 }) {
     try {
@@ -241,6 +251,13 @@ export async function getPublicStreamings(filters?: {
 
         if (filters?.catalogoId) {
             where.streamingCatalogoId = filters.catalogoId;
+        }
+
+        if (filters?.categoria && filters.categoria !== "all") {
+            where.catalogo = {
+                ...where.catalogo,
+                categoria: filters.categoria
+            };
         }
 
         if (filters?.search) {

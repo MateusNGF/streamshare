@@ -1,7 +1,9 @@
-import { Edit2, Trash2, ExternalLink, MoreVertical } from "lucide-react";
+import { Edit2, Trash2, ExternalLink, MoreVertical, ShieldAlert } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { CatalogoItem } from "@/stores/useCatalogoStore";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { Badge } from "@/components/ui/Badge";
+import { CATEGORY_LABELS } from "@/constants/catalogo";
 import {
     Table,
     TableBody,
@@ -27,6 +29,7 @@ export function CatalogoTable({ data, onEdit, onDelete }: CatalogoTableProps) {
                     <TableRow className="hover:bg-transparent">
                         <TableHead className="w-16">Logo</TableHead>
                         <TableHead>Nome</TableHead>
+                        <TableHead>Categoria</TableHead>
                         <TableHead>Cor</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -45,7 +48,19 @@ export function CatalogoTable({ data, onEdit, onDelete }: CatalogoTableProps) {
                                 />
                             </TableCell>
                             <TableCell className="font-bold text-gray-900">
-                                {item.nome}
+                                <div className="flex items-center gap-2">
+                                    {item.nome}
+                                    {item.isConteudoAdulto && (
+                                        <Badge variant="danger" className="text-[10px] py-0 px-1.5 h-4 font-bold border-none">
+                                            18+
+                                        </Badge>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <Badge variant="secondary" className="bg-gray-100 text-gray-500 font-bold border-none">
+                                    {CATEGORY_LABELS[item.categoria] || item.categoria}
+                                </Badge>
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2 font-mono text-xs text-gray-500">
@@ -64,6 +79,11 @@ export function CatalogoTable({ data, onEdit, onDelete }: CatalogoTableProps) {
                                             icon: <Edit2 size={16} />,
                                             onClick: () => onEdit(item)
                                         },
+                                        ...(item.siteOficial ? [{
+                                            label: "Visitar Site Oficial",
+                                            icon: <ExternalLink size={16} />,
+                                            onClick: () => window.open(item.siteOficial!, "_blank")
+                                        }] : []),
                                         ...(item.iconeUrl ? [{
                                             label: "Ver Ícone Original",
                                             icon: <ExternalLink size={16} />,
