@@ -31,6 +31,7 @@
     "cookie": "^1.1.1",
     "date-fns": "^4.1.0",
     "focus-trap-react": "^11.0.6",
+    "jose": "^6.1.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.378.0",
     "matter-js": "^0.20.0",

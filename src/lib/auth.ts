@@ -31,7 +31,7 @@ export async function getCurrentUser(): Promise<JWTPayload | null> {
     const token = await getAuthToken();
     if (!token) return null;
 
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
     if (!payload) return null;
 
     // Validate session in DB
