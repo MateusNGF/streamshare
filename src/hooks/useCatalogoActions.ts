@@ -12,25 +12,38 @@ export function useCatalogoActions() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<CatalogoItem | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [loading, setLoading] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
         nome: "",
+        categoria: "video",
+        isConteudoAdulto: false,
+        siteOficial: "",
         iconeUrl: "",
         corPrimaria: "#000000",
     });
 
     // Filtering
     const filteredData = useMemo(() => {
-        return items.filter((item) =>
-            item.nome.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [items, searchTerm]);
+        return items.filter((item) => {
+            const matchesSearch = item.nome.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = selectedCategory === "all" || item.categoria === selectedCategory;
+            return matchesSearch && matchesCategory;
+        });
+    }, [items, searchTerm, selectedCategory]);
 
     const handleOpenCreate = () => {
         setSelectedItem(null);
-        setFormData({ nome: "", iconeUrl: "", corPrimaria: "#000000" });
+        setFormData({
+            nome: "",
+            categoria: "video",
+            isConteudoAdulto: false,
+            siteOficial: "",
+            iconeUrl: "",
+            corPrimaria: "#000000"
+        });
         setIsModalOpen(true);
     };
 
@@ -38,6 +51,9 @@ export function useCatalogoActions() {
         setSelectedItem(item);
         setFormData({
             nome: item.nome,
+            categoria: item.categoria,
+            isConteudoAdulto: item.isConteudoAdulto,
+            siteOficial: item.siteOficial || "",
             iconeUrl: item.iconeUrl || "",
             corPrimaria: item.corPrimaria,
         });
@@ -106,6 +122,8 @@ export function useCatalogoActions() {
         filteredData,
         searchTerm,
         setSearchTerm,
+        selectedCategory,
+        setSelectedCategory,
         isModalOpen,
         setIsModalOpen,
         isDeleteModalOpen,

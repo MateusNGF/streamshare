@@ -3,14 +3,15 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { StreamingCard } from "@/components/explore/StreamingCard";
-import { Search, Compass } from "lucide-react";
+import { Search, Compass, Layers } from "lucide-react";
 import { useTransition } from "react";
+import { CATALOGO_CATEGORIES } from "@/constants/catalogo";
 import { useActionError } from "@/hooks/useActionError";
 
 interface ExploreClientProps {
     streamings: any[];
     catalogos: any[];
-    initialFilters: { search?: string; catalogoId?: string; onlyMyAccount?: string };
+    initialFilters: { search?: string; catalogoId?: string; categoria?: string; onlyMyAccount?: string };
     error?: string;
 }
 
@@ -46,9 +47,20 @@ export function ExploreClient({ streamings, catalogos, initialFilters, error }: 
                         className: "md:flex-[2]"
                     },
                     {
+                        key: "categoria",
+                        type: "select",
+                        label: "Categoria",
+                        placeholder: "Todas as categorias",
+                        className: "md:flex-1",
+                        options: CATALOGO_CATEGORIES.map(c => ({
+                            label: c.label,
+                            value: c.id
+                        }))
+                    },
+                    {
                         key: "catalogoId",
                         type: "select",
-                        label: "Serviço de Streaming",
+                        label: "Serviço Específico",
                         placeholder: "Todos os serviços",
                         className: "md:flex-1",
                         options: catalogos.map(c => ({
@@ -67,6 +79,7 @@ export function ExploreClient({ streamings, catalogos, initialFilters, error }: 
                 ]}
                 values={{
                     search: initialFilters.search || "",
+                    categoria: initialFilters.categoria || "all",
                     catalogoId: initialFilters.catalogoId || "all",
                     onlyMyAccount: initialFilters.onlyMyAccount || "false"
                 }}
