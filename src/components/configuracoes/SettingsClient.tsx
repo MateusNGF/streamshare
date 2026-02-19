@@ -24,7 +24,7 @@ interface SettingsClientProps {
             plano: string;
             moedaPreferencia?: string;
             chavePix?: string | null;
-            stripeSubscriptionStatus?: string | null;
+            gatewaySubscriptionStatus?: string | null;
             createdAt: Date;
             isAtivo: boolean;
 

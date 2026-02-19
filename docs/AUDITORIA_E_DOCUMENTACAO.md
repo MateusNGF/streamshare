@@ -110,4 +110,4 @@ A arquitetura do StreamShare v2 demonstra maturidade técnica elevada. O código
 **Recomendações de Evolução**:
 1.  **Testes Automatizados**: A lógica de negócio é crítica; recomenda-se implementar testes unitários (Jest/Vitest) para as Server Actions, cobrindo especialmente os cálculos financeiros e validações de limite.
 2.  **Job Queue**: Para o envio de notificações em massa (ex: renovação mensal de 1000 assinaturas), considerar mover o processamento para uma fila (ex: BullMQ/Redis) para não onerar o tempo de resposta da requisição web.
-3.  **Webhook Strip**: Assegurar que o endpoint de Webhook do Stripe (`api/webhooks/stripe`) tenha verificação de assinatura robusta e idempotência para evitar processamento duplicado de pagamentos.
+3.  **Webhook MercadoPago**: Assegurar que o endpoint de Webhook do MercadoPago (`api/webhooks/mercado-pago`) tenha verificação de assinatura robusta e idempotência para evitar processamento duplicado de pagamentos.

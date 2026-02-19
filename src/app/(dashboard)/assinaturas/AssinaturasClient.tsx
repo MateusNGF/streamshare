@@ -164,21 +164,19 @@ export default function AssinaturasClient({
             </KPIGrid>
 
             <div className="space-y-10">
-                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                    <GenericFilter
-                        filters={filterConfig}
-                        values={{
-                            search: filterValues.searchTerm,
-                            status: filterValues.statusFilter,
-                            streaming: filterValues.streamingFilter,
-                            criacao: filterValues.criacaoRange || "",
-                            valor: filterValues.valorRange || "",
-                            hasWhatsapp: filterValues.hasWhatsappFilter || "false"
-                        }}
-                        onChange={handleFilterChange}
-                        onClear={handleClearFilters}
-                    />
-                </div>
+                <GenericFilter
+                    filters={filterConfig}
+                    values={{
+                        search: filterValues.searchTerm,
+                        status: filterValues.statusFilter,
+                        streaming: filterValues.streamingFilter,
+                        criacao: filterValues.criacaoRange || "",
+                        valor: filterValues.valorRange || "",
+                        hasWhatsapp: filterValues.hasWhatsappFilter || "false"
+                    }}
+                    onChange={handleFilterChange}
+                    onClear={handleClearFilters}
+                />
 
                 <div className="space-y-6">
                     <SectionHeader title="Listagem de Assinaturas" className="mb-0" />

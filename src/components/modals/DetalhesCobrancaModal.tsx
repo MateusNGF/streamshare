@@ -7,6 +7,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useModalDetails } from "@/hooks/useModalDetails";
 import { ParticipantSection } from "./shared/ParticipantSection";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/useToast";
 import {
     Hash,
     CheckCircle2,
@@ -15,7 +16,8 @@ import {
     Clock,
     Receipt,
     Wallet,
-    Copy
+    Copy,
+    QrCode
 } from "lucide-react";
 
 interface DetalhesCobrancaModalProps {
@@ -31,6 +33,7 @@ export function DetalhesCobrancaModal({
 }: DetalhesCobrancaModalProps) {
     const { format } = useCurrency();
     const { copied, handleCopy, formatDate } = useModalDetails();
+    const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
     if (!cobranca) return null;
 
@@ -146,6 +149,56 @@ export function DetalhesCobrancaModal({
                     </div>
                 </div>
 
+                {/* F3: Bloco de PIX para o Gestor (se disponível e pendente) */}
+                {cobranca.status !== 'pago' && cobranca.pixCopiaECola && (
+                    <div className="bg-primary/[0.03] border border-primary/10 rounded-2xl p-4 sm:p-6 space-y-4 animate-in fade-in slide-in-from-top-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <QrCode size={16} className="text-primary" />
+                                <h4 className="text-[10px] font-black text-primary/60 uppercase tracking-widest pl-1">QR Code PIX para envio</h4>
+                            </div>
+                            <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 uppercase">Aguardando Pagamento</span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-6 items-center">
+                            {cobranca.pixQrCode && (
+                                <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex-shrink-0">
+                                    <img
+                                        src={`data:image/png;base64,${cobranca.pixQrCode}`}
+                                        alt="QR Code"
+                                        className="w-32 h-32"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="flex-1 w-full space-y-3">
+                                <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                                    Encaminhe o QR Code ou o código abaixo para o participante pelo WhatsApp para agilizar o recebimento.
+                                </p>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1 group">
+                                        <input
+                                            readOnly
+                                            value={cobranca.pixCopiaECola}
+                                            className="w-full h-10 bg-white border-gray-100 pl-3 pr-3 rounded-lg text-[10px] font-mono text-gray-400 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all truncate"
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={() => {
+                                            handleCopy(cobranca.pixCopiaECola!);
+                                            toastSuccess("Código PIX copiado!");
+                                        }}
+                                        variant="outline"
+                                        className="h-10 px-3 shrink-0 rounded-lg hover:bg-primary hover:text-white hover:border-primary transition-all"
+                                    >
+                                        {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 4. Taxas e Líquido */}
                 {cobranca.metadataJson && (cobranca.metadataJson.fee || cobranca.metadataJson.net) && (
                     <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 grid grid-cols-2 gap-4">
@@ -185,6 +238,28 @@ export function DetalhesCobrancaModal({
 
                 {/* Ações do Footer */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-50">
+                    {cobranca.status === 'pago' && cobranca.gatewayId && (
+                        <Button
+                            variant="outline"
+                            className="w-full text-red-600 border-red-100 hover:bg-red-50 hover:border-red-200"
+                            onClick={async () => {
+                                if (confirm("Deseja realmente estornar este pagamento? O valor será devolvido ao cliente e a cobrança será marcada como estornada.")) {
+                                    const { refundPaymentAction } = await import("@/actions/payments");
+                                    toastInfo("Processando estorno...");
+                                    const res = await refundPaymentAction(cobranca.gatewayId);
+                                    if (res.success) {
+                                        toastSuccess(res.message as string);
+                                        onClose();
+                                    } else {
+                                        toastError((res.error as string) || "Erro ao estornar pagamento");
+                                    }
+                                }
+                            }}
+                        >
+                            <AlertOctagon size={16} className="mr-2" />
+                            Estornar Pagamento
+                        </Button>
+                    )}
                     <Button onClick={onClose} variant="outline" className="w-full">
                         Fechar
                     </Button>

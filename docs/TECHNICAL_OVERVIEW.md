@@ -19,6 +19,7 @@ A aplicação é construída sobre uma stack moderna, tipada e focada em perform
 | **Validação** | **Zod** | Validação de esquemas (runtime) para formulários e APIs. |
 | **Gerenciamento de Estado** | **Zustand** | Estado global leve (ex: preferências de usuário, carrinhos). |
 | **Visualização de Dados** | **Recharts** | Gráficos compostos e responsivos baseados em React/SVG. |
+| **Gateway de Pagamento** | **MercadoPago SDK** | Integração para PIX e Cartão de Crédito com estorno direto. |
 
 ---
 
@@ -115,8 +116,12 @@ Core da aplicação. O sistema oferece três níveis de acesso (Planos):
 
 Permite criar grupos (Streamings), adicionar participantes e definir regras de cobrança (mensal, trimestral, etc).
 
-### 5.2. Sistema Financeiro
-Módulo responsável por gerar cobranças, calcular vencimentos e rastrear pagamentos. Utiliza uma máquina de estados para o ciclo de vida da fatura (Pendente -> Pago / Atrasado -> Expirado).
+### 5.2. Sistema Financeiro e Gateway
+Módulo responsável por gerar cobranças, calcular vencimentos e rastrear pagamentos.
+- **Gateway Optimization**: Foco total na integração com MercadoPago via campos genéricos (`gatewayId`), permitindo alta flexibilidade para PIX e Cartão.
+- **Adaptive Renewal Engine**: Motor de renovação automática que gera cobranças PIX proativamente 5 dias antes do vencimento e suspende assinaturas inadimplentes após 3 dias de atraso.
+- **Fluxo de Pagamento**: Integração em tempo real com MercadoPago via Webhooks (assinatura e renovação).
+- **Estornos**: Sistema de estorno direto para a origem via API em caso de cancelamento.
 
 ### 5.3. Analytics
 Motor de inteligência que agrega dados operacionais para gerar métricas de receita, ocupação e inadimplência em tempo real.

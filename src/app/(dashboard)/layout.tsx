@@ -32,7 +32,7 @@ export default async function DashboardLayout({
         }),
     ]);
 
-    const status = userAccount?.conta?.stripeSubscriptionStatus || null;
+    const status = userAccount?.conta?.gatewaySubscriptionStatus || null;
     const isSystemAdmin = !!systemAdmin;
     const userPlan = userAccount?.conta?.plano;
 

@@ -4,11 +4,10 @@ Este documento detalha o ciclo de vida das assinaturas no StreamShare, cobrindo 
 
 ## 🔄 Visão Geral do Ciclo de Vida
 
-O StreamShare utiliza o Stripe para gerenciar pagamentos recorrentes. O estado da assinatura é espelhado no banco de dados local da aplicação para garantir performance e permitir consultas offline (sem bater na API do Stripe a cada request).
+O StreamShare utiliza o MercadoPago como gateway único para SaaS (assinaturas de conta) e para as assinaturas dos participantes.
 
 ### Estados Principais (Banco de Dados)
-- **Ativa**: `plano != 'free'` E `stripeSubscriptionStatus = 'active'`.
-- **Cancelada (Agendada)**: `stripeCancelAtPeriodEnd = true`. O acesso continua até o fim do período.
+- **Ativa**: `plano != 'free'` E `gatewaySubscriptionStatus = 'authorized'`.
 - **Expirada/Cancelada (Definitivo)**: `plano = 'free'`.
 
 ---
@@ -16,18 +15,16 @@ O StreamShare utiliza o Stripe para gerenciar pagamentos recorrentes. O estado d
 ## 📚 Casos de Uso Detalhados
 
 ### 1. Assinatura Inicial (Checkout)
-O usuário escolhe um plano e completa o pagamento no Stripe Checkout.
+O usuário escolhe um plano e completa o pagamento no MercadoPago.
 
-- **Ação do Usuário**: Seleciona plano -> Paga no Stripe.
+- **Ação do Usuário**: Seleciona plano -> Paga no MercadoPago.
 - **Processamento**:
-  1. O Stripe envia o evento `checkout.session.completed`.
-  2. O sistema identifica a conta pelo `metadata.contaId`.
+  1. O MercadoPago envia o evento `subscription_preapproval`.
+  2. O sistema identifica a conta pelo `external_reference`.
   3. **Atualização no Banco**:
-     - `stripeSubscriptionId`: Salva o ID da nova assinatura.
-     - `stripeCustomerId`: Salva o ID do cliente.
-     - `plano`: Atualiza para o plano escolhido (ex: 'pro').
-     - `stripeSubscriptionStatus`: Define como 'active'.
-     - `stripeCancelAtPeriodEnd`: **Define como `false`** (Reset importante para re-assinaturas).
+     - `gatewaySubscriptionId`: Salva o ID da assinatura.
+     - `plano`: Atualiza para o plano escolhido.
+     - `gatewaySubscriptionStatus`: Define como 'authorized' (ativo no MP).
   4. O usuário ganha acesso imediato aos recursos Pro.
 
 ### 2. Cancelamento Voluntário (Pelo Usuário)
@@ -56,15 +53,15 @@ O usuário se arrepende do cancelamento antes do fim do período e decide contin
   - O status volta ao normal. A renovação ocorrerá normalmente na data prevista.
 
 ### 4. Término do Período (Finalização do Cancelamento)
-Chega a data de renovação de uma assinatura cancelada. O Stripe encerra a assinatura.
+O MercadoPago encerra a assinatura por falta de pagamento ou cancelamento manual.
 
-- **Gatilho**: O tempo passa e a data de fim do período é atingida.
+- **Gatilho**: Assinatura cancelada no gateway.
 - **Processamento**:
-  1. O Stripe envia o evento `customer.subscription.deleted`.
-  2. O sistema busca a conta pelo `stripeSubscriptionId`.
+  1. O MercadoPago envia o evento de cancelamento via Webhook.
+  2. O sistema busca a conta pelo `gatewaySubscriptionId`.
   3. **Atualização no Banco**:
      - `plano`: Reverte para 'free'.
-     - `stripeSubscriptionStatus`: Atualiza para 'canceled'.
+     - `gatewaySubscriptionStatus`: Atualiza para 'cancelled'.
   4. Uma notificação é gerada para o usuário informando o fim do acesso.
 
 ### 5. Falha no Pagamento (Inadimplência)
@@ -81,6 +78,16 @@ O Stripe tenta renovar, mas o cartão falha (sem limite, expirado, etc.).
      - Atualmente, o sistema apenas atualiza o status. Se o status não for 'active', o frontend pode bloquear recursos ou mostrar um aviso de pagamento pendente.
      - *Recomendação*: Se `stripeSubscriptionStatus` for `past_due`, mostrar banner de "Pagamento Pendente" mas talvez manter acesso por alguns dias (grace period) ou bloquear imediatamente dependendo da regra de negócio.
 
+### 6. Cancelamento de Assinatura de Participante (Interno)
+Diferente do Stripe, o cancelamento interno pode ser agendado ou imediato.
+
+- **Agendado**: Ocorre quando o participante já pagou pelo período atual. O status continua `ativa` até o fim do período.
+- **Imediato com Estorno**: Quando há uma falha crítica ou erro administrativo.
+  1. O Admin seleciona "Cancelar agora".
+  2. O sistema verifica se há uma cobrança paga com `gatewayId` (MercadoPago).
+  3. **Estorno Direto**: A action `cancelarAssinatura` dispara um comando de refund via API.
+  4. **Status**: A assinatura vai para `cancelada` e a cobrança para `estornado`.
+
 ---
 
 ## 🛠 Verificação de Implementação
@@ -89,11 +96,10 @@ Status da implementação atual vs. Documentação:
 
 | Caso de Uso | Implementado? | Observações |
 |-------------|---------------|-------------|
-| Assinatura Inicial | ✅ Sim | Webhook `checkout.session.completed` configurado. |
-| Cancelamento Voluntário | ✅ Sim | Action e UI implementadas. |
-| Reativação | ✅ Sim | Action e UI implementadas. |
-| Término (Downgrade) | ✅ Sim | Webhook `customer.subscription.deleted` reverte para free. |
-| Sincronização de Status | ✅ Sim | Webhook `customer.subscription.updated` mantém status local. |
+| Assinatura Inicial | ✅ Sim | Webhook `subscription_preapproval` configurado. |
+| Cancelamento Voluntário | ✅ Sim | Action e UI implementadas (via MP). |
+| Término (Downgrade) | ✅ Sim | Webhook reverte para free quando cancelado no gateway. |
+| Sincronização de Status | ✅ Sim | Webhook mantém status local sincronizado. |
 
 ### Pontos de Atenção Verificados
 - **Reset de Flag**: Foi verificado e corrigido um caso onde se o usuário cancelasse e depois assinasse novamente, a flag de cancelamento poderia ficar "presa". O webhook de checkout agora força `stripeCancelAtPeriodEnd = false`.

@@ -26,6 +26,11 @@ export interface ChargeCreationData {
     periodoInicio: Date;
     periodoFim: Date;
     dataVencimento: Date;
+    metodoPagamento?: 'PIX' | 'CREDIT_CARD';
+    pixQrCode?: string;
+    pixCopiaECola?: string;
+    gatewayId?: string;
+    externalReference?: string;
 }
 
 export type BillingDecision =
@@ -43,6 +48,7 @@ export interface SubscriptionWithCharges {
     dataInicio: Date;
     dataCancelamento: Date | null;
     status: StatusAssinatura;
+    autoRenovacao: boolean;
     cobrancaAutomaticaPaga: boolean;
     motivoCancelamento: string | null;
     canceladoPorId: number | null;

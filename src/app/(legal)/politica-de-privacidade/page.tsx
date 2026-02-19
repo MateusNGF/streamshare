@@ -75,7 +75,7 @@ export default function PoliticaDePrivacidadePage() {
                         </p>
 
                         <p>
-                            <strong>VI — Histórico financeiro.</strong> Coletado para gestão e controle de adimplemento, emissão de comprovantes de transação, contabilização fiscal e instrução de eventuais procedimentos de resolução de disputas. A base legal é o art. 7º, V, da LGPD (execução de contrato). O prazo de retenção é de cinco anos, em cumprimento às obrigações fiscais previstas no art. 195, parágrafo único, do Código Tributário Nacional.
+                            <strong>VI — Histórico financeiro.</strong> Coletado para gestão e controle de adimplemento, emissão de comprovantes de transação, contabilização fiscal e instrução de eventuais procedimentos de resolução de disputas. A base legal é o art. 7º, V, da LGPD (execução de contrato). O prazo de retenção é de <strong>cinco anos</strong>, independentemente da troca de fornecedores de processamento de pagamentos, em fiel cumprimento às obrigações fiscais e tributárias (art. 195, parágrafo único, do Código Tributário Nacional).
                         </p>
 
                         <p>
@@ -164,7 +164,7 @@ export default function PoliticaDePrivacidadePage() {
                         </p>
 
                         <p>
-                            <strong>Art. 2º.</strong> A Plataforma declara que <strong>não armazena em sua infraestrutura própria</strong> quaisquer dados financeiros sensíveis de pagamento, tais como numeração integral de cartões de crédito ou débito, códigos de verificação ou senhas de acesso aos provedores de streaming. O processamento financeiro é integralmente delegado a instituições de pagamento devidamente autorizadas pelo Banco Central do Brasil, certificadas por padrões de segurança reconhecidos internacionalmente, operando sob o regime de sigilo bancário previsto na Lei Complementar nº 105/2001.
+                            <strong>Art. 2º.</strong> A Plataforma utiliza o <strong>Mercado Pago</strong> como suboperador de dados personificados para o processamento financeiro. O Mercado Pago atua como a entidade responsável por capturar, processar e armazenar de forma segura (PCI-DSS) todos os dados sensíveis de pagamento, como números de cartões e códigos de segurança. Por força desta delegação técnica, a infraestrutura própria do StreamShare permanece isenta de contato com dados financeiros críticos, transferindo a responsabilidade da custódia desses ativos ao gateway especialista, nos termos da LGPD.
                         </p>
 
                         <p>

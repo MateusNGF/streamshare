@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const token = request.cookies.get("auth-token")?.value;
     const { pathname } = request.nextUrl;
 
     // IP Verification (Basic)
     if (token) {
-        const payload = verifyToken(token);
+        const payload = await verifyToken(token);
         if (payload && payload.clientIp) {
             const currentIp = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
             // Allow unknown or matching IP. If strict, uncomment throwing error.
