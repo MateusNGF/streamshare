@@ -1,7 +1,10 @@
-import jwt from "jsonwebtoken";
+import { SignJWT, jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "7d";
+
+// Convert the secret string to a Uint8Array which jose requires
+const encodedSecret = new TextEncoder().encode(JWT_SECRET);
 
 export interface JWTPayload {
     userId: number;
@@ -9,15 +12,25 @@ export interface JWTPayload {
     sessionVersion: number;
     clientIp?: string;
     exp?: number;
+    [key: string]: any; // To satisfy jose's JWTPayload type
 }
 
-export function generateToken(payload: JWTPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+export async function generateToken(payload: JWTPayload): Promise<string> {
+    const iat = Math.floor(Date.now() / 1000);
+
+    return await new SignJWT({ ...payload })
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt(iat)
+        .setExpirationTime(JWT_EXPIRES_IN)
+        .sign(encodedSecret);
 }
 
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
     try {
-        return jwt.verify(token, JWT_SECRET) as JWTPayload;
+        const { payload } = await jwtVerify(token, encodedSecret, {
+            algorithms: ["HS256"],
+        });
+        return payload as unknown as JWTPayload;
     } catch (error) {
         return null;
     }
