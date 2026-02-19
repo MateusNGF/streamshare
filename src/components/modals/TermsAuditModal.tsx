@@ -13,25 +13,40 @@ import { cn } from "@/lib/utils";
 
 interface TermsAuditModalProps {
     isOpen: boolean;
+    needsTerms: boolean;
+    needsPrivacy: boolean;
 }
 
-export function TermsAuditModal({ isOpen }: TermsAuditModalProps) {
+export function TermsAuditModal({ isOpen, needsTerms, needsPrivacy }: TermsAuditModalProps) {
     const { showToast } = useToast();
-    const [accepted, setAccepted] = useState(false);
+    const [acceptedTerms, setAcceptedTerms] = useState(!needsTerms);
+    const [acceptedPrivacy, setAcceptedPrivacy] = useState(!needsPrivacy);
     const [loading, setLoading] = useState(false);
 
     const handleAccept = async () => {
-        if (!accepted) return;
+        if ((needsTerms && !acceptedTerms) || (needsPrivacy && !acceptedPrivacy)) return;
         setLoading(true);
         try {
-            const result = await acceptTerms(CURRENT_TERMS_VERSION);
-            if (result.success) {
-                showToast("success", "Termos aceitos com sucesso!");
-                // Refreshing the page will re-evaluate the layout and hide the modal
-                window.location.reload();
-            } else {
-                showToast("error", result.error || "Erro ao aceitar termos");
+            if (needsTerms) {
+                const result = await acceptTerms(CURRENT_TERMS_VERSION);
+                if (!result.success) {
+                    showToast("error", result.error || "Erro ao aceitar termos");
+                    setLoading(false);
+                    return;
+                }
             }
+
+            if (needsPrivacy) {
+                const result = await acceptPrivacy(CURRENT_PRIVACY_VERSION);
+                if (!result.success) {
+                    showToast("error", result.error || "Erro ao aceitar política de privacidade");
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            showToast("success", "Políticas aceitas com sucesso!");
+            window.location.reload();
         } catch (error) {
             showToast("error", "Ocorreu um erro inesperado");
         } finally {
@@ -51,7 +66,7 @@ export function TermsAuditModal({ isOpen }: TermsAuditModalProps) {
             footer={
                 <Button
                     onClick={handleAccept}
-                    disabled={!accepted || loading}
+                    disabled={(needsTerms && !acceptedTerms) || (needsPrivacy && !acceptedPrivacy) || loading}
                     className="w-full sm:w-auto"
                 >
                     {loading ? "Processando..." : "Confirmar e Continuar"}
@@ -95,30 +110,60 @@ export function TermsAuditModal({ isOpen }: TermsAuditModalProps) {
                     </div>
                 </div>
 
-                <div
-                    onClick={() => setAccepted(!accepted)}
-                    className={cn(
-                        "flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer hover:bg-gray-50",
-                        accepted
-                            ? "border-primary/20 bg-primary/[0.02]"
-                            : "border-gray-100 bg-white"
+                <div className="space-y-4 pt-2">
+                    {needsTerms && (
+                        <div
+                            onClick={() => setAcceptedTerms(!acceptedTerms)}
+                            className={cn(
+                                "flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer hover:bg-gray-50",
+                                acceptedTerms
+                                    ? "border-primary/20 bg-primary/[0.02]"
+                                    : "border-gray-100 bg-white"
+                            )}
+                        >
+                            <div className="flex items-center pt-1">
+                                <Switch
+                                    checked={acceptedTerms}
+                                    onCheckedChange={setAcceptedTerms}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-gray-900 leading-tight">
+                                    Eu li e aceito os Termos de Uso
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                                    Você confirma que leu integralmente os termos de uso e concorda com as diretrizes de serviço.
+                                </p>
+                            </div>
+                        </div>
                     )}
-                >
-                    <div className="flex items-center pt-1">
-                        <Switch
-                            checked={accepted}
-                            onCheckedChange={setAccepted}
-                            aria-label="Aceitar termos"
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold text-gray-900 leading-tight">
-                            Eu li e aceito os Termos de Uso e Política de Privacidade
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                            Ao ativar esta chave, você confirma que leu integralmente os documentos acima e concorda com as novas diretrizes da plataforma.
-                        </p>
-                    </div>
+
+                    {needsPrivacy && (
+                        <div
+                            onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}
+                            className={cn(
+                                "flex items-start gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer hover:bg-gray-50",
+                                acceptedPrivacy
+                                    ? "border-primary/20 bg-primary/[0.02]"
+                                    : "border-gray-100 bg-white"
+                            )}
+                        >
+                            <div className="flex items-center pt-1">
+                                <Switch
+                                    checked={acceptedPrivacy}
+                                    onCheckedChange={setAcceptedPrivacy}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-gray-900 leading-tight">
+                                    Eu li e aceito a Política de Privacidade
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                                    Você confirma o aceite do processamento de seus dados pessoais conforme a LGPD.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </Modal>

@@ -26,3 +26,26 @@ export async function acceptTerms(version: string) {
         return { success: false, error: "Erro ao aceitar termos" };
     }
 }
+
+export async function acceptPrivacy(version: string) {
+    try {
+        const session = await getCurrentUser();
+        if (!session) {
+            return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
+        }
+
+        await prisma.usuario.update({
+            where: { id: session.userId },
+            data: {
+                privacyAcceptedAt: new Date(),
+                privacyVersion: version,
+            },
+        });
+
+        revalidatePath("/");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[ACCEPT_PRIVACY_ERROR]", error);
+        return { success: false, error: "Erro ao aceitar política de privacidade" };
+    }
+}

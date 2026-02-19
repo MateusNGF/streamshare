@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Chrome } from "lucide-react";
-import { CURRENT_TERMS_VERSION } from "@/config/legal";
+import { CURRENT_TERMS_VERSION, CURRENT_PRIVACY_VERSION } from "@/config/legal";
+import { Switch } from "@/components/ui/Switch";
 
 export function SignupForm() {
     const router = useRouter();
@@ -20,8 +21,14 @@ export function SignupForm() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [acceptTerms, setAcceptTerms] = useState(false);
+    const [acceptPrivacy, setAcceptPrivacy] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState<{ general?: string; confirmPassword?: string; acceptTerms?: string }>({});
+    const [errors, setErrors] = useState<{
+        general?: string;
+        confirmPassword?: string;
+        acceptTerms?: string;
+        acceptPrivacy?: string;
+    }>({});
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,8 +39,11 @@ export function SignupForm() {
             return;
         }
 
-        if (!acceptTerms) {
-            setErrors({ acceptTerms: "Você deve aceitar os termos e condições!" });
+        if (!acceptTerms || !acceptPrivacy) {
+            setErrors({
+                acceptTerms: !acceptTerms ? "Você deve aceitar os termos e condições!" : undefined,
+                acceptPrivacy: !acceptPrivacy ? "Você deve aceitar a política de privacidade!" : undefined
+            });
             return;
         }
 
@@ -48,7 +58,9 @@ export function SignupForm() {
                     email,
                     senha: password,
                     termsAccepted: true,
-                    termsVersion: CURRENT_TERMS_VERSION
+                    termsVersion: CURRENT_TERMS_VERSION,
+                    privacyAccepted: true,
+                    privacyVersion: CURRENT_PRIVACY_VERSION
                 }),
             });
 
@@ -120,47 +132,50 @@ export function SignupForm() {
                 />
             </div>
 
-            <div className="space-y-2 pt-2">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center mt-0.5">
-                        <input
-                            type="checkbox"
-                            checked={acceptTerms}
-                            onChange={(e) => setAcceptTerms(e.target.checked)}
-                            className="peer sr-only"
-                            required
-                        />
-                        <div className={`w-5 h-5 border-2 rounded-md transition-all ${errors.acceptTerms ? "border-red-500" : "border-gray-300 peer-checked:bg-primary peer-checked:border-primary"}`} />
-                        <svg
-                            className="absolute left-1 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                        >
-                            <path d="M5 13l4 4L19 7" />
-                        </svg>
+            <div className="space-y-4 pt-2">
+                <div
+                    onClick={() => setAcceptTerms(!acceptTerms)}
+                    className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:bg-gray-50/50 ${acceptTerms ? "border-primary/20 bg-primary/[0.02]" : "border-gray-100 bg-white"}`}
+                >
+                    <Switch
+                        checked={acceptTerms}
+                        onCheckedChange={setAcceptTerms}
+                    />
+                    <div className="flex-1">
+                        <label className="text-sm font-semibold text-gray-900 cursor-pointer">
+                            Eu aceito os{" "}
+                            <Link href="/termos-de-uso" target="_blank" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">
+                                termos e condições de uso
+                            </Link>
+                        </label>
+                        {errors.acceptTerms && <p className="text-xs text-red-500 mt-1">{errors.acceptTerms}</p>}
                     </div>
-                    <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors leading-tight">
-                        Eu aceito os{" "}
-                        <Link href="/termos-de-uso" target="_blank" className="font-semibold text-primary hover:text-primary/80">
-                            termos e condições
-                        </Link>{" "}
-                        e a{" "}
-                        <Link href="/politica-de-privacidade" target="_blank" className="font-semibold text-primary hover:text-primary/80">
-                            política de privacidade
-                        </Link>
-                    </span>
-                </label>
-                {errors.acceptTerms && (
-                    <p className="text-xs text-red-500 font-medium ml-8">{errors.acceptTerms}</p>
-                )}
+                </div>
+
+                <div
+                    onClick={() => setAcceptPrivacy(!acceptPrivacy)}
+                    className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:bg-gray-50/50 ${acceptPrivacy ? "border-primary/20 bg-primary/[0.02]" : "border-gray-100 bg-white"}`}
+                >
+                    <Switch
+                        checked={acceptPrivacy}
+                        onCheckedChange={setAcceptPrivacy}
+                    />
+                    <div className="flex-1">
+                        <label className="text-sm font-semibold text-gray-900 cursor-pointer">
+                            Eu aceito a{" "}
+                            <Link href="/politica-de-privacidade" target="_blank" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">
+                                política de privacidade
+                            </Link>
+                        </label>
+                        {errors.acceptPrivacy && <p className="text-xs text-red-500 mt-1">{errors.acceptPrivacy}</p>}
+                    </div>
+                </div>
             </div>
 
             <Button
                 type="submit"
-                disabled={loading}
-                className="w-full text-base py-6 shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
+                disabled={loading || !acceptTerms || !acceptPrivacy}
+                className="w-full text-base py-6 shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50 disabled:grayscale"
             >
                 {loading ? "Criando conta..." : "Criar minha conta"}
             </Button>

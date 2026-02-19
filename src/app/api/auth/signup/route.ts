@@ -6,7 +6,7 @@ import { generateToken, setAuthCookie } from "@/lib/auth";
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { nome, email, senha, termsAccepted, termsVersion } = body;
+        const { nome, email, senha, termsAccepted, termsVersion, privacyAccepted, privacyVersion } = body;
 
         // Validate input
         if (!nome || !email || !senha) {
@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!termsAccepted) {
+        if (!termsAccepted || !privacyAccepted) {
             return NextResponse.json(
-                { error: "Você deve aceitar os termos de uso para criar uma conta." },
+                { error: "Você deve aceitar os termos de uso e a política de privacidade para criar uma conta." },
                 { status: 400 }
             );
         }
@@ -54,6 +54,8 @@ export async function POST(request: NextRequest) {
                     senhaHash: hashedPassword,
                     termsAcceptedAt: new Date(),
                     termsVersion: termsVersion || "1.0.0",
+                    privacyAcceptedAt: new Date(),
+                    privacyVersion: privacyVersion || "1.0.0",
                 },
             });
 
