@@ -146,6 +146,51 @@ const catalogos = [
         corPrimaria: "#00C4CC",
     },
 
+    {
+        nome: "ChatGPT Plus (Team)",
+        categoria: "ia",
+        siteOficial: "https://chatgpt.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/openai.svg",
+        corPrimaria: "#74AA9C",
+    },
+    {
+        nome: "Claude Pro (Team)",
+        categoria: "ia",
+        siteOficial: "https://claude.ai",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/anthropic.svg",
+        corPrimaria: "#D97757",
+    },
+    {
+        nome: "Midjourney (Pro Plan)",
+        categoria: "design",
+        siteOficial: "https://www.midjourney.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/midjourney.svg",
+        corPrimaria: "#000000",
+    },
+
+    // --- CONTEÚDO ADULTO (Com Perfis/Compartilháveis) ---
+    {
+        nome: "SexHot",
+        categoria: "adulto",
+        siteOficial: "https://www.sexhot.com.br",
+        corPrimaria: "#FF0000",
+        isConteudoAdulto: true,
+    },
+    {
+        nome: "Playboy TV",
+        categoria: "adulto",
+        siteOficial: "https://www.playboytv.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/playboy.svg",
+        corPrimaria: "#000000",
+        isConteudoAdulto: true,
+    },
+    {
+        nome: "Brasileirinhas",
+        categoria: "adulto",
+        siteOficial: "https://www.brasileirinhas.com.br",
+        corPrimaria: "#FFD700",
+        isConteudoAdulto: true,
+    },
     // --- CANAIS, COMBOS & TV ---
     {
         nome: "Premiere",
