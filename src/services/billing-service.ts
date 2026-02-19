@@ -280,6 +280,7 @@ async function executeBillingTransactionWithTx(tx: any, cobrancas: ChargeCreatio
         if (res.success) {
             gatewayDataMap.set(externalReference!, {
                 gatewayId: res.id,
+                gatewayProvider: 'mercadopago',
                 pixQrCode: res.qr_code_base64,
                 pixCopiaECola: res.qr_code
             });

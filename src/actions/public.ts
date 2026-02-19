@@ -104,6 +104,7 @@ export async function publicSubscribe(data: {
                         data: {
                             metodoPagamento: MetodoPagamento.PIX,
                             gatewayId: res.id,
+                            gatewayProvider: 'mercadopago',
                             pixQrCode: res.qr_code_base64,
                             pixCopiaECola: res.qr_code
                         }
@@ -126,6 +127,14 @@ export async function publicSubscribe(data: {
                 });
 
                 if (res.success) {
+                    await tx.cobranca.updateMany({
+                        where: { assinaturaId: { in: assinaturas.map(a => a.id) }, status: 'pendente' },
+                        data: {
+                            metodoPagamento: MetodoPagamento.CREDIT_CARD,
+                            gatewayProvider: 'mercadopago'
+                        }
+                    });
+
                     checkoutData = {
                         type: 'CARD',
                         url: res.init_point

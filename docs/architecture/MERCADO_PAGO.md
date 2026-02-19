@@ -280,3 +280,92 @@ graph TD
 | MP PIX | [developers.mercadopago.com](https://developers.mercadopago.com/pt/guides/online-payments/checkout-api/other-payment-methods/brazil) |
 | Validação HMAC | [developers.mercadopago.com](https://developers.mercadopago.com/pt/guides/notifications/webhooks/webhooks-notifications) |
 | SDK Node.js | [github.com/mercadopago/sdk-nodejs](https://github.com/mercadopago/sdk-nodejs) |
+
+---
+
+## 11. Revisão do Frontend
+
+### 11.1 Mapa de Componentes por Fluxo
+
+| Componente | Camada | Fluxo |
+|-----------|--------|-------|
+| `PlanCheckoutClient.tsx` | Dashboard (Gestor) | SaaS: exibe tela de "Ambiente Seguro" enquanto aguarda o redirect para o `init_point` do MP |
+| `JoinStreamingForm.tsx` | Público | Streaming: formulário de adesão com seleção de método (PIX / Cartão) e frequência |
+| `PendingInvoiceModal.tsx` | Público | Streaming: exibe QR Code PIX ou botão de redirect para Cartão após `publicSubscribe()` |
+| `DetalhesCobrancaModal.tsx` | Dashboard (Gestor) | Visualização e estorno de cobranças do painel do gestor |
+| `CobrancasClient.tsx` | Dashboard (Gestor) | Lista cobranças com filtros e abre `DetalhesCobrancaModal` |
+| `CobrancasModals.tsx` | Dashboard (Gestor) | Container de modais: cancelar, confirmar pagamento, detalhes |
+
+### 11.2 Fluxo do Participante (Público)
+
+```
+/[token] → JoinStreamingForm
+    → Seleciona PIX ou Cartão
+    → Clica "Confirmar Assinatura"
+    → Modal de confirmação (termos)
+    → Clica "Confirmar e Assinar"
+    → publicSubscribe() → cria assinatura + cobrança no banco
+        → Se PIX:  retorna { checkoutData: { type: 'PIX', qrCode, copyPaste } }
+                   → PendingInvoiceModal: exibe QR + botão copia-e-cola
+        → Se Card: retorna { checkoutData: { type: 'CARD', url } }
+                   → PendingInvoiceModal: botão redirect para MP Preference URL
+    → Ao fechar modal: router.push('/faturas')
+```
+
+### 11.3 Fluxo do Gestor (Dashboard)
+
+**Planos SaaS:**
+```
+/planos → Clica "Assinar Pro"
+    → PlanCheckoutClient (página /checkout?plan=pro)
+    → createCheckoutSession() → createSaaSSubscription()
+    → Tela animada "Ambiente Seguro" + delay 1.5s
+    → window.location.href = init_point (redirect total para MP)
+    → Usuário paga → volta para /planos?success=true (via back_url)
+```
+
+**Estornos:**
+```
+/cobrancas → DetalhesCobrancaModal
+    → Botão "Estornar Pagamento" (visível apenas se status==='pago' && gatewayId)
+    → confirm() nativo do browser → refundPaymentAction(gatewayId)
+    → alert() para feedback → onClose()
+```
+
+### 11.4 Issues Encontrados no Frontend
+
+| # | Componente | Problema | Severidade | Status |
+|---|-----------|---------|-----------|--------|
+| **F1** | `DetalhesCobrancaModal.tsx` | Usa `alert()` nativo para feedback | 🟡 UX | ✅ Melhorado (Toast) |
+| **F2** | `PlanCheckoutClient.tsx` | Logo do MP via URL externa | 🟡 Infra | ⚠️ Pendente asset local |
+| **F3** | `DetalhesCobrancaModal.tsx` | PIX invisível para o gestor | 🔴 **Funcional** | ✅ Corrigido |
+| **F4** | `JoinStreamingForm.tsx` | Mensagem de confirmação imprecisa | 🟡 UX | ✅ Corrigido |
+| **F5** | `billing-service.ts` | `gatewayProvider` não preenchido | 🟡 Visual | ✅ Corrigido |
+
+### 11.5 Fix Prioritário: Exibir PIX na DetalhesCobrancaModal (F3)
+
+O campo `pixCopiaECola` está na cobrança no banco mas nunca é exibido ao gestor. O participante precisa que o gestor envie o código PIX manualmente, quebrando o fluxo automatizado.
+
+**O que adicionar ao `DetalhesCobrancaModal`:**
+```tsx
+{cobranca.pixCopiaECola && cobranca.status !== 'pago' && (
+    <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 space-y-3">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Código PIX para envio ao participante
+        </h4>
+        <div className="flex gap-2">
+            <input readOnly value={cobranca.pixCopiaECola}
+                className="flex-1 text-xs font-mono bg-white border border-gray-100 rounded-lg px-3 py-2 text-gray-500" />
+            <button onClick={() => handleCopy(cobranca.pixCopiaECola)}
+                className="p-2 rounded-lg border border-gray-100 hover:bg-gray-50">
+                {copied ? <CheckCircle2 size={16} className="text-green-500" /> : <Copy size={16} />}
+            </button>
+        </div>
+        {cobranca.pixQrCode && (
+            <img src={`data:image/png;base64,${cobranca.pixQrCode}`}
+                alt="QR Code PIX" className="w-32 h-32 mx-auto rounded-xl" />
+        )}
+    </div>
+)}
+```
+

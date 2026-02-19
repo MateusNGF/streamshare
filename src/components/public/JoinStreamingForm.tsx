@@ -298,7 +298,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                         <li className="flex gap-3">
                             <div className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px] mt-0.5 shrink-0">✓</div>
                             <p className="text-sm text-gray-600">
-                                Os dados de acesso (Login/Senha) serão liberados no seu painel assim que o administrador confirmar seu primeiro pagamento.
+                                Os dados de acesso (Login/Senha) serão liberados no seu painel assim que o pagamento for confirmado pelo sistema.
                             </p>
                         </li>
                     </ul>
