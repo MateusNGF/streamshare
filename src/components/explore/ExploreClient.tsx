@@ -36,51 +36,47 @@ export function ExploreClient({ streamings, catalogos, initialFilters, error }: 
 
     return (
         <div className={isPending ? "opacity-70 transition-opacity" : "transition-opacity"}>
-            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/20 shadow-2xl shadow-gray-200/30 mb-10 overflow-hidden relative">
-                {/* Decorative background element for the filter bar */}
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-
-                <GenericFilter
-                    filters={[
-                        {
-                            key: "search",
-                            type: "text",
-                            placeholder: "Pelo que você está procurando hoje?",
-                            className: "md:flex-[2]"
-                        },
-                        {
-                            key: "catalogoId",
-                            type: "select",
-                            label: "Serviço de Streaming",
-                            placeholder: "Todos os serviços",
-                            className: "md:flex-1",
-                            options: catalogos.map(c => ({
-                                label: c.nome,
-                                value: c.id.toString(),
-                                icon: c.iconeUrl,
-                                color: c.corPrimaria
-                            }))
-                        },
-                        {
-                            key: "onlyMyAccount",
-                            type: "switch",
-                            label: "Filtrar apenas por streaming da minha conta",
-                            className: "md:flex-1"
-                        }
-                    ]}
-                    values={{
-                        search: initialFilters.search || "",
-                        catalogoId: initialFilters.catalogoId || "all",
-                        onlyMyAccount: initialFilters.onlyMyAccount || "false"
-                    }}
-                    onChange={handleFilterChange}
-                    onClear={() => {
-                        startTransition(() => {
-                            router.push(pathname);
-                        });
-                    }}
-                />
-            </div>
+            <GenericFilter
+                className="mb-10"
+                filters={[
+                    {
+                        key: "search",
+                        type: "text",
+                        placeholder: "Pelo que você está procurando hoje?",
+                        className: "md:flex-[2]"
+                    },
+                    {
+                        key: "catalogoId",
+                        type: "select",
+                        label: "Serviço de Streaming",
+                        placeholder: "Todos os serviços",
+                        className: "md:flex-1",
+                        options: catalogos.map(c => ({
+                            label: c.nome,
+                            value: c.id.toString(),
+                            icon: c.iconeUrl,
+                            color: c.corPrimaria
+                        }))
+                    },
+                    {
+                        key: "onlyMyAccount",
+                        type: "switch",
+                        label: "Filtrar apenas por streaming da minha conta",
+                        className: "md:flex-1"
+                    }
+                ]}
+                values={{
+                    search: initialFilters.search || "",
+                    catalogoId: initialFilters.catalogoId || "all",
+                    onlyMyAccount: initialFilters.onlyMyAccount || "false"
+                }}
+                onChange={handleFilterChange}
+                onClear={() => {
+                    startTransition(() => {
+                        router.push(pathname);
+                    });
+                }}
+            />
 
             {streamings.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

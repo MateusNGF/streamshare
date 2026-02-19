@@ -29,19 +29,17 @@ export function ParticipantesTab({ participants, onEdit, onDelete, onView }: Pro
     return (
         <div className="space-y-6">
             {/* Search */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                <GenericFilter
-                    filters={[{
-                        key: "search",
-                        type: "text",
-                        placeholder: "Buscar por nome, telefone ou CPF...",
-                        className: "w-full"
-                    }]}
-                    values={{ search: searchTerm }}
-                    onChange={(_, value) => setSearchTerm(value)}
-                    onClear={() => setSearchTerm("")}
-                />
-            </div>
+            <GenericFilter
+                filters={[{
+                    key: "search",
+                    type: "text",
+                    placeholder: "Buscar por nome, telefone ou CPF...",
+                    className: "w-full"
+                }]}
+                values={{ search: searchTerm }}
+                onChange={(_, value) => setSearchTerm(value)}
+                onClear={() => setSearchTerm("")}
+            />
 
             <div aria-live="polite" aria-atomic="true">
                 {filteredParticipants.length > 0 ? (

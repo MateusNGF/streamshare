@@ -98,83 +98,81 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 </KPIGridItem>
             </KPIGrid>
 
-            <div className="py-6">
-                <GenericFilter
-                    filters={[
-                        {
-                            key: "search",
-                            type: "text",
-                            placeholder: "Buscar participante...",
-                            className: "flex-1 min-w-[200px]"
-                        },
-                        {
-                            key: "status",
-                            type: "select",
-                            label: "Status",
-                            className: "w-full md:w-[150px]",
-                            options: [
-                                { label: "Pendente", value: "pendente" },
-                                { label: "Pago", value: "pago" },
-                                { label: "Atrasado", value: "atrasado" },
-                                { label: "Cancelado", value: "cancelado" }
-                            ]
-                        },
-                        {
-                            key: "streaming",
-                            type: "select",
-                            label: "Streaming",
-                            className: "w-full md:w-[200px]",
-                            options: streamings.map(s => ({
-                                label: s.apelido || s.catalogo.nome,
-                                value: s.id.toString(),
-                                icon: s.catalogo.iconeUrl,
-                                color: s.catalogo.corPrimaria
-                            }))
-                        },
-                        {
-                            key: "vencimento",
-                            type: "dateRange",
-                            label: "Data de Vencimento",
-                            placeholder: "Filtrar vencimento"
-                        },
-                        {
-                            key: "pagamento",
-                            type: "dateRange",
-                            label: "Data de Pagamento",
-                            placeholder: "Filtrar pagamento"
-                        },
-                        {
-                            key: "valor",
-                            type: "numberRange",
-                            label: "Intervalo de Valor",
-                            placeholder: "Valor entre..."
-                        },
-                        {
-                            key: "hasWhatsapp",
-                            type: "switch",
-                            label: "Apenas com WhatsApp",
-                            className: "md:w-auto"
-                        }
-                    ]}
-                    values={{
-                        search: searchTerm,
-                        status: statusFilter,
-                        vencimento: vencimentoRange,
-                        pagamento: pagamentoRange,
-                        valor: valorRange,
-                        hasWhatsapp: hasWhatsappFilter
-                    }}
-                    onChange={(key: string, value: string) => {
-                        if (key === "search") setSearchTerm(value);
-                        if (key === "status") setStatusFilter(value);
-                        if (key === "vencimento") setVencimentoRange(value);
-                        if (key === "pagamento") setPagamentoRange(value);
-                        if (key === "valor") setValorRange(value);
-                        if (key === "hasWhatsapp") setHasWhatsappFilter(value);
-                    }}
-                    onClear={handleClearFilters}
-                />
-            </div>
+            <GenericFilter
+                filters={[
+                    {
+                        key: "search",
+                        type: "text",
+                        placeholder: "Buscar participante...",
+                        className: "flex-1 min-w-[200px]"
+                    },
+                    {
+                        key: "status",
+                        type: "select",
+                        label: "Status",
+                        className: "w-full md:w-[150px]",
+                        options: [
+                            { label: "Pendente", value: "pendente" },
+                            { label: "Pago", value: "pago" },
+                            { label: "Atrasado", value: "atrasado" },
+                            { label: "Cancelado", value: "cancelado" }
+                        ]
+                    },
+                    {
+                        key: "streaming",
+                        type: "select",
+                        label: "Streaming",
+                        className: "w-full md:w-[200px]",
+                        options: streamings.map(s => ({
+                            label: s.apelido || s.catalogo.nome,
+                            value: s.id.toString(),
+                            icon: s.catalogo.iconeUrl,
+                            color: s.catalogo.corPrimaria
+                        }))
+                    },
+                    {
+                        key: "vencimento",
+                        type: "dateRange",
+                        label: "Data de Vencimento",
+                        placeholder: "Filtrar vencimento"
+                    },
+                    {
+                        key: "pagamento",
+                        type: "dateRange",
+                        label: "Data de Pagamento",
+                        placeholder: "Filtrar pagamento"
+                    },
+                    {
+                        key: "valor",
+                        type: "numberRange",
+                        label: "Intervalo de Valor",
+                        placeholder: "Valor entre..."
+                    },
+                    {
+                        key: "hasWhatsapp",
+                        type: "switch",
+                        label: "Apenas com WhatsApp",
+                        className: "md:w-auto"
+                    }
+                ]}
+                values={{
+                    search: searchTerm,
+                    status: statusFilter,
+                    vencimento: vencimentoRange,
+                    pagamento: pagamentoRange,
+                    valor: valorRange,
+                    hasWhatsapp: hasWhatsappFilter
+                }}
+                onChange={(key: string, value: string) => {
+                    if (key === "search") setSearchTerm(value);
+                    if (key === "status") setStatusFilter(value);
+                    if (key === "vencimento") setVencimentoRange(value);
+                    if (key === "pagamento") setPagamentoRange(value);
+                    if (key === "valor") setValorRange(value);
+                    if (key === "hasWhatsapp") setHasWhatsappFilter(value);
+                }}
+                onClear={handleClearFilters}
+            />
 
             <div className="space-y-6 relative">
                 <SectionHeader title="Listagem de Cobranças" className="mb-0" />

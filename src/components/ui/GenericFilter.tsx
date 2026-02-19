@@ -241,7 +241,7 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
     };
 
     return (
-        <div className={cn("w-full", className)}>
+        <div className={cn("w-full py-6", className)}>
             {/* Desktop View: Inline Grid/Flex - Modified to limit components */}
             <div className="hidden md:flex flex-wrap gap-4 items-center w-full">
                 {/* Always render first filter inline */}
