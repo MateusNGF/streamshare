@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import { CatalogoPicker } from "@/components/streamings/CatalogoPicker";
+import type { CatalogoItem } from "@/stores/useCatalogoStore";
 import { getCatalogos, getStreamingCredentials, upsertStreamingCredentials, deleteStreamingCredentials } from "@/actions/streamings";
 import { cn } from "@/lib/utils";
 import { StreamingSchema } from "@/lib/schemas";
@@ -46,7 +47,7 @@ export function StreamingModal({
     loading,
 }: StreamingModalProps) {
     const [step, setStep] = useState(1);
-    const [catalogos, setCatalogos] = useState<{ id: number; nome: string; iconeUrl: string | null; corPrimaria: string }[]>([]);
+    const [catalogos, setCatalogos] = useState<CatalogoItem[]>([]);
     const [formData, setFormData] = useState<StreamingFormData>(
         streaming || {
             catalogoId: "",

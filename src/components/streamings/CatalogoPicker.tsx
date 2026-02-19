@@ -6,13 +6,7 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { CATALOGO_CATEGORIES } from "@/constants/catalogo";
 import { Search } from "lucide-react";
 
-interface CatalogoItem {
-    id: number;
-    nome: string;
-    categoria: string;
-    iconeUrl: string | null;
-    corPrimaria: string;
-}
+import type { CatalogoItem } from "@/stores/useCatalogoStore";
 
 interface CatalogoPickerProps {
     items: CatalogoItem[];
