@@ -1,7 +1,7 @@
 "use client";
 
 import { PLANS_LIST, PlanDefinition } from "@/config/plans";
-import { createCheckoutSession } from "@/actions/planos";
+import { createCheckoutSession, verifySaaSSubscriptionAction } from "@/actions/planos";
 import { Check, Loader2, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -21,13 +21,41 @@ export function PlansClient({ currentPlan, isLoggedIn = false, showHeader = true
     const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null);
 
     useEffect(() => {
-        if (searchParams.get("success")) {
-            setToast({ message: "Plano atualizado com sucesso!", variant: "success" });
-            router.refresh();
-        }
-        if (searchParams.get("canceled")) {
-            setToast({ message: "Pagamento cancelado.", variant: "error" });
-        }
+        const handleRedirectParams = async () => {
+            const url = window.location.href;
+
+            // 1. Detect Cancellation
+            if (searchParams.get("canceled") || url.includes("canceled")) {
+                return setToast({ message: "Pagamento cancelado.", variant: "error" });
+            }
+
+            // 2. Extract Preapproval ID (Handles MP double-question-mark bug)
+            const preapprovalId = searchParams.get("preapproval_id") ||
+                url.match(/[?&]preapproval_id=([^&#]*)/)?.[1];
+
+            if (!preapprovalId) return;
+
+            // 3. Process Plan Verification
+            setToast({ message: "Processando pagamento...", variant: "info" });
+
+            try {
+                const res = await verifySaaSSubscriptionAction(preapprovalId);
+
+                if (res.success) {
+                    setToast({ message: "Plano atualizado com sucesso!", variant: "success" });
+                    setTimeout(() => {
+                        router.refresh();
+                        router.replace("/planos");
+                    }, 2000);
+                } else {
+                    setToast({ message: res.error || "Erro ao verificar plano.", variant: "error" });
+                }
+            } catch (error) {
+                setToast({ message: "Falha na comunicação com o gateway.", variant: "error" });
+            }
+        };
+
+        handleRedirectParams();
     }, [searchParams, router]);
 
     const handleSelectPlan = async (plan: PlanDefinition) => {

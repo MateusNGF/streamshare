@@ -170,20 +170,24 @@ export async function refundPayment(paymentId: string) {
  */
 export async function createSaaSSubscription(planId: string, email: string, externalReference: string) {
     try {
-        const response = await mpPreApproval.create({
-            body: {
-                preapproval_plan_id: planId,
-                payer_email: email,
-                external_reference: externalReference,
-                back_url: `${process.env.NEXT_PUBLIC_URL}/planos?success=true`,
-                status: 'pending',
-            }
-        });
+        // Fluxo de Redirecionamento Estático (Checkout Pro para Assinaturas)
+        // Isso evita o erro 'card_token_id is required' pois o MP gerencia o pagamento na página deles.
+        const baseUrl = "https://www.mercadopago.com.br/subscriptions/checkout";
+        const init_point = `${baseUrl}?preapproval_plan_id=${planId}&external_reference=${externalReference}&payer_email=${email}`;
 
-        return { success: true, init_point: response.init_point, id: response.id };
+        return {
+            success: true,
+            init_point: init_point,
+            id: undefined // ID será gerado pelo MP após o pagamento e enviado via Webhook
+        };
     } catch (error: any) {
-        console.error('[MERCADOPAGO_CREATE_SUBSCRIPTION]', error);
-        return { success: false, error: 'Erro ao criar assinatura no MercadoPago' };
+        console.error('[MERCADOPAGO_CREATE_SUBSCRIPTION_ERROR]', {
+            message: error.message,
+            status: error.status,
+            cause: error.cause,
+            details: error.response?.data || error.response || 'No extra details'
+        });
+        return { success: false, error: 'Erro ao criar assinatura no MercadoPago: ' + (error.message || 'Erro desconhecido') };
     }
 }
 
@@ -226,6 +230,19 @@ export async function reactivateSaaSSubscription(subscriptionId: string) {
 }
 
 /**
+ * Busca detalhes de uma assinatura recorrente do SaaS (Pre-Approval)
+ */
+export async function getSaaSSubscription(subscriptionId: string) {
+    try {
+        const response = await mpPreApproval.get({ id: subscriptionId });
+        return { success: true, data: response };
+    } catch (error: any) {
+        console.error('[MERCADOPAGO_GET_SUBSCRIPTION]', error);
+        return { success: false, error: 'Erro ao buscar assinatura no MercadoPago' };
+    }
+}
+
+/**
  * Adaptador Unificado para MercadoPago
  */
 export const mercadoPagoAdapter = {
@@ -236,6 +253,7 @@ export const mercadoPagoAdapter = {
         create: createSaaSSubscription,
         cancel: cancelSaaSSubscription,
         reactivate: reactivateSaaSSubscription,
+        get: getSaaSSubscription,
     },
     /**
      * Fluxo de Streamings (Participantes)

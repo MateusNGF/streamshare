@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { PlanoConta } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { PLANS } from "@/config/plans";
-import { createSaaSSubscription, cancelSaaSSubscription, reactivateSaaSSubscription } from "@/lib/mercado-pago";
+import { createSaaSSubscription, cancelSaaSSubscription, reactivateSaaSSubscription, getSaaSSubscription } from "@/lib/mercado-pago";
 import { getContext } from "@/lib/action-context";
 
 export async function createCheckoutSession(plano: PlanoConta) {
@@ -147,5 +147,65 @@ export async function getCurrentPlan() {
     } catch (error: any) {
         console.error("[GET_CURRENT_PLAN_ERROR]", error);
         return { success: false, error: "Erro ao buscar plano atual" };
+    }
+}
+
+export async function verifySaaSSubscriptionAction(preapprovalId: string) {
+    try {
+        const { contaId } = await getContext();
+
+        // 1. Verificar no banco se já foi atualizado pelo webhook
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { gatewaySubscriptionId: true, plano: true }
+        });
+
+        if (conta?.gatewaySubscriptionId === preapprovalId && conta.plano !== PlanoConta.free) {
+            return { success: true, alreadyUpdated: true };
+        }
+
+        // 2. Buscar no Mercado Pago para garantir autenticidade
+        const result = await getSaaSSubscription(preapprovalId);
+        if (!result.success || !result.data) {
+            return { success: false, error: result.error || "Assinatura não encontrada no gateway" };
+        }
+
+        console.log("Assinatura encontrada no gateway:", result.data);
+
+        const preApproval = result.data;
+        const mpPlanId = (preApproval as any)?.preapproval_plan_id
+
+
+        if (!mpPlanId) {
+            return { success: false, error: "Não foi possível identificar o plano desta assinatura" };
+        }
+
+        const planEntry = Object.entries(PLANS).find(([_, p]) => p.mpPlanId === mpPlanId)?.[1];
+
+        if (!planEntry) {
+            return { success: false, error: "Não foi possível identificar o plano desta assinatura; entre em contato com o suporte." };
+        }
+
+        // 5. Se autorizada/ativa, atualizar no banco imediatamente
+        if (preApproval.status && ['authorized', 'active'].includes(preApproval.status as string)) {
+            await prisma.conta.update({
+                where: { id: contaId },
+                data: {
+                    gatewaySubscriptionId: preapprovalId,
+                    gatewaySubscriptionStatus: preApproval.status as string,
+                    plano: planEntry.id
+                }
+            });
+
+            revalidatePath("/planos");
+            revalidatePath("/configuracoes");
+            return { success: true, updated: true };
+        }
+
+        return { success: true, status: preApproval.status };
+
+    } catch (error: any) {
+        console.error("[VERIFY_SAAS_SUBSCRIPTION_ERROR]", error);
+        return { success: false, error: "Erro ao verificar assinatura" };
     }
 }
