@@ -4,6 +4,7 @@ import { BillingDecision, ChargeCreationData, SubscriptionWithCharges } from "@/
 import { isBefore, differenceInDays } from "date-fns";
 import { createPixPayment, mpPreApproval } from "@/lib/mercado-pago";
 import { MetodoPagamento } from "@prisma/client";
+import { walletService } from "./wallet-service";
 
 /**
  * Service responsible for billing logic independent of user session.
@@ -22,10 +23,14 @@ export const billingService = {
 
             if (!lock_acquired) return { skipped: true };
 
+
             const saas = await billingService.processarPlanosSaaS(tx);
             const streamings = await billingService.executarRenovacoesStreamings(tx);
 
-            return { saas, streamings };
+            // INTEGRAÇÃO WALLET: Liberar saldos pendentes (cartão) após 14 dias
+            const clearing = await walletService.processBalanceClearing(tx);
+
+            return { saas, streamings, clearing };
         }, { timeout: 60000 });
     },
 

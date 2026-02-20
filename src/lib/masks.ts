@@ -66,22 +66,41 @@ export function removeMask(value: string): string {
 
 
 /**
+ * Apply PIX mask based on type
+ */
+export function applyPixMask(value: string, type: "CPF" | "EMAIL" | "TELEFONE" | "ALEATORIA" | string): string {
+    switch (type) {
+        case "CPF":
+            return applyCPFMask(value);
+        case "TELEFONE":
+            return applyPhoneMask(value);
+        case "EMAIL":
+        case "ALEATORIA":
+        default:
+            return value;
+    }
+}
+
+/**
  * Mask types supported by the mask utilities
  */
-export type MaskType = "cpf" | "phone" | "none";
+export type MaskType = "cpf" | "phone" | "pix" | "none";
 
 /**
  * Apply mask based on type
  * @param value - String to format
  * @param maskType - Type of mask to apply
+ * @param extra - Extra context like pix type
  * @returns Formatted string
  */
-export function applyMask(value: string, maskType: MaskType): string {
+export function applyMask(value: string, maskType: MaskType, extra?: any): string {
     switch (maskType) {
         case "cpf":
             return applyCPFMask(value);
         case "phone":
             return applyPhoneMask(value);
+        case "pix":
+            return applyPixMask(value, extra);
         case "none":
         default:
             return value;

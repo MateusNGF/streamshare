@@ -98,9 +98,18 @@ export async function updateProfile(data: { nome: string; email: string; whatsap
     }
 }
 
+import { validatePixKey } from "@/lib/validation";
+
 export async function updateAccount(data: { nome: string; email: string; chavePix?: string; tipoChavePix?: string }) {
     try {
         const { contaId, userId } = await getContext();
+
+        // Validar chave PIX se fornecida
+        if (data.chavePix && data.tipoChavePix) {
+            if (!validatePixKey(data.chavePix, data.tipoChavePix)) {
+                return { success: false, error: "Chave PIX inválida para o tipo selecionado" };
+            }
+        }
 
         // Validar email se fornecido
         if (data.email) {

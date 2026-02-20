@@ -22,7 +22,7 @@ export const walletService = {
      * Processes a received payment, crediting the admin and debiting the platform fee.
      * ACID: Must be run inside a transaction confirming the charge.
      */
-    processarCreditoPagamento: async (tx: any, params: {
+    processPaymentCredit: async (tx: any, params: {
         contaId: number,
         valorPago: number,
         metodoPagamento: MetodoPagamento | string,
@@ -45,30 +45,31 @@ export const walletService = {
             return { skipped: true };
         }
 
-        const taxaPercentual = new Decimal(process.env.TAXA_PLATAFORMA_PERCENTUAL ?? '5').div(100);
-        const valorPagoDec = new Decimal(valorPago);
+        const feePercentage = new Decimal(process.env.TAXA_PLATAFORMA_PERCENTUAL ?? '5').div(100);
+        const amountPaidDec = new Decimal(valorPago);
 
-        const valorTaxa = valorPagoDec.mul(taxaPercentual).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-        const valorLiquido = valorPagoDec.minus(valorTaxa).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+        const feeAmount = amountPaidDec.mul(feePercentage).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+        const netAmount = amountPaidDec.minus(feeAmount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 
         // Logic: PIX is available immediately. Cards go to pending (clearing period).
-        const campoSaldo = metodoPagamento === 'PIX' ? 'saldoDisponivel' : 'saldoPendente';
+        const balanceField = metodoPagamento === 'PIX' ? 'saldoDisponivel' : 'saldoPendente';
 
         // Update Balance
         await tx.wallet.update({
             where: { id: wallet.id },
-            data: { [campoSaldo]: { increment: valorLiquido } }
+            data: { [balanceField]: { increment: netAmount } }
         });
 
         // Create Ledger Entry: Credit
         await tx.walletTransaction.create({
             data: {
                 walletId: wallet.id,
-                valor: valorLiquido,
+                valor: netAmount,
                 tipo: 'CREDITO_COTA',
                 descricao: `Pagamento recebido: Assinatura #${assinaturaId}`,
                 referenciaGateway,
                 metadataJson: { cobrancaId, participanteId },
+                isLiberado: metodoPagamento === 'PIX'
             }
         });
 
@@ -76,20 +77,21 @@ export const walletService = {
         await tx.walletTransaction.create({
             data: {
                 walletId: wallet.id,
-                valor: valorTaxa.negated(),
+                valor: feeAmount.negated(),
                 tipo: 'DEBITO_TAXA',
-                descricao: `Taxa de Intermediação (${taxaPercentual.mul(100).toNumber()}%) — Ref #${cobrancaId}`,
+                descricao: `Taxa de Intermediação (${feePercentage.mul(100).toNumber()}%) — Ref #${cobrancaId}`,
                 referenciaGateway,
+                isLiberado: true
             }
         });
 
-        return { success: true, valorLiquido, valorTaxa };
+        return { success: true, netAmount, feeAmount };
     },
 
     /**
      * Records a withdrawal request and locks funds.
      */
-    solicitarSaque: async (tx: any, params: {
+    requestWithdrawal: async (tx: any, params: {
         walletId: number,
         valor: number,
         chavePixDestino: string,
@@ -104,7 +106,7 @@ export const walletService = {
         });
 
         // 2. Create Saque record
-        const saque = await tx.saque.create({
+        const withdrawal = await tx.saque.create({
             data: {
                 walletId,
                 valor,
@@ -120,18 +122,18 @@ export const walletService = {
                 walletId,
                 valor: -valor,
                 tipo: 'SAQUE',
-                descricao: `Solicitação de Saque PIX #${saque.id}`,
-                metadataJson: { saqueId: saque.id }
+                descricao: `Solicitação de Saque PIX #${withdrawal.id}`,
+                metadataJson: { saqueId: withdrawal.id }
             }
         });
 
-        return saque;
+        return withdrawal;
     },
 
     /**
      * Finalizes a withdrawal. Funds were already locked at request.
      */
-    aprovarSaque: async (tx: any, params: {
+    approveWithdrawal: async (tx: any, params: {
         saqueId: number,
         adminId: number,
         comprovanteUrl?: string,
@@ -153,15 +155,15 @@ export const walletService = {
     /**
      * Rejects a withdrawal and UNLOCKS (returns) funds.
      */
-    rejeitarSaque: async (tx: any, params: {
+    rejectWithdrawal: async (tx: any, params: {
         saqueId: number,
         adminId: number,
         motivoRejeicao: string
     }) => {
         const { saqueId, adminId, motivoRejeicao } = params;
 
-        const saque = await tx.saque.findUnique({ where: { id: saqueId } });
-        if (!saque) throw new Error("Saque não encontrado");
+        const withdrawal = await tx.saque.findUnique({ where: { id: saqueId } });
+        if (!withdrawal) throw new Error("Saque não encontrado");
 
         // 1. Update status
         await tx.saque.update({
@@ -175,21 +177,93 @@ export const walletService = {
 
         // 2. Restore funds
         await tx.wallet.update({
-            where: { id: saque.walletId },
-            data: { saldoDisponivel: { increment: saque.valor } }
+            where: { id: withdrawal.walletId },
+            data: { saldoDisponivel: { increment: withdrawal.valor } }
         });
 
         // 3. Ledger entry (Reversal)
         await tx.walletTransaction.create({
             data: {
-                walletId: saque.walletId,
-                valor: saque.valor,
+                walletId: withdrawal.walletId,
+                valor: withdrawal.valor,
                 tipo: 'ESTORNO',
-                descricao: `Estorno de Saque Rejeitado #${saque.id}`,
-                metadataJson: { saqueId: saque.id, motivo: motivoRejeicao }
+                descricao: `Estorno de Saque Rejeitado #${withdrawal.id}`,
+                metadataJson: { saqueId: withdrawal.id, motivo: motivoRejeicao }
             }
         });
 
         return true;
+    },
+
+    /**
+     * Automatically moves pending balances (from credit cards) to available balance.
+     * Default clearing period: 14 days.
+     * Performance: Optimized to use batch updates per wallet.
+     */
+    processBalanceClearing: async (tx: any, diasClearing: number = 14) => {
+        const now = new Date();
+        const limitDate = new Date(now.getTime() - (diasClearing * 24 * 60 * 60 * 1000));
+
+        // 1. Find all transactions that should be cleared
+        const transactionsToClear = await tx.walletTransaction.findMany({
+            where: {
+                tipo: 'CREDITO_COTA',
+                isLiberado: false,
+                createdAt: { lt: limitDate }
+            }
+        });
+
+        if (transactionsToClear.length === 0) return { processedCount: 0 };
+
+        const resultsByWallet = new Map<number, Decimal>();
+        const idsByWallet = new Map<number, number[]>();
+
+        for (const t of transactionsToClear) {
+            const currentValor = resultsByWallet.get(t.walletId) || new Decimal(0);
+            resultsByWallet.set(t.walletId, currentValor.plus(t.valor));
+
+            const currentIds = idsByWallet.get(t.walletId) || [];
+            currentIds.push(t.id);
+            idsByWallet.set(t.walletId, currentIds);
+        }
+
+        // 2. Mark all as cleared in a single batch update
+        const allIds = transactionsToClear.map((t: any) => t.id);
+        await tx.walletTransaction.updateMany({
+            where: { id: { in: allIds } },
+            data: { isLiberado: true }
+        });
+
+        // 3. Update wallet balances per wallet
+        for (const [walletId, ids] of idsByWallet.entries()) {
+            const totalAmount = resultsByWallet.get(walletId)!;
+
+            // Update wallet balances (Atomic)
+            await tx.wallet.update({
+                where: { id: walletId },
+                data: {
+                    saldoPendente: { decrement: totalAmount },
+                    saldoDisponivel: { increment: totalAmount }
+                }
+            });
+
+            // Create a log entry for the clearing event
+            await tx.walletTransaction.create({
+                data: {
+                    walletId: walletId,
+                    valor: 0,
+                    tipo: 'CREDITO_COTA',
+                    descricao: `Liberação de saldo pendente consolidada (R$ ${totalAmount.toFixed(2)})`,
+                    isLiberado: true,
+                    metadataJson: {
+                        clearingDate: now,
+                        totalCleared: totalAmount,
+                        count: ids.length
+                    }
+                }
+            });
+        }
+
+        return { processedCount: transactionsToClear.length, walletsAffected: resultsByWallet.size };
     }
 };

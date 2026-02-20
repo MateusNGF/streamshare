@@ -88,7 +88,7 @@ export async function POST(req: Request) {
                             });
 
                             // INTEGRAÇÃO WALLET: Creditar o dono do grupo via Service
-                            await walletService.processarCreditoPagamento(tx, {
+                            await walletService.processPaymentCredit(tx, {
                                 contaId: assinatura.streaming.contaId,
                                 valorPago: Number(cobranca.valor),
                                 metodoPagamento: cobranca.metodoPagamento ?? 'PIX',

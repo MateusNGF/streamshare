@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
 import { PlanCardSettings } from "./PlanCardSettings";
 import { ToastVariant } from "@/components/ui/Toast";
+import { applyMask } from "@/lib/masks";
 
 interface AccountTabProps {
     accountData: {
@@ -70,22 +71,35 @@ export function AccountTab({
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Input
-                                label="Chave PIX para Recebimento"
-                                type="text"
-                                value={accountData.chavePix}
-                                onChange={(e) => setAccountData({ ...accountData, chavePix: e.target.value })}
-                                placeholder="CPF, Email, Telefone ou Aleatória"
-                                disabled={loadingAccount}
-                            />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                            <div>
+                                <Input
+                                    label="Chave PIX para Recebimento"
+                                    type="text"
+                                    value={accountData.chavePix}
+                                    onChange={(e) => {
+                                        const maskedValue = applyMask(e.target.value, "pix", accountData.tipoChavePix);
+                                        setAccountData({ ...accountData, chavePix: maskedValue });
+                                    }}
+                                    placeholder={
+                                        accountData.tipoChavePix === "CPF" ? "000.000.000-00" :
+                                            accountData.tipoChavePix === "TELEFONE" ? "(00) 00000-0000" :
+                                                accountData.tipoChavePix === "EMAIL" ? "seu@email.com" :
+                                                    "Coloque sua chave aqui"
+                                    }
+                                    disabled={loadingAccount}
+                                />
+                            </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">
                                     Tipo de Chave PIX
                                 </label>
                                 <Select
                                     value={accountData.tipoChavePix || ""}
-                                    onValueChange={(val) => setAccountData({ ...accountData, tipoChavePix: val })}
+                                    onValueChange={(val) => {
+                                        setAccountData({ ...accountData, tipoChavePix: val, chavePix: "" });
+                                    }}
                                     disabled={loadingAccount}
                                 >
                                     <SelectTrigger className="w-full h-12 bg-white border border-gray-200 rounded-xl px-4 flex justify-between items-center focus:ring-2 focus:ring-primary/20">

@@ -69,7 +69,7 @@ export async function solicitarSaque(valor: number) {
             }
 
             // Usar o service para garantir consistência do ledger e atomicidade
-            const saque = await walletService.solicitarSaque(tx, {
+            const saque = await walletService.requestWithdrawal(tx, {
                 walletId: wallet.id,
                 valor,
                 chavePixDestino: wallet.chavePixSaque,

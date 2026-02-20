@@ -552,9 +552,11 @@ model WalletTransaction {
   descricao         String
   referenciaGateway String?
   metadataJson      Json?
+  isLiberado        Boolean           @default(false)
   createdAt         DateTime          @default(now())
 
   @@index([walletId, createdAt])
+  @@index([isLiberado, createdAt]) // Index for clearing job
   @@map("wallet_transaction")
 }
 

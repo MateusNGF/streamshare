@@ -62,11 +62,11 @@ export async function aprovarSaque(saqueId: number, comprovanteUrl: string, tran
                 return { success: false, error: "Saque não encontrado ou não está pendente." };
             }
 
-            const updatedSaque = await walletService.aprovarSaque(tx, {
+            const updatedSaque = await walletService.approveWithdrawal(tx, {
                 saqueId,
                 adminId: usuarioId,
-                comprovanteUrl,
-                transferenciaMpId
+                comprovanteUrl: comprovanteUrl,
+                transferenciaMpId: transferenciaMpId
             });
 
             return { success: true, data: updatedSaque };
@@ -96,7 +96,7 @@ export async function rejeitarSaque(saqueId: number, motivoRejeicao: string) {
                 return { success: false, error: "Saque não encontrado ou não está pendente." };
             }
 
-            await walletService.rejeitarSaque(tx, {
+            await walletService.rejectWithdrawal(tx, {
                 saqueId,
                 adminId: usuarioId,
                 motivoRejeicao

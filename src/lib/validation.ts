@@ -135,6 +135,26 @@ export function validateEmail(email: string): boolean {
 }
 
 /**
+ * Validate PIX Key based on type
+ */
+export function validatePixKey(chave: string, tipo: "CPF" | "EMAIL" | "TELEFONE" | "ALEATORIA" | string): boolean {
+    if (!chave) return false;
+
+    switch (tipo) {
+        case "CPF":
+            return validateCPF(chave);
+        case "EMAIL":
+            return validateEmail(chave);
+        case "TELEFONE":
+            return validatePhone(chave);
+        case "ALEATORIA":
+            return chave.length >= 32; // Random keys are usually UUID-like
+        default:
+            return chave.length > 0;
+    }
+}
+
+/**
  * Get user-friendly error messages for validation failures
  */
 export const ValidationMessages = {
@@ -154,4 +174,8 @@ export const ValidationMessages = {
     name: {
         required: "Nome é obrigatório",
     },
+    pix: {
+        invalid: "Chave PIX inválida para o tipo selecionado",
+        required: "Chave PIX é obrigatória",
+    }
 } as const;
