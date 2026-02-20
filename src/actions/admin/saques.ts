@@ -6,17 +6,20 @@ import { TransactionStatus } from "@prisma/client";
 import { walletService } from "@/services/wallet-service";
 
 async function isSuperAdmin(usuarioId: number) {
-    const admin = await prisma.usuarioAdmin.findUnique({
-        where: { usuarioId }
+    const admin = await prisma.usuarioAdmin.findFirst({
+        where: {
+            usuarioId,
+            isAtivo: true
+        }
     });
-    return !!admin && admin.isAtivo;
+    return !!admin;
 }
 
 export async function listarSaquesPendentes() {
     try {
-        const { usuarioId } = await getContext();
+        const { userId } = await getContext();
 
-        if (!(await isSuperAdmin(usuarioId))) {
+        if (!(await isSuperAdmin(userId))) {
             return { success: false, error: "Acesso não autorizado." };
         }
 
@@ -47,9 +50,9 @@ export async function listarSaquesPendentes() {
 
 export async function aprovarSaque(saqueId: number, comprovanteUrl: string, transferenciaMpId?: string) {
     try {
-        const { usuarioId } = await getContext();
+        const { userId } = await getContext();
 
-        if (!(await isSuperAdmin(usuarioId))) {
+        if (!(await isSuperAdmin(userId))) {
             return { success: false, error: "Acesso não autorizado." };
         }
 
@@ -64,7 +67,7 @@ export async function aprovarSaque(saqueId: number, comprovanteUrl: string, tran
 
             const updatedSaque = await walletService.approveWithdrawal(tx, {
                 saqueId,
-                adminId: usuarioId,
+                adminId: userId,
                 comprovanteUrl: comprovanteUrl,
                 transferenciaMpId: transferenciaMpId
             });
@@ -81,9 +84,9 @@ export async function aprovarSaque(saqueId: number, comprovanteUrl: string, tran
 
 export async function rejeitarSaque(saqueId: number, motivoRejeicao: string) {
     try {
-        const { usuarioId } = await getContext();
+        const { userId } = await getContext();
 
-        if (!(await isSuperAdmin(usuarioId))) {
+        if (!(await isSuperAdmin(userId))) {
             return { success: false, error: "Acesso não autorizado." };
         }
 
@@ -98,7 +101,7 @@ export async function rejeitarSaque(saqueId: number, motivoRejeicao: string) {
 
             await walletService.rejectWithdrawal(tx, {
                 saqueId,
-                adminId: usuarioId,
+                adminId: userId,
                 motivoRejeicao
             });
 
@@ -114,9 +117,9 @@ export async function rejeitarSaque(saqueId: number, motivoRejeicao: string) {
 
 export async function getConciliacaoFinanceira() {
     try {
-        const { usuarioId } = await getContext();
+        const { userId } = await getContext();
 
-        if (!(await isSuperAdmin(usuarioId))) {
+        if (!(await isSuperAdmin(userId))) {
             return { success: false, error: "Acesso não autorizado." };
         }
 
@@ -138,5 +141,35 @@ export async function getConciliacaoFinanceira() {
     } catch (error) {
         console.error("[GET_CONCILIACAO_ERROR]", error);
         return { success: false, error: "Erro ao carregar conciliação financeira." };
+    }
+}
+
+export async function listarTodosSaques() {
+    try {
+        const { userId } = await getContext();
+
+        if (!(await isSuperAdmin(userId))) {
+            return { success: false, error: "Acesso não autorizado." };
+        }
+
+        const saques = await prisma.saque.findMany({
+            include: {
+                wallet: {
+                    include: {
+                        conta: {
+                            select: { nome: true, email: true }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return { success: true, data: saques };
+    } catch (error) {
+        console.error("[LISTAR_TODOS_SAQUES_ERROR]", error);
+        return { success: false, error: "Erro ao listar todos os saques." };
     }
 }

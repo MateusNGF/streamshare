@@ -27,7 +27,7 @@ export default async function DashboardLayout({
             where: { usuarioId: session.userId, isAtivo: true, nivelAcesso: "owner" },
             include: { conta: true },
         }),
-        prisma.usuarioAdmin.findUnique({
+        prisma.usuarioAdmin.findFirst({
             where: { usuarioId: session.userId, isAtivo: true },
         }),
     ]);

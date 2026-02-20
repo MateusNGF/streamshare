@@ -24,7 +24,7 @@ const menuItems = [
     { icon: Settings, label: "Parâmetros", href: "/admin/parametros" },
     { icon: User, label: "Usuários", href: "/admin/usuarios" },
     { icon: Wallet, label: "Saques", href: "/admin/saques" },
-    { icon: Wallet, label: "Saques Globais", href: "/saques" },
+    { icon: Wallet, label: "Saques Globais", href: "/admin/saques/globais" },
     { icon: Scale, label: "Conciliação", href: "/admin/conciliacao" },
     { icon: MessageCircleQuestion, label: "Reports", href: "/admin/reports" },
 ];
