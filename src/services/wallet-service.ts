@@ -89,6 +89,75 @@ export const walletService = {
     },
 
     /**
+     * Processes a payment refund, deducting the previously credited amount from the admin's wallet.
+     * ACID: Must be run inside a transaction.
+     */
+    processPaymentRefund: async (tx: any, params: {
+        contaId: number,
+        valorPago: number,
+        metodoPagamento: MetodoPagamento | string,
+        referenciaGateway: string,
+        cobrancaId: number,
+        assinaturaId: number,
+        participanteId: number
+    }) => {
+        const { contaId, valorPago, metodoPagamento, referenciaGateway, cobrancaId, assinaturaId, participanteId } = params;
+
+        const wallet = await walletService.getOrCreateWallet(tx, contaId);
+
+        // Idempotency: Don't process the same refund twice
+        const alreadyRefunded = await tx.walletTransaction.findFirst({
+            where: { walletId: wallet.id, tipo: 'ESTORNO', referenciaGateway, valor: { lt: 0 } }
+        });
+
+        if (alreadyRefunded) {
+            console.info(`[WALLET_SERVICE] Refund ${referenciaGateway} already processed in Ledger. Skipping.`);
+            return { skipped: true };
+        }
+
+        const feePercentage = new Decimal(process.env.TAXA_PLATAFORMA_PERCENTUAL ?? '5').div(100);
+        const amountPaidDec = new Decimal(valorPago);
+
+        const feeAmount = amountPaidDec.mul(feePercentage).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+        const netAmount = amountPaidDec.minus(feeAmount).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+
+        const balanceField = metodoPagamento === 'PIX' ? 'saldoDisponivel' : 'saldoPendente';
+
+        // Deduct Balance
+        await tx.wallet.update({
+            where: { id: wallet.id },
+            data: { [balanceField]: { decrement: netAmount } }
+        });
+
+        // Create Ledger Entry: Refund Debit
+        await tx.walletTransaction.create({
+            data: {
+                walletId: wallet.id,
+                valor: netAmount.negated(),
+                tipo: 'ESTORNO',
+                descricao: `Estorno de pagamento: Assinatura #${assinaturaId}`,
+                referenciaGateway,
+                metadataJson: { cobrancaId, participanteId, isRefund: true },
+                isLiberado: metodoPagamento === 'PIX'
+            }
+        });
+
+        // Create Ledger Entry: Platform Fee Reversal (Credit back the fee to balance out the initial fee debit)
+        await tx.walletTransaction.create({
+            data: {
+                walletId: wallet.id,
+                valor: feeAmount,
+                tipo: 'ESTORNO',
+                descricao: `Estorno da Taxa de Intermediação — Ref #${cobrancaId}`,
+                referenciaGateway,
+                isLiberado: true
+            }
+        });
+
+        return { success: true, netAmountDeducted: netAmount, feeAmountRefunded: feeAmount };
+    },
+
+    /**
      * Records a withdrawal request and locks funds.
      */
     requestWithdrawal: async (tx: any, params: {

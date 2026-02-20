@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { createPixPayment } from "@/lib/mercado-pago";
 
 import { StatusCobranca } from "@prisma/client";
 import {
@@ -548,5 +549,87 @@ export async function enviarNotificacaoCobranca(
     } catch (error: any) {
         console.error("[ENVIAR_NOTIFICACAO_COBRANCA_ERROR]", error);
         return { success: false, error: error.message || "Erro ao enviar notificação" };
+    }
+}
+
+/**
+ * Gera um QR Code PIX para uma cobrança específica
+ * @param cobrancaId - ID da cobrança
+ */
+export async function gerarPixCobranca(cobrancaId: number) {
+    try {
+        const { contaId } = await getContext();
+
+        // Buscar a cobrança e validar permissão
+        const cobranca = await prisma.cobranca.findUnique({
+            where: { id: cobrancaId },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: true,
+                        streaming: {
+                            include: { catalogo: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!cobranca) {
+            return { success: false, error: "Cobrança não encontrada" };
+        }
+
+        // Se for admin, a contaId do contexto deve bater com a contaId do participante
+        // Se for participante, o userId do contexto deve bater com o usuarioId do participante (precisaríamos buscar o participante)
+        // Simplificando: Validar se a cobrança pertence à conta do usuário atual
+        if (cobranca.assinatura.participante.contaId !== contaId) {
+            const { userId } = await getContext();
+            if (cobranca.assinatura.participante.userId !== userId) {
+                return { success: false, error: "Sem permissão para gerar PIX desta cobrança" };
+            }
+        }
+
+        if (cobranca.status === StatusCobranca.pago) {
+            return { success: false, error: "Esta cobrança já está paga" };
+        }
+
+        const streamingName = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
+
+        // Gerar pagamento no MercadoPago
+        const res = await createPixPayment({
+            id: cobranca.id.toString(),
+            title: `Assinatura ${streamingName}`,
+            description: `Mensalidade StreamShare - ${streamingName}`,
+            unit_price: cobranca.valor.toNumber(),
+            email: cobranca.assinatura.participante.email || "",
+            first_name: cobranca.assinatura.participante.nome.split(' ')[0],
+            cpf: cobranca.assinatura.participante.cpf || undefined,
+            external_reference: `COB_${cobranca.id}`
+        });
+
+        if (!res.success) {
+            return { success: false, error: res.error };
+        }
+
+        // Atualizar a cobrança com o ID da transação do gateway para futura reconciliação via Webhook
+        await prisma.cobranca.update({
+            where: { id: cobrancaId },
+            data: {
+                gatewayProvider: "MercadoPago",
+                gatewayTransactionId: res.id,
+            }
+        });
+
+        return {
+            success: true,
+            data: {
+                qrCodeBase64: res.qr_code_base64,
+                qrCode: res.qr_code,
+                paymentId: res.id
+            }
+        };
+    } catch (error: any) {
+        console.error("[GERAR_PIX_COBRANCA_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao gerar PIX" };
     }
 }

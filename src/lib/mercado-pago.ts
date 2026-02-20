@@ -49,9 +49,9 @@ export async function createCheckoutPreference(data: CreatePreferenceData) {
                 external_reference: data.external_reference,
                 notification_url: process.env.MERCADOPAGO_WEBHOOK_URL,
                 back_urls: {
-                    success: `${process.env.NEXT_PUBLIC_URL}/financas?success=true`,
-                    failure: `${process.env.NEXT_PUBLIC_URL}/financas?error=true`,
-                    pending: `${process.env.NEXT_PUBLIC_URL}/financas?pending=true`,
+                    success: `${process.env.NEXT_PUBLIC_URL}/faturamento?success=true`,
+                    failure: `${process.env.NEXT_PUBLIC_URL}/faturamento?error=true`,
+                    pending: `${process.env.NEXT_PUBLIC_URL}/faturamento?pending=true`,
                 },
                 auto_return: 'approved',
                 payment_methods: {
@@ -71,23 +71,39 @@ export async function createCheckoutPreference(data: CreatePreferenceData) {
     }
 }
 
+interface CreatePixData extends CreatePreferenceData {
+    first_name?: string;
+    cpf?: string;
+}
+
 /**
  * Gera um pagamento via PIX no MercadoPago
  */
-export async function createPixPayment(data: CreatePreferenceData) {
+export async function createPixPayment(data: CreatePixData) {
     try {
-        const response = await mpPayment.create({
-            body: {
-                transaction_amount: data.unit_price,
-                description: data.description,
-                payment_method_id: 'pix',
-                payer: {
-                    email: data.email,
-                },
-                external_reference: data.external_reference,
-                notification_url: process.env.MERCADOPAGO_WEBHOOK_URL,
-            }
-        });
+        const payerEmail = data.email && data.email.includes('@') ? data.email : `cliente_${data.id}@streamshare.com.br`;
+
+        const body: any = {
+            transaction_amount: data.unit_price,
+            description: data.description,
+            payment_method_id: 'pix',
+            payer: {
+                email: payerEmail,
+                first_name: data.first_name || 'Participante',
+            },
+            external_reference: data.external_reference,
+            ...(process.env.MERCADOPAGO_WEBHOOK_URL && process.env.MERCADOPAGO_WEBHOOK_URL.startsWith('http') ? { notification_url: process.env.MERCADOPAGO_WEBHOOK_URL } : {}),
+        };
+
+        // Adicionar CPF se disponível
+        if (data.cpf) {
+            body.payer.identification = {
+                type: 'CPF',
+                number: data.cpf.replace(/\D/g, '')
+            };
+        }
+
+        const response = await mpPayment.create({ body });
 
         // Extrai dados do PIX
         const pixData = response.point_of_interaction?.transaction_data;
@@ -100,9 +116,13 @@ export async function createPixPayment(data: CreatePreferenceData) {
             ticket_url: pixData?.ticket_url,
             status: response.status
         };
-    } catch (error) {
-        console.error('[MERCADOPAGO_CREATE_PIX]', error);
-        return { success: false, error: 'Erro ao gerar pagamento PIX' };
+    } catch (error: any) {
+        console.error('[MERCADOPAGO_CREATE_PIX]', {
+            error: error.message,
+            status: error.status,
+            details: error.response?.data || error.response || 'No extra details'
+        });
+        return { success: false, error: 'Erro ao gerar pagamento PIX no gateway' };
     }
 }
 

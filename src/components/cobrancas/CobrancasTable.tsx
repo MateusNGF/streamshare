@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History } from "lucide-react";
+import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History, QrCode } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -27,6 +27,7 @@ interface CobrancasTableProps {
     variant?: "default" | "compact";
     fallbackValorMensal?: number | string;
     isAdmin?: boolean;
+    onGeneratePix?: (id: number) => void;
 }
 
 export function CobrancasTable({
@@ -39,7 +40,8 @@ export function CobrancasTable({
     statusFilter = "all",
     variant = "default",
     fallbackValorMensal,
-    isAdmin = true
+    isAdmin = true,
+    onGeneratePix
 }: CobrancasTableProps) {
     const isCompact = variant === "compact";
 
@@ -140,6 +142,13 @@ export function CobrancasTable({
                                     icon: <Eye size={16} />,
                                     onClick: () => onViewDetails(cobranca.id)
                                 },
+                                ...(!isPaid && !isCancelled ? [
+                                    {
+                                        label: "Gerar QR Code PIX",
+                                        icon: <QrCode size={16} />,
+                                        onClick: () => onGeneratePix?.(cobranca.id)
+                                    }
+                                ] : []),
                                 ...(!isPaid && !isCancelled && isAdmin ? [
                                     { type: "separator" as const },
                                     {

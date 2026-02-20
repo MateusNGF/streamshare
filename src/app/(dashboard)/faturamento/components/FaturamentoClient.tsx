@@ -97,7 +97,7 @@ export function FaturamentoClient({ initialData }: { initialData: any }) {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+            <div id="extrato" className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
                 <div className="p-6 border-b border-gray-100">
                     <h3 className="text-lg font-bold text-gray-900">Extrato Financeiro</h3>
                     <p className="text-sm text-gray-500">Histórico de todas as entradas, taxas e saídas da sua carteira.</p>

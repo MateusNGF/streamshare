@@ -10,6 +10,7 @@ import { useCobrancasActions } from "@/hooks/useCobrancasActions";
 import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
 import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
 import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
+import { PixPaymentModal } from "@/components/modals/PixPaymentModal";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { FeatureGuards } from "@/lib/feature-guards";
@@ -60,6 +61,19 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         handleClearFilters,
         setSelectedCobrancaId // Added this just in case, though handled by actions
     } = useCobrancasActions(cobrancasIniciais);
+
+    const [isPixModalOpen, setIsPixModalOpen] = useState(false);
+    const [pixCobrancaId, setPixCobrancaId] = useState<number | null>(null);
+    const [pixValor, setPixValor] = useState<number | undefined>(undefined);
+
+    const handleGerarPix = (id: number) => {
+        const cobranca = filteredCobrancas.find(c => c.id === id);
+        if (cobranca) {
+            setPixCobrancaId(id);
+            setPixValor(Number(cobranca.valor));
+            setIsPixModalOpen(true);
+        }
+    };
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
@@ -210,6 +224,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                                 onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
                                 onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
                                 onCancel={() => handleCancelarCobranca(cobranca.id)}
+                                onGeneratePix={() => handleGerarPix(cobranca.id)}
                             />
                         ))}
                     </div>
@@ -223,6 +238,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                         onConfirmPayment={handleConfirmarPagamento}
                         onSendWhatsApp={handleEnviarWhatsApp}
                         onCancel={handleCancelarCobranca}
+                        onGeneratePix={handleGerarPix}
                         searchTerm={searchTerm}
                         statusFilter={statusFilter}
                     />
@@ -243,6 +259,13 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 }}
                 selectedCobranca={selectedCobranca}
                 loading={loading}
+            />
+
+            <PixPaymentModal
+                isOpen={isPixModalOpen}
+                onClose={() => setIsPixModalOpen(false)}
+                cobrancaId={pixCobrancaId}
+                valor={pixValor}
             />
         </PageContainer>
     );

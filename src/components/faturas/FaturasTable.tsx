@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, QrCode } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -20,11 +20,13 @@ import { useToast } from "@/hooks/useToast";
 interface FaturasTableProps {
     faturas: any[];
     onViewDetails: (id: number) => void;
+    onPayPix?: (id: number) => void;
 }
 
 export function FaturasTable({
     faturas,
     onViewDetails,
+    onPayPix,
 }: FaturasTableProps) {
     const { success, error: toastError } = useToast();
 
@@ -114,6 +116,14 @@ export function FaturasTable({
                                     icon: <Eye size={16} />,
                                     onClick: () => onViewDetails(fatura.id)
                                 },
+                                ...(!isPaid && !isCancelled ? [
+                                    { type: "separator" as const },
+                                    {
+                                        label: "Pagar com PIX",
+                                        icon: <QrCode size={16} />,
+                                        onClick: () => onPayPix?.(fatura.id)
+                                    }
+                                ] : []),
                                 ...(!isPaid && !isCancelled && chavePix ? [
                                     { type: "separator" as const },
                                     {

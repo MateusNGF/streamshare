@@ -122,15 +122,34 @@ export async function POST(req: Request) {
                             }
                         });
 
-                        await tx.notificacao.create({
-                            data: {
-                                contaId: assinatura?.streaming.contaId || 0,
-                                tipo: 'cobranca_cancelada',
-                                titulo: 'Pagamento Estornado',
-                                descricao: `O pagamento da cobrança #${cobranca.id} foi estornado via MercadoPago.`,
-                                metadata: { cobrancaId: cobranca.id, gatewayId: dataId }
-                            }
-                        });
+
+
+                        if (!assinatura) {
+                            console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} not found — skip`);
+                            return new Response(null, { status: 200 });
+                        }
+
+                        await Promise.all([
+                            tx.notificacao.create({
+                                data: {
+                                    contaId: assinatura?.streaming.contaId || 0,
+                                    tipo: 'cobranca_cancelada',
+                                    titulo: 'Pagamento Estornado',
+                                    descricao: `O pagamento da cobrança #${cobranca.id} foi estornado via MercadoPago.`,
+                                    metadata: { cobrancaId: cobranca.id, gatewayId: dataId }
+                                }
+                            }),
+                            // INTEGRAÇÃO WALLET: Retirar saldo da carteira do dono do grupo via Service
+                            walletService.processPaymentRefund(tx, {
+                                contaId: assinatura.streaming.contaId,
+                                valorPago: Number(cobranca.valor),
+                                metodoPagamento: cobranca.metodoPagamento ?? 'PIX',
+                                referenciaGateway: dataId,
+                                cobrancaId: cobranca.id,
+                                assinaturaId: assinatura.id,
+                                participanteId: assinatura.participanteId
+                            })
+                        ]);
                     });
                 }
                 // OUTROS STATUS

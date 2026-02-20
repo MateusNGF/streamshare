@@ -9,6 +9,7 @@ import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { useActionError } from "@/hooks/useActionError";
 import { useState } from "react";
 import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
+import { PixPaymentModal } from "@/components/modals/PixPaymentModal";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface FaturasClientProps {
@@ -21,6 +22,9 @@ export function FaturasClient({ faturas, resumo, error }: FaturasClientProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const [selectedFatura, setSelectedFatura] = useState<any>(null);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [isPixModalOpen, setIsPixModalOpen] = useState(false);
+    const [pixFaturaId, setPixFaturaId] = useState<number | null>(null);
+    const [pixValor, setPixValor] = useState<number | undefined>(undefined);
 
     useActionError(error);
 
@@ -28,6 +32,15 @@ export function FaturasClient({ faturas, resumo, error }: FaturasClientProps) {
         const fatura = faturas.find(f => f.id === id);
         setSelectedFatura(fatura);
         setIsDetailsModalOpen(true);
+    };
+
+    const handlePayPix = (id: number) => {
+        const fatura = faturas.find(f => f.id === id);
+        if (fatura) {
+            setPixFaturaId(id);
+            setPixValor(Number(fatura.valor));
+            setIsPixModalOpen(true);
+        }
     };
 
     return (
@@ -64,13 +77,14 @@ export function FaturasClient({ faturas, resumo, error }: FaturasClientProps) {
                     viewMode === "grid" ? (
                         <div className="grid grid-cols-1 gap-4">
                             {faturas.map((fatura) => (
-                                <FaturaCard key={fatura.id} fatura={fatura} />
+                                <FaturaCard key={fatura.id} fatura={fatura} onPayPix={() => handlePayPix(fatura.id)} />
                             ))}
                         </div>
                     ) : (
                         <FaturasTable
                             faturas={faturas}
                             onViewDetails={handleViewDetails}
+                            onPayPix={handlePayPix}
                         />
                     )
                 )}
@@ -80,6 +94,13 @@ export function FaturasClient({ faturas, resumo, error }: FaturasClientProps) {
                 isOpen={isDetailsModalOpen}
                 onClose={() => setIsDetailsModalOpen(false)}
                 cobranca={selectedFatura}
+            />
+
+            <PixPaymentModal
+                isOpen={isPixModalOpen}
+                onClose={() => setIsPixModalOpen(false)}
+                cobrancaId={pixFaturaId}
+                valor={pixValor}
             />
         </PageContainer>
     );

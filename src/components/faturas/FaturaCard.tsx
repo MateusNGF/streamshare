@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Calendar, Wallet, CheckCircle2, Clock } from "lucide-react";
+import { Copy, Calendar, Wallet, CheckCircle2, Clock, QrCode } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/useToast";
 
 interface FaturaCardProps {
     fatura: any;
+    onPayPix?: () => void;
 }
 
-export function FaturaCard({ fatura }: FaturaCardProps) {
+export function FaturaCard({ fatura, onPayPix }: FaturaCardProps) {
     const { format: formatPrice } = useCurrency();
     const { success, error: toastError } = useToast();
 
@@ -119,14 +120,22 @@ export function FaturaCard({ fatura }: FaturaCardProps) {
                     </div>
 
                     {!isPaid && !isCancelled && (
-                        <Button
-                            size="default"
-                            className="bg-primary hover:bg-primary/90 text-white gap-2 font-bold px-6 rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            onClick={copyPix}
-                        >
-                            <Copy size={18} />
-                            Copiar Pix
-                        </Button>
+                        <div className="flex flex-col gap-2 w-full md:w-auto">
+                            <Button
+                                size="default"
+                                className="bg-primary hover:bg-primary/90 text-white gap-2 font-bold px-6 rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                onClick={onPayPix}
+                            >
+                                <QrCode size={18} />
+                                Pagar com PIX
+                            </Button>
+                            <button
+                                onClick={copyPix}
+                                className="text-[10px] font-bold text-gray-400 hover:text-primary transition-colors text-center uppercase tracking-widest"
+                            >
+                                Copiar Chave Manual
+                            </button>
+                        </div>
                     )}
 
                     {isPaid && (

@@ -24,6 +24,7 @@ import { MobileMenuButton } from "./MobileMenuButton";
 import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { WalletBalanceWidget } from "@/components/dashboard/WalletBalanceWidget";
 import { PlanoConta } from "@prisma/client";
 
 interface SidebarProps {
@@ -212,6 +213,12 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
                             layout="vertical"
                             className="shadow-none border-indigo-50/50 bg-indigo-50/20"
                         />
+                    </div>
+                )}
+
+                {showManagement && (
+                    <div className="mb-4">
+                        <WalletBalanceWidget />
                     </div>
                 )}
 

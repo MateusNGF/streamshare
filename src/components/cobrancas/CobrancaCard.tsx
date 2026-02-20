@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MessageCircle, Check, XCircle, AlertCircle, Calendar } from "lucide-react";
+import { Eye, MessageCircle, Check, XCircle, AlertCircle, Calendar, QrCode } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -18,6 +18,7 @@ interface CobrancaCardProps {
     onSendWhatsApp: () => void;
     onConfirmPayment: () => void;
     onCancel: () => void;
+    onGeneratePix?: () => void;
 }
 
 export function CobrancaCard({
@@ -26,7 +27,8 @@ export function CobrancaCard({
     onViewDetails,
     onSendWhatsApp,
     onConfirmPayment,
-    onCancel
+    onCancel,
+    onGeneratePix
 }: CobrancaCardProps) {
     const { format } = useCurrency();
 
@@ -55,6 +57,7 @@ export function CobrancaCard({
         { label: "Ver Detalhes", icon: <Eye size={16} />, onClick: onViewDetails },
         ...(cobranca.status === 'pendente' || cobranca.status === 'atrasado' ? [
             { type: "separator" as const },
+            { label: "Gerar QR Code PIX", icon: <QrCode size={16} />, onClick: onGeneratePix },
             { label: "Confirmar Pagamento", icon: <Check size={16} />, onClick: onConfirmPayment, variant: "success" as const },
             { label: "Cancelar Cobrança", icon: <XCircle size={16} />, onClick: onCancel, variant: "danger" as const }
         ] : [])
