@@ -298,36 +298,34 @@ export async function cancelarAssinatura(assinaturaId: number, motivo?: string) 
     try {
         const { contaId, userId } = await getContext();
 
-        const assinatura = await prisma.assinatura.findUnique({
-            where: { id: assinaturaId },
-            include: {
-                participante: true,
-                streaming: { include: { catalogo: true } },
-                cobrancas: { where: { status: "pago" }, orderBy: { periodoFim: "desc" }, take: 1 }
-            }
-        });
+        const assinatura = await fetchSubscriptionForCancellation(assinaturaId);
 
         if (!assinatura) return { success: false, error: "Assinatura não encontrada" };
         if (assinatura.participante.contaId !== contaId) return { success: false, error: "Permissão negada" };
-        if (assinatura.status === 'cancelada') return { success: false, error: "Já cancelada" };
-        if (!['ativa', 'suspensa'].includes(assinatura.status)) return { success: false, error: "Status inválido para cancelamento" };
+
+        const validationError = validateCancellationStatus(assinatura.status);
+        if (validationError) return { success: false, error: validationError };
 
         const ultimaCobrancaPaga = assinatura.cobrancas[0];
-        const agora = new Date();
+        const cancellationDetails = determineCancellationStatus(ultimaCobrancaPaga);
 
-        let novoStatus: StatusAssinatura = StatusAssinatura.cancelada;
-        let agendado = false;
+        let refundRes = null;
+        if (cancellationDetails.novoStatus === StatusAssinatura.cancelada && ultimaCobrancaPaga?.gatewayId) {
+            // Tenta realizar o estorno direto no gateway ANTES de abrir a transação no banco (SEC-04)
+            refundRes = await refundPayment(ultimaCobrancaPaga.gatewayId);
 
-        if (ultimaCobrancaPaga && ultimaCobrancaPaga.periodoFim > agora) {
-            novoStatus = StatusAssinatura.ativa;
-            agendado = true;
+            // Se o estorno falhar no Gateway, emitimos um log (ou poderíamos lançar exceção).
+            // Optamos por prosseguir com o cancelamento local da assinatura de qualquer forma.
+            if (!refundRes.success) {
+                console.error("[CANCELAR_ASSINATURA] Falha no estorno via gateway. Motivo:", refundRes.error);
+            }
         }
 
         const updated = await prisma.$transaction(async (tx) => {
             const res = await tx.assinatura.update({
                 where: { id: assinaturaId },
                 data: {
-                    status: novoStatus,
+                    status: cancellationDetails.novoStatus,
                     dataCancelamento: new Date(),
                     motivoCancelamento: motivo || "Não informado.",
                     canceladoPorId: userId,
@@ -335,38 +333,52 @@ export async function cancelarAssinatura(assinaturaId: number, motivo?: string) 
                 }
             });
 
-            // Se for cancelamento IMEDIATO (sem período restante ou solicitado reembolso)
-            // Vamos verificar se existe uma cobrança PAGA para estornar
-            if (novoStatus === StatusAssinatura.cancelada && ultimaCobrancaPaga?.gatewayId) {
-                // Tenta realizar o estorno direto no gateway
-                const refundRes = await refundPayment(ultimaCobrancaPaga.gatewayId);
-
-                if (refundRes.success) {
-                    await tx.cobranca.update({
-                        where: { id: ultimaCobrancaPaga.id },
-                        data: {
-                            status: StatusCobranca.estornado,
-                            metadataJson: {
-                                ...(ultimaCobrancaPaga.metadataJson as any || {}),
-                                refundedAt: new Date().toISOString(),
-                                refundData: refundRes.data
-                            }
+            // Se o estorno foi realizado com sucesso fora da transação
+            if (refundRes?.success) {
+                await tx.cobranca.update({
+                    where: { id: ultimaCobrancaPaga.id },
+                    data: {
+                        status: StatusCobranca.estornado,
+                        metadataJson: {
+                            ...(ultimaCobrancaPaga.metadataJson as any || {}),
+                            refundedAt: new Date().toISOString(),
+                            refundData: refundRes.data
                         }
-                    });
-                }
+                    }
+                });
+
+                // INTEGRAÇÃO WALLET: Se estornou com sucesso sincronamente, 
+                // devemos abater da carteira do dono do grupo agora
+                const { walletService } = await import("@/services/wallet-service");
+                await walletService.processPaymentRefund(tx, {
+                    contaId: assinatura.streaming.contaId,
+                    valorPago: Number(ultimaCobrancaPaga.valor),
+                    metodoPagamento: ultimaCobrancaPaga.metodoPagamento ?? 'PIX',
+                    referenciaGateway: ultimaCobrancaPaga.gatewayId as string,
+                    cobrancaId: ultimaCobrancaPaga.id,
+                    assinaturaId: assinaturaId,
+                    participanteId: assinatura.participanteId
+                });
             }
 
             const dataFim = ultimaCobrancaPaga?.periodoFim ? ultimaCobrancaPaga.periodoFim.toLocaleDateString('pt-BR') : 'hoje';
+
+            const notificationContent = buildCancellationNotificationContent({
+                agendado: cancellationDetails.agendado,
+                nomeParticipante: assinatura.participante.nome,
+                nomeStreaming: assinatura.streaming.catalogo.nome,
+                dataFim,
+                temGatewayId: !!ultimaCobrancaPaga?.gatewayId,
+                estornoSucesso: refundRes?.success ?? false
+            });
 
             await tx.notificacao.create({
                 data: {
                     contaId,
                     tipo: "assinatura_cancelada",
                     usuarioId: assinatura.participante.userId || userId,
-                    titulo: agendado ? "Cancelamento agendado" : "Assinatura cancelada",
-                    descricao: agendado
-                        ? `O cancelamento da assinatura de ${assinatura.participante.nome} foi agendado. O acesso continua liberado até ${dataFim}.`
-                        : `Assinatura de ${assinatura.streaming.catalogo.nome} para ${assinatura.participante.nome} foi cancelada.${ultimaCobrancaPaga?.gatewayId ? " Estorno solicitado à origem." : ""}`,
+                    titulo: notificationContent.titulo,
+                    descricao: notificationContent.descricao,
                     entidadeId: assinaturaId,
                     lida: false
                 }
@@ -383,6 +395,73 @@ export async function cancelarAssinatura(assinaturaId: number, motivo?: string) 
 }
 
 // --- Helpers ---
+
+function validateCancellationStatus(status: string): string | null {
+    if (status === 'cancelada') return "Já cancelada";
+    if (!['ativa', 'suspensa'].includes(status)) return "Status inválido para cancelamento";
+    return null;
+}
+
+function determineCancellationStatus(ultimaCobrancaPaga: any): { novoStatus: StatusAssinatura, agendado: boolean } {
+    const agora = new Date();
+
+    if (ultimaCobrancaPaga && ultimaCobrancaPaga.periodoFim > agora) {
+        return {
+            novoStatus: StatusAssinatura.ativa,
+            agendado: true
+        };
+    }
+
+    return {
+        novoStatus: StatusAssinatura.cancelada,
+        agendado: false
+    };
+}
+
+async function fetchSubscriptionForCancellation(assinaturaId: number) {
+    return prisma.assinatura.findUnique({
+        where: { id: assinaturaId },
+        include: {
+            participante: true,
+            streaming: { include: { catalogo: true } },
+            cobrancas: { where: { status: "pago" }, orderBy: { periodoFim: "desc" }, take: 1 }
+        }
+    });
+}
+
+function buildCancellationNotificationContent(params: {
+    agendado: boolean;
+    nomeParticipante: string;
+    nomeStreaming: string;
+    dataFim: string;
+    temGatewayId: boolean;
+    estornoSucesso: boolean;
+}) {
+    if (params.agendado) {
+        return {
+            titulo: "Cancelamento agendado",
+            descricao: `O cancelamento da assinatura de ${params.nomeParticipante} foi agendado. O acesso continua liberado até ${params.dataFim}.`
+        };
+    }
+
+    const baseMessage = `Assinatura de ${params.nomeStreaming} para ${params.nomeParticipante} foi cancelada.`;
+
+    if (!params.temGatewayId) {
+        return {
+            titulo: "Assinatura cancelada",
+            descricao: baseMessage
+        };
+    }
+
+    const estornoMessage = params.estornoSucesso
+        ? " Estorno processado com sucesso."
+        : " Falha ao processar estorno automático.";
+
+    return {
+        titulo: "Assinatura cancelada",
+        descricao: baseMessage + estornoMessage
+    };
+}
 
 async function sendWhatsAppSafely(result: any, valor: number, dataInicio: Date) {
     try {
