@@ -40,6 +40,12 @@ export async function getSettingsData() {
                                 participantes: true,
                             },
                         },
+                        wallet: {
+                            select: {
+                                chavePixSaque: true,
+                                tipoChavePix: true
+                            }
+                        }
                     },
                 },
             },
@@ -92,7 +98,7 @@ export async function updateProfile(data: { nome: string; email: string; whatsap
     }
 }
 
-export async function updateAccount(data: { nome: string; email: string; chavePix?: string }) {
+export async function updateAccount(data: { nome: string; email: string; chavePix?: string; tipoChavePix?: string }) {
     try {
         const { contaId, userId } = await getContext();
 
@@ -125,9 +131,24 @@ export async function updateAccount(data: { nome: string; email: string; chavePi
                 data: {
                     nome: data.nome,
                     email: data.email,
-                    chavePix: data.chavePix,
+                    chavePix: data.chavePix, // Mantendo por retrocompatibilidade temporariamente
                 },
             });
+
+            if (data.tipoChavePix) {
+                await tx.wallet.upsert({
+                    where: { contaId },
+                    create: {
+                        contaId,
+                        chavePixSaque: data.chavePix,
+                        tipoChavePix: data.tipoChavePix as any
+                    },
+                    update: {
+                        chavePixSaque: data.chavePix,
+                        tipoChavePix: data.tipoChavePix as any
+                    }
+                });
+            }
 
             // Create notification inside transaction (Broadcast to Admins)
             await tx.notificacao.create({

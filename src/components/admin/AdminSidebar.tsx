@@ -11,6 +11,8 @@ import {
     User,
     Bell,
     MessageCircleQuestion,
+    Wallet,
+    Scale
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -21,6 +23,9 @@ const menuItems = [
     { icon: Play, label: "Catálogo", href: "/admin/catalogo" },
     { icon: Settings, label: "Parâmetros", href: "/admin/parametros" },
     { icon: User, label: "Usuários", href: "/admin/usuarios" },
+    { icon: Wallet, label: "Saques", href: "/admin/saques" },
+    { icon: Wallet, label: "Saques Globais", href: "/saques" },
+    { icon: Scale, label: "Conciliação", href: "/admin/conciliacao" },
     { icon: MessageCircleQuestion, label: "Reports", href: "/admin/reports" },
 ];
 

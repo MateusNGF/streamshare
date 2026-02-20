@@ -171,6 +171,7 @@ model Conta {
   gatewaySubscriptionId     String? @unique
   gatewaySubscriptionStatus String?
   gatewayCancelAtPeriodEnd  Boolean @default(false)
+  wallet                    Wallet?
 
   @@map("conta")
 }
@@ -500,4 +501,78 @@ model Notificacao {
   @@index([contaId, createdAt])
   @@index([usuarioId, createdAt])
   @@map("notificacao")
+}
+
+enum TransactionType {
+  CREDITO_COTA // Entrada: pagamento de participante
+  DEBITO_TAXA // Saída: taxa StreamShare
+  SAQUE // Saída: saque solicitado pelo Admin
+  ESTORNO // Entrada: estorno de saque rejeitado
+  CHARGEBACK // Saída: chargeback do gateway
+}
+
+enum TransactionStatus {
+  PENDENTE
+  CONCLUIDO
+  FALHA
+  CANCELADO
+}
+
+enum TipoChavePix {
+  CPF
+  EMAIL
+  TELEFONE
+  ALEATORIA
+}
+
+model Wallet {
+  id              Int           @id @default(autoincrement())
+  contaId         Int           @unique
+  conta           Conta         @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  saldoDisponivel Decimal       @default(0.00) @db.Decimal(10, 2)
+  saldoPendente   Decimal       @default(0.00) @db.Decimal(10, 2)
+  chavePixSaque   String?
+  tipoChavePix    TipoChavePix?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  transacoes WalletTransaction[]
+  saques     Saque[]
+
+  @@map("wallet")
+}
+
+model WalletTransaction {
+  id                Int               @id @default(autoincrement())
+  walletId          Int
+  wallet            Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  valor             Decimal           @db.Decimal(10, 2)
+  tipo              TransactionType
+  status            TransactionStatus @default(CONCLUIDO)
+  descricao         String
+  referenciaGateway String?
+  metadataJson      Json?
+  createdAt         DateTime          @default(now())
+
+  @@index([walletId, createdAt])
+  @@map("wallet_transaction")
+}
+
+model Saque {
+  id                Int               @id @default(autoincrement())
+  walletId          Int
+  wallet            Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  valor             Decimal           @db.Decimal(10, 2)
+  status            TransactionStatus @default(PENDENTE)
+  chavePixDestino   String
+  tipoChaveDestino  TipoChavePix
+  motivoRejeicao    String?
+  transferenciaMpId String?
+  comprovanteUrl    String?
+  aprovadoPorId     Int?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status, createdAt])
+  @@map("saque")
 }

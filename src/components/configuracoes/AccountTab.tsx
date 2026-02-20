@@ -13,6 +13,7 @@ interface AccountTabProps {
         nome: string;
         email: string;
         chavePix: string;
+        tipoChavePix: string;
     };
     setAccountData: (data: any) => void;
     onUpdateAccount: (e: React.FormEvent) => void;
@@ -78,11 +79,31 @@ export function AccountTab({
                                 placeholder="CPF, Email, Telefone ou Aleatória"
                                 disabled={loadingAccount}
                             />
-                            <div className="flex items-end pb-1">
-                                <p className="text-xs text-gray-400 italic font-medium">
-                                    * Esta chave será exibida para os participantes nos lembretes de pagamento.
-                                </p>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
+                                    Tipo de Chave PIX
+                                </label>
+                                <Select
+                                    value={accountData.tipoChavePix || ""}
+                                    onValueChange={(val) => setAccountData({ ...accountData, tipoChavePix: val })}
+                                    disabled={loadingAccount}
+                                >
+                                    <SelectTrigger className="w-full h-12 bg-white border border-gray-200 rounded-xl px-4 flex justify-between items-center focus:ring-2 focus:ring-primary/20">
+                                        <SelectValue placeholder="Selecione o tipo" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white border rounded-lg shadow-lg">
+                                        <SelectItem value="CPF">CPF/CNPJ</SelectItem>
+                                        <SelectItem value="EMAIL">E-mail</SelectItem>
+                                        <SelectItem value="TELEFONE">Telefone</SelectItem>
+                                        <SelectItem value="ALEATORIA">Chave Aleatória</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
+                        </div>
+                        <div className="flex items-end pb-1">
+                            <p className="text-xs text-gray-400 italic font-medium">
+                                * Esta chave será usada tanto para saques do saldo quanto exibida para os participantes.
+                            </p>
                         </div>
 
                         <div className="pt-4 flex justify-start">

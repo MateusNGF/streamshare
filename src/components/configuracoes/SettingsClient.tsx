@@ -67,7 +67,8 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [accountData, setAccountData] = useState({
         nome: initialData.conta?.nome || "",
         email: initialData.conta?.email || "",
-        chavePix: initialData.conta?.chavePix || "",
+        chavePix: initialData.conta?.wallet?.chavePixSaque || initialData.conta?.chavePix || "",
+        tipoChavePix: initialData.conta?.wallet?.tipoChavePix || "",
     });
 
     const [currency, setCurrency] = useState<CurrencyCode>(
@@ -82,7 +83,8 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const hasAccountChanges =
         accountData.nome !== (initialData.conta?.nome || "") ||
         accountData.email !== (initialData.conta?.email || "") ||
-        accountData.chavePix !== (initialData.conta?.chavePix || "");
+        accountData.chavePix !== (initialData.conta?.wallet?.chavePixSaque || initialData.conta?.chavePix || "") ||
+        accountData.tipoChavePix !== (initialData.conta?.wallet?.tipoChavePix || "");
 
     // Validação de email
     const validateEmail = (email: string): string | null => {

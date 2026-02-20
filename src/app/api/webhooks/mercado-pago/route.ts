@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { validateMPSignature, mpPayment, mpPreApproval } from "@/lib/mercado-pago";
 import { billingService } from "@/services/billing-service";
-import { StatusCobranca, PlanoConta } from "@prisma/client";
+import { StatusCobranca, MetodoPagamento, Conta, PlanoConta } from "@prisma/client";
+import { walletService } from "@/services/wallet-service";
 
 export async function POST(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -84,6 +85,17 @@ export async function POST(req: Request) {
                                 cobranca,
                                 contaId: assinatura.streaming.contaId,
                                 agora
+                            });
+
+                            // INTEGRAÇÃO WALLET: Creditar o dono do grupo via Service
+                            await walletService.processarCreditoPagamento(tx, {
+                                contaId: assinatura.streaming.contaId,
+                                valorPago: Number(cobranca.valor),
+                                metodoPagamento: cobranca.metodoPagamento ?? 'PIX',
+                                referenciaGateway: dataId,
+                                cobrancaId: cobranca.id,
+                                assinaturaId: assinatura.id,
+                                participanteId: assinatura.participanteId
                             });
                         }
                     });
