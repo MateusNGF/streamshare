@@ -4,6 +4,7 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { CheckCircle, ShieldCheck } from "lucide-react";
 import { redirect, notFound } from "next/navigation";
 import { AcceptInviteButton } from "./AcceptInviteButton";
+import { JoinStreamingForm } from "@/components/public/JoinStreamingForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -48,31 +49,53 @@ export default async function ConvitePage({
                             {invite.streamingId ? " assinar o serviço de streaming a seguir:" : " participar da conta deles no StreamShare."}
                         </p>
 
-                        {invite.streaming && (
-                            <div className="bg-gray-50/50 rounded-3xl p-6 mb-8 border border-gray-100 flex items-center gap-4 text-left group hover:bg-white hover:shadow-lg transition-all">
-                                <StreamingLogo
-                                    name={invite.streaming.catalogo.nome}
-                                    color={invite.streaming.catalogo.corPrimaria}
-                                    iconeUrl={invite.streaming.catalogo.iconeUrl}
-                                    size="lg"
-                                    className="shadow-md"
-                                />
-                                <div>
-                                    <h3 className="font-bold text-lg text-gray-900 leading-tight">
-                                        {invite.streaming.apelido || invite.streaming.catalogo.nome}
-                                    </h3>
-                                    <p className="text-sm text-gray-500">Vaga pronta disponível</p>
+                        {invite.streaming ? (
+                            <div className="text-left mt-8">
+                                <div className="bg-gray-50/50 rounded-3xl p-6 mb-6 border border-gray-100 flex items-center gap-4 group">
+                                    <StreamingLogo
+                                        name={invite.streaming.catalogo.nome}
+                                        color={invite.streaming.catalogo.corPrimaria}
+                                        iconeUrl={invite.streaming.catalogo.iconeUrl}
+                                        size="lg"
+                                        className="shadow-md"
+                                    />
+                                    <div>
+                                        <h3 className="font-bold text-lg text-gray-900 leading-tight">
+                                            {invite.streaming.apelido || invite.streaming.catalogo.nome}
+                                        </h3>
+                                        <p className="text-sm text-gray-500">
+                                            {Number(invite.streaming.valorIntegral) / invite.streaming.limiteParticipantes > 0 ? "Requer pagamento" : "Vaga pronta disponível"}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4">
+                                    <JoinStreamingForm
+                                        token={invite.streaming.publicToken} // Important: We pass the publicToken to reuse the form logic that expects a public token for now, or adapt it.
+                                        streamingName={invite.streaming.apelido || invite.streaming.catalogo.nome}
+                                        valorPorVaga={Number(invite.streaming.valorIntegral) / invite.streaming.limiteParticipantes}
+                                        enabledFrequencies={invite.streaming.frequenciasHabilitadas}
+                                        loggedUser={{
+                                            userId: user.userId,
+                                            nome: user.nome,
+                                            email: user.email,
+                                            whatsappNumero: user.whatsapp || "",
+                                            cpf: "" // Can't fetch from user directly, JoinStreamingForm will ask or get from Participante Table internally if adapted
+                                        }}
+                                        vagasRestantes={1} // Assuming 1 slot is guaranteed by the invite
+                                        isPrivateInvite={true}
+                                        privateInviteToken={params.token}
+                                    />
                                 </div>
                             </div>
+                        ) : (
+                            <div className="space-y-4 text-center mt-8">
+                                <AcceptInviteButton token={params.token} />
+
+                                <p className="text-xs text-gray-400 font-medium px-4">
+                                    Ao aceitar, você concorda com os <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e que seus dados de perfil sejam compartilhados com o host.
+                                </p>
+                            </div>
                         )}
-
-                        <div className="space-y-4">
-                            <AcceptInviteButton token={params.token} />
-
-                            <p className="text-xs text-gray-400 font-medium px-4">
-                                Ao aceitar, você concorda com os <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e que seus dados de perfil sejam compartilhados com o host.
-                            </p>
-                        </div>
                     </div>
                 </div>
 

@@ -28,6 +28,8 @@ interface JoinStreamingFormProps {
         cpf: string;
     } | null;
     vagasRestantes?: number;
+    isPrivateInvite?: boolean;
+    privateInviteToken?: string;
 }
 
 const INTERVALOS_MESES: Record<string, number> = {
@@ -44,7 +46,7 @@ const frequencyLabels: Record<FrequenciaPagamento, string> = {
     anual: "Anual",
 };
 
-export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledFrequencies, loggedUser, vagasRestantes }: JoinStreamingFormProps) {
+export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledFrequencies, loggedUser, vagasRestantes, isPrivateInvite, privateInviteToken }: JoinStreamingFormProps) {
     const router = useRouter();
     const { success, error: toastError } = useToast();
     const { format } = useCurrency();
@@ -75,8 +77,10 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
 
         try {
             const result = await publicSubscribe({
-                token,
+                token, // Public token of the streaming (used for general validation if needed)
                 userId: loggedUser?.userId,
+                isPrivateInvite,
+                privateInviteToken,
                 ...formData
             });
 
