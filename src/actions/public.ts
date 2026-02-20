@@ -18,6 +18,8 @@ export async function publicSubscribe(data: {
     frequencia?: FrequenciaPagamento;
     quantidade?: number;
     metodoPagamento?: MetodoPagamento;
+    isPrivateInvite?: boolean;
+    privateInviteToken?: string;
 }) {
     try {
         // 1. Validar Streaming e Token
@@ -147,8 +149,8 @@ export async function publicSubscribe(data: {
                 data: {
                     contaId: streaming.contaId,
                     tipo: "assinatura_criada",
-                    titulo: "Nova Assinatura Pública",
-                    descricao: `${data.nome} se inscreveu via link público no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
+                    titulo: data.isPrivateInvite ? "Nova Assinatura Privada" : "Nova Assinatura Pública",
+                    descricao: `${data.nome} se inscreveu ${data.isPrivateInvite ? "por convite" : "via link público"} no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
                     metadata: {
                         participanteId: participante.id,
                         streamingId: streaming.id,
@@ -157,6 +159,19 @@ export async function publicSubscribe(data: {
                     }
                 }
             });
+
+            // 8. Se for um convite privado, marca como aceito
+            if (data.isPrivateInvite && data.privateInviteToken && data.userId) {
+                const convite = await tx.convite.findUnique({
+                    where: { token: data.privateInviteToken }
+                });
+                if (convite) {
+                    await tx.convite.update({
+                        where: { id: convite.id },
+                        data: { status: "aceito", usuarioId: data.userId }
+                    });
+                }
+            }
 
             return { success: true, checkoutData };
         });
