@@ -167,7 +167,7 @@ export default function AssinaturasClient({
                 </KPIGridItem>
             </KPIGrid>
 
-            <div className="space-y-10">
+            <div className="space-y-6 mt-4">
                 <GenericFilter
                     filters={filterConfig}
                     values={{
