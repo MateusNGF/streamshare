@@ -38,59 +38,94 @@ export async function POST(req: Request) {
         if (type === 'payment' || type === 'payment.updated' || type === 'payment.created') {
             const payment = await mpPayment.get({ id: dataId });
 
-            // B7 FIX: Log non-approved statuses for observability
-            if (payment.status !== 'approved') {
-                console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} status: ${payment.status} — skipping`);
-                return new Response(`Payment status: ${payment.status}`, { status: 200 });
-            }
-
             const cobranca = await prisma.cobranca.findFirst({
                 where: { gatewayId: dataId }
             });
 
             if (cobranca) {
-                // B9 FIX: Idempotency — skip if already paid to prevent double-processing on re-delivery
-                if (cobranca.status === StatusCobranca.pago) {
-                    console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} already processed — idempotent skip`);
-                    return new Response(null, { status: 200 });
-                }
-
-                await prisma.$transaction(async (tx) => {
-                    await tx.cobranca.update({
-                        where: { id: cobranca.id },
-                        data: {
-                            status: StatusCobranca.pago,
-                            dataPagamento: agora,
-                        }
-                    });
-
-                    const assinatura = await tx.assinatura.findUnique({
-                        where: { id: cobranca.assinaturaId },
-                        include: {
-                            participante: true,
-                            streaming: { select: { contaId: true } }
-                        }
-                    });
-
-                    await tx.notificacao.create({
-                        data: {
-                            contaId: assinatura?.streaming.contaId || 0,
-                            tipo: 'cobranca_confirmada',
-                            titulo: 'Pagamento Confirmado',
-                            descricao: `O pagamento da cobrança #${cobranca.id} foi confirmado via MercadoPago.`,
-                            metadata: { cobrancaId: cobranca.id, gatewayId: dataId, externalReference: payment.external_reference }
-                        }
-                    });
-
-                    if (assinatura) {
-                        await billingService.avaliarAtivacaoAposPagamento(tx, {
-                            assinatura,
-                            cobranca,
-                            contaId: assinatura.streaming.contaId,
-                            agora
-                        });
+                // CASO A: APROVADO
+                if (payment.status === 'approved') {
+                    // B9 FIX: Idempotency — skip if already paid to prevent double-processing on re-delivery
+                    if (cobranca.status === StatusCobranca.pago) {
+                        console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} already processed — idempotent skip`);
+                        return new Response(null, { status: 200 });
                     }
-                });
+
+                    await prisma.$transaction(async (tx) => {
+                        await tx.cobranca.update({
+                            where: { id: cobranca.id },
+                            data: {
+                                status: StatusCobranca.pago,
+                                dataPagamento: agora,
+                            }
+                        });
+
+                        const assinatura = await tx.assinatura.findUnique({
+                            where: { id: cobranca.assinaturaId },
+                            include: {
+                                participante: true,
+                                streaming: { select: { contaId: true } }
+                            }
+                        });
+
+                        await tx.notificacao.create({
+                            data: {
+                                contaId: assinatura?.streaming.contaId || 0,
+                                tipo: 'cobranca_confirmada',
+                                titulo: 'Pagamento Confirmado',
+                                descricao: `O pagamento da cobrança #${cobranca.id} foi confirmado via MercadoPago.`,
+                                metadata: { cobrancaId: cobranca.id, gatewayId: dataId, externalReference: payment.external_reference }
+                            }
+                        });
+
+                        if (assinatura) {
+                            await billingService.avaliarAtivacaoAposPagamento(tx, {
+                                assinatura,
+                                cobranca,
+                                contaId: assinatura.streaming.contaId,
+                                agora
+                            });
+                        }
+                    });
+                }
+                // CASO B: ESTORNADO (REFUNDED)
+                else if (payment.status === 'refunded') {
+                    if (cobranca.status === StatusCobranca.estornado) {
+                        console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} already refunded — idempotent skip`);
+                        return new Response(null, { status: 200 });
+                    }
+
+                    await prisma.$transaction(async (tx) => {
+                        await tx.cobranca.update({
+                            where: { id: cobranca.id },
+                            data: {
+                                status: StatusCobranca.estornado,
+                            }
+                        });
+
+                        const assinatura = await tx.assinatura.findUnique({
+                            where: { id: cobranca.assinaturaId },
+                            include: {
+                                streaming: { select: { contaId: true } }
+                            }
+                        });
+
+                        await tx.notificacao.create({
+                            data: {
+                                contaId: assinatura?.streaming.contaId || 0,
+                                tipo: 'cobranca_cancelada',
+                                titulo: 'Pagamento Estornado',
+                                descricao: `O pagamento da cobrança #${cobranca.id} foi estornado via MercadoPago.`,
+                                metadata: { cobrancaId: cobranca.id, gatewayId: dataId }
+                            }
+                        });
+                    });
+                }
+                // OUTROS STATUS
+                else {
+                    console.info(`[MERCADOPAGO_WEBHOOK] Payment ${dataId} status: ${payment.status} — skipping`);
+                    return new Response(`Payment status: ${payment.status}`, { status: 200 });
+                }
             }
         }
 

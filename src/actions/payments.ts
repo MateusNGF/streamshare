@@ -133,13 +133,7 @@ export async function refundPaymentAction(paymentId: string) {
         const result = await refundPayment(paymentId);
 
         if (result.success) {
-            // Atualizar status da cobrança no banco
-            await prisma.cobranca.updateMany({
-                where: { gatewayId: paymentId },
-                data: { status: "estornado" }
-            });
-
-            return { success: true, message: "Estorno realizado com sucesso pelo MercadoPago." };
+            return { success: true, message: "Estorno processado pelo MercadoPago. O status será atualizado em instantes." };
         }
 
         return { success: false, error: result.error || "Erro ao processar estorno no gateway." };
