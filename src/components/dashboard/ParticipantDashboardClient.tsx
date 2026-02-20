@@ -40,7 +40,7 @@ export function ParticipantDashboardClient({ stats, subscriptions, error }: Part
     }
 
     return (
-        <div className="space-y-12 animate-slide-in-from-bottom pb-10">
+        <div className="space-y-8 animate-slide-in-from-bottom">
             {/* Targeted actions for participants */}
             <ParticipantQuickActions
                 onOpenSupport={() => setIsSupportModalOpen(true)}

@@ -8,8 +8,10 @@ import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { useCobrancasActions } from "@/hooks/useCobrancasActions";
 import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
+import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
 import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
@@ -17,7 +19,7 @@ import { UpgradeFeatureOverlay } from "@/components/ui/UpgradeFeatureOverlay";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface CobrancasClientProps {
     kpis: {
@@ -36,6 +38,7 @@ interface CobrancasClientProps {
 export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings, plano, error }: CobrancasClientProps) {
     const router = useRouter();
     useActionError(error);
+    const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
@@ -68,7 +71,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 description="Controle de pagamentos e envios de cobrança."
             />
 
-            <KPIGrid cols={3} className="mb-10">
+            <KPIGrid cols={3} >
                 <KPIGridItem>
                     <KPIFinanceiroCard
                         titulo="Total a Receber"
@@ -176,8 +179,14 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 />
             </div>
 
-            <div className="space-y-6 relative">
-                <SectionHeader title="Listagem de Cobranças" className="mb-0" />
+            <div className="space-y-4 relative mt-2">
+                <SectionHeader
+                    title="Listagem de Cobranças"
+                    className="mb-0"
+                    rightElement={
+                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                    }
+                />
 
                 {!whatsappCheck.enabled && (
                     <UpgradeBanner
@@ -187,18 +196,39 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                     />
                 )}
 
-                <CobrancasTable
-                    cobrancas={filteredCobrancas}
-                    onViewDetails={(id) => {
-                        setSelectedCobrancaId(id);
-                        setDetailsModalOpen(true);
-                    }}
-                    onConfirmPayment={handleConfirmarPagamento}
-                    onSendWhatsApp={handleEnviarWhatsApp}
-                    onCancel={handleCancelarCobranca}
-                    searchTerm={searchTerm}
-                    statusFilter={statusFilter}
-                />
+                {viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 gap-4">
+                        {filteredCobrancas.map((cobranca) => (
+                            <CobrancaCard
+                                key={cobranca.id}
+                                cobranca={cobranca}
+                                isOverdue={cobranca.status === 'atrasado'}
+                                formatDate={(date) => new Date(date).toLocaleDateString()}
+                                formatPeriod={(start, end) => ""}
+                                onViewDetails={() => {
+                                    setSelectedCobrancaId(cobranca.id);
+                                    setDetailsModalOpen(true);
+                                }}
+                                onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
+                                onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
+                                onCancel={() => handleCancelarCobranca(cobranca.id)}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <CobrancasTable
+                        cobrancas={filteredCobrancas}
+                        onViewDetails={(id) => {
+                            setSelectedCobrancaId(id);
+                            setDetailsModalOpen(true);
+                        }}
+                        onConfirmPayment={handleConfirmarPagamento}
+                        onSendWhatsApp={handleEnviarWhatsApp}
+                        onCancel={handleCancelarCobranca}
+                        searchTerm={searchTerm}
+                        statusFilter={statusFilter}
+                    />
+                )}
             </div>
 
             <CobrancasModals

@@ -79,31 +79,30 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
 
 
             {/* Filters & View Toggle */}
-            <div className="py-5">
+            <div className="py-2">
                 <StreamingFilters
                     streamings={streamings}
                     filters={filters}
                     onFilterChange={(key, value) => setFilters({ ...filters, [key]: value })}
                     onClear={() => setFilters({ searchTerm: "", catalogoId: undefined, onlyFull: false })}
                 />
-
-                <div className="flex justify-end">
-                    <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
-                </div>
             </div>
 
             {plano !== PlanoConta.business && (
-                <UpgradeBanner
-                    variant="gold"
-                    size="normal"
-                    title="Catálogo Business Ilimitado"
-                    description="Crie quantos serviços desejar e habilite o faturamento automático por streaming."
-                    className="mb-10"
-                />
+                <div className="py-4">
+                    <UpgradeBanner
+                        variant="gold"
+                        size="normal"
+                        title="Catálogo Business Ilimitado"
+                        description="Crie quantos serviços desejar e habilite o faturamento automático por streaming."
+                        className=""
+                    />
+                </div>
             )}
 
             <SectionHeader
                 title="Lista de catálogos"
+                rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
             />
 
             {/* List/Grid */}

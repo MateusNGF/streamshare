@@ -75,14 +75,12 @@ export function UsersClient({ users, metadata }: UsersClientProps) {
                 description="Visualize e gerencie as permissões dos usuários do sistema"
             />
 
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 md:mb-8">
-                <GenericFilter
-                    filters={filters}
-                    values={{ q: searchParams.get("q")?.toString() || "" }}
-                    onChange={handleFilterChange}
-                    className="w-full"
-                />
-            </div>
+            <GenericFilter
+                filters={filters}
+                values={{ q: searchParams.get("q")?.toString() || "" }}
+                onChange={handleFilterChange}
+                className="w-full mb-1"
+            />
 
             <SectionHeader
                 title="Lista de Usuários"
@@ -100,7 +98,7 @@ export function UsersClient({ users, metadata }: UsersClientProps) {
                     }
                 />
             ) : (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-gray-50/50">

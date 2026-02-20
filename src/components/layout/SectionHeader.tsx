@@ -11,7 +11,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, description, rightElement, className }: SectionHeaderProps) {
     return (
-        <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6", className)}>
+        <div className={cn("flex flex-row py-3  sm:items-center justify-between gap-4 mb-6", className)}>
             <div className="flex items-start gap-3">
                 <div className="w-1.5 h-7 bg-primary rounded-full shrink-0" />
                 <div>
@@ -20,7 +20,7 @@ export function SectionHeader({ title, description, rightElement, className }: S
                 </div>
             </div>
             {rightElement && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     {rightElement}
                 </div>
             )}
