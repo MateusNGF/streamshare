@@ -205,6 +205,7 @@ model Usuario {
   convitesFeitos        Convite[]      @relation("Convidou")
   convitesRecebidos     Convite[]      @relation("Convidado")
   reports               Suporte[]
+  saquesAprovados       Saque[]        @relation("SaqueAprovador")
 
   @@map("usuario")
 }
@@ -509,6 +510,7 @@ enum TransactionType {
   SAQUE // Saída: saque solicitado pelo Admin
   ESTORNO // Entrada: estorno de saque rejeitado
   CHARGEBACK // Saída: chargeback do gateway
+  CLEARING // Lançamento de consolidação (clearing)
 }
 
 enum TransactionStatus {
@@ -572,6 +574,7 @@ model Saque {
   transferenciaMpId String?
   comprovanteUrl    String?
   aprovadoPorId     Int?
+  aprovador         Usuario?          @relation("SaqueAprovador", fields: [aprovadoPorId], references: [id])
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 

@@ -4,10 +4,11 @@ import { Building2, DollarSign } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
+import { CurrencyCode } from "@/types/currency.types";
 import { PlanCardSettings } from "./PlanCardSettings";
 import { ToastVariant } from "@/components/ui/Toast";
 import { applyMask } from "@/lib/masks";
+import { CurrencySelect } from "@/components/ui/CurrencySelect";
 
 interface AccountTabProps {
     accountData: {
@@ -150,37 +151,12 @@ export function AccountTab({
                     />
                     <div className="space-y-6 mt-8">
                         <div className="max-w-md">
-                            <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
-                                Moeda Padrão do Sistema
-                            </label>
-                            <Select value={currency} onValueChange={(value) => onUpdateCurrency(value as CurrencyCode)} disabled={loadingCurrency}>
-                                <SelectTrigger className="w-full h-16 rounded-2xl border-gray-100 bg-white hover:border-primary transition-all shadow-sm px-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
-                                            {SUPPORTED_CURRENCIES[currency].symbol}
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-bold text-gray-900">{SUPPORTED_CURRENCIES[currency].name}</p>
-                                            <p className="text-xs text-gray-400 font-medium">{SUPPORTED_CURRENCIES[currency].code}</p>
-                                        </div>
-                                    </div>
-                                </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-gray-100 shadow-2xl p-2">
-                                    {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
-                                        <SelectItem key={code} value={code} className="rounded-xl py-3 focus:bg-primary/5">
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-xl w-8 text-center">{info.symbol}</span>
-                                                <div className="text-left">
-                                                    <span className="block text-sm font-bold text-gray-900">
-                                                        {info.name}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500 font-medium">{info.code}</span>
-                                                </div>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <CurrencySelect
+                                label="Moeda Padrão do Sistema"
+                                value={currency}
+                                onValueChange={(value) => onUpdateCurrency(value as CurrencyCode)}
+                                disabled={loadingCurrency}
+                            />
                         </div>
                         <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10 max-w-2xl">
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

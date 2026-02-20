@@ -203,6 +203,18 @@ export async function confirmarPagamento(
                 agora
             });
 
+            // SEC-08: Creditar Wallet no momento do pagamento manual
+            const { walletService } = await import("@/services/wallet-service");
+            await walletService.processPaymentCredit(tx, {
+                contaId: result.assinatura.participante.contaId,
+                valorPago: result.valor.toNumber(),
+                metodoPagamento: 'PIX', // Manual é considerado PIX para ficar disponível imediatamente
+                referenciaGateway: `MANUAL_${result.id}_${agora.getTime()}`,
+                cobrancaId: result.id,
+                assinaturaId: result.assinaturaId,
+                participanteId: result.assinatura.participanteId
+            });
+
             // Create notification inside transaction for the payment itself (Broadcast to Admins)
             await tx.notificacao.create({
                 data: {

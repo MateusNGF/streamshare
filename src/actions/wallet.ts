@@ -13,6 +13,7 @@ export async function getWalletData() {
             where: { contaId },
             include: {
                 transacoes: {
+                    where: { valor: { not: 0 } },
                     orderBy: { createdAt: "desc" },
                     take: 50
                 },

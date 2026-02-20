@@ -44,6 +44,7 @@ export function useParametrosActions(initialData: any[]) {
         baseUrl: getParam("app.base_url"),
         timezone: getParam("app.timezone"),
         currency: getParam("app.currency"),
+        streamshareFee: getParam("TAXA_PLATAFORMA_PERCENTUAL") || process.env.NEXT_PUBLIC_TAXA_PLATAFORMA_PERCENTUAL || "5",
     });
 
     const togglePasswordVisibility = (field: string) => {
@@ -81,7 +82,8 @@ export function useParametrosActions(initialData: any[]) {
                     { chave: "app.name", valor: generalConfig.appName, tipo: "string" },
                     { chave: "app.base_url", valor: generalConfig.baseUrl, tipo: "string" },
                     { chave: "app.timezone", valor: generalConfig.timezone, tipo: "string" },
-                    { chave: "app.currency", valor: generalConfig.currency, tipo: "string" }
+                    { chave: "app.currency", valor: generalConfig.currency, tipo: "string" },
+                    { chave: "TAXA_PLATAFORMA_PERCENTUAL", valor: generalConfig.streamshareFee, tipo: "string" }
                 );
             }
 

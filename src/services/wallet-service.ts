@@ -19,6 +19,15 @@ export const walletService = {
     },
 
     /**
+     * Gets the platform fee percentage as a Decimal.
+     * Centralized to keep DRY (SOLID).
+     */
+    getPlatformFeePercentage: async (tx: any): Promise<Decimal> => {
+        const parametroTaxa = await tx.parametro.findUnique({ where: { chave: 'TAXA_PLATAFORMA_PERCENTUAL' } });
+        return new Decimal(parametroTaxa ?? '2').div(100);
+    },
+
+    /**
      * Processes a received payment, crediting the admin and debiting the platform fee.
      * ACID: Must be run inside a transaction confirming the charge.
      */
@@ -45,7 +54,7 @@ export const walletService = {
             return { skipped: true };
         }
 
-        const feePercentage = new Decimal(process.env.TAXA_PLATAFORMA_PERCENTUAL ?? '5').div(100);
+        const feePercentage = await walletService.getPlatformFeePercentage(tx);
         const amountPaidDec = new Decimal(valorPago);
 
         const feeAmount = amountPaidDec.mul(feePercentage).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
@@ -115,7 +124,7 @@ export const walletService = {
             return { skipped: true };
         }
 
-        const feePercentage = new Decimal(process.env.TAXA_PLATAFORMA_PERCENTUAL ?? '5').div(100);
+        const feePercentage = await walletService.getPlatformFeePercentage(tx);
         const amountPaidDec = new Decimal(valorPago);
 
         const feeAmount = amountPaidDec.mul(feePercentage).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
@@ -169,10 +178,14 @@ export const walletService = {
         const { walletId, valor, chavePixDestino, tipoChaveDestino } = params;
 
         // 1. Lock funds
-        await tx.wallet.update({
-            where: { id: walletId },
+        const result = await tx.wallet.updateMany({
+            where: { id: walletId, saldoDisponivel: { gte: valor } },
             data: { saldoDisponivel: { decrement: valor } }
         });
+
+        if (result.count === 0) {
+            throw new Error("Saldo insuficiente ou carteira não encontrada.");
+        }
 
         // 2. Create Saque record
         const withdrawal = await tx.saque.create({
@@ -317,20 +330,22 @@ export const walletService = {
             });
 
             // Create a log entry for the clearing event
-            await tx.walletTransaction.create({
-                data: {
-                    walletId: walletId,
-                    valor: 0,
-                    tipo: 'CREDITO_COTA',
-                    descricao: `Liberação de saldo pendente consolidada (R$ ${totalAmount.toFixed(2)})`,
-                    isLiberado: true,
-                    metadataJson: {
-                        clearingDate: now,
-                        totalCleared: totalAmount,
-                        count: ids.length
+            if (totalAmount.greaterThan(0)) {
+                await tx.walletTransaction.create({
+                    data: {
+                        walletId: walletId,
+                        valor: 0, // mantendo 0 para constar no extrato como evento informativo, se desejado
+                        tipo: 'CLEARING',
+                        descricao: `Liberação de saldo pendente consolidada (R$ ${totalAmount.toFixed(2)})`,
+                        isLiberado: true,
+                        metadataJson: {
+                            clearingDate: now,
+                            totalCleared: totalAmount,
+                            count: ids.length
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         return { processedCount: transactionsToClear.length, walletsAffected: resultsByWallet.size };

@@ -967,6 +967,73 @@ export default function ParticipantesLoading() {
 
 ---
 
+## 💰 Componentes Financeiros e Numéricos
+
+### CurrencyInput
+
+**Localização**: `src/components/ui/CurrencyInput.tsx`
+
+**Propósito**: Input especializado para valores monetários com formatação automática e detecção da moeda local via hook `useCurrency`.
+
+**Características**:
+- Adiciona os símbolos de moeda dinamicamente (R$, $, etc).
+- Faz formatação automática de milhar e decimal conforme os padrões da moeda preferida pelo usuário `(Ex: BRL -> 1.000,00)`.
+- Suporta integração direta com React Hook Form.
+
+**Uso**:
+```tsx
+<CurrencyInput
+    label="Valor"
+    value={valor}
+    onValueChange={(val) => setValor(val)}
+/>
+```
+
+---
+
+### PercentageInput
+
+**Localização**: `src/components/ui/PercentageInput.tsx`
+
+**Propósito**: Input especializado para representação precisa de porcentagens.
+
+**Características**:
+- Impede valores fora do range 0% - 100%.
+- Acrescenta sufixo ' %' automaticamente `(Ex: 5,00 %)`.
+- Formatação no padrão Brasileiro, forçando milhar `.` e decimal `,`.
+
+**Uso**:
+```tsx
+<PercentageInput
+    label="Taxa da Plataforma"
+    value={taxa}
+    onValueChange={(val) => setTaxa(val)}
+/>
+```
+
+---
+
+### CurrencySelect
+
+**Localização**: `src/components/ui/CurrencySelect.tsx`
+
+**Propósito**: Componente de Select padronizado para seleção rápida das moedas suportadas pelo sistema (`SUPPORTED_CURRENCIES`).
+
+**Características**:
+- Traz as bandeiras/símbolos pré-configuradas.
+- Reutiliza a engine do ShadCN/Select.
+
+**Uso**:
+```tsx
+<CurrencySelect
+    label="Qual a moeda da sua conta?"
+    value={conta.currency}
+    onValueChange={(val) => setCurrency(val)}
+/>
+```
+
+---
+
 ## 📚 Documentação Completa
 
 Para guia detalhado sobre loading states, padrões de implementação e exemplos completos, consulte:
