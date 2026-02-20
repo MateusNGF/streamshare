@@ -11,11 +11,14 @@ import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
 import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
 import { AssinaturasTable } from "@/components/assinaturas/AssinaturasTable";
+import { AssinaturaCard } from "@/components/assinaturas/AssinaturaCard";
 import { AssinaturasModals } from "@/components/assinaturas/AssinaturasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
+import { useState } from "react";
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
@@ -40,6 +43,7 @@ export default function AssinaturasClient({
     error
 }: AssinaturasClientProps) {
     useActionError(error);
+    const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
         isMultipleModalOpen, setIsMultipleModalOpen,
         cancelModalOpen, setCancelModalOpen,
@@ -121,7 +125,7 @@ export default function AssinaturasClient({
                 }
             />
 
-            <KPIGrid cols={4} className="mb-10">
+            <KPIGrid cols={4} className="mb-4">
                 <KPIGridItem>
                     <KPIFinanceiroCard
                         titulo="Receita Estimada"
@@ -163,7 +167,7 @@ export default function AssinaturasClient({
                 </KPIGridItem>
             </KPIGrid>
 
-            <div className="space-y-10">
+            <div className="space-y-6 mt-4">
                 <GenericFilter
                     filters={filterConfig}
                     values={{
@@ -178,8 +182,14 @@ export default function AssinaturasClient({
                     onClear={handleClearFilters}
                 />
 
-                <div className="space-y-6">
-                    <SectionHeader title="Listagem de Assinaturas" className="mb-0" />
+                <div className="space-y-4">
+                    <SectionHeader
+                        title="Listagem de Assinaturas"
+                        className="mb-0"
+                        rightElement={
+                            <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                        }
+                    />
                     {!FeatureGuards.isFeatureEnabled(plano, "automatic_billing").enabled && (
                         <UpgradeBanner
                             variant="glass"
@@ -189,17 +199,36 @@ export default function AssinaturasClient({
                             className="mb-8"
                         />
                     )}
-                    <AssinaturasTable
-                        subscriptions={initialSubscriptions}
-                        onViewDetails={(sub) => {
-                            setSelectedAssinatura(sub);
-                            setDetailsModalOpen(true);
-                        }}
-                        onCancel={(sub) => {
-                            setSelectedAssinatura(sub);
-                            setCancelModalOpen(true);
-                        }}
-                    />
+                    {viewMode === "grid" ? (
+                        <div className="grid grid-cols-1 gap-4">
+                            {initialSubscriptions.map((sub) => (
+                                <AssinaturaCard
+                                    key={sub.id}
+                                    sub={sub}
+                                    onViewDetails={() => {
+                                        setSelectedAssinatura(sub);
+                                        setDetailsModalOpen(true);
+                                    }}
+                                    onCancel={() => {
+                                        setSelectedAssinatura(sub);
+                                        setCancelModalOpen(true);
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <AssinaturasTable
+                            subscriptions={initialSubscriptions}
+                            onViewDetails={(sub) => {
+                                setSelectedAssinatura(sub);
+                                setDetailsModalOpen(true);
+                            }}
+                            onCancel={(sub) => {
+                                setSelectedAssinatura(sub);
+                                setCancelModalOpen(true);
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 

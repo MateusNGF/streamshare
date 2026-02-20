@@ -27,7 +27,7 @@ export function ParticipantesTab({ participants, onEdit, onDelete, onView }: Pro
     }, [participants, searchTerm]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-2">
             {/* Search */}
             <GenericFilter
                 filters={[{

@@ -38,7 +38,7 @@ export function ExploreClient({ streamings, catalogos, initialFilters, error }: 
     return (
         <div className={isPending ? "opacity-70 transition-opacity" : "transition-opacity"}>
             <GenericFilter
-                className="mb-10"
+                className="mb-6"
                 filters={[
                     {
                         key: "search",

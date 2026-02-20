@@ -16,7 +16,7 @@ export function PersonalFinancialSummary({ stats }: PersonalFinancialSummaryProp
     const { activeSubscriptions, monthlySpending, totalSavings, nextPaymentDate, currencyCode } = stats;
 
     return (
-        <section className="space-y-6">
+        <section>
             <SectionHeader title="Resumo Pessoal" />
 
             <KPIGrid cols={4}>

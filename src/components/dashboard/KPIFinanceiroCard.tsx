@@ -38,14 +38,14 @@ export function KPIFinanceiroCard({ titulo, valor, icone: Icon, cor, isMoeda = t
 
     return (
         <div
-            className={`relative overflow-hidden h-full bg-white/70 backdrop-blur-xs border border-white/20 rounded-[32px] p-7 shadow-sm hover:shadow-xl ${config.shadow} hover:-translate-y-1.5 transition-all duration-500 group animate-scale-in flex flex-col justify-between cursor-default`}
+            className={`relative overflow-hidden h-full bg-white/70 backdrop-blur-xs border border-white/20 rounded-[32px] p-7 shadow-sm hover:shadow-xl ${config.shadow} hover:-translate-y-1.5 transition-all duration-500 group animate-scale-in flex flex-row items-center justify-start gap-4 cursor-default`}
             style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'both' }}
         >
             {/* Efeito decorativo de fundo */}
             <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-0 group-hover:opacity-10 blur-3xl transition-opacity duration-700 ${config.iconBg}`} />
 
             <div className="relative">
-                <div className={`inline-flex p-4 rounded-2xl ${config.iconBg} ${config.icon} mb-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm`}>
+                <div className={`inline-flex p-4 rounded-2xl ${config.iconBg} ${config.icon}  transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm`}>
                     <Icon className="w-6 h-6" />
                 </div>
             </div>

@@ -23,7 +23,7 @@ export function ViewModeToggle({ viewMode, setViewMode }: ViewModeToggleProps) {
                 onClick={() => setViewMode("table")}
             >
                 <TableIcon size={14} />
-                <span className="text-xs font-bold">Tabela</span>
+                <span className="text-xs font-bold hidden md:block">Tabela</span>
             </Button>
             <Button
                 variant="ghost"
@@ -36,7 +36,7 @@ export function ViewModeToggle({ viewMode, setViewMode }: ViewModeToggleProps) {
                 onClick={() => setViewMode("grid")}
             >
                 <LayoutGrid size={14} />
-                <span className="text-xs font-bold">Cards</span>
+                <span className="text-xs font-bold hidden md:block">Cards</span>
             </Button>
         </div>
     );
