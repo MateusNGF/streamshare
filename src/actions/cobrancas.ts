@@ -610,6 +610,21 @@ export async function gerarPixCobranca(cobrancaId: number) {
             return { success: false, error: "Esta cobrança já está paga" };
         }
 
+        const gatewayId = cobranca.gatewayTransactionId || cobranca.gatewayId;
+
+        // INC-03: Idempotência de QR Code PIX 
+        // 1. Verificar Cache em Banco: já temos o QR code salvo localmente? (Rápido e sem HTTP request)
+        if (gatewayId && cobranca.pixQrCode && cobranca.pixCopiaECola) {
+            return {
+                success: true,
+                data: {
+                    qrCodeBase64: cobranca.pixQrCode,
+                    qrCode: cobranca.pixCopiaECola,
+                    paymentId: gatewayId
+                }
+            };
+        }
+
         const streamingName = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
 
         // Gerar pagamento no MercadoPago
@@ -634,6 +649,8 @@ export async function gerarPixCobranca(cobrancaId: number) {
             data: {
                 gatewayProvider: "MercadoPago",
                 gatewayTransactionId: res.id,
+                pixQrCode: res.qr_code_base64,
+                pixCopiaECola: res.qr_code,
             }
         });
 
