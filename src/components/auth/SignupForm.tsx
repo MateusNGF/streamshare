@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Chrome } from "lucide-react";
 import { CURRENT_TERMS_VERSION, CURRENT_PRIVACY_VERSION } from "@/config/legal";
-import { Switch } from "@/components/ui/Switch";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 export function SignupForm() {
     const router = useRouter();
@@ -134,17 +134,24 @@ export function SignupForm() {
 
             <div className="space-y-4 pt-2">
                 <div
-                    onClick={() => setAcceptTerms(!acceptTerms)}
-                    className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:bg-gray-50/50 ${acceptTerms ? "border-primary/20 bg-primary/[0.02]" : "border-gray-100 bg-white"}`}
+                    className={`flex items-start gap-4 p-4 rounded-2xl border transition-all hover:bg-gray-50/50 relative ${acceptTerms ? "border-primary/20 bg-primary/[0.02]" : "border-gray-100 bg-white"}`}
                 >
-                    <Switch
-                        checked={acceptTerms}
-                        onCheckedChange={setAcceptTerms}
-                    />
+                    <div className="flex items-center h-5">
+                        <Checkbox
+                            id="accept-terms"
+                            checked={acceptTerms}
+                            onCheckedChange={(checked: boolean) => setAcceptTerms(checked)}
+                        />
+                    </div>
                     <div className="flex-1">
-                        <label className="text-sm font-semibold text-gray-900 cursor-pointer">
+                        <label htmlFor="accept-terms" className="text-sm font-semibold text-gray-900 cursor-pointer block">
                             Eu aceito os{" "}
-                            <Link href="/termos-de-uso" target="_blank" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">
+                            <Link
+                                href="/termos-de-uso"
+                                target="_blank"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:underline relative z-10"
+                            >
                                 termos e condições de uso
                             </Link>
                         </label>
@@ -153,17 +160,24 @@ export function SignupForm() {
                 </div>
 
                 <div
-                    onClick={() => setAcceptPrivacy(!acceptPrivacy)}
-                    className={`flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:bg-gray-50/50 ${acceptPrivacy ? "border-primary/20 bg-primary/[0.02]" : "border-gray-100 bg-white"}`}
+                    className={`flex items-start gap-4 p-4 rounded-2xl border transition-all hover:bg-gray-50/50 relative ${acceptPrivacy ? "border-primary/20 bg-primary/[0.02]" : "border-gray-100 bg-white"}`}
                 >
-                    <Switch
-                        checked={acceptPrivacy}
-                        onCheckedChange={setAcceptPrivacy}
-                    />
+                    <div className="flex items-center h-5">
+                        <Checkbox
+                            id="accept-privacy"
+                            checked={acceptPrivacy}
+                            onCheckedChange={(checked: boolean) => setAcceptPrivacy(checked)}
+                        />
+                    </div>
                     <div className="flex-1">
-                        <label className="text-sm font-semibold text-gray-900 cursor-pointer">
+                        <label htmlFor="accept-privacy" className="text-sm font-semibold text-gray-900 cursor-pointer block">
                             Eu aceito a{" "}
-                            <Link href="/politica-de-privacidade" target="_blank" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">
+                            <Link
+                                href="/politica-de-privacidade"
+                                target="_blank"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:underline relative z-10"
+                            >
                                 política de privacidade
                             </Link>
                         </label>
