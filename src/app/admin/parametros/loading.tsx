@@ -5,9 +5,12 @@ export default function AdminParametrosLoading() {
     return (
         <PageContainer>
             {/* Header Skeleton */}
-            <div className="mb-8">
-                <Skeleton variant="text" className="w-48 h-8 mb-2" />
-                <Skeleton variant="text" className="w-64 h-4" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-10">
+                <div>
+                    <Skeleton variant="text" className="w-48 h-8 md:h-10 mb-2" />
+                    <Skeleton variant="text" className="w-64 h-4 md:h-5" />
+                </div>
+                <Skeleton variant="rectangular" className="w-56 h-12 rounded-2xl" />
             </div>
 
             <div className="space-y-6">

@@ -4,6 +4,7 @@ import { Plus, Search } from "lucide-react";
 import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useCatalogoActions } from "@/hooks/useCatalogoActions";
 import { useCatalogoStore, CatalogoItem } from "@/stores/useCatalogoStore";
 import { useActionError } from "@/hooks/useActionError";
@@ -76,28 +77,28 @@ export function CatalogoClient({ initialData, error }: CatalogoClientProps) {
             />
 
             {/* Filtros e Busca */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-8 animate-in fade-in slide-in-from-top-4 duration-500 space-y-4">
-                <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-2xl border border-transparent focus-within:border-primary/20 focus-within:bg-white focus-within:shadow-sm transition-all duration-300">
+            <div className="bg-white p-4 md:p-6 rounded-3xl border border-gray-100 shadow-sm mb-8 animate-in fade-in slide-in-from-top-4 duration-500 space-y-5">
+                <div className="flex items-center gap-3 px-5 py-3.5 bg-gray-50/50 rounded-2xl border border-gray-100 focus-within:border-primary/30 focus-within:bg-white focus-within:shadow-md focus-within:shadow-primary/5 transition-all duration-300">
                     <Search size={22} className="text-gray-400 flex-shrink-0" />
                     <input
                         type="text"
                         placeholder="Buscar por serviço ou plataforma..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-400 font-medium"
+                        className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-400 font-bold text-sm"
                     />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                     {categories.map((cat) => (
                         <button
                             key={cat.id}
                             onClick={() => setSelectedCategory(cat.id)}
                             className={cn(
-                                "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                                "px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0",
                                 selectedCategory === cat.id
-                                    ? "bg-primary text-white border-primary shadow-sm"
-                                    : "bg-white text-gray-500 border-gray-200 hover:border-primary/30 hover:bg-gray-50"
+                                    ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105"
+                                    : "bg-white text-gray-500 border-gray-100 hover:border-primary/30 hover:bg-gray-50 hover:text-gray-900"
                             )}
                         >
                             {cat.label}
@@ -133,15 +134,15 @@ export function CatalogoClient({ initialData, error }: CatalogoClientProps) {
 
                 {/* Empty State */}
                 {filteredData.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in-95 duration-500">
-                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                            <Search size={32} className="text-gray-300" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Nenhum serviço encontrado</h3>
-                        <p className="text-gray-500 max-w-sm">
-                            Tente ajustar os termos da sua busca ou adicione um novo serviço ao catálogo.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={Search}
+                        title="Nenhum serviço encontrado"
+                        description={
+                            searchTerm
+                                ? `Não encontramos resultados para "${searchTerm}". Tente outro termo.`
+                                : "Tente ajustar os termos da sua busca ou adicione um novo serviço ao catálogo."
+                        }
+                    />
                 )}
             </div>
 

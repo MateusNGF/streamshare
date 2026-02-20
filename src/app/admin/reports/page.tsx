@@ -1,8 +1,13 @@
-import { getReports, updateReportStatus } from "@/actions/suporte";
+import { getReports } from "@/actions/suporte";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, Clock, XCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { MessageSquare, Calendar, User, AlignLeft, ShieldAlert } from "lucide-react";
 import { UpdateStatusButton } from "./components/UpdateStatusButton";
 import { ViewReportButton } from "./components/ViewReportButton";
 
@@ -11,100 +16,111 @@ export default async function ReportsPage() {
 
     if (!success || !reports) {
         return (
-            <div className="p-6">
-                <div className="bg-red-50 text-red-800 p-4 rounded-xl">
+            <PageContainer>
+                <div className="bg-red-50 text-red-800 p-4 rounded-xl border border-red-100">
                     Erro ao carregar reports.
                 </div>
-            </div>
+            </PageContainer>
         );
     }
 
     return (
-        <div className="p-6 md:p-8 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Central de Suporte</h1>
-                    <p className="text-gray-500">Gerencie os reports enviados pelos usuários</p>
-                </div>
-            </div>
+        <PageContainer>
+            <PageHeader
+                title="Central de Suporte"
+                description="Gerencie os reports enviados pelos usuários"
+            />
 
-            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuário</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assunto</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {reports.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                                        Nenhum report encontrado.
-                                    </td>
-                                </tr>
-                            ) : (
-                                reports.map((report: any) => (
-                                    <tr key={report.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {format(new Date(report.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+            <SectionHeader
+                title="Chamados Ativos"
+                description={`${reports.length} chamados registrados`}
+            />
+
+            {reports.length === 0 ? (
+                <EmptyState
+                    icon={MessageSquare}
+                    title="Nenhum report encontrado"
+                    description="Não há chamados de suporte pendentes no momento."
+                />
+            ) : (
+                <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm mb-8">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-50/50">
+                                <TableRow className="hover:bg-transparent border-b border-gray-100">
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar size={12} className="text-gray-400" />
+                                            Data
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <User size={12} className="text-gray-400" />
+                                            Usuário
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                        <div className="flex items-center gap-2">
+                                            <AlignLeft size={12} className="text-gray-400" />
+                                            Assunto
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <ShieldAlert size={12} className="text-gray-400" />
+                                            Status
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="w-[100px] text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {reports.map((report: any, index: number) => (
+                                    <TableRow
+                                        key={report.id}
+                                        className="group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both"
+                                        style={{ animationDelay: `${index * 50}ms` }}
+                                    >
+                                        <TableCell className="text-xs font-medium text-gray-500">
+                                            {format(new Date(report.createdAt), "dd/MM HH:mm")}
+                                        </TableCell>
+                                        <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-gray-900">{report.nome}</span>
-                                                <span className="text-xs text-gray-500">{report.email}</span>
+                                                <span className="text-sm font-bold text-gray-900 leading-tight">
+                                                    {report.nome}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400 font-medium">
+                                                    {report.email}
+                                                </span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-sm font-medium text-gray-900">{report.assunto}</span>
-                                                <p className="text-xs text-gray-500 line-clamp-2 max-w-xs" title={report.descricao}>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-sm font-bold text-gray-900 leading-tight">
+                                                    {report.assunto}
+                                                </span>
+                                                <p className="text-[10px] text-gray-400 font-medium line-clamp-1 max-w-xs" title={report.descricao}>
                                                     {report.descricao}
                                                 </p>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <StatusInfo status={report.status} />
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-2">
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <StatusBadge status={report.status} className="scale-75" />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1">
                                                 <ViewReportButton report={report} />
                                                 <UpdateStatusButton id={report.id} currentStatus={report.status} />
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
-            </div>
-        </div>
-    );
-}
-
-function StatusInfo({ status }: { status: string }) {
-    const styles = {
-        pendente: "bg-yellow-100 text-yellow-800",
-        em_analise: "bg-blue-100 text-blue-800",
-        resolvido: "bg-green-100 text-green-800",
-        finalizado: "bg-gray-100 text-gray-800",
-    };
-
-    const labels = {
-        pendente: "Pendente",
-        em_analise: "Em Análise",
-        resolvido: "Resolvido",
-        finalizado: "Finalizado",
-    };
-
-    return (
-        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"}`}>
-            {labels[status as keyof typeof labels] || status}
-        </span>
+            )}
+        </PageContainer>
     );
 }

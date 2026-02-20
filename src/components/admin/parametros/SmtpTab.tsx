@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/Input";
 import { TestTube, Eye, EyeOff } from "lucide-react";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface SmtpTabProps {
     config: {
@@ -27,26 +28,21 @@ export function SmtpTab({
     testing
 }: SmtpTabProps) {
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in duration-300">
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                    <span className="md:hidden">SMTP</span>
-                    <span className="hidden md:inline">Configurações de Email (SMTP)</span>
-                </h3>
-                <button
-                    onClick={onTest}
-                    disabled={testing}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
-                >
-                    <TestTube size={18} />
-                    {testing ? "Testando..." : (
-                        <>
-                            <span className="md:hidden">Testar</span>
-                            <span className="hidden md:inline">Testar Conexão</span>
-                        </>
-                    )}
-                </button>
-            </div>
+        <div className="animate-in fade-in duration-300 space-y-6">
+            <SectionHeader
+                title="Configurações de Email (SMTP)"
+                description="Parâmetros para envio de notificações por email"
+                rightElement={
+                    <button
+                        onClick={onTest}
+                        disabled={testing}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 hover:border-primary/30 hover:shadow-sm transition-all disabled:opacity-50 text-sm"
+                    >
+                        <TestTube size={18} className="text-primary" />
+                        {testing ? "Testando..." : "Testar Conexão"}
+                    </button>
+                }
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input

@@ -53,21 +53,27 @@ export function UserRow({ user }: UserRowProps) {
     ];
 
     return (
-        <TableRow>
-            <TableCell className="font-medium">{user.nome}</TableCell>
-            <TableCell>{user.email}</TableCell>
+        <TableRow className="group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both">
             <TableCell>
+                <span className="font-bold text-gray-900 leading-tight">
+                    {user.nome}
+                </span>
+            </TableCell>
+            <TableCell className="text-sm font-medium text-gray-500">
+                {user.email}
+            </TableCell>
+            <TableCell className="text-xs font-semibold text-gray-400">
                 {format(new Date(user.createdAt), "dd/MM/yyyy", {
                     locale: ptBR,
                 })}
             </TableCell>
             <TableCell>
                 {user.isAdmin ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700 border border-purple-200 uppercase tracking-tight">
                         Admin
                     </span>
                 ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-gray-50 text-gray-500 border border-gray-100 uppercase tracking-tight">
                         Usuário
                     </span>
                 )}
