@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/Input";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 
 interface GeneralTabProps {
     config: {
@@ -12,11 +13,11 @@ interface GeneralTabProps {
 
 export function GeneralTab({ config, onChange }: GeneralTabProps) {
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in duration-300">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
-                <span className="md:hidden">Geral</span>
-                <span className="hidden md:inline">Configurações Gerais</span>
-            </h3>
+        <div className="animate-in fade-in duration-300 space-y-6">
+            <SectionHeader
+                title="Configurações Gerais"
+                description="Parâmetros globais da aplicação e identididade"
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input

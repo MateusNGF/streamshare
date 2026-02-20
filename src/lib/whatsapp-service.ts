@@ -2,15 +2,9 @@ import { prisma } from "@/lib/db";
 import { TipoNotificacaoWhatsApp } from "@prisma/client";
 import { PLANS } from "@/config/plans";
 import crypto from "crypto";
+import { safeDecrypt } from "@/lib/encryption";
 
-// Função para descriptografar credenciais
-function decrypt(text: string): string {
-    const key = process.env.ENCRYPTION_KEY || "default-encryption-key-change-me";
-    const decipher = crypto.createDecipher("aes-256-cbc", key);
-    let decrypted = decipher.update(text, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-    return decrypted;
-}
+// Redundant local decrypt removed as we use the centralized one in @/lib/encryption
 
 // Função para normalizar número no formato E.164 (internacional)
 function normalizePhoneNumber(phone: string): string {
@@ -128,8 +122,8 @@ export async function sendWhatsAppNotification(
     const getParam = (key: string) => parametros.find(p => p.chave === key)?.valor;
 
     const globalEnabled = getParam("whatsapp.enabled") === "true";
-    const accountSid = getParam("whatsapp.account_sid");
-    const authToken = getParam("whatsapp.auth_token");
+    const accountSid = safeDecrypt(getParam("whatsapp.account_sid"));
+    const authToken = safeDecrypt(getParam("whatsapp.auth_token"));
     const fromNumber = getParam("whatsapp.phone_number");
 
     // Se a integração global estiver desativada ou faltar credenciais, aborta

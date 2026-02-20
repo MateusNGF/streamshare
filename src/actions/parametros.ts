@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { encrypt, safeDecrypt, isEncrypted } from "@/lib/encryption";
 
 const SENSITIVE_KEYWORDS = ["token", "secret", "password", "key", "sid", "auth"];
 
@@ -115,7 +116,8 @@ export async function upsertParametro(data: ParametroInput) {
         };
 
         if (data.valor !== "********") {
-            updateData.valor = data.valor;
+            const isSensitive = SENSITIVE_KEYWORDS.some(keyword => data.chave.toLowerCase().includes(keyword));
+            updateData.valor = isSensitive ? encrypt(data.valor) : data.valor;
         }
 
         const parametro = await prisma.parametro.upsert({
@@ -124,7 +126,7 @@ export async function upsertParametro(data: ParametroInput) {
             },
             create: {
                 chave: data.chave,
-                valor: data.valor === "********" ? "" : data.valor,
+                valor: data.valor === "********" ? "" : (SENSITIVE_KEYWORDS.some(keyword => data.chave.toLowerCase().includes(keyword)) ? encrypt(data.valor) : data.valor),
                 tipo: data.tipo || "string",
                 descricao: data.descricao,
             },
@@ -161,11 +163,16 @@ export async function upsertParametros(parametros: ParametroInput[]) {
                     },
                     create: {
                         chave: data.chave,
-                        valor: data.valor === "********" ? "" : data.valor,
+                        valor: data.valor === "********" ? "" : (SENSITIVE_KEYWORDS.some(keyword => data.chave.toLowerCase().includes(keyword)) ? encrypt(data.valor) : data.valor),
                         tipo: data.tipo || "string",
                         descricao: data.descricao,
                     },
-                    update: updateData,
+                    update: {
+                        ...updateData,
+                        valor: (data.valor !== "********" && SENSITIVE_KEYWORDS.some(keyword => data.chave.toLowerCase().includes(keyword)))
+                            ? encrypt(data.valor)
+                            : updateData.valor
+                    },
                 });
             })
         );
@@ -206,8 +213,8 @@ export async function testSmtpConnection(config: SmtpConfig) {
             port: config.port,
             secure: config.useTls,
             auth: {
-                user: config.user,
-                pass: config.password,
+                user: safeDecrypt(config.user) || config.user,
+                pass: safeDecrypt(config.password) || config.password,
             },
         });
 
@@ -232,7 +239,7 @@ export async function testWhatsAppConnection(config: WhatsAppTestConfig) {
             {
                 headers: {
                     Authorization: `Basic ${Buffer.from(
-                        `${config.accountSid}:${config.authToken}`
+                        `${config.accountSid}:${safeDecrypt(config.authToken) || config.authToken}`
                     ).toString("base64")}`,
                 },
             }
