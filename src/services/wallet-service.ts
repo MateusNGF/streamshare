@@ -199,11 +199,13 @@ export const walletService = {
         });
 
         // 3. Ledger entry
+        // INC-02: Definir explicitamente o status da transação de saque como PENDENTE no momento do pedido.
         await tx.walletTransaction.create({
             data: {
                 walletId,
                 valor: -valor,
                 tipo: 'SAQUE',
+                status: 'PENDENTE',
                 descricao: `Solicitação de Saque PIX #${withdrawal.id}`,
                 metadataJson: { saqueId: withdrawal.id }
             }
@@ -223,7 +225,7 @@ export const walletService = {
     }) => {
         const { saqueId, adminId, comprovanteUrl, transferenciaMpId } = params;
 
-        return await tx.saque.update({
+        const updatedSaque = await tx.saque.update({
             where: { id: saqueId },
             data: {
                 status: 'CONCLUIDO',
@@ -232,6 +234,21 @@ export const walletService = {
                 aprovadoPorId: adminId
             }
         });
+
+        // INC-02: Sincronizar status concluído com o Ledger
+        const pendingTxs = await tx.walletTransaction.findMany({
+            where: { tipo: 'SAQUE', status: 'PENDENTE', walletId: updatedSaque.walletId }
+        });
+
+        const relatedTx = pendingTxs.find((t: any) => (t.metadataJson as any)?.saqueId === saqueId);
+        if (relatedTx) {
+            await tx.walletTransaction.update({
+                where: { id: relatedTx.id },
+                data: { status: 'CONCLUIDO' }
+            });
+        }
+
+        return updatedSaque;
     },
 
     /**
@@ -262,6 +279,19 @@ export const walletService = {
             where: { id: withdrawal.walletId },
             data: { saldoDisponivel: { increment: withdrawal.valor } }
         });
+
+        // INC-02: Sincronizar status de Ledger de PENDENTE para CANCELADO
+        const pendingTxs = await tx.walletTransaction.findMany({
+            where: { tipo: 'SAQUE', status: 'PENDENTE', walletId: withdrawal.walletId }
+        });
+
+        const relatedTx = pendingTxs.find((t: any) => (t.metadataJson as any)?.saqueId === saqueId);
+        if (relatedTx) {
+            await tx.walletTransaction.update({
+                where: { id: relatedTx.id },
+                data: { status: 'CANCELADO' }
+            });
+        }
 
         // 3. Ledger entry (Reversal)
         await tx.walletTransaction.create({
