@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/hooks/useToast";
 import { useState, useEffect } from "react";
 import { gerarPixCobranca } from "@/actions/cobrancas";
-import { QrCode, Copy, CheckCircle2, Loader2, Smartphone, AlertCircle } from "lucide-react";
+import { QrCode, Copy, CheckCircle2, Loader2, Smartphone, AlertCircle, MessageCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 
 interface PixPaymentModalProps {
@@ -63,6 +63,12 @@ export function PixPaymentModal({
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleWhatsAppShare = () => {
+        if (!pixData?.qrCode) return;
+        const text = encodeURIComponent(`Aqui está o código PIX Copia e Cola para pagamento no valor de ${format(valor || 0)}:\n\n${pixData.qrCode}`);
+        window.open(`https://wa.me/?text=${text}`, "_blank");
+    };
+
     if (!cobrancaId && !loading) return null;
 
     return (
@@ -109,9 +115,18 @@ export function PixPaymentModal({
                                     <Button
                                         onClick={handleCopyCode}
                                         size="sm"
+                                        title="Copiar código"
                                         className="shrink-0 h-10 px-4 rounded-xl"
                                     >
                                         {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                                    </Button>
+                                    <Button
+                                        onClick={handleWhatsAppShare}
+                                        size="sm"
+                                        title="Enviar via WhatsApp"
+                                        className="shrink-0 h-10 px-4 rounded-xl bg-green-500 hover:bg-green-600 border-none text-white"
+                                    >
+                                        <MessageCircle size={18} />
                                     </Button>
                                 </div>
                             </div>
@@ -142,3 +157,4 @@ export function PixPaymentModal({
         </Modal>
     );
 }
+
