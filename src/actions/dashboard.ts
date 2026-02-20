@@ -129,14 +129,16 @@ async function getPaymentMetrics(contaId: number, agora: Date): Promise<PaymentM
             where: {
                 assinatura: { streaming: { contaId }, status: "ativa" },
                 status: { in: ["pendente", "atrasado"] },
-                periodoFim: { lt: agora }
+                periodoFim: { lt: agora },
+                deletedAt: null
             }
         }),
         prisma.cobranca.groupBy({
             by: ['status'],
             where: {
                 assinatura: { streaming: { contaId } },
-                createdAt: { gte: noventaDiasAtras }
+                createdAt: { gte: noventaDiasAtras },
+                deletedAt: null
             },
             _count: { _all: true }
         })
@@ -185,7 +187,10 @@ async function getChurnMetrics(contaId: number): Promise<ChurnMetrics> {
         where: { streaming: { contaId }, status: "ativa" },
         include: {
             cobrancas: {
-                where: { status: { in: ["pago", "atrasado"] } },
+                where: {
+                    status: { in: ["pago", "atrasado"] },
+                    deletedAt: null
+                },
                 orderBy: { periodoInicio: "desc" },
                 take: 6
             }
@@ -289,7 +294,8 @@ export async function getRevenueHistory() {
                 where: {
                     assinatura: { streaming: { contaId } },
                     status: "pago",
-                    dataPagamento: { gte: seisMesesAtras }
+                    dataPagamento: { gte: seisMesesAtras },
+                    deletedAt: null
                 },
                 select: {
                     valor: true,

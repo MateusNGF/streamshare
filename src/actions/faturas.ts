@@ -16,7 +16,8 @@ export async function getFaturasUsuario(filters?: { status?: StatusCobranca }) {
                         userId: user.userId
                     }
                 },
-                ...(filters?.status ? { status: filters.status } : {})
+                ...(filters?.status ? { status: filters.status } : {}),
+                deletedAt: null
             },
             include: {
                 assinatura: {
@@ -63,7 +64,8 @@ export async function getResumoFaturas() {
                     participante: {
                         userId: user.userId
                     }
-                }
+                },
+                deletedAt: null
             },
             _sum: {
                 valor: true

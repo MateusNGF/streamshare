@@ -37,7 +37,17 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith("/participantes") ||
         pathname.startsWith("/streamings") ||
         pathname.startsWith("/cobrancas") ||
-        pathname.startsWith("/configuracoes");
+        pathname.startsWith("/configuracoes") ||
+        pathname.startsWith("/wallet") ||
+        pathname.startsWith("/assinaturas") ||
+        pathname.startsWith("/faturamento") ||
+        pathname.startsWith("/faturas") ||
+        pathname.startsWith("/grupos") ||
+        pathname.startsWith("/minhas-assinaturas") ||
+        pathname.startsWith("/planos") ||
+        pathname.startsWith("/saques") ||
+        pathname.startsWith("/explore") ||
+        pathname.startsWith("/admin");
 
     // 1. If user is logged in and tries to access login page, redirect to dashboard
     if (token && pathname === "/login") {

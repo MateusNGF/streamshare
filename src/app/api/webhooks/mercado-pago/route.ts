@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { validateMPSignature, mpPayment, mpPreApproval } from "@/lib/mercado-pago";
 import { billingService } from "@/services/billing-service";
-import { StatusCobranca, MetodoPagamento, Conta, PlanoConta } from "@prisma/client";
+import { StatusCobranca, PlanoConta } from "@prisma/client";
 import { walletService } from "@/services/wallet-service";
 
 export async function POST(req: Request) {
@@ -24,8 +24,8 @@ export async function POST(req: Request) {
             console.error('[MERCADOPAGO_WEBHOOK] Falha na validação de assinatura (HMAC)');
             return new Response('Invalid Signature', { status: 401 });
         }
-    } else if (process.env.NODE_ENV === 'production') {
-        // Bloqueia requests sem assinatura em produção
+    } else {
+        // Bloqueia requests sem assinatura se exigido pela env var
         return new Response('Signature Required', { status: 401 });
     }
 
@@ -40,7 +40,12 @@ export async function POST(req: Request) {
             const payment = await mpPayment.get({ id: dataId });
 
             const cobranca = await prisma.cobranca.findFirst({
-                where: { gatewayId: dataId }
+                where: {
+                    OR: [
+                        { gatewayId: dataId },
+                        { gatewayTransactionId: dataId }
+                    ]
+                }
             });
 
             if (cobranca) {

@@ -100,7 +100,8 @@ export const billingService = {
         await tx.cobranca.updateMany({
             where: {
                 status: "pendente",
-                dataVencimento: { lt: agora }
+                dataVencimento: { lt: agora },
+                deletedAt: null
             },
             data: { status: "atrasado" }
         });
@@ -134,7 +135,8 @@ export const billingService = {
         const { streamingId, assinaturaId, novoValorMensal, contaId } = params;
         const where: any = {
             status: "pendente",
-            assinatura: { streaming: { contaId } }
+            assinatura: { streaming: { contaId } },
+            deletedAt: null
         };
 
         if (streamingId) where.assinatura.streamingId = streamingId;
@@ -226,7 +228,7 @@ function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora:
 
 function checkInadimplencia(assinatura: SubscriptionWithCharges, agora: Date): BillingDecision {
     const vencidas = assinatura.cobrancas.filter(c =>
-        (c.status === "pendente" || c.status === "atrasado") && isBefore(c.dataVencimento, agora)
+        (c.status === "pendente" || c.status === "atrasado") && isBefore(c.dataVencimento, agora) && c.deletedAt === null
     );
 
     if (vencidas.length > 0) {
@@ -306,7 +308,8 @@ async function executeBillingTransactionWithTx(tx: any, cobrancas: ChargeCreatio
         const exists = await tx.cobranca.findFirst({
             where: {
                 assinaturaId: prismaData.assinaturaId,
-                periodoInicio: prismaData.periodoInicio
+                periodoInicio: prismaData.periodoInicio,
+                deletedAt: null
             }
         });
         if (exists) continue;

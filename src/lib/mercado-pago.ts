@@ -288,10 +288,5 @@ export const mercadoPagoAdapter = {
      */
     security: {
         validateSignature: validateMPSignature,
-        isMercadoPagoIP: (ip: string) => {
-            // Simplificação: Em produção, usar uma lib de CIDR para checar os ranges
-            // Para este desafio, manteremos a estrutura para expansão futura
-            return true;
-        }
     }
 };

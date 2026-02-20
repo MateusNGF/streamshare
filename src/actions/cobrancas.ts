@@ -33,7 +33,8 @@ export async function getCobrancas(filters?: {
         const where: any = {
             assinatura: {
                 participante: { contaId }
-            }
+            },
+            deletedAt: null
         };
 
         if (filters?.status) {
@@ -112,7 +113,8 @@ export async function criarCobrancaInicial(assinaturaId: number) {
         const existing = await prisma.cobranca.findFirst({
             where: {
                 assinaturaId,
-                periodoInicio
+                periodoInicio,
+                deletedAt: null
             }
         });
 
@@ -159,7 +161,8 @@ export async function confirmarPagamento(
                 id: cobrancaId,
                 assinatura: {
                     participante: { contaId }
-                }
+                },
+                deletedAt: null
             }
         });
 
@@ -237,7 +240,8 @@ export async function cancelarCobranca(cobrancaId: number) {
                 id: cobrancaId,
                 assinatura: {
                     participante: { contaId }
-                }
+                },
+                deletedAt: null
             }
         });
 
@@ -303,7 +307,8 @@ export async function getKPIsFinanceiros() {
             where: {
                 assinatura: {
                     participante: { contaId }
-                }
+                },
+                deletedAt: null
             },
             _sum: {
                 valor: true
@@ -320,7 +325,8 @@ export async function getKPIsFinanceiros() {
                     participante: { contaId }
                 },
                 status: { in: [StatusCobranca.pendente, StatusCobranca.atrasado] },
-                dataVencimento: { lt: agora }
+                dataVencimento: { lt: agora },
+                deletedAt: null
             },
             _sum: {
                 valor: true
@@ -392,7 +398,7 @@ export async function enviarNotificacaoCobranca(
 
         // Buscar cobrança com todos os relacionamentos necessários
         const cobranca = await prisma.cobranca.findUnique({
-            where: { id: cobrancaId },
+            where: { id: cobrancaId, deletedAt: null },
             include: {
                 assinatura: {
                     include: {
@@ -558,11 +564,11 @@ export async function enviarNotificacaoCobranca(
  */
 export async function gerarPixCobranca(cobrancaId: number) {
     try {
-        const { contaId } = await getContext();
+        const { contaId, userId } = await getContext();
 
         // Buscar a cobrança e validar permissão
         const cobranca = await prisma.cobranca.findUnique({
-            where: { id: cobrancaId },
+            where: { id: cobrancaId, deletedAt: null },
             include: {
                 assinatura: {
                     include: {
@@ -583,7 +589,6 @@ export async function gerarPixCobranca(cobrancaId: number) {
         // Se for participante, o userId do contexto deve bater com o usuarioId do participante (precisaríamos buscar o participante)
         // Simplificando: Validar se a cobrança pertence à conta do usuário atual
         if (cobranca.assinatura.participante.contaId !== contaId) {
-            const { userId } = await getContext();
             if (cobranca.assinatura.participante.userId !== userId) {
                 return { success: false, error: "Sem permissão para gerar PIX desta cobrança" };
             }
