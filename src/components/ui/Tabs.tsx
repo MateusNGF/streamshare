@@ -1,7 +1,8 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, Suspense } from "react";
 import { LucideIcon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export interface TabItem {
     id: string;
@@ -17,8 +18,17 @@ interface TabsProps {
     onValueChange?: (value: string) => void;
 }
 
-export function Tabs({ tabs, defaultTab, value, onValueChange }: TabsProps) {
-    const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || tabs[0]?.id);
+function TabsContent({ tabs, defaultTab, value, onValueChange }: TabsProps) {
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get("tab");
+
+    const [internalActiveTab, setInternalActiveTab] = useState(tabParam || defaultTab || tabs[0]?.id);
+
+    useEffect(() => {
+        if (tabParam && tabs.find(t => t.id === tabParam)) {
+            setInternalActiveTab(tabParam);
+        }
+    }, [tabParam, tabs]);
 
     const activeTab = value !== undefined ? value : internalActiveTab;
 
@@ -36,7 +46,7 @@ export function Tabs({ tabs, defaultTab, value, onValueChange }: TabsProps) {
     return (
         <div className="w-full">
             {/* Tab Headers */}
-            <div className="flex gap-2 border-b border-gray-200 mb-6 overflow-x-auto">
+            <div className="flex gap-2 border-b border-gray-200 mb-6 overflow-x-auto scrollbar-hide">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -46,7 +56,7 @@ export function Tabs({ tabs, defaultTab, value, onValueChange }: TabsProps) {
                             key={tab.id}
                             onClick={() => handleTabChange(tab.id)}
                             className={`
-                                flex items-center gap-2 px-4 py-3 font-semibold text-sm md:text-base
+                                flex items-center gap-2 px-4 py-3 font-bold text-sm md:text-base
                                 border-b-2 transition-all whitespace-nowrap
                                 ${isActive
                                     ? "border-primary text-primary"
@@ -62,9 +72,17 @@ export function Tabs({ tabs, defaultTab, value, onValueChange }: TabsProps) {
             </div>
 
             {/* Tab Content */}
-            <div className="animate-fade-in slide-in-from-left duration-300" key={activeTab}>
+            <div className="animate-in fade-in slide-in-from-left-4 duration-500" key={activeTab}>
                 {activeTabData?.content}
             </div>
         </div>
+    );
+}
+
+export function Tabs(props: TabsProps) {
+    return (
+        <Suspense fallback={<div className="w-full h-32 animate-pulse bg-gray-100 rounded-2xl" />}>
+            <TabsContent {...props} />
+        </Suspense>
     );
 }
