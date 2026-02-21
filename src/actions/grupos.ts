@@ -7,7 +7,6 @@ import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PLANS } from "@/config/plans";
 import type { CurrencyCode } from "@/types/currency.types";
-import { criarNotificacao } from "@/actions/notificacoes";
 
 // ============================================
 // CRUD OPERATIONS

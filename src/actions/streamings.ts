@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { StreamingSchema } from "@/lib/schemas";
 import { PLANS } from "@/config/plans";
-import { criarNotificacao } from "@/actions/notificacoes";
+import { criarNotificacaoDeContexto } from "./notificacoes";
 import { getContext } from "@/lib/action-context";
 import { billingService } from "@/services/billing-service";
 import { FeatureGuards } from "@/lib/feature-guards";
@@ -433,7 +433,7 @@ export async function createStreaming(data: {
         });
 
         // Create notification (Broadcast to Admins)
-        await criarNotificacao({
+        await criarNotificacaoDeContexto({
             tipo: "streaming_criado",
             titulo: `Streaming adicionado`,
             descricao: `${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foi adicionado ao sistema.`,
@@ -518,7 +518,7 @@ export async function updateStreaming(
                 }
             });
 
-            await criarNotificacao({
+            await criarNotificacaoDeContexto({
                 tipo: "streaming_editado",
                 titulo: `Streaming atualizado`,
                 descricao: `As informações de ${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foram atualizadas.`,
@@ -583,7 +583,7 @@ export async function updateStreaming(
         });
 
         // Broadcast to Admins
-        await criarNotificacao({
+        await criarNotificacaoDeContexto({
             tipo: "streaming_editado",
             titulo: `Streaming atualizado`,
             descricao: `As informações do streaming foram atualizadas${result.updatedCount > 0 ? ` e ${result.updatedCount} assinatura(s) ajustada(s)` : ''}.`,
@@ -663,7 +663,7 @@ export async function deleteStreaming(id: number) {
         }).catch(() => null);
 
         // Create notification (Broadcast to Admins)
-        await criarNotificacao({
+        await criarNotificacaoDeContexto({
             tipo: "streaming_excluido",
             titulo: `Streaming removido`,
             descricao: streamingName ? `${streamingName} foi removido do sistema.` : "Um streaming foi removido do sistema.",

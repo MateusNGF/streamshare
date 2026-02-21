@@ -50,7 +50,12 @@ export async function getNotificacoes(params?: {
                 skip: offset
             }),
             prisma.notificacao.count({ where }),
-            prisma.notificacao.count({ where: { contaId, lida: false } })
+            prisma.notificacao.count({
+                where: {
+                    ...where,
+                    lida: false,
+                }
+            })
         ]);
 
         return { success: true, data: { notificacoes, total, naoLidas } };
@@ -61,23 +66,22 @@ export async function getNotificacoes(params?: {
 }
 
 /**
- * Create a new notification
+ * Create a new notification using the current execution context
  */
-export async function criarNotificacao(data: {
+export async function criarNotificacaoDeContexto(data: {
     tipo: TipoNotificacao;
     titulo: string;
     descricao?: string;
     entidadeId?: number;
     usuarioId?: number | null; // NULL = Admins, ID = Specific User
     metadata?: Record<string, any>;
-    contaId?: number;
 }) {
     try {
         const { contaId, userId } = await getContext();
 
         const notificacao = await prisma.notificacao.create({
             data: {
-                contaId: data.contaId || contaId,
+                contaId,
                 usuarioId: data.usuarioId !== undefined ? data.usuarioId : userId,
                 tipo: data.tipo,
                 titulo: data.titulo,
@@ -90,8 +94,44 @@ export async function criarNotificacao(data: {
         revalidatePath("/", "layout");
         return { success: true, data: notificacao };
     } catch (error: any) {
-        console.error("[CRIAR_NOTIFICACAO_ERROR]", error);
-        return { success: false, error: "Erro ao criar notificação" };
+        console.error("[CRIAR_NOTIFICACAO_CTX_ERROR]", error);
+        return { success: false, error: "Erro ao criar notificação do contexto" };
+    }
+}
+
+/**
+ * Create a new notification internally with explicit IDs
+ * Can participate in an existing Prisma transaction to ensure ACID properties.
+ */
+export async function criarNotificacaoInterna(
+    data: {
+        contaId: number;
+        tipo: TipoNotificacao;
+        titulo: string;
+        descricao?: string;
+        entidadeId?: number;
+        usuarioId?: number | null; // NULL = Admins, ID = Specific User
+        metadata?: Record<string, any>;
+    },
+    tx: any = prisma // Optional Prisma.TransactionClient for ACID compliance
+) {
+    try {
+        const notificacao = await tx.notificacao.create({
+            data: {
+                contaId: data.contaId,
+                usuarioId: data.usuarioId !== undefined ? data.usuarioId : null,
+                tipo: data.tipo,
+                titulo: data.titulo,
+                descricao: data.descricao,
+                entidadeId: data.entidadeId,
+                metadata: data.metadata || {}
+            }
+        });
+
+        return { success: true, data: notificacao };
+    } catch (error: any) {
+        console.error("[CRIAR_NOTIFICACAO_INT_ERROR]", error);
+        return { success: false, error: "Erro ao criar notificação interna" };
     }
 }
 
@@ -122,8 +162,18 @@ export async function marcarTodasComoLidas() {
     try {
         const { contaId } = await getContext();
 
+        const session = await getCurrentUser();
+        if (!session) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
+
         await prisma.notificacao.updateMany({
-            where: { contaId, lida: false },
+            where: {
+                contaId,
+                lida: false,
+                OR: [
+                    { usuarioId: session.userId },
+                    { usuarioId: null }
+                ]
+            },
             data: { lida: true }
         });
 

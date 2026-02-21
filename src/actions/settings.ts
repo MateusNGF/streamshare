@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { criarNotificacao } from "@/actions/notificacoes";
 
 import { getContext } from "@/lib/action-context";
 

@@ -5,7 +5,7 @@ import { Prisma, StatusSuporte } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 
 import { getCurrentUser } from '@/lib/auth';
-import { criarNotificacao } from './notificacoes';
+import { criarNotificacaoInterna } from './notificacoes';
 
 export async function getCurrentUserAction() {
     try {
@@ -143,7 +143,7 @@ export async function updateReportStatus(id: number, status: StatusSuporte) {
             });
 
             if (userAccount) {
-                await criarNotificacao({
+                await criarNotificacaoInterna({
                     tipo: 'suporte_atualizado' as any, // Cast until type is updated in generated client
                     titulo: `Atualização no Chamado #${report.id}`,
                     descricao: `Status atualizado para: ${status.replace(/_/g, ' ').toUpperCase()}.`,
