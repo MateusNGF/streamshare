@@ -36,12 +36,14 @@ interface DetalhesCobrancaModalProps {
     isOpen: boolean;
     onClose: () => void;
     cobranca: any | null;
+    isAdmin?: boolean;
 }
 
 export function DetalhesCobrancaModal({
     isOpen,
     onClose,
-    cobranca
+    cobranca,
+    isAdmin = false
 }: DetalhesCobrancaModalProps) {
     const { format } = useCurrency();
     const { copied, handleCopy, formatDate } = useModalDetails();
@@ -256,7 +258,7 @@ export function DetalhesCobrancaModal({
                 )}
 
                 {/* 5. QR Code para Pagamento (Se pendente e tiver chave) */}
-                {cobranca.status !== 'pago' && cobranca.assinatura?.participante?.conta?.chavePix && (
+                {(cobranca.status === 'pendente' || cobranca.status === 'atrasado') && cobranca.assinatura?.participante?.conta?.chavePix && (
                     <div className="bg-gradient-to-b from-gray-50 to-white border border-gray-100 rounded-2xl p-5 flex flex-col items-center gap-4 shadow-sm">
                         <div className="flex items-center justify-between w-full">
                             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2">
@@ -326,7 +328,7 @@ export function DetalhesCobrancaModal({
                                 className="max-w-full object-contain rounded"
                             />
                         </div>
-                        {cobranca.status === 'aguardando_aprovacao' && (
+                        {cobranca.status === 'aguardando_aprovacao' && isAdmin && (
                             <div className="space-y-4 pt-2">
                                 <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3">
                                     <p className="text-[11px] text-blue-800 leading-relaxed font-medium">
@@ -340,7 +342,7 @@ export function DetalhesCobrancaModal({
                                         disabled={isProcessing}
                                     >
                                         <CheckCircle2 size={16} className="mr-2" />
-                                        Aprovar Pagamento
+                                        Aprovar
                                     </Button>
                                     <Button
                                         className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 font-bold h-11"
@@ -351,6 +353,13 @@ export function DetalhesCobrancaModal({
                                         Rejeitar
                                     </Button>
                                 </div>
+                            </div>
+                        )}
+                        {cobranca.status === 'aguardando_aprovacao' && !isAdmin && (
+                            <div className="mt-2 p-3 bg-amber-50/50 border border-amber-100 rounded-lg">
+                                <p className="text-xs text-amber-700 font-medium text-center">
+                                    Comprovante em análise pelo administrador.
+                                </p>
                             </div>
                         )}
                     </div>

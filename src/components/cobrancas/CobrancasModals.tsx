@@ -54,6 +54,7 @@ export function CobrancasModals({
                 isOpen={detailsModalOpen}
                 onClose={onCloseDetails}
                 cobranca={selectedCobranca}
+                isAdmin={true}
             />
 
             <ModalPagamentoCobranca

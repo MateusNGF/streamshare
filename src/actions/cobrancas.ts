@@ -192,7 +192,7 @@ export async function confirmarPagamento(
                     assinatura: {
                         include: {
                             participante: true,
-                            streaming: true
+                            streaming: { include: { catalogo: true } }
                         }
                     }
                 }
@@ -221,6 +221,21 @@ export async function confirmarPagamento(
                     lida: false
                 }
             });
+
+            // Notificar o participante que seu pagamento foi confirmado
+            if (result.assinatura.participante.userId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: result.assinatura.participante.userId,
+                        tipo: "cobranca_confirmada",
+                        titulo: "Pagamento Aprovado",
+                        descricao: `O administrador confirmou o seu pagamento para ${result.assinatura.streaming.catalogo.nome}. Obrigado!`,
+                        entidadeId: cobrancaId,
+                        lida: false
+                    }
+                });
+            }
 
             return result;
         });
@@ -268,7 +283,8 @@ export async function cancelarCobranca(cobrancaId: number) {
                 include: {
                     assinatura: {
                         include: {
-                            participante: true
+                            participante: true,
+                            streaming: { include: { catalogo: true } }
                         }
                     }
                 }
@@ -286,6 +302,21 @@ export async function cancelarCobranca(cobrancaId: number) {
                     lida: false
                 }
             });
+
+            // Notificar o participante do cancelamento da cobrança
+            if (result.assinatura.participante.userId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: result.assinatura.participante.userId,
+                        tipo: "cobranca_cancelada",
+                        titulo: "Cobrança Cancelada",
+                        descricao: `A cobrança para o seu acesso de ${result.assinatura.streaming.catalogo.nome} foi cancelada pelo administrador.`,
+                        entidadeId: cobrancaId,
+                        lida: false
+                    }
+                });
+            }
 
             return result;
         });

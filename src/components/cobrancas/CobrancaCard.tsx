@@ -41,9 +41,12 @@ export function CobrancaCard({
     const daysUntil = differenceInDays(vencimentoDate, today);
 
     // Lógica visual de urgência
+    const isAwaiting = cobranca.status === 'aguardando_aprovacao';
+
     const getBorderColor = () => {
         if (isCancelled) return "border-l-gray-300";
         if (isPaid) return "border-l-green-600";
+        if (isAwaiting) return "border-l-blue-500 border-blue-100";
         if (isOverdue) return "border-l-red-500";
         if (isToday(vencimentoDate)) return "border-l-amber-500";
         return "border-l-primary/30";
@@ -52,17 +55,23 @@ export function CobrancaCard({
     const getBgColor = () => {
         if (isOverdue && !isPaid && !isCancelled) return "bg-red-50/30";
         if (isPaid) return "bg-green-50/10";
+        if (isAwaiting) return "bg-blue-50/40";
         return "bg-white";
     };
 
     const options = [
         { label: "Ver Detalhes", icon: <Eye size={16} />, onClick: onViewDetails },
-        ...(cobranca.status !== 'pago' && cobranca.status !== 'cancelado' ? [
+        ...(cobranca.status === 'pendente' || cobranca.status === 'atrasado' ? [
             { label: "Ver QR Code", icon: <QrCode size={16} />, onClick: onViewQrCode || onViewDetails }
         ] : []),
         ...(isAdmin && (cobranca.status === 'pendente' || cobranca.status === 'atrasado') ? [
             { type: "separator" as const },
             { label: "Confirmar Pagamento", icon: <Check size={16} />, onClick: onConfirmPayment, variant: "success" as const },
+            { label: "Cancelar Cobrança", icon: <XCircle size={16} />, onClick: onCancel, variant: "danger" as const }
+        ] : []),
+        ...(isAdmin && isAwaiting ? [
+            { type: "separator" as const },
+            { label: "Validar Comprovante", icon: <Eye size={16} className="text-amber-500" />, onClick: onViewDetails },
             { label: "Cancelar Cobrança", icon: <XCircle size={16} />, onClick: onCancel, variant: "danger" as const }
         ] : [])
     ];
@@ -169,7 +178,7 @@ export function CobrancaCard({
                         </Button>
 
                         {/* Botão Pagar Rápido (Mobile) */}
-                        {!isPaid && !isCancelled && (
+                        {!isPaid && !isCancelled && !isAwaiting && (
                             <Button
                                 variant="outline"
                                 disabled={isPaid || isCancelled}
@@ -179,6 +188,19 @@ export function CobrancaCard({
                             >
                                 <Check size={18} />
                                 <span className="text-xs font-bold">Pagar</span>
+                            </Button>
+                        )}
+
+                        {/* Botão Validar Rápido (Mobile) */}
+                        {isAdmin && isAwaiting && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-11 md:h-8 gap-2 text-amber-700 border-amber-200 hover:bg-amber-50 md:hidden flex-1"
+                                onClick={onViewDetails}
+                            >
+                                <Eye size={18} className="text-amber-600" />
+                                <span className="text-xs font-bold text-amber-700">Validar</span>
                             </Button>
                         )}
 

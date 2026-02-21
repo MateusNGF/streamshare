@@ -19,10 +19,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
  */
 export async function uploadComprovante(file: File | Blob | ArrayBuffer, fileName: string): Promise<string> {
     const fileExt = fileName.split('.').pop() || 'tmp';
-    const filePath = `comprovantes/${uuidv4()}.${fileExt}`;
+    const filePath = `comprovantes_streamshare/${uuidv4()}.${fileExt}`;
 
     const { data, error } = await supabase.storage
-        .from("comprovantes")
+        .from("comprovantes_streamshare")
         .upload(filePath, file, {
             cacheControl: "3600",
             upsert: false,
@@ -34,7 +34,7 @@ export async function uploadComprovante(file: File | Blob | ArrayBuffer, fileNam
     }
 
     const { data: publicUrlData } = supabase.storage
-        .from("comprovantes")
+        .from("comprovantes_streamshare")
         .getPublicUrl(data.path);
 
     return publicUrlData.publicUrl;

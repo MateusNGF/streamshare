@@ -142,7 +142,7 @@ export function CobrancasTable({
                                     icon: <Eye size={16} />,
                                     onClick: () => onViewDetails(cobranca.id)
                                 },
-                                ...(cobranca.status !== 'pago' && cobranca.status !== 'cancelado' ? [
+                                ...(cobranca.status === 'pendente' || cobranca.status === 'atrasado' ? [
                                     {
                                         label: "Ver QR Code / PIX",
                                         icon: <QrCode size={16} />,
