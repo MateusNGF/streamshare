@@ -12,7 +12,8 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { QuantityInput } from "@/components/ui/QuantityInput";
 
 import { Modal } from "@/components/ui/Modal";
-import { User, LogOut, CheckCircle, Shield, Info, CreditCard, QrCode } from "lucide-react";
+import { User, LogOut, CheckCircle, Shield, Info } from "lucide-react";
+import { PaymentMethodSelector } from "@/components/ui/PaymentMethodSelector";
 import Link from "next/link";
 import { PendingInvoiceModal } from "@/components/modals/PendingInvoiceModal";
 
@@ -177,33 +178,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     </div>
                 </div>
 
-                <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Método de Pagamento</label>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, metodoPagamento: 'PIX' })}
-                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2 ${formData.metodoPagamento === 'PIX'
-                                ? 'border-primary bg-primary/[0.03] text-primary shadow-lg shadow-primary/5'
-                                : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
-                                }`}
-                        >
-                            <QrCode size={24} className={formData.metodoPagamento === 'PIX' ? 'opacity-100' : 'opacity-40'} />
-                            <span className="text-xs font-black uppercase tracking-wider">PIX</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, metodoPagamento: 'CREDIT_CARD' })}
-                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2 ${formData.metodoPagamento === 'CREDIT_CARD'
-                                ? 'border-primary bg-primary/[0.03] text-primary shadow-lg shadow-primary/5'
-                                : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'
-                                }`}
-                        >
-                            <CreditCard size={24} className={formData.metodoPagamento === 'CREDIT_CARD' ? 'opacity-100' : 'opacity-40'} />
-                            <span className="text-xs font-black uppercase tracking-wider">Cartão</span>
-                        </button>
-                    </div>
-                </div>
+
 
                 <div className="space-y-2 w-full">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade de Vagas</label>
