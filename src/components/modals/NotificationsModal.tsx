@@ -60,9 +60,19 @@ const FILTERS: FilterCategory[] = [
         types: ['grupo_criado', 'grupo_editado', 'grupo_excluido']
     },
     {
+        id: 'convites',
+        label: 'Convites',
+        types: ['convite_recebido', 'convite_aceito', 'solicitacao_participacao_criada', 'solicitacao_participacao_aceita', 'solicitacao_participacao_recusada']
+    },
+    {
+        id: 'suporte',
+        label: 'Suporte',
+        types: ['suporte_atualizado']
+    },
+    {
         id: 'sistema',
         label: 'Sistema',
-        types: ['configuracao_alterada']
+        types: ['configuracao_alterada', 'plano_alterado']
     },
 ];
 
@@ -76,15 +86,25 @@ const TIME_FILTERS = [
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
     const [notificacoes, setNotificacoes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
     const [naoLidas, setNaoLidas] = useState(0);
     const [activeFilter, setActiveFilter] = useState('all');
     const [timeFilter, setTimeFilter] = useState('all');
     const toast = useToast();
 
-    const loadNotificacoes = async () => {
-        setLoading(true);
+    const loadNotificacoes = async (isLoadMore = false) => {
+        if (isLoadMore) {
+            setLoadingMore(true);
+        } else {
+            setLoading(true);
+            setOffset(0);
+        }
+
         try {
             const currentFilter = FILTERS.find(f => f.id === activeFilter);
+            const currentOffset = isLoadMore ? offset + 50 : 0;
 
             let dataInicio: Date | undefined;
             if (timeFilter !== 'all') {
@@ -104,15 +124,23 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
 
             const result = await getNotificacoes({
                 limite: 50,
+                offset: currentOffset,
                 apenasNaoLidas: currentFilter?.unread,
                 tipos: currentFilter?.types,
                 dataInicio
             });
 
             if (result.success && result.data) {
-                setNotificacoes(result.data.notificacoes);
+                if (isLoadMore) {
+                    setNotificacoes(prev => [...prev, ...result.data.notificacoes]);
+                } else {
+                    setNotificacoes(result.data.notificacoes);
+                }
 
-                if (activeFilter === 'all' && timeFilter === 'all') {
+                setHasMore(result.data.notificacoes.length === 50);
+                setOffset(currentOffset);
+
+                if (activeFilter === 'all' && timeFilter === 'all' && !isLoadMore) {
                     setNaoLidas(result.data.naoLidas);
                 }
             } else if (result.error) {
@@ -123,12 +151,13 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
             console.error(error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
 
     useEffect(() => {
         if (isOpen) {
-            loadNotificacoes();
+            loadNotificacoes(false);
         }
     }, [isOpen, activeFilter, timeFilter]);
 
@@ -262,6 +291,19 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                             onMarkAsRead={handleMarkAsRead}
                         />
                     ))}
+                    {hasMore && notificacoes.length > 0 && (
+                        <div className="py-4 flex justify-center">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => loadNotificacoes(true)}
+                                disabled={loadingMore}
+                                className="w-full sm:w-auto"
+                            >
+                                {loadingMore ? "Carregando..." : "Carregar mais"}
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
         </Modal>
