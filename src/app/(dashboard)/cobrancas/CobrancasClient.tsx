@@ -58,7 +58,9 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         confirmCancellation,
         handleEnviarWhatsApp,
         handleClearFilters,
-        setSelectedCobrancaId // Added this just in case, though handled by actions
+        handleViewQrCode,
+        qrModalOpen, setQrModalOpen,
+        setSelectedCobrancaId
     } = useCobrancasActions(cobrancasIniciais);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
@@ -239,6 +241,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                                 onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
                                 onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
                                 onCancel={() => handleCancelarCobranca(cobranca.id)}
+                                onViewQrCode={() => handleViewQrCode(cobranca.id)}
                             />
                         ))}
                     </div>
@@ -251,9 +254,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                         }}
                         onConfirmPayment={handleConfirmarPagamento}
                         onSendWhatsApp={handleEnviarWhatsApp}
-                        onCancel={handleCancelarCobranca}
+                        onCancelPayment={handleCancelarCobranca}
                         searchTerm={searchTerm}
                         statusFilter={statusFilter}
+                        onViewQrCode={handleViewQrCode}
                     />
                 )}
             </div>
@@ -272,6 +276,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 }}
                 selectedCobranca={selectedCobranca}
                 loading={loading}
+                qrModalOpen={qrModalOpen}
+                onCloseQrModal={() => setQrModalOpen(false)}
             />
         </PageContainer>
     );

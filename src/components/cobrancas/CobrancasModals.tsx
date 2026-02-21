@@ -3,6 +3,7 @@
 import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal";
 import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
 import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
+import { ModalPagamentoCobranca } from "@/components/faturas/ModalPagamentoCobranca";
 
 interface CobrancasModalsProps {
     cancelModalOpen: boolean;
@@ -13,6 +14,8 @@ interface CobrancasModalsProps {
     onConfirmPayment: () => void;
     detailsModalOpen: boolean;
     onCloseDetails: () => void;
+    qrModalOpen: boolean;
+    onCloseQrModal: () => void;
     selectedCobranca: any;
     loading: boolean;
 }
@@ -26,6 +29,8 @@ export function CobrancasModals({
     onConfirmPayment,
     detailsModalOpen,
     onCloseDetails,
+    qrModalOpen,
+    onCloseQrModal,
     selectedCobranca,
     loading
 }: CobrancasModalsProps) {
@@ -49,6 +54,12 @@ export function CobrancasModals({
                 isOpen={detailsModalOpen}
                 onClose={onCloseDetails}
                 cobranca={selectedCobranca}
+            />
+
+            <ModalPagamentoCobranca
+                isOpen={qrModalOpen}
+                onClose={onCloseQrModal}
+                fatura={selectedCobranca}
             />
         </>
     );

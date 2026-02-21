@@ -4,12 +4,13 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
-import { Copy, UploadCloud, CheckCircle2, Loader2, MessageCircle } from "lucide-react";
+import { Copy, UploadCloud, CheckCircle2, Loader2, MessageCircle, AlertCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { generateStaticPix } from "@/lib/pix-generator";
 import { useToast } from "@/hooks/useToast";
 import { enviarComprovanteAction } from "@/actions/comprovantes";
 import { generateWhatsAppLink, generateWhatsAppLinkTextOnly } from "@/lib/whatsapp-link-utils";
+import { cn } from "@/lib/utils";
 
 interface ModalPagamentoCobrancaProps {
     isOpen: boolean;
@@ -30,7 +31,6 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura }: ModalPagamen
     const chavePix = fatura?.assinatura?.participante?.conta?.chavePix;
     const nomeConta = fatura?.assinatura?.participante?.conta?.nome || "Titular";
 
-    // Gera o payload do PIX de forma assíncrona (Necessário pela lib faz-um-pix)
     useEffect(() => {
         async function loadPix() {
             if (isOpen && chavePix) {
@@ -58,7 +58,6 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura }: ModalPagamen
 
     const shareWhatsApp = () => {
         if (!pixPayload) return;
-
         const message = `Olá! Segue o PIX para pagamento da fatura do streaming ${fatura?.assinatura?.streaming?.apelido || fatura?.assinatura?.streaming?.catalogo?.nome || ""}:\n\n${pixPayload}\n\nValor: ${format(valor)}`;
         const whatsapp = fatura?.assinatura?.participante?.whatsappNumero;
 
@@ -97,127 +96,138 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura }: ModalPagamen
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Pagamento via Pix">
-            <div className="flex flex-col gap-6 items-center w-full px-2">
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Pagamento e Liberação"
+            className="sm:max-w-[700px] overflow-hidden"
+        >
+            <div className="w-full">
                 {!chavePix ? (
-                    <NoPixKeyAlert />
+                    <div className="flex items-center gap-3 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 mb-2 mt-2">
+                        <AlertCircle size={24} className="flex-shrink-0" />
+                        <p className="text-sm font-medium">O dono da plataforma não configurou a chave PIX. Impossível gerar QR Code no momento.</p>
+                    </div>
                 ) : (
-                    <>
-                        <PixAmountDisplay valor={valor} format={format} />
+                    <div className="flex flex-col sm:flex-row gap-5 items-stretch pt-2 pb-2">
 
-                        <PixQRSection
-                            payload={pixPayload}
-                            loading={isLoadingPix}
-                            onCopy={copyPix}
-                            onShareWhatsApp={shareWhatsApp}
-                        />
+                        {/* LADO ESQUERDO: PIX REFATORADO (COMPACTO) */}
+                        <div className="flex-1 flex flex-col gap-4">
+                            {/* Bloco de Valor Destacado */}
+                            <div className="bg-gradient-to-br from-blue-50/80 to-indigo-50/40 p-5 rounded-2xl border border-blue-100/60 shadow-inner flex flex-col items-center justify-center text-center">
+                                <span className="text-[10px] font-black tracking-widest text-blue-500 uppercase mb-0.5">Total da Fatura</span>
+                                <div className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tighter leading-none">{format(valor)}</div>
+                            </div>
 
-                        <div className="w-full border-t border-gray-100 my-2" />
+                            {/* Bloco QR Code e Ações */}
+                            <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 flex flex-col items-center gap-4 h-full">
+                                <div className="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 flex justify-center items-center w-[150px] h-[150px] transition-transform hover:scale-[1.02]">
+                                    {isLoadingPix ? (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">Gerando</span>
+                                        </div>
+                                    ) : (
+                                        pixPayload ? <QRCode value={pixPayload} size={130} /> : <span className="text-gray-400 text-[10px] uppercase font-bold">Erro QR</span>
+                                    )}
+                                </div>
 
-                        <ProofUploadSection
-                            file={file}
-                            onFileChange={handleFileChange}
-                            onUpload={handleEnviar}
-                            loading={isUploading}
-                        />
-                    </>
+                                {/* Campo Copia e Cola visível */}
+                                <div className="w-full relative">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={pixPayload || "Aguardando geração..."}
+                                        className="w-full text-xs font-mono bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 truncate"
+                                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                                    />
+                                </div>
+
+                                <div className="w-full flex gap-2">
+                                    <Button
+                                        onClick={copyPix}
+                                        variant="secondary"
+                                        disabled={!pixPayload || isLoadingPix}
+                                        className="flex-1 font-bold gap-1.5 text-primary bg-primary/10 hover:bg-primary/20 transition-all h-10 text-xs border-transparent hover:-translate-y-[1px]"
+                                    >
+                                        <Copy size={14} /> Copiar
+                                    </Button>
+                                    <Button
+                                        onClick={shareWhatsApp}
+                                        variant="secondary"
+                                        disabled={!pixPayload || isLoadingPix}
+                                        className="flex-1 font-bold gap-1.5 text-green-700 bg-green-50 hover:bg-green-100 border-green-200 hover:border-green-300 transition-all h-10 text-xs hover:-translate-y-[1px]"
+                                    >
+                                        <MessageCircle size={14} /> WhatsApp
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SEPARADOR DIVISÓRIO */}
+                        <div className="hidden sm:block w-px bg-gray-100" />
+
+                        {/* LADO DIREITO: ENVIO DE COMPROVANTE */}
+                        <div className="flex-1 flex flex-col">
+                            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-full gap-5">
+                                <div className="space-y-1">
+                                    <h4 className="font-black text-gray-900 text-lg tracking-tight">Anexar Comprovante</h4>
+                                    <p className="text-xs text-gray-500 leading-relaxed font-medium">Após realizar o PIX e salvar na galeria, envie o recibo aqui para acelerar sua liberação.</p>
+                                </div>
+
+                                <label className={cn(
+                                    "flex flex-col items-center justify-center w-full border-2 border-dashed rounded-xl cursor-pointer transition-all group relative overflow-hidden flex-1 min-h-[140px]",
+                                    file ? "border-green-300 bg-green-50/30" : "border-gray-200 hover:bg-blue-50/40 hover:border-primary"
+                                )}>
+                                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="flex flex-col items-center justify-center px-4 relative z-10 text-center">
+                                        {file ? (
+                                            <>
+                                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mb-2 shadow-sm">
+                                                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                                </div>
+                                                <p className="text-xs text-gray-700 truncate max-w-[180px] font-bold">{file.name}</p>
+                                                <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mt-1 hover:underline">Trocar arquivo</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-2 group-hover:bg-white transition-colors shadow-sm">
+                                                    <UploadCloud className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
+                                                </div>
+                                                <p className="text-xs font-semibold text-gray-700">
+                                                    <span className="text-primary group-hover:underline">Clique para fazer upload</span>
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 font-medium mt-0.5">Somente Imagens PNG ou JPG</p>
+                                            </>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        disabled={isUploading}
+                                    />
+                                </label>
+
+                                <Button
+                                    onClick={handleEnviar}
+                                    disabled={!file || isUploading}
+                                    className="w-full font-black text-xs uppercase tracking-wider h-11 transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:shadow-none"
+                                >
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Enviando...
+                                        </>
+                                    ) : "Enviar Comprovante de Pagamento"}
+                                </Button>
+                            </div>
+                        </div>
+
+                    </div>
                 )}
             </div>
         </Modal>
     );
 }
-
-/**
- * Sub-componentes para manter o Single Responsibility Principle (SRP)
- */
-
-function NoPixKeyAlert() {
-    return (
-        <div className="text-red-500 text-center p-4 bg-red-50 rounded-lg">
-            O dono do grupo não cadastrou uma chave PIX para recebimento. Entre em contato com ele.
-        </div>
-    );
-}
-
-function PixAmountDisplay({ valor, format }: { valor: number, format: any }) {
-    return (
-        <div className="text-center space-y-1">
-            <span className="text-sm text-gray-500">Valor a Pagar:</span>
-            <div className="text-3xl font-black text-gray-900">{format(valor)}</div>
-        </div>
-    );
-}
-
-function PixQRSection({ payload, loading, onCopy, onShareWhatsApp }: { payload: string, loading: boolean, onCopy: () => void, onShareWhatsApp: () => void }) {
-    return (
-        <div className="w-full space-y-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-center min-h-[182px] items-center">
-                {loading ? (
-                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                ) : (
-                    payload ? <QRCode value={payload} size={150} /> : <span className="text-gray-400">Erro ao carregar QR</span>
-                )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 w-full">
-                <Button
-                    onClick={onCopy}
-                    variant="secondary"
-                    disabled={!payload || loading}
-                    className="font-bold gap-2 text-primary bg-primary/10 hover:bg-primary/20"
-                >
-                    <Copy size={16} />
-                    Copiar
-                </Button>
-
-                <Button
-                    onClick={onShareWhatsApp}
-                    variant="secondary"
-                    disabled={!payload || loading}
-                    className="font-bold gap-2 text-green-600 bg-green-50 hover:bg-green-100 border-green-100"
-                >
-                    <MessageCircle size={16} />
-                    WhatsApp
-                </Button>
-            </div>
-        </div>
-    );
-}
-
-function ProofUploadSection({ file, onFileChange, onUpload, loading }: { file: File | null, onFileChange: any, onUpload: any, loading: boolean }) {
-    return (
-        <div className="w-full space-y-4">
-            <div className="space-y-1">
-                <h4 className="font-bold text-gray-900">Já efetuou o pagamento?</h4>
-                <p className="text-sm text-gray-500">Submeta o comprovante para acelerar a validação.</p>
-            </div>
-
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-primary transition-all group">
-                <div className="flex flex-col items-center justify-center px-4">
-                    {file ? (
-                        <>
-                            <CheckCircle2 className="w-8 h-8 text-green-500 mb-2" />
-                            <p className="text-xs text-gray-500 truncate max-w-[200px] font-medium">{file.name}</p>
-                        </>
-                    ) : (
-                        <>
-                            <UploadCloud className="w-8 h-8 text-gray-400 mb-2 group-hover:text-primary transition-colors" />
-                            <p className="text-xs text-gray-500"><span className="font-bold text-primary">Anexar</span> ou arrastar arquivo</p>
-                            <p className="text-[10px] text-gray-400 mt-1">PNG, JPG, PDF (Máx. 5MB)</p>
-                        </>
-                    )}
-                </div>
-                <input type="file" className="hidden" accept="image/*,application/pdf" onChange={onFileChange} />
-            </label>
-
-            <Button
-                onClick={onUpload}
-                disabled={!file || loading}
-                className="w-full gap-2 font-bold bg-primary text-white shadow-lg shadow-primary/20"
-            >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar Comprovante"}
-            </Button>
-        </div>
-    );
-}
-

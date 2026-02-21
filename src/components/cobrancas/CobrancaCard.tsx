@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MessageCircle, Check, XCircle, AlertCircle, Calendar } from "lucide-react";
+import { Eye, MessageCircle, Check, XCircle, AlertCircle, Calendar, QrCode } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -16,8 +16,10 @@ interface CobrancaCardProps {
     formatPeriod: (start: Date, end: Date) => string;
     onViewDetails: () => void;
     onSendWhatsApp: () => void;
-    onConfirmPayment: () => void;
-    onCancel: () => void;
+    onConfirmPayment?: () => void;
+    onCancel?: () => void;
+    onViewQrCode?: () => void;
+    isAdmin?: boolean;
 }
 
 export function CobrancaCard({
@@ -26,7 +28,9 @@ export function CobrancaCard({
     onViewDetails,
     onSendWhatsApp,
     onConfirmPayment,
-    onCancel
+    onCancel,
+    onViewQrCode,
+    isAdmin = false
 }: CobrancaCardProps) {
     const { format } = useCurrency();
 
@@ -53,7 +57,10 @@ export function CobrancaCard({
 
     const options = [
         { label: "Ver Detalhes", icon: <Eye size={16} />, onClick: onViewDetails },
-        ...(cobranca.status === 'pendente' || cobranca.status === 'atrasado' ? [
+        ...(cobranca.status !== 'pago' && cobranca.status !== 'cancelado' ? [
+            { label: "Ver QR Code", icon: <QrCode size={16} />, onClick: onViewQrCode || onViewDetails }
+        ] : []),
+        ...(isAdmin && (cobranca.status === 'pendente' || cobranca.status === 'atrasado') ? [
             { type: "separator" as const },
             { label: "Confirmar Pagamento", icon: <Check size={16} />, onClick: onConfirmPayment, variant: "success" as const },
             { label: "Cancelar Cobrança", icon: <XCircle size={16} />, onClick: onCancel, variant: "danger" as const }

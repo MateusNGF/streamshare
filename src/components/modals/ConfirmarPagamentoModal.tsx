@@ -42,15 +42,25 @@ export function ConfirmarPagamentoModal({
         >
             <div className="space-y-4">
                 <p className="text-gray-600">
-                    Deseja confirmar o pagamento desta cobrança?
+                    Você está confirmando que recebeu o pagamento deste participante **manualmente** (por fora da plataforma).
                 </p>
-                <div className="bg-green-50 text-green-700 p-4 rounded-lg flex items-start gap-3">
+
+                <div className="bg-blue-50 text-blue-800 p-4 rounded-lg flex items-start gap-3 border border-blue-100">
                     <CheckCircle className="shrink-0 mt-0.5" size={20} />
-                    <div className="text-sm">
-                        <p className="font-medium">Confirmação</p>
-                        <p>O status da cobrança será alterado para "Pago" e a receita será contabilizada.</p>
+                    <div className="text-sm space-y-2">
+                        <p className="font-bold">Impactos desta ação:</p>
+                        <ul className="list-disc pl-4 space-y-1">
+                            <li>O status da fatura mudará para <strong>"Pago"</strong> imediatamente.</li>
+                            <li>O valor <strong>NÃO</strong> passará pela sua carteira digital.</li>
+                            <li>Nenhuma taxa de plataforma será descontada.</li>
+                            <li>O participante receberá uma notificação de confirmação.</li>
+                        </ul>
                     </div>
                 </div>
+
+                <p className="text-xs text-gray-500 italic">
+                    * Use esta opção apenas se o dinheiro já estiver na sua conta pessoal.
+                </p>
             </div>
         </Modal>
     );

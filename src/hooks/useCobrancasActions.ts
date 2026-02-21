@@ -25,6 +25,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const [confirmPaymentModalOpen, setConfirmPaymentModalOpen] = useState(false);
     const [selectedCobrancaId, setSelectedCobrancaId] = useState<number | null>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [qrModalOpen, setQrModalOpen] = useState(false);
 
     const filteredCobrancas = cobrancasIniciais.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
@@ -147,6 +148,11 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         setHasWhatsappFilter("false");
     };
 
+    const handleViewQrCode = (id: number) => {
+        setSelectedCobrancaId(id);
+        setQrModalOpen(true);
+    };
+
     return {
         // States
         searchTerm, setSearchTerm,
@@ -161,6 +167,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         cancelModalOpen, setCancelModalOpen,
         confirmPaymentModalOpen, setConfirmPaymentModalOpen,
         detailsModalOpen, setDetailsModalOpen,
+        qrModalOpen, setQrModalOpen,
         selectedCobrancaId, setSelectedCobrancaId,
 
         // Calculated
@@ -173,6 +180,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         handleCancelarCobranca,
         confirmCancellation,
         handleEnviarWhatsApp,
-        handleClearFilters
+        handleClearFilters,
+        handleViewQrCode
     };
 }

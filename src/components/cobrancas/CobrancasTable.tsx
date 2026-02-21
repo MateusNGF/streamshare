@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History } from "lucide-react";
+import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History, QrCode, AlertCircle } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -19,9 +19,10 @@ import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "./share
 interface CobrancasTableProps {
     cobrancas: any[];
     onViewDetails: (id: number) => void;
-    onConfirmPayment: (id: number) => void;
-    onSendWhatsApp: (id: number) => void;
-    onCancel: (id: number) => void;
+    onConfirmPayment?: (id: number) => void;
+    onSendWhatsApp?: (id: number) => void;
+    onCancelPayment?: (id: number) => void;
+    onViewQrCode?: (id: number) => void;
     searchTerm?: string;
     statusFilter?: string;
     variant?: "default" | "compact";
@@ -34,7 +35,8 @@ export function CobrancasTable({
     onViewDetails,
     onConfirmPayment,
     onSendWhatsApp,
-    onCancel,
+    onCancelPayment,
+    onViewQrCode,
     searchTerm = "",
     statusFilter = "all",
     variant = "default",
@@ -140,22 +142,30 @@ export function CobrancasTable({
                                     icon: <Eye size={16} />,
                                     onClick: () => onViewDetails(cobranca.id)
                                 },
+                                ...(cobranca.status !== 'pago' && cobranca.status !== 'cancelado' ? [
+                                    {
+                                        label: "Ver QR Code / PIX",
+                                        icon: <QrCode size={16} />,
+                                        onClick: () => onViewQrCode ? onViewQrCode(cobranca.id) : onViewDetails(cobranca.id)
+                                    }
+                                ] : []),
                                 ...(!isPaid && !isCancelled && isAdmin ? [
                                     { type: "separator" as const },
                                     {
                                         label: "Confirmar Pagamento",
                                         icon: <Check size={16} />,
-                                        onClick: () => onConfirmPayment(cobranca.id)
+                                        onClick: () => onConfirmPayment?.(cobranca.id)
                                     },
                                     {
                                         label: "Enviar WhatsApp",
                                         icon: <MessageCircle size={16} />,
-                                        onClick: () => onSendWhatsApp(cobranca.id)
+                                        onClick: () => onSendWhatsApp?.(cobranca.id)
                                     },
+                                    { type: "separator" as const },
                                     {
-                                        label: "Cancelar Cobrança",
-                                        icon: <Trash size={16} />,
-                                        onClick: () => onCancel(cobranca.id),
+                                        label: "Cancelar",
+                                        icon: <AlertCircle size={16} />,
+                                        onClick: () => onCancelPayment?.(cobranca.id),
                                         variant: "danger" as const
                                     }
                                 ] : [])
