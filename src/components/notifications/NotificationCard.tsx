@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMemo } from "react";
 
 interface NotificationCardProps {
     id: number;
@@ -90,10 +91,12 @@ export function NotificationCard({
     const Icon = iconMap[tipo] || Bell;
     const colorClass = colorMap[tipo] || "bg-gray-50 text-gray-600";
 
-    const timeAgo = formatDistanceToNow(new Date(createdAt), {
-        addSuffix: true,
-        locale: ptBR
-    });
+    const timeAgo = useMemo(() =>
+        formatDistanceToNow(createdAt instanceof Date ? createdAt : new Date(createdAt), {
+            addSuffix: true,
+            locale: ptBR
+        }),
+        [createdAt]);
 
     return (
         <div
@@ -159,9 +162,7 @@ export function NotificationCard({
                             className="
                                 flex items-center gap-1 px-1.5 py-0.5 -mr-1 text-[8px] font-bold tracking-wide uppercase
                                 text-primary bg-primary/5 hover:bg-primary/10 rounded-md 
-                                transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100
-                                sm:opacity-0 /* Hidden by default on desktop until hover */
-                                opacity-100 /* Always visible on mobile if unread */
+                                transition-all duration-200 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100
                             "
                             aria-label="Marcar como lida"
                         >
