@@ -68,6 +68,12 @@ async function checkAndNotifyPendingBillings() {
 
         console.log(`[CRON] Conta ${config.contaId}: ${cobrancas.length} cobranças vencendo`);
 
+        // Fetch account currency ONCE per account, not per charge
+        const conta = await prisma.conta.findUnique({
+            where: { id: config.contaId },
+            select: { moedaPreferencia: true }
+        });
+
         for (const cobranca of cobrancas) {
             // Verificar última notificação para evitar spam
             const ultimoLog = await prisma.whatsAppLog.findFirst({
@@ -88,12 +94,6 @@ async function checkAndNotifyPendingBillings() {
 
             // Calcular dias restantes
             const diasRestantes = differenceInDays(new Date(cobranca.periodoFim), new Date());
-
-            // Fetch account currency
-            const conta = await prisma.conta.findUnique({
-                where: { id: config.contaId },
-                select: { moedaPreferencia: true }
-            });
 
             // Criar mensagem
             const mensagem = whatsappTemplates.cobrancaVencendo(
@@ -173,6 +173,12 @@ async function checkAndNotifyOverdueBillings() {
 
         console.log(`[CRON] Conta ${config.contaId}: ${cobrancas.length} cobranças atrasadas`);
 
+        // Fetch account currency ONCE per account, not per charge
+        const conta = await prisma.conta.findUnique({
+            where: { id: config.contaId },
+            select: { moedaPreferencia: true }
+        });
+
         for (const cobranca of cobrancas) {
             // Verificar última notificação para evitar spam
             const ultimoLog = await prisma.whatsAppLog.findFirst({
@@ -193,12 +199,6 @@ async function checkAndNotifyOverdueBillings() {
 
             // Calcular dias de atraso
             const diasAtraso = differenceInDays(new Date(), new Date(cobranca.periodoFim));
-
-            // Fetch account currency
-            const conta = await prisma.conta.findUnique({
-                where: { id: config.contaId },
-                select: { moedaPreferencia: true }
-            });
 
             // Criar mensagem
             const mensagem = whatsappTemplates.cobrancaAtrasada(
