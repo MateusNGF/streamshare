@@ -15,8 +15,16 @@ import {
     Clock,
     Receipt,
     Wallet,
-    Copy
+    Copy,
+    Image as ImageIcon,
+    QrCode
 } from "lucide-react";
+
+import { ModalPagamentoCobranca } from "@/components/faturas/ModalPagamentoCobranca";
+
+import { aprovarComprovanteAction, rejeitarComprovanteAction } from "@/actions/comprovantes";
+import { useState } from "react";
+import { useToast } from "@/hooks/useToast";
 
 interface DetalhesCobrancaModalProps {
     isOpen: boolean;
@@ -31,6 +39,34 @@ export function DetalhesCobrancaModal({
 }: DetalhesCobrancaModalProps) {
     const { format } = useCurrency();
     const { copied, handleCopy, formatDate } = useModalDetails();
+    const { success: toastSuccess, error: toastError } = useToast();
+
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+    const handleAprovar = async () => {
+        setIsProcessing(true);
+        const res = await aprovarComprovanteAction(cobranca.id);
+        setIsProcessing(false);
+        if (res.sucesso) {
+            toastSuccess("Comprovante aprovado e fatura dada como paga!");
+            onClose();
+        } else {
+            toastError((res as any).erro || "Erro ao aprovar comprovante.");
+        }
+    };
+
+    const handleRejeitar = async () => {
+        setIsProcessing(true);
+        const res = await rejeitarComprovanteAction(cobranca.id);
+        setIsProcessing(false);
+        if (res.sucesso) {
+            toastSuccess("Comprovante rejeitado. O participante poderá enviar um novo.");
+            onClose();
+        } else {
+            toastError((res as any).erro || "Erro ao rejeitar comprovante.");
+        }
+    };
 
     if (!cobranca) return null;
 
@@ -170,6 +206,43 @@ export function DetalhesCobrancaModal({
                     </div>
                 )}
 
+                {/* Secção de Comprovativo anexo */}
+                {cobranca.comprovanteUrl && (
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <ImageIcon size={16} className="text-gray-500" />
+                            <h4 className="text-sm font-bold text-gray-900">Comprovativo Anexado</h4>
+                        </div>
+                        <div className="w-full flex justify-center bg-white border border-gray-200 rounded-lg p-2 max-h-[400px] overflow-auto">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={cobranca.comprovanteUrl}
+                                alt="Comprovativo de Pagamento"
+                                className="max-w-full object-contain rounded"
+                            />
+                        </div>
+                        {cobranca.status === 'aguardando_aprovacao' && (
+                            <div className="flex gap-3 pt-2">
+                                <Button
+                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold"
+                                    onClick={handleAprovar}
+                                    disabled={isProcessing}
+                                >
+                                    Confirmar Recebimento
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 font-bold"
+                                    onClick={handleRejeitar}
+                                    variant="secondary"
+                                    disabled={isProcessing}
+                                >
+                                    Rejeitar
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* 4. Footer de Alerta */}
                 {cobranca.deletedAt && (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 animate-in fade-in slide-in-from-bottom-2">
@@ -185,11 +258,25 @@ export function DetalhesCobrancaModal({
 
                 {/* Ações do Footer */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-50">
+                    <Button
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        className="w-full gap-2 font-bold text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
+                        variant="secondary"
+                    >
+                        <QrCode size={16} />
+                        Gerar PIX / Pagamento
+                    </Button>
                     <Button onClick={onClose} variant="outline" className="w-full">
                         Fechar
                     </Button>
                 </div>
             </div>
+
+            <ModalPagamentoCobranca
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                fatura={cobranca}
+            />
         </Modal>
     );
 }

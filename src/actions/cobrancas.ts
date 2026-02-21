@@ -73,7 +73,17 @@ export async function getCobrancas(filters?: {
             include: {
                 assinatura: {
                     include: {
-                        participante: true,
+                        participante: {
+                            include: {
+                                conta: {
+                                    select: {
+                                        id: true,
+                                        nome: true,
+                                        chavePix: true,
+                                    }
+                                }
+                            }
+                        },
                         streaming: {
                             include: { catalogo: true }
                         }

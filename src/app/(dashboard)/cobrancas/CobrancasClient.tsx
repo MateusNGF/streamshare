@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, CheckCircle, AlertCircle } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, FileStack, ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GenericFilter } from "@/components/ui/GenericFilter";
@@ -64,12 +64,38 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
 
+    const pendingApprovalsCount = cobrancasIniciais.filter(c => c.status === 'aguardando_aprovacao').length;
+
     return (
         <PageContainer>
             <PageHeader
                 title="Cobranças"
                 description="Controle de pagamentos e envios de cobrança."
             />
+
+            {pendingApprovalsCount > 0 && (
+                <div
+                    className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-100 transition-colors animate-in fade-in slide-in-from-top-4"
+                    onClick={() => {
+                        setStatusFilter("aguardando_aprovacao");
+                        setTimeout(() => window.scrollTo({ top: 400, behavior: 'smooth' }), 100);
+                    }}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
+                            <FileStack size={24} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-blue-900 text-lg">Faturas a Aguardar Validação ({pendingApprovalsCount})</h4>
+                            <p className="text-sm text-blue-700">Participantes enviaram comprovantes que precisam da sua aprovação.</p>
+                        </div>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1 text-sm font-bold text-blue-700 bg-white px-4 py-2 rounded-lg border border-blue-100 shadow-sm">
+                        Ver Faturas
+                        <ChevronRight size={16} />
+                    </div>
+                </div>
+            )}
 
             <KPIGrid cols={3} >
                 <KPIGridItem>
@@ -117,6 +143,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                             className: "w-full md:w-[150px]",
                             options: [
                                 { label: "Pendente", value: "pendente" },
+                                { label: "Aguardando", value: "aguardando_aprovacao" },
                                 { label: "Pago", value: "pago" },
                                 { label: "Atrasado", value: "atrasado" },
                                 { label: "Cancelado", value: "cancelado" }

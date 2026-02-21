@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Calendar, Wallet, CheckCircle2, Clock } from "lucide-react";
+import { Copy, Calendar, Wallet, CheckCircle2, Clock, DollarSign } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { differenceInDays, isToday, startOfDay, format } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/hooks/useToast";
+import { ModalPagamentoCobranca } from "./ModalPagamentoCobranca";
+import { useState } from "react";
 
 interface FaturaCardProps {
     fatura: any;
@@ -24,15 +26,9 @@ export function FaturaCard({ fatura }: FaturaCardProps) {
     const daysUntil = differenceInDays(vencimentoDate, today);
     const isOverdue = !isPaid && !isCancelled && daysUntil < 0;
 
-    const copyPix = () => {
-        const chavePix = fatura.assinatura.participante.conta.chavePix;
-        if (!chavePix) {
-            toastError("Chave Pix não cadastrada pelo proprietário da conta.");
-            return;
-        }
-        navigator.clipboard.writeText(chavePix);
-        success("Chave Pix copiada!");
-    };
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+    const openPaymentModal = () => setIsPaymentModalOpen(true);
 
     const getBorderColor = () => {
         if (isCancelled) return "border-l-gray-300";
@@ -122,10 +118,10 @@ export function FaturaCard({ fatura }: FaturaCardProps) {
                         <Button
                             size="default"
                             className="bg-primary hover:bg-primary/90 text-white gap-2 font-bold px-6 rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            onClick={copyPix}
+                            onClick={openPaymentModal}
                         >
-                            <Copy size={18} />
-                            Copiar Pix
+                            <DollarSign size={18} />
+                            Pagar Fatura
                         </Button>
                     )}
 
@@ -144,6 +140,12 @@ export function FaturaCard({ fatura }: FaturaCardProps) {
                     )}
                 </div>
             </div>
+
+            <ModalPagamentoCobranca
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                fatura={fatura}
+            />
         </div>
     );
 }

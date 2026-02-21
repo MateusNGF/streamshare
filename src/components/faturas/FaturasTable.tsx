@@ -16,6 +16,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "@/components/cobrancas/shared/BillingTableCells";
 import { useToast } from "@/hooks/useToast";
+import { useState } from "react";
+import { ModalPagamentoCobranca } from "./ModalPagamentoCobranca";
 
 interface FaturasTableProps {
     faturas: any[];
@@ -27,6 +29,7 @@ export function FaturasTable({
     onViewDetails,
 }: FaturasTableProps) {
     const { success, error: toastError } = useToast();
+    const [faturaToPay, setFaturaToPay] = useState<any>(null);
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -117,6 +120,11 @@ export function FaturasTable({
                                 ...(!isPaid && !isCancelled && chavePix ? [
                                     { type: "separator" as const },
                                     {
+                                        label: "Pagar Fatura",
+                                        icon: <DollarSign size={16} />,
+                                        onClick: () => setFaturaToPay(fatura)
+                                    },
+                                    {
                                         label: "Copiar Pix",
                                         icon: <Copy size={16} />,
                                         onClick: () => copyPix(chavePix)
@@ -192,6 +200,12 @@ export function FaturasTable({
                     </TableBody>
                 </Table>
             </div>
+
+            <ModalPagamentoCobranca
+                isOpen={!!faturaToPay}
+                onClose={() => setFaturaToPay(null)}
+                fatura={faturaToPay}
+            />
         </div>
     );
 }
