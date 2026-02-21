@@ -12,14 +12,14 @@ export function startSubscriptionRenewalCron() {
     cron.schedule('0 4 * * *', async () => {
         console.log('[CRON] Iniciando renovação automática de assinaturas...');
         try {
-            const result = await billingService.processarCicloCobranca();
+            const result = await billingService.processarRenovacoes();
 
             if ('skipped' in result) {
                 console.log('[CRON] Ciclo de cobrança ignorado: Outra execução em andamento.');
                 return;
             }
 
-            const renovadas = result.streamings?.renovadas || 0;
+            const renovadas = result?.renovadas || 0;
 
             if (renovadas > 0) {
                 console.log(`[CRON] Renovação concluída: ${renovadas} novas cobranças geradas.`);
