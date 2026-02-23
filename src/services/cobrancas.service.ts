@@ -47,7 +47,6 @@ export class CobrancasService {
                     where: { id: cobrancaId },
                     data: {
                         comprovanteUrl: urlComprovante,
-                        dataEnvioComprovante: new Date(),
                         status: StatusCobranca.aguardando_aprovacao
                     }
                 });
@@ -159,7 +158,6 @@ export class CobrancasService {
                     data: {
                         status: StatusCobranca.pendente,
                         comprovanteUrl: null,
-                        dataEnvioComprovante: null
                     }
                 });
 
