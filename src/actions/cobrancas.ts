@@ -157,25 +157,26 @@ export async function criarCobrancaInicial(assinaturaId: number) {
  */
 export async function confirmarPagamento(
     cobrancaId: number,
-    formData?: FormData
+    data?: FormData | string
 ) {
     try {
         const { contaId, userId } = await getContext();
 
         let comprovanteUrl: string | undefined = undefined;
 
-        // Se houver formData, tenta extrair e fazer upload do comprovante
-        if (formData) {
-            const file = formData.get("comprovante") as File;
-            if (file && file instanceof Blob && file.size > 0) {
-                const { uploadComprovante } = await import("@/lib/storage");
-                try {
-                    comprovanteUrl = await uploadComprovante(file, `manual_confirmation_${cobrancaId}_${Date.now()}`);
-                } catch (err) {
-                    console.error("[UPLOAD_MANUAL_ERROR]", err);
-                    // Não bloqueamos a confirmação se o upload do comprovante falhar, 
-                    // a menos que desejemos que seja obrigatório. 
-                    // Por enquanto, vamos apenas avisar no log.
+        // Se houver dados extras (FormData ou String de URL)
+        if (data) {
+            if (typeof data === "string") {
+                comprovanteUrl = data;
+            } else if (data instanceof FormData) {
+                const file = data.get("comprovante") as File;
+                if (file && file instanceof Blob && file.size > 0) {
+                    const { uploadComprovante } = await import("@/lib/storage");
+                    try {
+                        comprovanteUrl = await uploadComprovante(file, `manual_confirmation_${cobrancaId}_${Date.now()}`);
+                    } catch (err) {
+                        console.error("[UPLOAD_MANUAL_ERROR]", err);
+                    }
                 }
             }
         }
