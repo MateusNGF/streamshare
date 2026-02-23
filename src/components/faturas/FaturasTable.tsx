@@ -217,7 +217,6 @@ export function FaturasTable({
                                     <TableCell className="px-4 py-3">
                                         <BillingValueCell
                                             valor={fatura.valor}
-                                            valorMensal={fatura.assinatura?.valor}
                                         />
                                     </TableCell>
 
