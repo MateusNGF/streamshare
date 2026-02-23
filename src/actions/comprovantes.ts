@@ -54,8 +54,8 @@ export async function aprovarComprovanteAction(cobrancaId: number) {
 
         if (!result.sucesso) return result;
 
-        revalidatePath("/(dashboard)/faturas");
-        revalidatePath("/(dashboard)/provedor/cobrancas");
+        revalidatePath("/faturas");
+        revalidatePath("/cobrancas");
 
         return { sucesso: true };
     } catch (error: any) {
