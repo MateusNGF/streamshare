@@ -17,6 +17,7 @@ interface UseGoogleLoginProps {
 export function useGoogleLogin({ callbackUrl, onSuccess, onError, onCredential }: UseGoogleLoginProps) {
     const router = useRouter();
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [isSdkLoaded, setIsSdkLoaded] = useState(false);
 
     const handleGoogleResponse = useCallback(async (response: any) => {
         const credential = response.credential;
@@ -55,8 +56,10 @@ export function useGoogleLogin({ callbackUrl, onSuccess, onError, onCredential }
     }, [callbackUrl, router, onSuccess, onError, onCredential]);
 
     const initializeGoogle = useCallback(() => {
-        if (!window.google || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-            console.warn("Google SDK not loaded or Client ID missing");
+        if (!window.google) return;
+
+        if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+            console.error("Google Client ID is missing! Make sure NEXT_PUBLIC_GOOGLE_CLIENT_ID is set in your environment variables.");
             return;
         }
 
@@ -74,6 +77,8 @@ export function useGoogleLogin({ callbackUrl, onSuccess, onError, onCredential }
                 console.log("One Tap not displayed or skipped", notification.getNotDisplayedReason());
             }
         });
+
+        setIsSdkLoaded(true);
     }, [handleGoogleResponse]);
 
     useEffect(() => {
@@ -91,11 +96,20 @@ export function useGoogleLogin({ callbackUrl, onSuccess, onError, onCredential }
         }
     }, [initializeGoogle]);
 
-    const renderGoogleButton = (containerId: string) => {
-        if (!window.google) return;
+    const renderGoogleButton = useCallback((containerId: string) => {
+        if (!window.google) {
+            console.warn("Cannot render Google button: SDK not loaded yet");
+            return;
+        }
+
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.warn(`Container #${containerId} not found`);
+            return;
+        }
 
         window.google.accounts.id.renderButton(
-            document.getElementById(containerId),
+            container,
             {
                 theme: "outline",
                 size: "large",
@@ -105,10 +119,11 @@ export function useGoogleLogin({ callbackUrl, onSuccess, onError, onCredential }
                 locale: "pt_BR"
             }
         );
-    };
+    }, []);
 
     return {
         isGoogleLoading,
+        isSdkLoaded,
         renderGoogleButton
     };
 }

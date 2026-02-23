@@ -15,7 +15,7 @@ export function GoogleAuthButton({ callbackUrl, mode, onLoading, onCredential }:
     const toast = useToast();
     const containerId = `google-${mode}-btn`;
 
-    const { isGoogleLoading, renderGoogleButton } = useGoogleLogin({
+    const { isGoogleLoading, isSdkLoaded, renderGoogleButton } = useGoogleLogin({
         callbackUrl,
         onCredential,
         onSuccess: () => {
@@ -32,12 +32,14 @@ export function GoogleAuthButton({ callbackUrl, mode, onLoading, onCredential }:
     }, [isGoogleLoading, onLoading]);
 
     useEffect(() => {
-        renderGoogleButton(containerId);
-    }, [renderGoogleButton, containerId]);
+        if (isSdkLoaded) {
+            renderGoogleButton(containerId);
+        }
+    }, [renderGoogleButton, containerId, isSdkLoaded]);
 
     return (
         <div className="relative w-full">
-            <div id={containerId} className="w-full h-[58px]" />
+            <div id={containerId} className="w-full h-[42px] flex justify-center" />
 
             {isGoogleLoading && (
                 <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-2xl z-20">
