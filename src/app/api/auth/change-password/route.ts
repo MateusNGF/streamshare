@@ -22,10 +22,33 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { currentPassword, newPassword } = body;
 
-        // Validações básicas
-        if (!currentPassword || !newPassword) {
+        // Buscar usuário completo do banco primeiro para verificar se precisa de senha atual
+        const user = await prisma.usuario.findUnique({
+            where: { id: currentUser.userId },
+            select: {
+                id: true,
+                senhaHash: true,
+            },
+        });
+
+        if (!user) {
             return NextResponse.json(
-                { error: "Senhas são obrigatórias" },
+                { error: "Usuário não encontrado" },
+                { status: 404 }
+            );
+        }
+
+        // Validações básicas
+        if (!newPassword) {
+            return NextResponse.json(
+                { error: "Nova senha é obrigatória" },
+                { status: 400 }
+            );
+        }
+
+        if (user.senhaHash && !currentPassword) {
+            return NextResponse.json(
+                { error: "Senha atual é obrigatória" },
                 { status: 400 }
             );
         }
@@ -37,36 +60,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (currentPassword === newPassword) {
-            return NextResponse.json(
-                { error: "A nova senha deve ser diferente da senha atual" },
-                { status: 400 }
-            );
-        }
+        if (user.senhaHash) {
+            if (currentPassword === newPassword) {
+                return NextResponse.json(
+                    { error: "A nova senha deve ser diferente da senha atual" },
+                    { status: 400 }
+                );
+            }
 
-        // Buscar usuário completo do banco
-        const user = await prisma.usuario.findUnique({
-            where: { id: currentUser.userId },
-            select: {
-                id: true,
-                senhaHash: true,
-            },
-        });
-
-        if (!user || !user.senhaHash) {
-            return NextResponse.json(
-                { error: "Usuário não encontrado" },
-                { status: 404 }
-            );
-        }
-
-        // Validar senha atual
-        const isValid = await bcrypt.compare(currentPassword, user.senhaHash);
-        if (!isValid) {
-            return NextResponse.json(
-                { error: "Senha atual incorreta" },
-                { status: 400 }
-            );
+            // Validar senha atual
+            const isValid = await bcrypt.compare(currentPassword, user.senhaHash);
+            if (!isValid) {
+                return NextResponse.json(
+                    { error: "Senha atual incorreta" },
+                    { status: 400 }
+                );
+            }
         }
 
         // Hash da nova senha

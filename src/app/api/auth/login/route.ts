@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { generateToken, setAuthCookie } from "@/lib/auth";
+import { AuthService } from "@/services/auth.service";
 
 export async function POST(request: NextRequest) {
     try {
@@ -46,24 +47,16 @@ export async function POST(request: NextRequest) {
         const userAgent = headersList.get("user-agent") || "unknown";
 
         // Update user session info
-        const updatedUser = await prisma.usuario.update({
-            where: { id: user.id },
-            data: {
-                lastIp: clientIp,
-                lastUserAgent: userAgent,
-            },
-            select: {
-                id: true,
-                email: true,
-                sessionVersion: true,
-            }
+        const sessionUser = await AuthService.updateLoginMetadata(user.id, {
+            ip: clientIp,
+            userAgent: userAgent,
         });
 
         // Generate JWT token
         const token = await generateToken({
             userId: user.id,
             email: user.email,
-            sessionVersion: updatedUser.sessionVersion,
+            sessionVersion: sessionUser.sessionVersion,
             clientIp: clientIp,
         });
 

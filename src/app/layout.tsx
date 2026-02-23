@@ -5,6 +5,7 @@ import { ToastProvider } from "@/contexts/ToastContext";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { SupportButton } from "@/components/support/SupportButton";
+import Script from "next/script";
 import "@/cron/init";
 import { BetaAnnouncement } from "@/components/layout/BetaAnnouncement";
 
@@ -88,6 +89,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} antialiased justify-center w-full flex flex-col bg-gray-50/50`}>
+        <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
         <ToastProvider>
           <TooltipProvider>
             <BetaAnnouncement />

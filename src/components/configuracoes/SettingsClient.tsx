@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, User, Bell } from "lucide-react";
+import { Building2, User, Bell, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LogoutModal } from "@/components/modals/LogoutModal";
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
@@ -14,10 +14,17 @@ import { CurrencyCode } from "@/types/currency.types";
 import NotificationsTab from "@/components/settings/NotificationsTab";
 import { ProfileTab } from "./ProfileTab";
 import { AccountTab } from "./AccountTab";
+import { SocialAccountsTab } from "./SocialAccountsTab";
 
 interface SettingsClientProps {
     initialData: {
-        user: { nome: string; email: string; whatsapp?: string | null } | null;
+        user: {
+            nome: string;
+            email: string;
+            whatsapp?: string | null;
+            provider?: string;
+            hasPassword?: boolean;
+        } | null;
         conta: {
             nome: string | null;
             email: string | null;
@@ -233,6 +240,12 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
             )
         },
         {
+            id: "social",
+            label: "Contas Sociais",
+            icon: Share2,
+            content: <SocialAccountsTab user={initialData.user as any} />,
+        },
+        {
             id: "notificacoes",
             label: "Notificações",
             icon: Bell,
@@ -266,6 +279,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
             <ChangePasswordModal
                 isOpen={isChangePasswordModalOpen}
+                user={initialData.user}
                 onClose={() => setIsChangePasswordModalOpen(false)}
                 onSuccess={() => showToast("Senha alterada com sucesso!", "success")}
             />
