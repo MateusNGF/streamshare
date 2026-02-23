@@ -76,11 +76,11 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         setConfirmPaymentModalOpen(true);
     };
 
-    const executePaymentConfirmation = async () => {
+    const executePaymentConfirmation = async (formData?: FormData) => {
         if (!selectedCobrancaId) return;
         setLoading(true);
         try {
-            const result = await confirmarPagamento(selectedCobrancaId);
+            const result = await confirmarPagamento(selectedCobrancaId, formData);
             if (result.success) {
                 toast.success("Pagamento confirmado com sucesso!");
                 setConfirmPaymentModalOpen(false);

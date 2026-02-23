@@ -11,7 +11,7 @@ interface CobrancasModalsProps {
     onConfirmCancel: () => void;
     confirmPaymentModalOpen: boolean;
     onCloseConfirmPayment: () => void;
-    onConfirmPayment: () => void;
+    onConfirmPayment: (formData?: FormData) => void;
     detailsModalOpen: boolean;
     onCloseDetails: () => void;
     qrModalOpen: boolean;
@@ -47,6 +47,7 @@ export function CobrancasModals({
                 isOpen={confirmPaymentModalOpen}
                 onClose={onCloseConfirmPayment}
                 onConfirm={onConfirmPayment}
+                selectedCobranca={selectedCobranca}
                 loading={loading}
             />
 

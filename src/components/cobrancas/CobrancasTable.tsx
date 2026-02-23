@@ -30,6 +30,71 @@ interface CobrancasTableProps {
     isAdmin?: boolean;
 }
 
+/**
+ * SRP: Centraliza a lógica de quais ações estão disponíveis para uma cobrança.
+ * Isso isola a regra de negócio da lógica de renderização da tabela.
+ */
+const getAvailableCobrancaActions = (cobranca: any, config: {
+    isAdmin: boolean;
+    onDetails: (id: number) => void;
+    onQrCode?: (id: number) => void;
+    onConfirm?: (id: number) => void;
+    onWhatsApp?: (id: number) => void;
+    onCancel?: (id: number) => void;
+}) => {
+    const { isAdmin, onDetails, onQrCode, onConfirm, onWhatsApp, onCancel } = config;
+
+    const isPaid = cobranca.status === 'pago';
+    const isCancelled = cobranca.status === 'cancelado';
+    const isPendingOrOverdue = ['pendente', 'atrasado'].includes(cobranca.status);
+    const canManageAdmin = !isPaid && !isCancelled && isAdmin;
+
+    const actions: any[] = [
+        {
+            label: "Ver Detalhes",
+            icon: <Eye size={16} />,
+            onClick: () => onDetails(cobranca.id)
+        }
+    ];
+
+    // Regra: Participantes veem QR Code. Admins não precisam (já têm Confirmar Pagamento).
+    if (isPendingOrOverdue && !isAdmin) {
+        actions.push({
+            label: "Ver QR Code / PIX",
+            icon: <QrCode size={16} />,
+            onClick: () => onQrCode ? onQrCode(cobranca.id) : onDetails(cobranca.id)
+        });
+    }
+
+    // Ações exclusivas para Administradores
+    if (canManageAdmin) {
+        actions.push({ type: "separator" as const });
+
+        actions.push({
+            label: "Confirmar Pagamento",
+            icon: <Check size={16} />,
+            onClick: () => onConfirm?.(cobranca.id)
+        });
+
+        actions.push({
+            label: "Enviar WhatsApp",
+            icon: <MessageCircle size={16} />,
+            onClick: () => onWhatsApp?.(cobranca.id)
+        });
+
+        actions.push({ type: "separator" as const });
+
+        actions.push({
+            label: "Cancelar",
+            icon: <AlertCircle size={16} />,
+            onClick: () => onCancel?.(cobranca.id),
+            variant: "danger" as const
+        });
+    }
+
+    return actions;
+};
+
 export function CobrancasTable({
     cobrancas,
     onViewDetails,
@@ -136,40 +201,15 @@ export function CobrancasTable({
                             const isPaid = cobranca.status === 'pago';
                             const isCancelled = cobranca.status === 'cancelado';
 
-                            const options = [
-                                {
-                                    label: "Ver Detalhes",
-                                    icon: <Eye size={16} />,
-                                    onClick: () => onViewDetails(cobranca.id)
-                                },
-                                ...(cobranca.status === 'pendente' || cobranca.status === 'atrasado' ? [
-                                    {
-                                        label: "Ver QR Code / PIX",
-                                        icon: <QrCode size={16} />,
-                                        onClick: () => onViewQrCode ? onViewQrCode(cobranca.id) : onViewDetails(cobranca.id)
-                                    }
-                                ] : []),
-                                ...(!isPaid && !isCancelled && isAdmin ? [
-                                    { type: "separator" as const },
-                                    {
-                                        label: "Confirmar Pagamento",
-                                        icon: <Check size={16} />,
-                                        onClick: () => onConfirmPayment?.(cobranca.id)
-                                    },
-                                    {
-                                        label: "Enviar WhatsApp",
-                                        icon: <MessageCircle size={16} />,
-                                        onClick: () => onSendWhatsApp?.(cobranca.id)
-                                    },
-                                    { type: "separator" as const },
-                                    {
-                                        label: "Cancelar",
-                                        icon: <AlertCircle size={16} />,
-                                        onClick: () => onCancelPayment?.(cobranca.id),
-                                        variant: "danger" as const
-                                    }
-                                ] : [])
-                            ];
+                            // Refatoração Clean Code: Delegando a lógica de ações para uma construção mais clara
+                            const options = getAvailableCobrancaActions(cobranca, {
+                                isAdmin,
+                                onDetails: onViewDetails,
+                                onQrCode: onViewQrCode,
+                                onConfirm: onConfirmPayment,
+                                onWhatsApp: onSendWhatsApp,
+                                onCancel: onCancelPayment
+                            });
 
                             return (
                                 <TableRow

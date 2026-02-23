@@ -157,10 +157,28 @@ export async function criarCobrancaInicial(assinaturaId: number) {
  */
 export async function confirmarPagamento(
     cobrancaId: number,
-    comprovanteUrl?: string
+    formData?: FormData
 ) {
     try {
         const { contaId, userId } = await getContext();
+
+        let comprovanteUrl: string | undefined = undefined;
+
+        // Se houver formData, tenta extrair e fazer upload do comprovante
+        if (formData) {
+            const file = formData.get("comprovante") as File;
+            if (file && file instanceof Blob && file.size > 0) {
+                const { uploadComprovante } = await import("@/lib/storage");
+                try {
+                    comprovanteUrl = await uploadComprovante(file, `manual_confirmation_${cobrancaId}_${Date.now()}`);
+                } catch (err) {
+                    console.error("[UPLOAD_MANUAL_ERROR]", err);
+                    // Não bloqueamos a confirmação se o upload do comprovante falhar, 
+                    // a menos que desejemos que seja obrigatório. 
+                    // Por enquanto, vamos apenas avisar no log.
+                }
+            }
+        }
 
         // Verify ownership
         const cobranca = await prisma.cobranca.findFirst({
