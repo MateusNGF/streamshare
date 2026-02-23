@@ -14,7 +14,6 @@ interface GoogleAuthButtonProps {
 export function GoogleAuthButton({ callbackUrl, mode, onLoading, onCredential }: GoogleAuthButtonProps) {
     const toast = useToast();
     const containerId = `google-${mode}-btn`;
-    const [localError, setLocalError] = useState<string | null>(null);
 
     const { isGoogleLoading, renderGoogleButton } = useGoogleLogin({
         callbackUrl,
@@ -24,7 +23,6 @@ export function GoogleAuthButton({ callbackUrl, mode, onLoading, onCredential }:
             toast.success(message);
         },
         onError: (err) => {
-            setLocalError(err);
             toast.error(err);
         }
     });
@@ -39,10 +37,6 @@ export function GoogleAuthButton({ callbackUrl, mode, onLoading, onCredential }:
 
     return (
         <div className="relative w-full">
-            {localError && (
-                <p className="text-xs text-red-500 mb-2 text-center">{localError}</p>
-            )}
-
             <div id={containerId} className="w-full h-[58px]" />
 
             {isGoogleLoading && (
