@@ -231,7 +231,6 @@ export function CobrancasTable({
                                     <TableCell className="px-4 py-3">
                                         <BillingValueCell
                                             valor={cobranca.valor}
-                                            valorMensal={cobranca.assinatura?.valor || fallbackValorMensal}
                                         />
                                     </TableCell>
 
