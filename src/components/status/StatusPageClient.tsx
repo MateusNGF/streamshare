@@ -46,6 +46,14 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-24",
+        date: "24/02/2026",
+        changes: [
+            { category: "Performance", description: "Lançamento da **Arquitetura de Carregamento Adaptativo** em toda a plataforma, otimizando a entrega de recursos no Dashboard e Portal de Acesso para garantir interatividade instantânea e menor consumo de dados." },
+            { category: "Experiência", description: "Implementação do sistema de **Estabilidade Visual Preditiva**, introduzindo estados de espera harmonizados que eliminam saltos de layout e proporcionam uma transição fluida durante o carregamento de dados." },
+        ],
+    },
+    {
         id: "2026-02-23",
         date: "23/02/2026",
         changes: [
