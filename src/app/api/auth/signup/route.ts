@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { generateToken, setAuthCookie } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
     try {
@@ -93,6 +94,11 @@ export async function POST(request: NextRequest) {
 
         // Set cookie
         await setAuthCookie(token);
+
+        // Envia email de boas-vindas assincronamente (não bloqueia a resposta)
+        sendWelcomeEmail(user.email, user.nome).catch((error) => {
+            console.error("Erro ao enviar email de boas-vindas:", error);
+        });
 
         return NextResponse.json({
             message: "Usuário criado com sucesso",

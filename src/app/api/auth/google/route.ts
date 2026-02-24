@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { googleAuthService } from "@/services/google-auth.service";
 import { AuthService } from "@/services/auth.service";
 import { generateToken, setAuthCookie } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/email";
 
 /**
  * Endpoint to authenticate user with Google ID Token.
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
         const googlePayload = await googleAuthService.verifyIdToken(idToken);
 
         // 2. Handle User Authentication / Registration
-        const user = await AuthService.handleExternalAuth({
+        const { user, isNewUser } = await AuthService.handleExternalAuth({
             email: googlePayload.email!,
             nome: googlePayload.name || googlePayload.email!.split("@")[0],
             picture: googlePayload.picture,
@@ -44,6 +45,12 @@ export async function POST(request: NextRequest) {
         });
 
         await setAuthCookie(token);
+
+        if (isNewUser) {
+            sendWelcomeEmail(sessionUser.email, sessionUser.nome).catch((error) => {
+                console.error("Erro ao enviar email de boas-vindas (Google Auth):", error);
+            });
+        }
 
         return NextResponse.json({
             message: "Autenticação realizada com sucesso",

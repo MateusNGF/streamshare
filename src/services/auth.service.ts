@@ -15,12 +15,14 @@ export class AuthService {
      * Finds or creates a user and their associated account.
      */
     static async handleExternalAuth(payload: ExternalAuthPayload) {
+        let isNewUser = false;
         let user = await prisma.usuario.findUnique({
             where: { email: payload.email },
         });
 
         if (!user) {
             user = await this.createUserWithAccount(payload);
+            isNewUser = true;
         } else if (user.provider !== payload.provider) {
             // Optional: Handle case where email exists but was signed up with a different provider
             // For now, we'll allow it but we might want to "link" or warn.
@@ -31,7 +33,7 @@ export class AuthService {
             });
         }
 
-        return user;
+        return { user, isNewUser };
     }
 
     /**

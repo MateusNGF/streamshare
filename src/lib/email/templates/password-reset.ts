@@ -1,4 +1,5 @@
 import { getBaseTemplate } from "./base";
+import { escapeHtml } from "../utils/html";
 
 /**
  * Password Reset Email Template
@@ -22,7 +23,7 @@ export function getPasswordResetTemplate({
             Redefinir sua senha
         </h2>
         
-        ${userName ? `<p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">Olá, <strong>${userName}</strong>!</p>` : ""}
+        ${userName ? `<p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">Olá, <strong>${escapeHtml(userName)}</strong>!</p>` : ""}
         
         <p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">
             Recebemos uma solicitação para redefinir a senha da sua conta StreamShare. 

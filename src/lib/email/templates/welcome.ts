@@ -1,4 +1,5 @@
 import { getBaseTemplate } from "./base";
+import { escapeHtml } from "../utils/html";
 
 /**
  * Welcome Email Template
@@ -19,7 +20,7 @@ export function getWelcomeTemplate({
 }: WelcomeTemplateProps): string {
     const content = `
         <h2 style="margin: 0 0 20px; color: #1f2937; font-size: 24px; font-weight: bold;">
-            Olá, ${userName}!
+            Olá, ${escapeHtml(userName)}!
         </h2>
         
         <p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">
