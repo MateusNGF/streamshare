@@ -7,11 +7,15 @@ import { validatePassword } from "@/lib/password-validation";
 
 interface ChangePasswordModalProps {
     isOpen: boolean;
+    user: {
+        hasPassword?: boolean;
+    } | null;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswordModalProps) {
+export function ChangePasswordModal({ isOpen, user, onClose, onSuccess }: ChangePasswordModalProps) {
+    const hasPassword = user?.hasPassword ?? true;
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,7 +27,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
         setError("");
 
         // Validações client-side
-        if (!currentPassword) {
+        if (hasPassword && !currentPassword) {
             setError("Digite sua senha atual");
             return;
         }
@@ -39,7 +43,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
             return;
         }
 
-        if (currentPassword === newPassword) {
+        if (hasPassword && currentPassword === newPassword) {
             setError("A nova senha deve ser diferente da senha atual");
             return;
         }
@@ -97,7 +101,9 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
                         <div className="p-3 bg-primary/10 rounded-2xl">
                             <Lock className="text-primary" size={24} />
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900">Alterar Senha</h2>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {hasPassword ? "Alterar Senha" : "Definir Senha"}
+                        </h2>
                     </div>
                     <button
                         onClick={handleClose}
@@ -117,17 +123,29 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
                         </div>
                     )}
 
+                    {!hasPassword && (
+                        <div className="bg-blue-50 text-blue-700 p-4 rounded-xl text-xs border border-blue-100 flex gap-3">
+                            <Lock size={16} className="shrink-0" />
+                            <p>
+                                Como você entrou via Google, você ainda não tem uma senha.
+                                Defina uma agora para poder desvincular o Google ou logar tradicionalmente.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Current Password */}
-                    <PasswordInput
-                        label="Senha Atual"
-                        value={currentPassword}
-                        onChange={setCurrentPassword}
-                        required
-                    />
+                    {hasPassword && (
+                        <PasswordInput
+                            label="Senha Atual"
+                            value={currentPassword}
+                            onChange={setCurrentPassword}
+                            required
+                        />
+                    )}
 
                     {/* New Password */}
                     <PasswordInput
-                        label="Nova Senha"
+                        label={hasPassword ? "Nova Senha" : "Senha"}
                         value={newPassword}
                         onChange={setNewPassword}
                         required
@@ -158,7 +176,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess }: ChangePasswo
                             disabled={loading}
                             className="flex-1 bg-primary hover:bg-accent text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
                         >
-                            {loading ? "Alterando..." : "Alterar Senha"}
+                            {loading ? (hasPassword ? "Alterando..." : "Definindo...") : (hasPassword ? "Alterar Senha" : "Definir Senha")}
                         </button>
                     </div>
                 </form>

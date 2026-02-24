@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, QrCode } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, Check, MessageCircle, AlertCircle, Trash } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -16,19 +16,28 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "@/components/cobrancas/shared/BillingTableCells";
 import { useToast } from "@/hooks/useToast";
+import { useState } from "react";
+import { ModalPagamentoCobranca } from "./ModalPagamentoCobranca";
 
 interface FaturasTableProps {
     faturas: any[];
     onViewDetails: (id: number) => void;
-    onPayPix?: (id: number) => void;
+    isAdmin?: boolean;
+    onConfirmPayment?: (id: number) => void;
+    onSendWhatsApp?: (id: number) => void;
+    onCancelPayment?: (id: number) => void;
 }
 
 export function FaturasTable({
     faturas,
     onViewDetails,
-    onPayPix,
+    isAdmin = false,
+    onConfirmPayment,
+    onSendWhatsApp,
+    onCancelPayment
 }: FaturasTableProps) {
     const { success, error: toastError } = useToast();
+    const [faturaToPay, setFaturaToPay] = useState<any>(null);
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -108,6 +117,7 @@ export function FaturasTable({
                         {faturas.map((fatura: any, index: number) => {
                             const isPaid = fatura.status === 'pago';
                             const isCancelled = fatura.status === 'cancelado';
+                            const isAwaiting = fatura.status === 'aguardando_aprovacao';
                             const chavePix = fatura.assinatura?.participante?.conta?.chavePix;
 
                             const options = [
@@ -116,20 +126,36 @@ export function FaturasTable({
                                     icon: <Eye size={16} />,
                                     onClick: () => onViewDetails(fatura.id)
                                 },
-                                ...(!isPaid && !isCancelled ? [
+                                ...(!isPaid && !isCancelled && !isAwaiting && chavePix && !isAdmin ? [
                                     { type: "separator" as const },
                                     {
-                                        label: "Pagar com PIX",
-                                        icon: <QrCode size={16} />,
-                                        onClick: () => onPayPix?.(fatura.id)
+                                        label: "Pagar Fatura",
+                                        icon: <DollarSign size={16} />,
+                                        onClick: () => setFaturaToPay(fatura)
                                     }
                                 ] : []),
-                                ...(!isPaid && !isCancelled && chavePix ? [
+                                ...(!isPaid && !isCancelled && isAdmin ? [
+                                    { type: "separator" as const },
+                                    ...(isAwaiting ? [{
+                                        label: "Validar Comprovante",
+                                        icon: <Eye size={16} className="text-amber-500" />,
+                                        onClick: () => onViewDetails(fatura.id)
+                                    }] : [{
+                                        label: "Confirmar Pagamento",
+                                        icon: <Check size={16} />,
+                                        onClick: () => onConfirmPayment?.(fatura.id)
+                                    }]),
+                                    {
+                                        label: "Enviar WhatsApp",
+                                        icon: <MessageCircle size={16} />,
+                                        onClick: () => onSendWhatsApp?.(fatura.id)
+                                    },
                                     { type: "separator" as const },
                                     {
-                                        label: "Copiar Pix",
-                                        icon: <Copy size={16} />,
-                                        onClick: () => copyPix(chavePix)
+                                        label: "Cancelar Cobrança",
+                                        icon: <Trash size={16} />,
+                                        onClick: () => onCancelPayment?.(fatura.id),
+                                        variant: "danger" as const
                                     }
                                 ] : [])
                             ];
@@ -139,6 +165,8 @@ export function FaturasTable({
                                     key={fatura.id}
                                     className={cn(
                                         isCancelled && "opacity-60",
+                                        isAwaiting && !isAdmin && "bg-amber-50/30",
+                                        isAwaiting && isAdmin && "bg-blue-50/40 border-l-4 border-l-blue-500",
                                         "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both"
                                     )}
                                     style={{ animationDelay: `${index * 50}ms` }}
@@ -189,7 +217,6 @@ export function FaturasTable({
                                     <TableCell className="px-4 py-3">
                                         <BillingValueCell
                                             valor={fatura.valor}
-                                            valorMensal={fatura.assinatura?.valor}
                                         />
                                     </TableCell>
 
@@ -202,6 +229,12 @@ export function FaturasTable({
                     </TableBody>
                 </Table>
             </div>
+
+            <ModalPagamentoCobranca
+                isOpen={!!faturaToPay}
+                onClose={() => setFaturaToPay(null)}
+                fatura={faturaToPay}
+            />
         </div>
     );
 }

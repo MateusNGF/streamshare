@@ -1,8 +1,7 @@
 import { Input } from "@/components/ui/Input";
+import { SectionHeader } from "@/components/layout/SectionHeader";
 import { PercentageInput } from "@/components/ui/PercentageInput";
 import { CurrencySelect } from "@/components/ui/CurrencySelect";
-import { SectionHeader } from "@/components/layout/SectionHeader";
-import { SUPPORTED_CURRENCIES, CurrencyCode } from "@/types/currency.types";
 
 interface GeneralTabProps {
     config: {

@@ -43,6 +43,7 @@ enum StatusCobranca {
   atrasado
   cancelado
   estornado
+  aguardando_aprovacao
 }
 
 enum StatusParticipante {
@@ -380,6 +381,7 @@ model Cobranca {
   pixCopiaECola        String?
   tentativas           Int              @default(0)
   metadataJson         Json?
+  dataEnvioComprovante DateTime?
   deletedAt            DateTime?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt

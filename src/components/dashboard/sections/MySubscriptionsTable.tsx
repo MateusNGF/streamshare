@@ -4,9 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { formatarMoeda } from "@/lib/financeiro-utils";
 import { Eye, Calendar, ShieldCheck, MoreHorizontal, KeyRound } from "lucide-react";
 import { ParticipantSubscription } from "@/types/dashboard.types";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface MySubscriptionsTableProps {
     subscriptions: ParticipantSubscription[];
@@ -16,6 +16,7 @@ interface MySubscriptionsTableProps {
 }
 
 export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetails, onViewCredentials }: MySubscriptionsTableProps) {
+    const { format } = useCurrency();
     return (
         <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto overflow-y-hidden">
@@ -78,13 +79,13 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                                         <div className="flex flex-col items-end">
                                             <div className="flex items-baseline gap-1">
                                                 <span className="font-black text-gray-900 text-base whitespace-nowrap">
-                                                    {formatarMoeda(sub.valor, currencyCode)}
+                                                    {format(sub.valor)}
                                                 </span>
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">/mês</span>
                                             </div>
                                             <div className="mt-0.5">
                                                 <span className="text-[10px] font-medium text-green-600 whitespace-nowrap">
-                                                    {formatarMoeda(sub.valorIntegral - sub.valor, currencyCode)} economizados
+                                                    {format(sub.valorIntegral - sub.valor)} economizados
                                                 </span>
                                             </div>
                                         </div>

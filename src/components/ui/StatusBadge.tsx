@@ -7,8 +7,8 @@ const statusStyles: Record<string, { color: string; label: string }> = {
     ativo: { color: "bg-green-100 text-green-700 border-green-200", label: "Ativo" },
 
     // Amber / Warning / Pending
-    pendente: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Pendente" },
-    aguardando: { color: "bg-amber-100 text-amber-700 border-amber-200", label: "Aguardando" },
+    pendente: { color: "bg-amber-50 text-amber-700 border-amber-300/60 shadow-[0_1px_2px_rgba(251,191,36,0.15)]", label: "Pendente" },
+    aguardando: { color: "bg-amber-50 text-amber-700 border-amber-300/60 shadow-[0_1px_2px_rgba(251,191,36,0.15)]", label: "Aguardando" },
 
     // Red / Error / Overdue
     atrasado: { color: "bg-red-100 text-red-700 border-red-200", label: "Atrasado" },
@@ -23,9 +23,10 @@ const statusStyles: Record<string, { color: string; label: string }> = {
     cancelada: { color: "bg-gray-100 text-gray-700 border-gray-200", label: "Cancelada" },
     excluido: { color: "bg-gray-200 text-gray-800 border-gray-300", label: "Excluído" },
 
-    // Purple / Scheduled / In Progress
+    // Purple / Scheduled / In Progress / Analysis
     cancelamento_agendado: { color: "bg-purple-100 text-purple-700 border-purple-200", label: "Cancelamento Agendado" },
     em_analise: { color: "bg-purple-100 text-purple-700 border-purple-200", label: "Em Análise" },
+    aguardando_aprovacao: { color: "bg-blue-50 text-blue-700 border-blue-300/60 shadow-[0_1px_2px_rgba(59,130,246,0.15)]", label: "Em Análise" },
 
     // Blue / Info
     resolvido: { color: "bg-blue-100 text-blue-700 border-blue-200", label: "Resolvido" },
@@ -67,7 +68,10 @@ export function StatusBadge({ status, label, className, dataCancelamento, delete
                 className
             )}
         >
-            <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+            <span className={cn(
+                "mr-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-70",
+                (normalizedStatus === 'pendente' || normalizedStatus === 'aguardando' || normalizedStatus === 'aguardando_aprovacao') && "animate-pulse"
+            )} />
             {label || config.label}
         </span>
     );

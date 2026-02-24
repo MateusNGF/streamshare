@@ -75,7 +75,17 @@ export async function getCobrancas(filters?: {
             include: {
                 assinatura: {
                     include: {
-                        participante: true,
+                        participante: {
+                            include: {
+                                conta: {
+                                    select: {
+                                        id: true,
+                                        nome: true,
+                                        chavePix: true,
+                                    }
+                                }
+                            }
+                        },
                         streaming: {
                             include: { catalogo: true }
                         }
@@ -150,10 +160,29 @@ export async function criarCobrancaInicial(assinaturaId: number) {
  */
 export async function confirmarPagamento(
     cobrancaId: number,
-    comprovanteUrl?: string
+    data?: FormData | string
 ) {
     try {
         const { contaId, userId } = await getContext();
+
+        let comprovanteUrl: string | undefined = undefined;
+
+        // Se houver dados extras (FormData ou String de URL)
+        if (data) {
+            if (typeof data === "string") {
+                comprovanteUrl = data;
+            } else if (data instanceof FormData) {
+                const file = data.get("comprovante") as File;
+                if (file && file instanceof Blob && file.size > 0) {
+                    const { uploadComprovante } = await import("@/lib/storage");
+                    try {
+                        comprovanteUrl = await uploadComprovante(file, `manual_confirmation_${cobrancaId}_${Date.now()}`);
+                    } catch (err) {
+                        console.error("[UPLOAD_MANUAL_ERROR]", err);
+                    }
+                }
+            }
+        }
 
         // Verify ownership
         const cobranca = await prisma.cobranca.findFirst({
@@ -186,7 +215,7 @@ export async function confirmarPagamento(
                     assinatura: {
                         include: {
                             participante: true,
-                            streaming: true
+                            streaming: { include: { catalogo: true } }
                         }
                     }
                 }
@@ -216,6 +245,21 @@ export async function confirmarPagamento(
                     lida: false
                 }
             });
+
+            // Notificar o participante que seu pagamento foi confirmado
+            if (result.assinatura.participante.userId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: result.assinatura.participante.userId,
+                        tipo: "cobranca_confirmada",
+                        titulo: "Pagamento Aprovado",
+                        descricao: `O administrador confirmou o seu pagamento para ${result.assinatura.streaming.catalogo.nome}. Obrigado!`,
+                        entidadeId: cobrancaId,
+                        lida: false
+                    }
+                });
+            }
 
             return result;
         });
@@ -264,7 +308,8 @@ export async function cancelarCobranca(cobrancaId: number) {
                 include: {
                     assinatura: {
                         include: {
-                            participante: true
+                            participante: true,
+                            streaming: { include: { catalogo: true } }
                         }
                     }
                 }
@@ -282,6 +327,21 @@ export async function cancelarCobranca(cobrancaId: number) {
                     lida: false
                 }
             });
+
+            // Notificar o participante do cancelamento da cobrança
+            if (result.assinatura.participante.userId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: result.assinatura.participante.userId,
+                        tipo: "cobranca_cancelada",
+                        titulo: "Cobrança Cancelada",
+                        descricao: `A cobrança para o seu acesso de ${result.assinatura.streaming.catalogo.nome} foi cancelada pelo administrador.`,
+                        entidadeId: cobrancaId,
+                        lida: false
+                    }
+                });
+            }
 
             return result;
         });

@@ -13,7 +13,7 @@ export async function getSettingsData() {
 
         const user = await prisma.usuario.findUnique({
             where: { id: session.userId },
-            select: { nome: true, email: true, whatsapp: true },
+            select: { nome: true, email: true, whatsapp: true, provider: true, senhaHash: true },
         });
 
         const userAccount = await prisma.contaUsuario.findFirst({
@@ -51,7 +51,13 @@ export async function getSettingsData() {
         });
 
         const data = {
-            user,
+            user: user ? {
+                nome: user.nome,
+                email: user.email,
+                whatsapp: user.whatsapp,
+                provider: user.provider,
+                hasPassword: !!user.senhaHash,
+            } : null,
             conta: userAccount?.conta,
         };
 

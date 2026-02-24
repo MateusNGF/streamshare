@@ -41,7 +41,7 @@ export function BillingPeriodCell({ inicio, fim, className }: { inicio: Date | s
             className
         )}>
             <span>{formatFN(new Date(inicio), 'MMM/yy', { locale: ptBR })}</span>
-            <span className="text-gray-300 font-normal">|</span>
+            <span className="lowercase"> a </span>
             <span>{formatFN(new Date(fim), 'MMM/yy', { locale: ptBR })}</span>
         </div>
     );

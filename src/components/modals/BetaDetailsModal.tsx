@@ -73,7 +73,7 @@ export function BetaDetailsModal({ isOpen, onClose }: BetaDetailsModalProps) {
                 </div>
 
                 <div className="text-xs text-gray-400 text-center mt-4">
-                    Versão Atual: <span className="font-mono text-gray-500">v0.1.0-beta</span>
+                    Versão Atual: <span className="font-mono text-gray-500">v0.5.0-beta</span>
                 </div>
             </div>
         </Modal>

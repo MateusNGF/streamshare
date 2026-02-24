@@ -203,7 +203,6 @@ export function DetalhesAssinaturaModal({
                         onViewDetails={() => { }}
                         onConfirmPayment={() => { }}
                         onSendWhatsApp={() => { }}
-                        onCancel={() => { }}
                         isAdmin={isAdmin}
                     />
                 </div>

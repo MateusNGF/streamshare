@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Chrome } from "lucide-react";
+import { useToast } from "@/hooks/useToast";
+import { GoogleAuthButton } from "./GoogleAuthButton";
 
 export function LoginForm() {
     const router = useRouter();
+    const toast = useToast();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
     const [email, setEmail] = useState("");
@@ -121,14 +124,7 @@ export function LoginForm() {
                 </div>
             </div>
 
-            <button
-                type="button"
-                aria-label="Continuar com Google"
-                className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 py-4 rounded-2xl font-bold transition-all duration-300 group"
-            >
-                <Chrome size={20} className="text-gray-500 group-hover:text-primary transition-colors" />
-                <span>Google</span>
-            </button>
+            <GoogleAuthButton callbackUrl={callbackUrl} mode="login" />
         </form>
     );
 }

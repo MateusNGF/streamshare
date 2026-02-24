@@ -17,7 +17,6 @@ export async function publicSubscribe(data: {
     cpf?: string;
     frequencia?: FrequenciaPagamento;
     quantidade?: number;
-    metodoPagamento?: MetodoPagamento;
     isPrivateInvite?: boolean;
     privateInviteToken?: string;
 }) {
@@ -173,7 +172,7 @@ export async function publicSubscribe(data: {
                 }
             }
 
-            return { success: true, checkoutData };
+            return { success: true };
         });
 
         if (result.success) {

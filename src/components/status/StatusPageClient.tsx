@@ -46,6 +46,20 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-23",
+        date: "23/02/2026",
+        changes: [
+            { category: "Integrações", description: "Lançamento do **Sistema de Comprovantes Digitais**, permitindo que assinantes anexem evidências de pagamento diretamente na plataforma para validação instantânea." },
+            { category: "Faturamento", description: "Implementação do fluxo de **Aprovação Assistida**, oferecendo ferramentas de auditoria visual para administradores validarem transações manuais com segurança." },
+            { category: "Segurança", description: "Refatoração do **Motor de Identidade**, implementando arquitetura de responsabilidade única para maior isolamento e proteção de dados em fluxos de acesso externo." },
+            { category: "Experiência", description: "Lançamento do sistema de **Vínculo de Identidade Digital**, permitindo que usuários conectem e gerenciem múltiplos provedores de autenticação em uma única conta." },
+            { category: "Interface", description: "Novo portal de **Contas Sociais**, oferecendo transparência total sobre conexões externas e ferramentas para gerenciamento seguro de identidades vinculadas." },
+            { category: "Segurança", description: "Implementação do protocolo de **Prevenção de Bloqueio de Acesso**, com validações inteligentes que garantem que o usuário mantenha métodos de entrada redundantes ao gerenciar sua conta." },
+            { category: "Experiência", description: "Otimização do fluxo de **Configuração de Identidade**, permitindo que usuários de provedores externos estabeleçam credenciais de fallback de forma fluida e assistida." },
+            { category: "Performance", description: "Redesign dos componentes de **Acesso Rápido**, eliminando latência na inicialização de sessões e unificando a experiência visual entre portal de login e cadastro." },
+        ],
+    },
+    {
         id: "2026-02-18",
         date: "18/02/2026",
         changes: [

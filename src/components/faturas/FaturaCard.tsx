@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Calendar, Wallet, CheckCircle2, Clock, QrCode } from "lucide-react";
+import { Copy, Calendar, Wallet, CheckCircle2, Clock, DollarSign, Check, MessageCircle, AlertCircle, Trash, MoreVertical, Eye } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -8,36 +8,47 @@ import { cn } from "@/lib/utils";
 import { differenceInDays, isToday, startOfDay, format } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/hooks/useToast";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { ModalPagamentoCobranca } from "./ModalPagamentoCobranca";
+import { useState } from "react";
 
 interface FaturaCardProps {
     fatura: any;
-    onPayPix?: () => void;
+    isAdmin?: boolean;
+    onViewDetails?: (id: number) => void;
+    onConfirmPayment?: (id: number) => void;
+    onSendWhatsApp?: (id: number) => void;
+    onCancelPayment?: (id: number) => void;
 }
 
-export function FaturaCard({ fatura, onPayPix }: FaturaCardProps) {
+export function FaturaCard({
+    fatura,
+    isAdmin = false,
+    onViewDetails,
+    onConfirmPayment,
+    onSendWhatsApp,
+    onCancelPayment
+}: FaturaCardProps) {
     const { format: formatPrice } = useCurrency();
     const { success, error: toastError } = useToast();
 
     const isPaid = fatura.status === 'pago';
     const isCancelled = fatura.status === 'cancelado';
+    const isAwaiting = fatura.status === 'aguardando_aprovacao';
     const vencimentoDate = new Date(fatura.dataVencimento);
     const today = startOfDay(new Date());
     const daysUntil = differenceInDays(vencimentoDate, today);
     const isOverdue = !isPaid && !isCancelled && daysUntil < 0;
 
-    const copyPix = () => {
-        const chavePix = fatura.assinatura.participante.conta.chavePix;
-        if (!chavePix) {
-            toastError("Chave Pix não cadastrada pelo proprietário da conta.");
-            return;
-        }
-        navigator.clipboard.writeText(chavePix);
-        success("Chave Pix copiada!");
-    };
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+    const openPaymentModal = () => setIsPaymentModalOpen(true);
 
     const getBorderColor = () => {
         if (isCancelled) return "border-l-gray-300";
         if (isPaid) return "border-l-green-600";
+        if (isAwaiting && isAdmin) return "border-l-blue-500 border-blue-100";
+        if (isAwaiting && !isAdmin) return "border-l-amber-400 border-amber-100";
         if (isOverdue) return "border-l-red-500";
         if (isToday(vencimentoDate)) return "border-l-amber-500";
         return "border-l-primary/30";
@@ -46,6 +57,8 @@ export function FaturaCard({ fatura, onPayPix }: FaturaCardProps) {
     const getBgColor = () => {
         if (isOverdue) return "bg-red-50/10";
         if (isPaid) return "bg-green-50/5";
+        if (isAwaiting && isAdmin) return "bg-blue-50/20";
+        if (isAwaiting && !isAdmin) return "bg-amber-50/10";
         return "bg-white";
     };
 
@@ -119,22 +132,56 @@ export function FaturaCard({ fatura, onPayPix }: FaturaCardProps) {
                         </span>
                     </div>
 
-                    {!isPaid && !isCancelled && (
-                        <div className="flex flex-col gap-2 w-full md:w-auto">
-                            <Button
-                                size="default"
-                                className="bg-primary hover:bg-primary/90 text-white gap-2 font-bold px-6 rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                                onClick={onPayPix}
-                            >
-                                <QrCode size={18} />
-                                Pagar com PIX
-                            </Button>
-                            <button
-                                onClick={copyPix}
-                                className="text-[10px] font-bold text-gray-400 hover:text-primary transition-colors text-center uppercase tracking-widest"
-                            >
-                                Copiar Chave Manual
-                            </button>
+                    {!isPaid && !isCancelled && !isAwaiting && !isAdmin && (
+                        <Button
+                            size="default"
+                            className="bg-primary hover:bg-primary/90 text-white gap-2 font-bold px-6 rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            onClick={openPaymentModal}
+                        >
+                            <DollarSign size={18} />
+                            Pagar Fatura
+                        </Button>
+                    )}
+
+                    {!isPaid && !isCancelled && isAdmin && (
+                        <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                            <Dropdown
+                                trigger={
+                                    <Button variant="outline" className="w-full gap-2">
+                                        <MoreVertical size={16} />
+                                        Ações
+                                    </Button>
+                                }
+                                options={[
+                                    {
+                                        label: "Ver Detalhes",
+                                        icon: <Check size={16} className="opacity-0" />,
+                                        onClick: () => onViewDetails?.(fatura.id)
+                                    },
+                                    { type: "separator" as const },
+                                    ...(isAwaiting ? [{
+                                        label: "Validar Comprovante",
+                                        icon: <Eye size={16} className="text-amber-500" />,
+                                        onClick: () => onViewDetails?.(fatura.id)
+                                    }] : [{
+                                        label: "Confirmar Pagamento",
+                                        icon: <Check size={16} />,
+                                        onClick: () => onConfirmPayment?.(fatura.id)
+                                    }]),
+                                    {
+                                        label: "Enviar WhatsApp",
+                                        icon: <MessageCircle size={16} />,
+                                        onClick: () => onSendWhatsApp?.(fatura.id)
+                                    },
+                                    { type: "separator" as const },
+                                    {
+                                        label: "Cancelar Cobrança",
+                                        icon: <Trash size={16} />,
+                                        onClick: () => onCancelPayment?.(fatura.id),
+                                        variant: "danger"
+                                    }
+                                ]}
+                            />
                         </div>
                     )}
 
@@ -153,6 +200,12 @@ export function FaturaCard({ fatura, onPayPix }: FaturaCardProps) {
                     )}
                 </div>
             </div>
+
+            <ModalPagamentoCobranca
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                fatura={fatura}
+            />
         </div>
     );
 }

@@ -151,15 +151,19 @@ export function CancelarAssinaturaModal({
                     <ul className="space-y-1 text-sm text-gray-600">
                         <li className="flex items-start gap-2">
                             <span className="text-gray-400 mt-0.5">•</span>
-                            <span>A vaga no streaming será liberada para outros participantes</span>
+                            <span>A vaga no streaming será liberada para novos participantes.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-gray-400 mt-0.5">•</span>
-                            <span>O participante receberá uma notificação via WhatsApp</span>
+                            <span>O acesso às credenciais será removido para este participante.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-gray-400 mt-0.5">•</span>
-                            <span>Cobranças pendentes permanecerão no sistema</span>
+                            <span>**Encerrará imediatamente** o ciclo de renovações automáticas.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-gray-400 mt-0.5">•</span>
+                            <span>O participante receberá uma notificação de encerramento.</span>
                         </li>
                     </ul>
                 </div>

@@ -43,13 +43,19 @@ export function CancelarCobrancaModal({
         >
             <div className="space-y-4">
                 <p className="text-gray-600">
-                    Tem certeza que deseja cancelar esta cobrança? Esta ação não pode ser desfeita.
+                    Você tem certeza que deseja **anular** esta fatura específica?
                 </p>
-                <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3">
+
+                <div className="bg-red-50 text-red-800 p-4 rounded-lg flex items-start gap-3 border border-red-100">
                     <AlertCircle className="shrink-0 mt-0.5" size={20} />
-                    <div className="text-sm">
-                        <p className="font-medium">Atenção</p>
-                        <p>Isso cancelará apenas esta cobrança específica. A assinatura continuará ativa para os próximos recorrências.</p>
+                    <div className="text-sm space-y-2">
+                        <p className="font-bold">Informações Importantes:</p>
+                        <ul className="list-disc pl-4 space-y-1">
+                            <li>Esta fatura deixará de ser cobrada e sumirá da lista de pendências do participante.</li>
+                            <li>A ação é **irreversível**.</li>
+                            <li>A assinatura do participante **continuará ativa** e novas faturas serão geradas normalmente no próximo ciclo.</li>
+                            <li>Use isto apenas para correções manuais ou perdão de dívida.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
