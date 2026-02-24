@@ -416,25 +416,6 @@ export async function getKPIsFinanceiros() {
 }
 
 /**
- * Renew charges for active subscriptions (CRON job or manual trigger)
- */
-export async function renovarCobrancas() {
-    try {
-        const { contaId } = await getContext();
-        const { billingService } = await import("@/services/billing-service");
-
-        const result = await billingService.processarRenovacoes(contaId);
-
-        revalidatePath("/cobrancas");
-
-        return { success: true, data: result };
-    } catch (error: any) {
-        console.error("[RENOVAR_COBRANCAS_ERROR]", error);
-        return { success: false, error: "Erro ao renovar cobranças" };
-    }
-}
-
-/**
  * Enviar notificação WhatsApp manual para uma cobrança
  * A mensagem é determinada automaticamente baseada no status da cobrança
  * @param cobrancaId - ID da cobrança

@@ -6,30 +6,10 @@ import { formatCurrency } from "@/lib/formatCurrency";
 import type { CurrencyCode } from "@/types/currency.types";
 
 /**
- * Inicializa o cron job para notificações automáticas de cobranças
- * Executa semanalmente (segundas-feiras) às 9h da manhã
- */
-export function startBillingNotificationCron() {
-    // Executar diariamente às 9h
-    cron.schedule('0 4 * * *', async () => {
-        console.log('[CRON] Iniciando verificação de cobranças...');
-        try {
-            await checkAndNotifyPendingBillings();
-            await checkAndNotifyOverdueBillings();
-            console.log('[CRON] Verificação de cobranças concluída');
-        } catch (error) {
-            console.error('[CRON] Erro na verificação de cobranças:', error);
-        }
-    });
-
-    console.log('✅ Billing notification cron job initialized (runs daily at 4:00 AM)');
-}
-
-/**
  * Verifica cobranças pendentes que estão próximas do vencimento
  * e envia notificações de acordo com a configuração da conta
  */
-async function checkAndNotifyPendingBillings() {
+export async function checkAndNotifyPendingBillings() {
     // Buscar todas contas com WhatsApp ativo e notificação de vencimento habilitada
     const configs = await prisma.whatsAppConfig.findMany({
         where: {
@@ -141,7 +121,7 @@ async function checkAndNotifyPendingBillings() {
 /**
  * Verifica cobranças atrasadas e envia notificações
  */
-async function checkAndNotifyOverdueBillings() {
+export async function checkAndNotifyOverdueBillings() {
     // Buscar todas contas com WhatsApp ativo e notificação de atraso habilitada
     const configs = await prisma.whatsAppConfig.findMany({
         where: {
