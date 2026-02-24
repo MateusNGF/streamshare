@@ -64,11 +64,7 @@ export class AuthService {
                     nome: payload.nome,
                     email: payload.email,
                     provider: payload.provider,
-                    isAtivo: true,
-                    termsAcceptedAt: new Date(),
-                    termsVersion: CURRENT_TERMS_VERSION,
-                    privacyAcceptedAt: new Date(),
-                    privacyVersion: CURRENT_PRIVACY_VERSION,
+                    isAtivo: true
                 },
             });
 
