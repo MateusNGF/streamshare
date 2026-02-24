@@ -3,18 +3,30 @@
 import { useState } from "react";
 import { Building2, User, Bell, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { LogoutModal } from "@/components/modals/LogoutModal";
-import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Toast, ToastVariant } from "@/components/ui/Toast";
 import { updateProfile, updateAccount, updateCurrency } from "@/actions/settings";
 import { CurrencyCode } from "@/types/currency.types";
-import NotificationsTab from "@/components/settings/NotificationsTab";
-import { ProfileTab } from "./ProfileTab";
-import { AccountTab } from "./AccountTab";
-import { SocialAccountsTab } from "./SocialAccountsTab";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const ProfileTab = dynamic(() => import("./ProfileTab").then(mod => mod.ProfileTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+const AccountTab = dynamic(() => import("./AccountTab").then(mod => mod.AccountTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+const SocialAccountsTab = dynamic(() => import("./SocialAccountsTab").then(mod => mod.SocialAccountsTab), {
+    loading: () => <Skeleton className="w-full h-[300px] rounded-[32px]" />
+});
+const NotificationsTab = dynamic(() => import("@/components/settings/NotificationsTab"), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const LogoutModal = dynamic(() => import("@/components/modals/LogoutModal").then(mod => mod.LogoutModal));
+const ChangePasswordModal = dynamic(() => import("@/components/modals/ChangePasswordModal").then(mod => mod.ChangePasswordModal));
 
 interface SettingsClientProps {
     initialData: {

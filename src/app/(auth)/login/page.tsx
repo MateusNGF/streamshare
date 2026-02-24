@@ -7,8 +7,29 @@ import { AuthBackground } from "@/components/auth/AuthBackground";
 import { SecurityAlert } from "@/components/auth/SecurityAlert";
 import { AuthTabs } from "@/components/auth/AuthTabs";
 import { AuthHeader } from "@/components/auth/AuthHeader";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { SignupForm } from "@/components/auth/SignupForm";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const LoginForm = dynamic(() => import("@/components/auth/LoginForm").then(mod => mod.LoginForm), {
+    loading: () => (
+        <div className="space-y-4 py-4">
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+        </div>
+    )
+});
+
+const SignupForm = dynamic(() => import("@/components/auth/SignupForm").then(mod => mod.SignupForm), {
+    loading: () => (
+        <div className="space-y-4 py-4">
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+        </div>
+    )
+});
 
 export default function AuthPage() {
     const { activeTab, setActiveTab, alertMessage, content } = useAuthParams();

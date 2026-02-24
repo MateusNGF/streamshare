@@ -3,7 +3,15 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AdminUser } from "@/actions/admin/users";
 import { ChevronLeft, ChevronRight, Search, Users, Mail, Calendar, Shield } from "lucide-react";
-import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const GenericFilter = dynamic(() => import("@/components/ui/GenericFilter").then(mod => mod.GenericFilter), {
+    loading: () => <Skeleton className="w-full h-12 rounded-2xl mb-4" />
+});
+
+import { FilterConfig } from "@/components/ui/GenericFilter";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import {
     Table,

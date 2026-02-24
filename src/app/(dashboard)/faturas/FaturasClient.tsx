@@ -2,14 +2,24 @@
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { FaturasTable } from "@/components/faturas/FaturasTable";
-import { FaturaCard } from "@/components/faturas/FaturaCard";
 import { Wallet } from "lucide-react";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { useActionError } from "@/hooks/useActionError";
 import { useState } from "react";
-import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
+
+const FaturasTable = dynamic(() => import("@/components/faturas/FaturasTable").then(mod => mod.FaturasTable), {
+    loading: () => <TableSkeleton />
+});
+
+const FaturaCard = dynamic(() => import("@/components/faturas/FaturaCard").then(mod => mod.FaturaCard), {
+    loading: () => <LoadingCard variant="compact" />
+});
+
+const DetalhesCobrancaModal = dynamic(() => import("@/components/modals/DetalhesCobrancaModal").then(mod => mod.DetalhesCobrancaModal));
 
 interface FaturasClientProps {
     faturas: any[];

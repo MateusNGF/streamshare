@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/Button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Chrome } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
-import { GoogleAuthButton } from "./GoogleAuthButton";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const GoogleAuthButton = dynamic(() => import("./GoogleAuthButton").then(mod => mod.GoogleAuthButton), {
+    loading: () => <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+});
 
 export function LoginForm() {
     const router = useRouter();

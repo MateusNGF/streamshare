@@ -2,17 +2,30 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { DashboardStreamingList } from "./DashboardStreamingList";
 import { type StreamingFormData } from "@/components/modals/StreamingModal";
 import { createStreaming, upsertStreamingCredentials } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
 
-// Sections
-import { QuickActionsSection } from "./sections/QuickActionsSection";
-import { DashboardAnalytics } from "./sections/DashboardAnalytics";
-import { RecentSubscriptionsSection } from "./sections/RecentSubscriptionsSection";
+const QuickActionsSection = dynamic(() => import("./sections/QuickActionsSection").then(mod => mod.QuickActionsSection), {
+    loading: () => <Skeleton className="w-full h-32 rounded-[32px]" />
+});
+
+const DashboardAnalytics = dynamic(() => import("./sections/DashboardAnalytics").then(mod => mod.DashboardAnalytics), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const RecentSubscriptionsSection = dynamic(() => import("./sections/RecentSubscriptionsSection").then(mod => mod.RecentSubscriptionsSection), {
+    loading: () => <div className="space-y-4">{[1, 2, 3].map(i => <LoadingCard key={i} variant="compact" />)}</div>
+});
+
+const DashboardStreamingList = dynamic(() => import("./DashboardStreamingList").then(mod => mod.DashboardStreamingList), {
+    loading: () => <TableSkeleton />
+});
 
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));

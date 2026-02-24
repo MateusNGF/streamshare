@@ -1,11 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const ResetPasswordForm = dynamic(() => import("@/components/auth/ResetPasswordForm").then(mod => mod.ResetPasswordForm), {
+    loading: () => (
+        <div className="space-y-4 py-4">
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+        </div>
+    )
+});
 
 export default function ResetPasswordPage() {
     const params = useParams();

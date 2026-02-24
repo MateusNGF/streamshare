@@ -1,12 +1,23 @@
 "use client";
 
 import { ParticipantStats, ParticipantSubscription } from "@/types/dashboard.types";
-import { PersonalFinancialSummary } from "./sections/PersonalFinancialSummary";
-import { MySubscriptionsSection } from "./sections/MySubscriptionsSection";
-import { ParticipantQuickActions } from "./sections/ParticipantQuickActions";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useActionError } from "@/hooks/useActionError";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+
+const PersonalFinancialSummary = dynamic(() => import("./sections/PersonalFinancialSummary").then(mod => mod.PersonalFinancialSummary), {
+    loading: () => <Skeleton className="w-full h-[120px] rounded-[32px]" />
+});
+
+const MySubscriptionsSection = dynamic(() => import("./sections/MySubscriptionsSection").then(mod => mod.MySubscriptionsSection), {
+    loading: () => <TableSkeleton rows={3} />
+});
+
+const ParticipantQuickActions = dynamic(() => import("./sections/ParticipantQuickActions").then(mod => mod.ParticipantQuickActions), {
+    loading: () => <Skeleton className="w-full h-[100px] rounded-[32px]" />
+});
 
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));

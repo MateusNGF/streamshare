@@ -3,23 +3,38 @@
 import { DollarSign, CheckCircle, AlertCircle, FileStack, ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { GenericFilter } from "@/components/ui/GenericFilter";
-import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { useCobrancasActions } from "@/hooks/useCobrancasActions";
-import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
-import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
-import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
-import { UpgradeFeatureOverlay } from "@/components/ui/UpgradeFeatureOverlay";
-import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
+
+const GenericFilter = dynamic(() => import("@/components/ui/GenericFilter").then(mod => mod.GenericFilter), {
+    loading: () => <Skeleton className="w-full h-16 rounded-2xl" />
+});
+
+const KPIFinanceiroCard = dynamic(() => import("@/components/dashboard/KPIFinanceiroCard").then(mod => mod.KPIFinanceiroCard), {
+    loading: () => <Skeleton className="w-full h-32 rounded-[32px]" />
+});
+
+const CobrancasTable = dynamic(() => import("@/components/cobrancas/CobrancasTable").then(mod => mod.CobrancasTable), {
+    loading: () => <TableSkeleton />
+});
+
+const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard").then(mod => mod.CobrancaCard), {
+    loading: () => <LoadingCard variant="compact" />
+});
+
+const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
 
 interface CobrancasClientProps {
     kpis: {

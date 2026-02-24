@@ -10,7 +10,12 @@ import { Chrome } from "lucide-react";
 import { CURRENT_TERMS_VERSION, CURRENT_PRIVACY_VERSION } from "@/config/legal";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { useToast } from "@/hooks/useToast";
-import { GoogleAuthButton } from "./GoogleAuthButton";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const GoogleAuthButton = dynamic(() => import("./GoogleAuthButton").then(mod => mod.GoogleAuthButton), {
+    loading: () => <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+});
 
 export function SignupForm() {
     const router = useRouter();

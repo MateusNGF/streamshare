@@ -5,10 +5,19 @@ import { useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
-import { SmtpTab } from "@/components/admin/parametros/SmtpTab";
-import { WhatsappTab } from "@/components/admin/parametros/WhatsappTab";
-import { GeneralTab } from "@/components/admin/parametros/GeneralTab";
 import { useParametrosActions, ConfigSection } from "@/hooks/useParametrosActions";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const SmtpTab = dynamic(() => import("@/components/admin/parametros/SmtpTab").then(mod => mod.SmtpTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+const WhatsappTab = dynamic(() => import("@/components/admin/parametros/WhatsappTab").then(mod => mod.WhatsappTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+const GeneralTab = dynamic(() => import("@/components/admin/parametros/GeneralTab").then(mod => mod.GeneralTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
 
 interface ParametrosClientProps {
     initialData: any[];

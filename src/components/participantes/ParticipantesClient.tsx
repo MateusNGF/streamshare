@@ -3,25 +3,36 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Mail, Users, UserPlus, Send, ShieldCheck } from "lucide-react";
 import { useActionError } from "@/hooks/useActionError";
-import { ParticipantModal, ParticipantFormData } from "@/components/modals/ParticipantModal";
-import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { createParticipante, updateParticipante, deleteParticipante } from "@/actions/participantes";
 import { useToast } from "@/hooks/useToast";
+import { createParticipante, updateParticipante, deleteParticipante } from "@/actions/participantes";
+import { type ParticipantFormData } from "@/components/modals/ParticipantModal";
 import { Tabs } from "@/components/ui/Tabs";
-import { AddMemberModal } from "@/components/modals/AddMemberModal";
 import { cancelInvite } from "@/actions/invites";
 import { approveRequest, rejectRequest } from "@/actions/requests";
 import { Participante, PendingInvite, PendingRequest, Streaming } from "@/types/participante";
-import { ParticipantesTab } from "./tabs/ParticipantesTab";
-import { SolicitacoesTab } from "./tabs/SolicitacoesTab";
-import { ConvitesTab } from "./tabs/ConvitesTab";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DetalhesParticipanteModal } from "../modals/DetalhesParticipanteModal";
 import { KPICard } from "../dashboard/KPICard";
 import { KPIGrid, KPIGridItem } from "../dashboard/KPIGrid";
 import { PlanoConta } from "@prisma/client";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+
+const ParticipantesTab = dynamic(() => import("./tabs/ParticipantesTab").then(mod => mod.ParticipantesTab), {
+    loading: () => <TableSkeleton />
+});
+const SolicitacoesTab = dynamic(() => import("./tabs/SolicitacoesTab").then(mod => mod.SolicitacoesTab), {
+    loading: () => <TableSkeleton rows={3} />
+});
+const ConvitesTab = dynamic(() => import("./tabs/ConvitesTab").then(mod => mod.ConvitesTab), {
+    loading: () => <TableSkeleton rows={2} />
+});
+
+const ParticipantModal = dynamic(() => import("@/components/modals/ParticipantModal").then(mod => mod.ParticipantModal));
+const DeleteModal = dynamic(() => import("@/components/modals/DeleteModal").then(mod => mod.DeleteModal));
+const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));
+const DetalhesParticipanteModal = dynamic(() => import("../modals/DetalhesParticipanteModal").then(mod => mod.DetalhesParticipanteModal));
 
 interface ParticipantesClientProps {
     initialData: Participante[];

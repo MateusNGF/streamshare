@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
-import { DeleteModal } from "@/components/modals/DeleteModal";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -13,11 +12,20 @@ import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { CATALOGO_CATEGORIES } from "@/constants/catalogo";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 
-// Sub-components
-import { CatalogoGrid } from "./catalogo/CatalogoGrid";
-import { CatalogoTable } from "./catalogo/CatalogoTable";
-import { CatalogoFormModal } from "./catalogo/CatalogoFormModal";
+const CatalogoGrid = dynamic(() => import("./catalogo/CatalogoGrid").then(mod => mod.CatalogoGrid), {
+    loading: () => <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[200px] rounded-2xl" />)}</div>
+});
+
+const CatalogoTable = dynamic(() => import("./catalogo/CatalogoTable").then(mod => mod.CatalogoTable), {
+    loading: () => <TableSkeleton />
+});
+
+const CatalogoFormModal = dynamic(() => import("./catalogo/CatalogoFormModal").then(mod => mod.CatalogoFormModal));
+const DeleteModal = dynamic(() => import("@/components/modals/DeleteModal").then(mod => mod.DeleteModal));
 
 interface CatalogoClientProps {
     initialData: CatalogoItem[];

@@ -6,19 +6,37 @@ import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
-import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import { FilterConfig } from "@/components/ui/GenericFilter";
 import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
-import { AssinaturasTable } from "@/components/assinaturas/AssinaturasTable";
-import { AssinaturaCard } from "@/components/assinaturas/AssinaturaCard";
-import { AssinaturasModals } from "@/components/assinaturas/AssinaturasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
+
+const GenericFilter = dynamic(() => import("@/components/ui/GenericFilter").then(mod => mod.GenericFilter), {
+    loading: () => <Skeleton className="w-full h-16 rounded-2xl" />
+});
+
+const KPIFinanceiroCard = dynamic(() => import("@/components/dashboard/KPIFinanceiroCard").then(mod => mod.KPIFinanceiroCard), {
+    loading: () => <Skeleton className="w-full h-32 rounded-[32px]" />
+});
+
+const AssinaturasTable = dynamic(() => import("@/components/assinaturas/AssinaturasTable").then(mod => mod.AssinaturasTable), {
+    loading: () => <TableSkeleton />
+});
+
+const AssinaturaCard = dynamic(() => import("@/components/assinaturas/AssinaturaCard").then(mod => mod.AssinaturaCard), {
+    loading: () => <LoadingCard variant="compact" />
+});
+
+const AssinaturasModals = dynamic(() => import("@/components/assinaturas/AssinaturasModals").then(mod => mod.AssinaturasModals));
 
 interface AssinaturasClientProps {
     initialSubscriptions: any[];
