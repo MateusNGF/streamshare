@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { BetaDetailsModal } from "@/components/modals/BetaDetailsModal";
 import { Button } from "@/components/ui/Button";
+import { APP_VERSION } from "@/constants/app";
 
 const STORAGE_KEY = "streamshare_beta_banner_dismissed_v1";
 
@@ -20,7 +21,7 @@ export function BetaAnnouncement() {
     const handleDismiss = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsVisible(false);
-        // localStorage.setItem(STORAGE_KEY, "true");
+        localStorage.setItem(STORAGE_KEY, "true");
     };
 
     const handleOpenDetails = () => {
@@ -41,7 +42,7 @@ export function BetaAnnouncement() {
                     </div>
 
                     <div className="flex flex-col items-start mr-2">
-                        <span className="text-xs font-bold text-white">Versão v0.5.0</span>
+                        <span className="text-xs font-bold text-white">Versão v{APP_VERSION}</span>
                         <span className="text-[10px] text-gray-400 group-hover:text-violet-300 transition-colors">Saiba mais &rarr;</span>
                     </div>
 
