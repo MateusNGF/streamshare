@@ -268,7 +268,7 @@ async function main() {
 
     // 3. Criar Usuários
     console.log("\n👤 Criando usuários...");
-    const senhaHash = await bcrypt.hash("senha123", 10);
+    const senhaHash = await bcrypt.hash("ss@#$2026", 10);
 
     const usuario1 = await prisma.usuario.upsert({
         where: { email: "atendimento@streamshare.com.br" },

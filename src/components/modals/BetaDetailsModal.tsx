@@ -4,6 +4,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { Info, AlertTriangle, ShieldCheck, Bug, Rocket, MessageSquare } from "lucide-react";
+import { APP_VERSION } from "@/constants/app";
 
 interface BetaDetailsModalProps {
     isOpen: boolean;
@@ -73,7 +74,7 @@ export function BetaDetailsModal({ isOpen, onClose }: BetaDetailsModalProps) {
                 </div>
 
                 <div className="text-xs text-gray-400 text-center mt-4">
-                    Versão Atual: <span className="font-mono text-gray-500">v0.5.0-beta</span>
+                    Versão Atual: <span className="font-mono text-gray-500">v{APP_VERSION}-beta</span>
                 </div>
             </div>
         </Modal>

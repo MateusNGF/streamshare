@@ -1,61 +1,57 @@
-import cron from 'node-cron';
 import { prisma } from "@/lib/db";
+import { TipoNotificacaoWhatsApp } from "@prisma/client";
 import { sendWhatsAppNotification, whatsappTemplates } from "@/lib/whatsapp-service";
 import { addDays, differenceInDays, subHours } from "date-fns";
 import { formatCurrency } from "@/lib/formatCurrency";
 import type { CurrencyCode } from "@/types/currency.types";
 
-/**
- * Inicializa o cron job para notificações automáticas de cobranças
- * Executa semanalmente (segundas-feiras) às 9h da manhã
- */
-export function startBillingNotificationCron() {
-    // Executar diariamente às 9h
-    cron.schedule('0 4 * * *', async () => {
-        console.log('[CRON] Iniciando verificação de cobranças...');
-        try {
-            await checkAndNotifyPendingBillings();
-            await checkAndNotifyOverdueBillings();
-            console.log('[CRON] Verificação de cobranças concluída');
-        } catch (error) {
-            console.error('[CRON] Erro na verificação de cobranças:', error);
-        }
-    });
+type NotificationType = TipoNotificacaoWhatsApp;
 
-    console.log('✅ Billing notification cron job initialized (runs daily at 4:00 AM)');
+/**
+ * Interface para os parâmetros de processamento de notificações
+ */
+interface ProcessNotificationParams {
+    tipo: NotificationType;
+    configFilter: {
+        notificarCobrancaVencendo?: boolean;
+        notificarCobrancaAtrasada?: boolean;
+    };
+    getBillingFilter: (config: any) => any;
+    getMensagem: (cobranca: any, moeda: CurrencyCode) => string;
+    logPrefix: string;
 }
 
 /**
- * Verifica cobranças pendentes que estão próximas do vencimento
- * e envia notificações de acordo com a configuração da conta
+ * Função genérica para processar grupos de notificações de cobrança
+ * Segue o princípio DRY (Don't Repeat Yourself) e SRP (Single Responsibility Principle)
  */
-async function checkAndNotifyPendingBillings() {
-    // Buscar todas contas com WhatsApp ativo e notificação de vencimento habilitada
+async function processBillingNotifications({
+    tipo,
+    configFilter,
+    getBillingFilter,
+    getMensagem,
+    logPrefix
+}: ProcessNotificationParams) {
+    // Buscar todas contas com WhatsApp ativo e a flag específica habilitada
+    // Incluir a Conta para pegar a moeda de preferência (evita N+1)
     const configs = await prisma.whatsAppConfig.findMany({
         where: {
             isAtivo: true,
-            notificarCobrancaVencendo: true
+            ...configFilter
         },
+        include: {
+            conta: {
+                select: { moedaPreferencia: true }
+            }
+        }
     });
 
-    console.log(`[CRON] Encontradas ${configs.length} contas com notificação de vencimento ativa`);
+    console.log(`[${logPrefix}] Encontradas ${configs.length} contas configuradas`);
 
     for (const config of configs) {
-        // Data limite = hoje + dias de aviso configurados
-        const dataLimite = addDays(new Date(), config.diasAvisoVencimento);
-
-        // Buscar cobranças pendentes que vencem entre hoje e a data limite
+        // Buscar cobranças de acordo com o filtro específico
         const cobrancas = await prisma.cobranca.findMany({
-            where: {
-                status: 'pendente',
-                periodoFim: {
-                    lte: dataLimite,
-                    gte: new Date()
-                },
-                assinatura: {
-                    participante: { contaId: config.contaId }
-                },
-            },
+            where: getBillingFilter(config),
             include: {
                 assinatura: {
                     include: {
@@ -66,179 +62,120 @@ async function checkAndNotifyPendingBillings() {
             },
         });
 
-        console.log(`[CRON] Conta ${config.contaId}: ${cobrancas.length} cobranças vencendo`);
+        if (cobrancas.length === 0) continue;
+
+        console.log(`[${logPrefix}] Conta ${config.contaId}: ${cobrancas.length} cobranças para processar`);
+
+        const moeda = (config.conta.moedaPreferencia as CurrencyCode) || 'BRL';
 
         for (const cobranca of cobrancas) {
-            // Verificar última notificação para evitar spam
+            const participanteId = cobranca.assinatura.participanteId;
+
+            // Verificar última notificação deste tipo para este participante nas últimas 24h (Antispam)
             const ultimoLog = await prisma.whatsAppLog.findFirst({
                 where: {
                     configId: config.id,
-                    participanteId: cobranca.assinatura.participanteId,
-                    tipo: 'cobranca_vencendo',
+                    participanteId,
+                    tipo,
                     createdAt: { gte: subHours(new Date(), 24) }
                 },
                 orderBy: { createdAt: 'desc' }
             });
 
-            // Se já notificou nas últimas 24h, pular
             if (ultimoLog) {
-                console.log(`[CRON] Cobrança ${cobranca.id}: notificação recente, pulando`);
+                console.log(`[${logPrefix}] Cobrança ${cobranca.id}: notificação recente enviada, pulando`);
                 continue;
             }
 
-            // Calcular dias restantes
-            const diasRestantes = differenceInDays(new Date(cobranca.periodoFim), new Date());
+            const mensagem = getMensagem(cobranca, moeda);
 
-            // Fetch account currency
-            const conta = await prisma.conta.findUnique({
-                where: { id: config.contaId },
-                select: { moedaPreferencia: true }
-            });
-
-            // Criar mensagem
-            const mensagem = whatsappTemplates.cobrancaVencendo(
-                cobranca.assinatura.participante.nome,
-                cobranca.assinatura.streaming.catalogo.nome,
-                formatCurrency(Number(cobranca.valor), (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
-                diasRestantes
-            );
-
-            // Enviar notificação
+            // Tentar enviar notificação
             const result = await sendWhatsAppNotification(
                 config.contaId,
-                'cobranca_vencendo',
-                cobranca.assinatura.participanteId,
+                tipo,
+                participanteId,
                 mensagem
             );
 
             if (result.success) {
-                console.log(`[CRON] ✅ Notificação enviada para cobrança ${cobranca.id}`);
+                console.log(`[${logPrefix}] ✅ Notificação enviada para cobrança ${cobranca.id}`);
             } else if ('reason' in result && result.reason === 'not_configured') {
-                // Criar log persistente para notificação pendente
+                // Registrar log persistente caso o WhatsApp não esteja configurado no momento
                 try {
                     await prisma.whatsAppLog.create({
                         data: {
                             configId: config.id,
-                            participanteId: cobranca.assinatura.participanteId,
-                            tipo: 'cobranca_vencendo',
+                            participanteId,
+                            tipo,
                             numeroDestino: cobranca.assinatura.participante.whatsappNumero || '',
                             mensagem,
                             enviado: false,
-                            erro: 'Sistema: Notificação pendente - WhatsApp não configurado (CRON)'
+                            erro: `Sistema: Notificação pendente - WhatsApp não configurado (${logPrefix})`
                         }
                     });
-                    console.log(`[CRON] ℹ️ WhatsApp não configurado - Log criado para cobrança ${cobranca.id}`);
+                    console.log(`[${logPrefix}] ℹ️ WhatsApp não configurado - Log de atraso criado para cobrança ${cobranca.id}`);
                 } catch (logError) {
-                    console.error(`[CRON] Erro ao criar log para cobrança ${cobranca.id}:`, logError);
+                    console.error(`[${logPrefix}] Erro ao criar log para cobrança ${cobranca.id}:`, logError);
                 }
             } else {
-                console.log(`[CRON] ❌ Falha ao enviar notificação para cobrança ${cobranca.id}: ${JSON.stringify(result)}`);
+                console.log(`[${logPrefix}] ❌ Falha ao enviar notificação para cobrança ${cobranca.id}: ${JSON.stringify(result)}`);
             }
         }
     }
+}
+
+/**
+ * Verifica cobranças pendentes que estão próximas do vencimento
+ */
+export async function checkAndNotifyPendingBillings() {
+    return processBillingNotifications({
+        tipo: 'cobranca_vencendo',
+        configFilter: { notificarCobrancaVencendo: true },
+        logPrefix: 'CRON_VENCENDO',
+        getBillingFilter: (config) => ({
+            status: 'pendente',
+            periodoFim: {
+                lte: addDays(new Date(), config.diasAvisoVencimento),
+                gte: new Date()
+            },
+            assinatura: {
+                participante: { contaId: config.contaId }
+            }
+        }),
+        getMensagem: (cobranca, moeda) => {
+            const diasRestantes = differenceInDays(new Date(cobranca.periodoFim), new Date());
+            return whatsappTemplates.cobrancaVencendo(
+                cobranca.assinatura.participante.nome,
+                cobranca.assinatura.streaming.catalogo.nome,
+                formatCurrency(Number(cobranca.valor), moeda),
+                diasRestantes
+            );
+        }
+    });
 }
 
 /**
  * Verifica cobranças atrasadas e envia notificações
  */
-async function checkAndNotifyOverdueBillings() {
-    // Buscar todas contas com WhatsApp ativo e notificação de atraso habilitada
-    const configs = await prisma.whatsAppConfig.findMany({
-        where: {
-            isAtivo: true,
-            notificarCobrancaAtrasada: true
-        },
-    });
-
-    console.log(`[CRON] Encontradas ${configs.length} contas com notificação de atraso ativa`);
-
-    for (const config of configs) {
-        // Buscar cobranças atrasadas
-        const cobrancas = await prisma.cobranca.findMany({
-            where: {
-                status: 'atrasado',
-                assinatura: {
-                    participante: { contaId: config.contaId }
-                },
-            },
-            include: {
-                assinatura: {
-                    include: {
-                        participante: true,
-                        streaming: { include: { catalogo: true } }
-                    }
-                }
-            },
-        });
-
-        console.log(`[CRON] Conta ${config.contaId}: ${cobrancas.length} cobranças atrasadas`);
-
-        for (const cobranca of cobrancas) {
-            // Verificar última notificação para evitar spam
-            const ultimoLog = await prisma.whatsAppLog.findFirst({
-                where: {
-                    configId: config.id,
-                    participanteId: cobranca.assinatura.participanteId,
-                    tipo: 'cobranca_atrasada',
-                    createdAt: { gte: subHours(new Date(), 24) }
-                },
-                orderBy: { createdAt: 'desc' }
-            });
-
-            // Se já notificou nas últimas 24h, pular
-            if (ultimoLog) {
-                console.log(`[CRON] Cobrança ${cobranca.id}: notificação de atraso recente, pulando`);
-                continue;
+export async function checkAndNotifyOverdueBillings() {
+    return processBillingNotifications({
+        tipo: 'cobranca_atrasada',
+        configFilter: { notificarCobrancaAtrasada: true },
+        logPrefix: 'CRON_ATRASO',
+        getBillingFilter: (config) => ({
+            status: 'atrasado',
+            assinatura: {
+                participante: { contaId: config.contaId }
             }
-
-            // Calcular dias de atraso
+        }),
+        getMensagem: (cobranca, moeda) => {
             const diasAtraso = differenceInDays(new Date(), new Date(cobranca.periodoFim));
-
-            // Fetch account currency
-            const conta = await prisma.conta.findUnique({
-                where: { id: config.contaId },
-                select: { moedaPreferencia: true }
-            });
-
-            // Criar mensagem
-            const mensagem = whatsappTemplates.cobrancaAtrasada(
+            return whatsappTemplates.cobrancaAtrasada(
                 cobranca.assinatura.participante.nome,
                 cobranca.assinatura.streaming.catalogo.nome,
-                formatCurrency(Number(cobranca.valor), (conta?.moedaPreferencia as CurrencyCode) || 'BRL'),
+                formatCurrency(Number(cobranca.valor), moeda),
                 diasAtraso
             );
-
-            // Enviar notificação
-            const result = await sendWhatsAppNotification(
-                config.contaId,
-                'cobranca_atrasada',
-                cobranca.assinatura.participanteId,
-                mensagem
-            );
-
-            if (result.success) {
-                console.log(`[CRON] ✅ Notificação de atraso enviada para cobrança ${cobranca.id}`);
-            } else if ('reason' in result && result.reason === 'not_configured') {
-                // Criar log persistente para notificação de atraso pendente
-                try {
-                    await prisma.whatsAppLog.create({
-                        data: {
-                            configId: config.id,
-                            participanteId: cobranca.assinatura.participanteId,
-                            tipo: 'cobranca_atrasada',
-                            numeroDestino: cobranca.assinatura.participante.whatsappNumero || '',
-                            mensagem,
-                            enviado: false,
-                            erro: 'Sistema: Notificação de atraso pendente - WhatsApp não configurado (CRON)'
-                        }
-                    });
-                    console.log(`[CRON] ℹ️ WhatsApp não configurado - Log de atraso criado para cobrança ${cobranca.id}`);
-                } catch (logError) {
-                    console.error(`[CRON] Erro ao criar log de atraso para cobrança ${cobranca.id}:`, logError);
-                }
-            } else {
-                console.log(`[CRON] ❌ Falha ao enviar notificação de atraso para cobrança ${cobranca.id}: ${JSON.stringify(result)}`);
-            }
         }
-    }
+    });
 }

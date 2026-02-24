@@ -6,7 +6,6 @@ import { ToastContainer } from "@/components/ui/ToastContainer";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { SupportButton } from "@/components/support/SupportButton";
 import Script from "next/script";
-import "@/cron/init";
 import { BetaAnnouncement } from "@/components/layout/BetaAnnouncement";
 
 const inter = Inter({ subsets: ["latin"] });
