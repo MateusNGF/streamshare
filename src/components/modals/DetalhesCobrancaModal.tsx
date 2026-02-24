@@ -35,7 +35,6 @@ import { ModalPagamentoCobranca } from "@/components/faturas/ModalPagamentoCobra
 
 import { aprovarComprovanteAction, rejeitarComprovanteAction } from "@/actions/comprovantes";
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/useToast";
 
 interface DetalhesCobrancaModalProps {
     isOpen: boolean;
