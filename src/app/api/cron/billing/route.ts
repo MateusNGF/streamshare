@@ -30,15 +30,27 @@ export async function GET(req: NextRequest) {
     try {
         console.info('[CRON_BILLING] Starting billing cycle...');
 
-        const [result] = await Promise.all([
-            await billingService.processarRenovacoes(),
-            await checkAndNotifyPendingBillings(),
-            await checkAndNotifyOverdueBillings()
-        ])
+        // 1. Process renewals and update overdue statuses (Critical Step)
+        console.info('[CRON_BILLING] Step 1: Processing renewals and overdue status updates...');
+        const renewalResult = await billingService.processarRenovacoes();
+        console.info(`[CRON_BILLING] Renewals completed: ${JSON.stringify(renewalResult)}`);
 
+        // 2. Notify about upcoming expirations
+        console.info('[CRON_BILLING] Step 2: Checking for pending billing notifications...');
+        await checkAndNotifyPendingBillings();
 
-        console.info('[CRON_BILLING] Completed');
-        return Response.json({ success: true, data: result });
+        // 3. Notify about overdue billings
+        console.info('[CRON_BILLING] Step 3: Checking for overdue billing notifications...');
+        await checkAndNotifyOverdueBillings();
+
+        console.info('[CRON_BILLING] Cycle completed successfully');
+        return Response.json({
+            success: true,
+            data: {
+                renewal: renewalResult,
+                timestamp: new Date().toISOString()
+            }
+        });
 
     } catch (error: any) {
         console.error('[CRON_BILLING] Error:', error);
