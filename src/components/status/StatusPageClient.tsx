@@ -49,6 +49,8 @@ const changelogData = [
         id: "2026-02-24",
         date: "24/02/2026",
         changes: [
+            { category: "Automação", description: "Lançamento do **Fluxo de Boas-Vindas Automatizado**, garantindo a entrega imediata de instruções e recursos essenciais para novos assinantes em todos os métodos de acesso." },
+            { category: "Segurança", description: "Implementação do protocolo de **Sanitização de Comunicações**, assegurando que toda interação dinâmica via e-mail seja devidamente neutralizada contra injeções, preservando a integridade da experiência do usuário." },
             { category: "Performance", description: "Lançamento da **Arquitetura de Carregamento Adaptativo** em toda a plataforma, otimizando a entrega de recursos no Dashboard e Portal de Acesso para garantir interatividade instantânea e menor consumo de dados." },
             { category: "Experiência", description: "Implementação do sistema de **Estabilidade Visual Preditiva**, introduzindo estados de espera harmonizados que eliminam saltos de layout e proporcionam uma transição fluida durante o carregamento de dados." },
         ],
