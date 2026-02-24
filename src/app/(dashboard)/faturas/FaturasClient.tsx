@@ -77,14 +77,13 @@ export function FaturasClient({ faturas, resumo, error }: FaturasClientProps) {
                     viewMode === "grid" ? (
                         <div className="grid grid-cols-1 gap-4">
                             {faturas.map((fatura) => (
-                                <FaturaCard key={fatura.id} fatura={fatura} onPayPix={() => handlePayPix(fatura.id)} />
+                                <FaturaCard key={fatura.id} fatura={fatura} />
                             ))}
                         </div>
                     ) : (
                         <FaturasTable
                             faturas={faturas}
                             onViewDetails={handleViewDetails}
-                            onPayPix={handlePayPix}
                         />
                     )
                 )}

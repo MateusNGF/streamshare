@@ -66,7 +66,6 @@ export function CobrancaCard({
         ] : []),
         ...(isAdmin && (cobranca.status === 'pendente' || cobranca.status === 'atrasado') ? [
             { type: "separator" as const },
-            { label: "Gerar QR Code PIX", icon: <QrCode size={16} />, onClick: onGeneratePix },
             { label: "Confirmar Pagamento", icon: <Check size={16} />, onClick: onConfirmPayment, variant: "success" as const },
             { label: "Cancelar Cobrança", icon: <XCircle size={16} />, onClick: onCancel, variant: "danger" as const }
         ] : []),
