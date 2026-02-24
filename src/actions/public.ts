@@ -20,6 +20,7 @@ export async function publicSubscribe(data: {
     isPrivateInvite?: boolean;
     privateInviteToken?: string;
 }) {
+
     try {
         // 1. Validar Streaming e Token
         const streaming = await StreamingService.validatePublicToken(data.token.trim());
@@ -81,67 +82,6 @@ export async function publicSubscribe(data: {
                 assinaturas.push(ass);
             }
 
-            const primeiraAssinatura = assinaturas[0];
-            const valorTotalCiclo = Number(primeiraAssinatura.valor) * (data.quantidade || 1);
-
-            // 6. Gerar Pagamento Inicial no Gateway (PIX ou CARTÃO)
-            let checkoutData = null;
-            if (data.metodoPagamento === MetodoPagamento.PIX) {
-                const res = await createPixPayment({
-                    id: `pub_sub_${primeiraAssinatura.id}`,
-                    title: `Assinatura ${streaming.catalogo.nome}`,
-                    description: `Inscrição para ${data.nome}`,
-                    unit_price: valorTotalCiclo,
-                    email: data.email,
-                    external_reference: `assinatura_${primeiraAssinatura.id}`
-                });
-
-                if (res.success) {
-                    // Buscar a cobrança gerada pelo SubscriptionService (createFromStreaming gera cobrança inicial)
-                    // Como o SubscriptionService gera uma cobrança para cada assinatura, precisamos atualizar as cobranças iniciais
-                    // Para simplificar, o checkout público foca na primeira assinatura (o lote é menos comum aqui)
-                    await tx.cobranca.updateMany({
-                        where: { assinaturaId: { in: assinaturas.map(a => a.id) }, status: 'pendente' },
-                        data: {
-                            metodoPagamento: MetodoPagamento.PIX,
-                            gatewayId: res.id,
-                            gatewayProvider: 'mercadopago',
-                            pixQrCode: res.qr_code_base64,
-                            pixCopiaECola: res.qr_code
-                        }
-                    });
-
-                    checkoutData = {
-                        type: 'PIX',
-                        qrCode: res.qr_code_base64,
-                        copyPaste: res.qr_code
-                    };
-                }
-            } else if (data.metodoPagamento === MetodoPagamento.CREDIT_CARD) {
-                const res = await createCheckoutPreference({
-                    id: `pub_sub_${primeiraAssinatura.id}`,
-                    title: `Assinatura ${streaming.catalogo.nome}`,
-                    description: `Inscrição para ${data.nome}`,
-                    unit_price: valorTotalCiclo,
-                    email: data.email,
-                    external_reference: `assinatura_${primeiraAssinatura.id}`
-                });
-
-                if (res.success) {
-                    await tx.cobranca.updateMany({
-                        where: { assinaturaId: { in: assinaturas.map(a => a.id) }, status: 'pendente' },
-                        data: {
-                            metodoPagamento: MetodoPagamento.CREDIT_CARD,
-                            gatewayProvider: 'mercadopago'
-                        }
-                    });
-
-                    checkoutData = {
-                        type: 'CARD',
-                        url: res.init_point
-                    };
-                }
-            }
 
             // 7. Notificar Admin
             await tx.notificacao.create({
@@ -153,8 +93,7 @@ export async function publicSubscribe(data: {
                     metadata: {
                         participanteId: participante.id,
                         streamingId: streaming.id,
-                        quantidade: data.quantidade || 1,
-                        metodo: data.metodoPagamento
+                        quantidade: data.quantidade || 1
                     }
                 }
             });
