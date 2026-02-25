@@ -3,6 +3,7 @@ import { Save, Settings, ShieldCheck } from "lucide-react";
 import { useActionError } from "@/hooks/useActionError";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { useParametrosActions, ConfigSection } from "@/hooks/useParametrosActions";
 import dynamic from "next/dynamic";
@@ -69,14 +70,14 @@ export function ParametrosClient({ initialData, error }: ParametrosClientProps) 
                     description="Gestão de infraestrutura, integrações e diagnósticos de conectividade."
                     action={
                         activeSection === "general" && (
-                            <button
+                            <Button
+                                variant="default"
                                 onClick={handlers.handleSave}
                                 disabled={loading}
-                                className="group flex items-center gap-3 bg-primary hover:bg-accent text-white px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
                             >
                                 <Save size={20} className="group-hover:rotate-12 transition-transform" />
                                 {loading ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
-                            </button>
+                            </Button>
                         )
                     }
                 />

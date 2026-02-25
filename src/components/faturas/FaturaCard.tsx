@@ -134,8 +134,7 @@ export function FaturaCard({
 
                     {!isPaid && !isCancelled && !isAwaiting && !isAdmin && (
                         <Button
-                            size="default"
-                            className="bg-primary hover:bg-primary/90 text-white gap-2 font-bold px-6 rounded-xl shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            variant="default"
                             onClick={openPaymentModal}
                         >
                             <DollarSign size={18} />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { validateEmail, ValidationMessages } from "@/lib/validation";
 import {
@@ -65,21 +66,23 @@ export function InviteModal({
             onClose={onClose}
             title="Convidar Membro"
             footer={
-                <div className="flex w-full gap-3 sm:w-auto">
-                    <button
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <Button
+                        variant="outline"
                         onClick={onClose}
-                        className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all justify-center"
+                        className="w-full sm:w-auto sm:mr-auto"
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="default"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex-1 sm:flex-none px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto"
                     >
                         {loading && <Spinner size="sm" color="white" />}
                         {loading ? "Processando..." : "Enviar Convite"}
-                    </button>
+                    </Button>
                 </div>
             }
         >

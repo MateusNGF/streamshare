@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Ghost, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export default function NotFound() {
     return (
@@ -31,13 +32,15 @@ export default function NotFound() {
                         Voltar para o Início
                     </Link>
 
-                    <button
+                    <Button
+                        variant="secondary"
+                        size="lg"
                         onClick={() => window.history.back()}
-                        className="flex items-center justify-center gap-2 w-full bg-gray-50 hover:bg-gray-100 text-gray-700 py-3.5 px-6 rounded-xl font-semibold transition-all"
+                        className="w-full justify-center"
                     >
                         <ArrowLeft size={18} />
                         Voltar para trás
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Globe, Info, Lock, LockOpen, KeyRound, Eye, EyeOff, Trash2, ChevronDown } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -199,34 +200,37 @@ export function StreamingModal({
             footer={
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                     {step === 2 && !streaming && (
-                        <button
+                        <Button
                             type="button"
+                            variant="outline"
                             onClick={() => setStep(1)}
                             disabled={loading}
-                            className="w-full sm:w-auto sm:mr-auto px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full sm:w-auto sm:mr-auto"
                         >
                             Voltar
-                        </button>
+                        </Button>
                     )}
                     {step === 1 ? (
-                        <button
+                        <Button
                             type="button"
+                            variant="default"
                             onClick={handleNextStep}
                             disabled={!formData.catalogoId}
-                            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 text-sm sm:text-base ml-auto"
+                            className="w-full sm:w-auto ml-auto"
                         >
                             Próximo
-                        </button>
+                        </Button>
                     ) : (
-                        <button
+                        <Button
                             type="button"
+                            variant="default"
                             onClick={handleSubmit}
                             disabled={loading || catalogos.length === 0}
-                            className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center justify-center gap-2 ml-auto"
+                            className="w-full sm:w-auto ml-auto"
                         >
                             {loading && <Spinner size="sm" color="white" />}
                             {loading ? "Processando..." : streaming ? "Salvar" : "Criar"}
-                        </button>
+                        </Button>
                     )}
                 </div>
             }

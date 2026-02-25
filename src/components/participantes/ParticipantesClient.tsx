@@ -5,6 +5,7 @@ import { Plus, Mail, Users, UserPlus, Send, ShieldCheck } from "lucide-react";
 import { useActionError } from "@/hooks/useActionError";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
 import { useToast } from "@/hooks/useToast";
 import { createParticipante, updateParticipante, deleteParticipante } from "@/actions/participantes";
 import { type ParticipantFormData } from "@/components/modals/ParticipantModal";
@@ -240,20 +241,20 @@ export function ParticipantesClient({
                 description="Gerencie os membros e convites da sua conta"
                 action={
                     <div className="flex gap-3">
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={() => setIsInviteModalOpen(true)}
-                            className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-2xl font-bold transition-all shadow-sm"
                         >
                             <Mail size={20} />
                             Convidar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="default"
                             onClick={() => setIsAddModalOpen(true)}
-                            className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all"
                         >
                             <Plus size={20} />
                             Direto
-                        </button>
+                        </Button>
                     </div>
                 }
             />

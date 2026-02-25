@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tv, Check, Users } from "lucide-react";
 import { createGrupo, updateGrupo, getStreamingsParaGrupo, getGrupoById } from "@/actions/grupos";
@@ -163,22 +164,24 @@ export function GrupoFormModal({
             onClose={onClose}
             title={grupo ? "Editar Grupo" : "Novo Grupo"}
             footer={
-                <>
-                    <button
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <Button
+                        variant="outline"
                         onClick={onClose}
-                        className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                        className="w-full sm:w-auto sm:mr-auto"
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="default"
                         onClick={handleSubmit}
                         disabled={isPending || loading}
-                        className="px-6 py-3 bg-primary hover:bg-accent text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 flex items-center gap-2"
+                        className="w-full sm:w-auto"
                     >
                         {isPending && <Spinner size="sm" color="white" />}
                         {isPending ? "Salvando..." : grupo ? "Salvar" : "Criar"}
-                    </button>
-                </>
+                    </Button>
+                </div>
             }
         >
             <form onSubmit={handleSubmit} className="space-y-6">

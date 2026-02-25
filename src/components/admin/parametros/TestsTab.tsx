@@ -1,4 +1,5 @@
 import { Mail, MessageSquare, Play, Globe, User, Hash, CheckCircle2, XCircle, Activity, Shield, Mailbox } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Input } from "@/components/ui/Input";
 
@@ -100,15 +101,17 @@ export function TestsTab({ onTestSmtp, onTestWhatsApp, testing, config }: TestsT
                 </div>
 
                 <div className="pt-2 relative z-10">
-                    <button
+                    <Button
+                        variant="default"
                         onClick={onTestSmtp}
                         disabled={testing || !config}
-                        className="w-full flex items-center justify-center gap-2.5 bg-primary hover:bg-accent text-white px-6 py-4 rounded-xl font-black text-base transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-50 group/btn overflow-hidden relative"
+                        className="w-full group/btn overflow-hidden relative justify-center"
+                        size="lg"
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shimmer" />
                         <Play size={20} className={testing ? "animate-pulse" : "group-hover/btn:translate-x-1 transition-transform"} />
                         {testing ? "EXECUTANDO..." : "TESTAR CONEXÃO SMTP"}
-                    </button>
+                    </Button>
                     <div className="flex items-center justify-between mt-3 px-1">
                         <span className="text-[8px] text-muted-foreground/40 font-black uppercase tracking-widest">
                             TLS: {config?.smtp.secure === 'true' ? 'ON' : 'OFF'}
@@ -171,15 +174,17 @@ export function TestsTab({ onTestSmtp, onTestWhatsApp, testing, config }: TestsT
                 </div>
 
                 <div className="pt-2 relative z-10">
-                    <button
+                    <Button
+                        variant="default"
                         onClick={onTestWhatsApp}
                         disabled={testing || !config}
-                        className="w-full flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-4 rounded-xl font-black text-base transition-all shadow-lg shadow-[#25D366]/20 hover:shadow-[#25D366]/30 active:scale-[0.98] disabled:opacity-50 group/btn overflow-hidden relative"
+                        className="w-full bg-[#25D366] hover:bg-[#128C7E] shadow-[#25D366]/20 group/btn overflow-hidden relative justify-center"
+                        size="lg"
                     >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shimmer" />
                         <Play size={20} className={testing ? "animate-pulse" : "group-hover/btn:translate-x-1 transition-transform"} />
                         {testing ? "DIAGNÓSTICO..." : "TESTAR CONEXÃO WHATSAPP"}
-                    </button>
+                    </Button>
                     <div className="flex items-center justify-between mt-3 px-1">
                         <span className="text-[8px] text-muted-foreground/40 font-black uppercase tracking-widest">
                             INTEGRAÇÃO: {config?.whatsapp.enabled === 'true' ? 'ON' : 'OFF'}

@@ -106,3 +106,68 @@ Para cada nova tela de listagem/dashboard:
 > [!NOTE]
 > As classes `stagger-*` definem apenas `animation-delay`. Elas devem ser **sempre** combinadas com uma classe de animação (`animate-fade-in`, `animate-slide-in-from-bottom`, etc.). Sem a animação, o stagger sozinho não tem efeito visual.
 
+---
+
+## 🖥️ Diretivas Client/Server e Prevenção de Erros de Hidratação (Next.js)
+
+### Regra: `"use client"` é Obrigatório em Componentes Interativos
+
+Qualquer componente que use state, efeitos, event handlers, ou acesse APIs do navegador **deve** declarar `"use client"` como primeira linha do arquivo.
+
+**Componentes que obrigatoriamente precisam de `"use client"`**:
+- Botões com `onClick` (`Button.tsx`)
+- Modais e overlays (`Modal.tsx`)
+- Formulários com estado controlado
+- Qualquer componente que use `useState`, `useEffect`, `useRef`
+
+```tsx
+// ✅ Correto — directive no topo do arquivo
+"use client";
+
+import { useState } from "react";
+export function MeuComponente() { ... }
+
+// ❌ Errado — componente interativo sem a diretiva (quebra o SSR)
+import { useState } from "react"; // ← Server component não suporta hooks
+export function MeuComponente() { ... }
+```
+
+---
+
+### Padrão de Prevenção de Erros de Hidratação
+
+Componentes que acessam `window`, `document`, ou renderizam Portais **não podem executar essa lógica no servidor**. O Next.js renderiza o HTML no servidor antes de hidratar no cliente — qualquer divergência causa um erro de hidratação.
+
+**Padrão obrigatório** (implementado em `Modal.tsx`, deve ser replicado em outros casos):
+
+```tsx
+"use client";
+
+import { useState, useEffect } from "react";
+
+export function MeuComponenteComPortal() {
+    const [mounted, setMounted] = useState(false);
+
+    // ✅ Confirma que estamos no cliente antes de acessar DOM ou renderizar Portal
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // ✅ Retorna null no servidor — sem erro de hidratação
+    if (!mounted) return null;
+
+    return (
+        // Agora é seguro acessar window, document.body, createPortal, etc.
+        <div>Conteúdo seguro para SSR</div>
+    );
+}
+```
+
+**Quando aplicar este padrão**:
+- Componentes que chamam `createPortal`
+- Componentes que leem `window.innerWidth`, `window.location`, etc.
+- Componentes que modificam `document.body` (scroll lock, class injection)
+- Componentes que dependem de valores calculados apenas no browser (ex: `localStorage`)
+
+> **Referência**: O componente `Modal.tsx` é a implementação canônica deste padrão no projeto. Consulte-o como modelo.
+
