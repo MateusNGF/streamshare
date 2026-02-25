@@ -65,7 +65,7 @@ function TechnicalDetails({ cobranca, format, handleCopy, copied }: { cobranca: 
             </button>
 
             <div className={cn(
-                "transition-all duration-300 ease-in-out overflow-hidden",
+                "transition-all duration-300 ease-smooth overflow-hidden",
                 isOpen ? "max-h-[500px] border-t border-gray-100" : "max-h-0"
             )}>
                 <div className="p-4 space-y-4">

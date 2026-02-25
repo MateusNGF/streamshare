@@ -26,7 +26,7 @@ export function LandingNavbar({ session }: LandingNavbarProps) {
 
     return (
         <nav
-            className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out ${isScrolled || isMenuOpen
+            className={`fixed top-0 w-full z-50 transition-all duration-500 ease-smooth ${isScrolled || isMenuOpen
                 ? "bg-[#0f172a]/95 border-b border-gray-800 shadow-xl backdrop-blur-xl"
                 : "bg-transparent border-transparent py-4"
                 }`}

@@ -60,5 +60,49 @@ Para cada nova tela de listagem/dashboard:
 ## 🛠️ Padrões de Estilização (Tailwind)
 
 *   **Bordas de Destaque**: Use `border-l-4` com cores semânticas para cards de status (verde para pago, vermelho para atrasado, etc).
-*   **Animações**: Utilize as classes de `animate-in fade-in slide-in-from-left-4` para entradas suaves de linhas e cards.
+*   **Animações**: Utilize as classes customizadas do projeto (`animate-fade-in`, `animate-slide-in-from-left`, etc.) para entradas suaves de linhas e cards. Consulte o `DESIGN_SYSTEM.md` para a lista completa.
 *   **Shadows**: Use `shadow-sm` para cards normais e `shadow-lg shadow-primary/25` para botões principais.
+*   **Transições**: Use **exclusivamente** `ease-smooth` ou a classe global `.transition-smooth`. Para efeito de rebote em modais/tooltips, use `ease-bounce-in`. **Nunca** use `ease-in-out` ou curvas genéricas.
+
+---
+
+## 🎭 Coreografia de UI (Staggering)
+
+> [!IMPORTANT]
+> Ao renderizar **listas** ou **grids de cards** (participantes, faturas, streamings), é **obrigatório** usar animação com revelação progressiva (stagger) para criar uma experiência visual fluida.
+
+### Como Implementar
+
+1. Aplique uma animação de entrada (`animate-fade-in` ou `animate-slide-in-from-bottom`) a cada item da lista.
+2. Combine com a classe de atraso sequencial correspondente ao índice do item.
+
+**Classes de Atraso Disponíveis** (definidas em `globals.css`):
+
+| Classe | Delay |
+|---|---|
+| `stagger-1` | 100ms |
+| `stagger-2` | 200ms |
+| `stagger-3` | 300ms |
+| `stagger-4` | 400ms |
+| `stagger-5` | 500ms |
+
+### Exemplo de Implementação
+
+```tsx
+// ✅ Correto — revelação progressiva em lista de cards
+{items.map((item, index) => (
+  <Card
+    key={item.id}
+    className={`animate-fade-in opacity-0 fill-mode-forwards stagger-${Math.min(index + 1, 5)}`}
+  >
+    {/* conteúdo */}
+  </Card>
+))}
+```
+
+> [!TIP]
+> Para listas com mais de 5 itens, limite o stagger a `stagger-5` (500ms). Itens além do 5º recebem todos o mesmo delay final, evitando esperas longas demais.
+
+> [!NOTE]
+> As classes `stagger-*` definem apenas `animation-delay`. Elas devem ser **sempre** combinadas com uma classe de animação (`animate-fade-in`, `animate-slide-in-from-bottom`, etc.). Sem a animação, o stagger sozinho não tem efeito visual.
+

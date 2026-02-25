@@ -67,10 +67,10 @@ export const QuantityInput = forwardRef<HTMLDivElement, QuantityInputProps>(
                     aria-invalid={error ? "true" : "false"}
                     aria-describedby={error ? errorId : undefined}
                     className={cn(
-                        "flex items-center justify-between py-2 border rounded-xl bg-white transition-all",
+                        "flex items-center justify-between py-2 border rounded-xl bg-white transition-smooth",
                         error
-                            ? "border-red-300 ring-offset-2 focus-within:ring-2 focus-within:ring-red-500 focus-within:border-red-500"
-                            : "border-gray-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2",
+                            ? "border-red-300 focus-within:border-red-500"
+                            : "border-gray-200 focus-within:border-primary",
                         disabled && "opacity-50 cursor-not-allowed bg-gray-50"
                     )}
                 >

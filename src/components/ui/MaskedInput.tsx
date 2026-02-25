@@ -71,9 +71,9 @@ export function MaskedInput({
         ? applyMask(String(externalValue), maskType)
         : (externalValue as string);
 
-    const inputClassName = `w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all placeholder:text-gray-500 ${error
-            ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-            : "border-gray-200 focus:border-primary"
+    const inputClassName = `w-full px-4 py-3 border rounded-xl transition-smooth placeholder:text-gray-500 ${error
+        ? "border-red-300 focus:border-red-500"
+        : "border-gray-200 focus:border-primary"
         } ${className}`;
 
     return (

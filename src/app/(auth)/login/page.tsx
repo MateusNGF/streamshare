@@ -69,7 +69,7 @@ export default function AuthPage() {
                     {/* Forms */}
                     <div className="relative">
                         <div
-                            className={`transition-all duration-500 ease-in-out ${activeTab === "login"
+                            className={`transition-all duration-500 ease-smooth ${activeTab === "login"
                                 ? "opacity-100 translate-x-0 relative z-10"
                                 : "opacity-0 -translate-x-10 absolute inset-0 pointer-events-none"
                                 }`}
@@ -77,7 +77,7 @@ export default function AuthPage() {
                             <LoginForm />
                         </div>
                         <div
-                            className={`transition-all duration-500 ease-in-out ${activeTab === "signup"
+                            className={`transition-all duration-500 ease-smooth ${activeTab === "signup"
                                 ? "opacity-100 translate-x-0 relative z-10"
                                 : "opacity-0 translate-x-10 absolute inset-0 pointer-events-none"
                                 }`}

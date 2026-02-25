@@ -24,7 +24,7 @@ export function Skeleton({
     };
 
     const animationClasses = {
-        pulse: "animate-pulse",
+        pulse: "animate-pulse-subtle",
         wave: "animate-wave",
         none: "",
     };
