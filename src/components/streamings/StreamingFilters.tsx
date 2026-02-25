@@ -21,7 +21,7 @@ export function StreamingFilters({ streamings, filters, onFilterChange, onClear 
         }));
 
     return (
-        <div className="bg-white/70 backdrop-blur-md p-4 rounded-[32px] border border-white/20 shadow-sm mb-8 md:mb-10">
+        <div className="py-6">
             <GenericFilter
                 filters={[
                     {
