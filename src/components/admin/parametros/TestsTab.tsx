@@ -16,8 +16,8 @@ interface TestsTabProps {
             fromEmail: string;
         };
         whatsapp: {
-            accountSid: string;
-            fromNumber: string;
+            accessTokenConfigured: boolean;
+            phoneNumberId: string;
             enabled: string;
         };
     } | null;
@@ -135,8 +135,8 @@ export function TestsTab({ onTestSmtp, onTestWhatsApp, testing, config }: TestsT
                             <MessageSquare size={22} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black tracking-tight leading-none mb-1">WhatsApp (Twilio)</h3>
-                            <p className="text-xs text-muted-foreground font-medium">Gateway Twilio API</p>
+                            <h3 className="text-xl font-black tracking-tight leading-none mb-1">WhatsApp Oficial</h3>
+                            <p className="text-xs text-muted-foreground font-medium">Meta Cloud API</p>
                         </div>
                     </div>
                     {config && (
@@ -162,8 +162,8 @@ export function TestsTab({ onTestSmtp, onTestWhatsApp, testing, config }: TestsT
                                 <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Credenciais API</span>
                             </div>
                             <div className="grid grid-cols-1 gap-2.5">
-                                {renderDisabledInput(<User size={14} />, "Account SID", config.whatsapp.accountSid)}
-                                {renderDisabledInput(<Hash size={14} />, "Número Twilio", config.whatsapp.fromNumber)}
+                                {renderDisabledInput(<User size={14} />, "Access Token", config.whatsapp.accessTokenConfigured ? "********************" : "Não configurado")}
+                                {renderDisabledInput(<Hash size={14} />, "Phone Number ID", config.whatsapp.phoneNumberId)}
                                 <div className="mt-1 flex items-center gap-2 py-2 px-3 bg-[#25D366]/5 rounded-xl border border-[#25D366]/10">
                                     <Activity size={10} className="text-[#25D366]" />
                                     <span className="text-[9px] text-[#128C7E] font-bold">Status: Serviço Operacional</span>

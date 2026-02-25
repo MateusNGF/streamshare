@@ -20,62 +20,62 @@ function normalizePhoneNumber(phone: string): string {
     return `+${normalized}`;
 }
 
-// Twilio Provider
-class TwilioProvider {
+// Meta WhatsApp Cloud API Provider
+class MetaWhatsAppProvider {
     constructor(
-        private accountSid: string,
-        private authToken: string,
-        private fromNumber: string
+        private accessToken: string,
+        private phoneNumberId: string,
+        private apiVersion: string = 'v21.0'
     ) { }
 
     async sendMessage(to: string, message: string): Promise<{ success: boolean; providerId?: string; error?: string }> {
         try {
-            // Normalize phone numbers to E.164 format
-            const normalizedTo = normalizePhoneNumber(to);
+            // Normalize phone numbers to E.164 format and remove '+' for Meta API
+            const normalizedTo = normalizePhoneNumber(to).replace('+', '');
 
-            // Ensure proper WhatsApp format for both numbers
-            const fromWhatsApp = this.fromNumber.startsWith('whatsapp:')
-                ? this.fromNumber
-                : `whatsapp:${this.fromNumber}`;
+            // The Meta Cloud API uses /messages endpoint
+            const url = `https://graph.facebook.com/${this.apiVersion}/${this.phoneNumberId}/messages`;
 
-            const toWhatsApp = normalizedTo.startsWith('whatsapp:')
-                ? normalizedTo
-                : `whatsapp:${normalizedTo}`;
-
-            const response = await fetch(
-                `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Messages.json`,
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Basic ${Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64")}`,
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams({
-                        From: fromWhatsApp,
-                        To: toWhatsApp,
-                        Body: message,
-                    }),
+            const payload = {
+                messaging_product: "whatsapp",
+                recipient_type: "individual",
+                to: normalizedTo,
+                type: "text",
+                text: {
+                    preview_url: false,
+                    body: message
                 }
-            );
+            };
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${this.accessToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
 
             const data = await response.json();
 
             if (!response.ok) {
+                console.error("Meta API Error Details:", data);
                 return {
                     success: false,
-                    error: data.message || "Erro ao enviar mensagem"
+                    error: data.error?.message || "Erro ao enviar mensagem pela API Oficial"
                 };
             }
 
             return {
                 success: true,
-                providerId: data.sid
+                // Meta API returns messages array with the message ID
+                providerId: data.messages && data.messages.length > 0 ? data.messages[0].id : undefined
             };
         } catch (error) {
-            console.error("Twilio sendMessage Error:", error);
+            console.error("Meta sendMessage Error:", error);
             return {
                 success: false,
-                error: "Falha ao enviar mensagem pelo provedor."
+                error: "Falha ao comunicar com a API do Meta."
             };
         }
     }
@@ -107,12 +107,12 @@ export async function sendWhatsAppNotification(
 
     // 1. Buscar parâmetros globais do sistema de variáveis de ambiente
     const globalEnabled = process.env.WHATSAPP_ENABLED === "true";
-    const accountSid = process.env.WHATSAPP_ACCOUNT_SID;
-    const authToken = process.env.WHATSAPP_AUTH_TOKEN;
-    const fromNumber = process.env.WHATSAPP_PHONE_NUMBER;
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
 
     // Se a integração global estiver desativada ou faltar credenciais, aborta
-    if (!globalEnabled || !accountSid || !authToken || !fromNumber) {
+    if (!globalEnabled || !accessToken || !phoneNumberId) {
         return { success: false, reason: "system_not_configured" };
     }
 
@@ -153,10 +153,10 @@ export async function sendWhatsAppNotification(
 
     // 5. Enviar mensagem usando as credenciais globais
     try {
-        const provider = new TwilioProvider(
-            accountSid,
-            authToken,
-            fromNumber
+        const provider = new MetaWhatsAppProvider(
+            accessToken,
+            phoneNumberId,
+            apiVersion
         );
         const result = await provider.sendMessage(participante.whatsappNumero, mensagem);
 

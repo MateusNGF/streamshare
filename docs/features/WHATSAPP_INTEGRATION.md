@@ -18,12 +18,12 @@
 
 O sistema de integração WhatsApp permite o envio de notificações automáticas e manuais para participantes através de dois mecanismos:
 
-1. **Envio Automático (Twilio API)** - Quando configurado, envia mensagens automaticamente via Twilio
+1. **Envio Automático (Meta Cloud API)** - Quando configurado, envia mensagens automaticamente via Meta (WhatsApp Business API Oficial)
 2. **Envio Manual (wa.me)** - Quando não configurado, gera links wa.me para envio manual
 
 ### Características Principais
 
-- ✅ **Dual Mode**: Automático via Twilio ou manual via wa.me
+- ✅ **Dual Mode**: Automático via Meta Cloud API ou manual via wa.me
 - ✅ **Anti-Spam**: Limita envios a 1 notificação por participante a cada 24h
 - ✅ **Cron Jobs**: Notificações automáticas diárias para cobranças vencendo/atrasadas
 - ✅ **Rastreamento Completo**: Todos os envios registrados em `WhatsAppLog`
@@ -55,7 +55,7 @@ graph TB
     end
     
     subgraph External
-        Twilio[Twilio API]
+        MetaAPI[Meta WhatsApp Cloud API]
         WhatsAppWeb[WhatsApp Web/App]
     end
     
@@ -93,7 +93,7 @@ graph TB
 |------------|------------|
 | Backend | Next.js Server Actions |
 | Database | Prisma + PostgreSQL |
-| WhatsApp API | Twilio (opcional) |
+| WhatsApp API | Meta WhatsApp Cloud API (Graph API) |
 | Fallback | wa.me links |
 | Cron Jobs | node-cron |
 | Encryption | crypto (AES-256-CBC) |
@@ -244,9 +244,8 @@ sequenceDiagram
     Note over SA: Baseado no status da cobrança
     
     SA->>WS: sendWhatsAppNotification()
-    WS->>WS: Descriptografar credenciais
-    WS->>T: POST /Messages.json
-    T-->>WS: {sid: "SM...", status: "queued"}
+    WS->>T: POST /messages
+    T-->>WS: {messages: [{id: "wamid..."}]}
     
     WS->>DB: Criar WhatsAppLog (enviado: true)
     WS-->>SA: {success: true}
@@ -258,7 +257,7 @@ sequenceDiagram
 
 **Métricas de Sucesso:**
 - `WhatsAppLog.enviado = true`
-- `WhatsAppLog.providerId` contém Twilio SID
+- `WhatsAppLog.providerId` contém o ID gerado pela Meta (wamid...)
 - `WhatsAppLog.erro = null`
 
 ---
@@ -512,57 +511,46 @@ switch (cobranca.status) {
 
 ---
 
-## Configuração Twilio
+## Configuração Meta WhatsApp Cloud API
 
-### 1. Criar Conta Twilio
+### 1. Criar Aplicativo na Meta
 
-1. Acesse [twilio.com](https://www.twilio.com)
-2. Crie uma conta ou faça login
-3. Navegue para **Console Dashboard**
+1. Acesse o [Meta for Developers](https://developers.facebook.com/)
+2. Crie um novo aplicativo do tipo **Business**
+3. Adicione o produto **WhatsApp** ao aplicativo
 
-### 2. Obter Credenciais
+### 2. Configurar Número
 
-No Dashboard, copie:
-- **Account SID** (ex: `AC1234567890abcdef...`)
-- **Auth Token** (ex: `abc123def456...`)
+1. Nas configurações do produto WhatsApp, clique em "API Setup / Configuração da API"
+2. Você pode usar o número de teste fornecido pela Meta (Phone Number ID / ID do número de telefone)
+3. Para produção, adicione um novo número na Business Manager e faça as devidas verificações
 
-### 3. Configurar WhatsApp Sandbox (Desenvolvimento)
+### 3. Obter Credenciais
 
-1. Navegue para **Messaging → Try it out → Send a WhatsApp message**
-2. Siga as instruções para conectar seu WhatsApp pessoal
-3. Envie a mensagem de ativação para o número do Twilio
-4. Copie o **From number** (ex: `whatsapp:+14155238886`)
+Copie os seguintes dados do painel do aplicativo (WhatsApp > API Setup):
+- **Access Token** (Recomenda-se gerar um token permanente através de um usuário de sistema no Business Manager)
+- **Phone Number ID** (ID do número de telefone)
 
-### 4. Configurar WhatsApp Business API (Produção)
+### 4. Configurar no StreamShare / Arquivo .env
 
-Para produção, você precisa:
-
-1. **WhatsApp Business Account** aprovado
-2. **Facebook Business Manager** configurado
-3. **Número de telefone aprovado** pelo WhatsApp
-
-> [!WARNING]
-> O WhatsApp Business API tem processo de aprovação e custos associados. Use o Sandbox para desenvolvimento.
-
-### 5. Configurar no StreamShare
-
-1. Acesse **Configurações → Integrações → WhatsApp**
-2. Preencha:
-   - **Provider**: Twilio (padrão)
-   - **Account SID**: Cole o Account SID
-   - **Auth Token**: Cole o Auth Token
-   - **From Number**: Cole o número (com ou sem `whatsapp:`)
-3. Configure os tipos de notificações
-4. Ative a integração
-
-### 6. Testar Configuração
+Para integrar com sucesso o StreamShare à API da Meta, modifique seu arquivo `.env`:
 
 ```bash
-# Via Server Action (em desenvolvimento)
-await testWhatsAppConfig(contaId);
+WHATSAPP_ENABLED="true"
+WHATSAPP_ACCESS_TOKEN="[EAAXXXX...]"
+WHATSAPP_PHONE_NUMBER_ID="[123456...]"
+WHATSAPP_API_VERSION="v21.0"
+```
 
-# Ou manualmente na página de Cobranças
-# Click em "Enviar WhatsApp" para uma cobrança
+> [!IMPORTANT]
+> A API oficial exige templates aprovados para a sua conta para realizar envios iniciados pela empresa (outbound) em produção. O StreamShare fará envios do tipo `text` que funcionam apenas na janela de 24h ou durante testes/sandbox. Pode ser necessário revisar a integração com templates do Meta, substituindo mensagens puras de texto pelos objetos do tipo "template".
+
+### 5. Testar Configuração
+
+Você pode acionar o teste diretamente do painel Parameters -> Diagnostics.
+
+```bash
+# Na UI de configuração (Aba Diagnósticos) clique em "Testar Conexão WhatsApp"
 ```
 
 ---

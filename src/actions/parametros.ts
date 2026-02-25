@@ -243,10 +243,11 @@ export async function testWhatsAppConnection() {
         const isAdmin = await validateAdmin();
         if (!isAdmin.success) return isAdmin;
 
-        const accountSid = process.env.WHATSAPP_ACCOUNT_SID;
-        const authToken = process.env.WHATSAPP_AUTH_TOKEN;
+        const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+        const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const apiVersion = process.env.WHATSAPP_API_VERSION || 'v21.0';
 
-        if (!accountSid || !authToken) {
+        if (!accessToken || !phoneNumberId) {
             return {
                 success: false,
                 error: "Configurações WhatsApp incompletas no ambiente (.env)",
@@ -254,25 +255,20 @@ export async function testWhatsAppConnection() {
             };
         }
 
-        const decryptedToken = safeDecrypt(authToken) || authToken;
+        const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}`;
 
-        const response = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
-            {
-                headers: {
-                    Authorization: `Basic ${Buffer.from(
-                        `${accountSid}:${decryptedToken}`
-                    ).toString("base64")}`,
-                },
-            }
-        );
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
 
         if (response.ok) {
-            return { success: true, data: { message: "Conexão WhatsApp/Twilio estabelecida com sucesso usando .env!" } };
+            return { success: true, data: { message: "Conexão com a API Oficial do WhatsApp estabelecida com sucesso!" } };
         } else {
             return {
                 success: false,
-                error: "Credenciais de ambiente inválidas",
+                error: "Credenciais da API do WhatsApp inválidas",
                 code: "WHATSAPP_ERROR",
                 metadata: { status: response.status }
             };
@@ -304,8 +300,8 @@ export async function getConfigParams() {
                     fromEmail: process.env.SMTP_FROM_EMAIL || "Não configurado",
                 },
                 whatsapp: {
-                    accountSid: process.env.WHATSAPP_ACCOUNT_SID || "Não configurado",
-                    fromNumber: process.env.WHATSAPP_PHONE_NUMBER || "Não configurado",
+                    accessTokenConfigured: !!process.env.WHATSAPP_ACCESS_TOKEN,
+                    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || "Não configurado",
                     enabled: process.env.WHATSAPP_ENABLED || "false",
                 }
             }
