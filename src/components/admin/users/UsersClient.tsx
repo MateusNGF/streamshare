@@ -83,12 +83,14 @@ export function UsersClient({ users, metadata }: UsersClientProps) {
                 description="Visualize e gerencie as permissões dos usuários do sistema"
             />
 
-            <GenericFilter
-                filters={filters}
-                values={{ q: searchParams.get("q")?.toString() || "" }}
-                onChange={handleFilterChange}
-                className="w-full mb-1"
-            />
+            <div className="py-6">
+                <GenericFilter
+                    filters={filters}
+                    values={{ q: searchParams.get("q")?.toString() || "" }}
+                    onChange={handleFilterChange}
+                    className="w-full"
+                />
+            </div>
 
             <SectionHeader
                 title="Lista de Usuários"

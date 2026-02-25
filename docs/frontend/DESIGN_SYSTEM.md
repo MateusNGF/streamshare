@@ -222,6 +222,34 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ---
 
+### 7. Sessão de Filtros (Filter Session)
+
+**Características**:
+- **Wrapper**: `<div className="py-6">`
+- **Componente**: `GenericFilter`
+- **Posicionamento**: Entre os KPIs e o cabeçalho da listagem (`SectionHeader`).
+- **Espaçamento Inferior**: O `mt-2` ou `mt-4` na `div` da listagem garante o respiro adequado.
+
+**Exemplo de Estrutura**:
+```tsx
+<KPIGrid>...</KPIGrid>
+
+<div className="py-6">
+  <GenericFilter 
+    filters={...}
+    values={...}
+    onChange={...}
+  />
+</div>
+
+<div className="space-y-4 relative mt-2">
+  <SectionHeader ... />
+  ...
+</div>
+```
+
+---
+
 ## 🎭 Padrões de Layout
 
 ### Dashboard Page

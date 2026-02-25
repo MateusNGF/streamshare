@@ -185,7 +185,7 @@ export default function AssinaturasClient({
                 </KPIGridItem>
             </KPIGrid>
 
-            <div className="space-y-6 mt-4">
+            <div className="py-6">
                 <GenericFilter
                     filters={filterConfig}
                     values={{
@@ -199,55 +199,55 @@ export default function AssinaturasClient({
                     onChange={handleFilterChange}
                     onClear={handleClearFilters}
                 />
+            </div>
 
-                <div className="space-y-4">
-                    <SectionHeader
-                        title="Listagem de Assinaturas"
-                        className="mb-0"
-                        rightElement={
-                            <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
-                        }
+            <div className="space-y-4">
+                <SectionHeader
+                    title="Listagem de Assinaturas"
+                    className="mb-0"
+                    rightElement={
+                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                    }
+                />
+                {!FeatureGuards.isFeatureEnabled(plano, "automatic_billing").enabled && (
+                    <UpgradeBanner
+                        variant="glass"
+                        size="normal"
+                        title="Gestão de Assinaturas Inteligente"
+                        description="Automatize o controle de períodos e receba alertas de renovação para nunca perder o prazo."
+                        className="mb-8"
                     />
-                    {!FeatureGuards.isFeatureEnabled(plano, "automatic_billing").enabled && (
-                        <UpgradeBanner
-                            variant="glass"
-                            size="normal"
-                            title="Gestão de Assinaturas Inteligente"
-                            description="Automatize o controle de períodos e receba alertas de renovação para nunca perder o prazo."
-                            className="mb-8"
-                        />
-                    )}
-                    {viewMode === "grid" ? (
-                        <div className="grid grid-cols-1 gap-4">
-                            {initialSubscriptions.map((sub) => (
-                                <AssinaturaCard
-                                    key={sub.id}
-                                    sub={sub}
-                                    onViewDetails={() => {
-                                        setSelectedAssinatura(sub);
-                                        setDetailsModalOpen(true);
-                                    }}
-                                    onCancel={() => {
-                                        setSelectedAssinatura(sub);
-                                        setCancelModalOpen(true);
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <AssinaturasTable
-                            subscriptions={initialSubscriptions}
-                            onViewDetails={(sub) => {
-                                setSelectedAssinatura(sub);
-                                setDetailsModalOpen(true);
-                            }}
-                            onCancel={(sub) => {
-                                setSelectedAssinatura(sub);
-                                setCancelModalOpen(true);
-                            }}
-                        />
-                    )}
-                </div>
+                )}
+                {viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 gap-4">
+                        {initialSubscriptions.map((sub) => (
+                            <AssinaturaCard
+                                key={sub.id}
+                                sub={sub}
+                                onViewDetails={() => {
+                                    setSelectedAssinatura(sub);
+                                    setDetailsModalOpen(true);
+                                }}
+                                onCancel={() => {
+                                    setSelectedAssinatura(sub);
+                                    setCancelModalOpen(true);
+                                }}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <AssinaturasTable
+                        subscriptions={initialSubscriptions}
+                        onViewDetails={(sub) => {
+                            setSelectedAssinatura(sub);
+                            setDetailsModalOpen(true);
+                        }}
+                        onCancel={(sub) => {
+                            setSelectedAssinatura(sub);
+                            setCancelModalOpen(true);
+                        }}
+                    />
+                )}
             </div>
 
             <AssinaturasModals
