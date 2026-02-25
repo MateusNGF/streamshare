@@ -105,26 +105,11 @@ export async function sendWhatsAppNotification(
         };
     }
 
-    // 1. Buscar parâmetros globais do sistema
-    const parametros = await prisma.parametro.findMany({
-        where: {
-            chave: {
-                in: [
-                    "whatsapp.enabled",
-                    "whatsapp.account_sid",
-                    "whatsapp.auth_token",
-                    "whatsapp.phone_number"
-                ]
-            }
-        }
-    });
-
-    const getParam = (key: string) => parametros.find(p => p.chave === key)?.valor;
-
-    const globalEnabled = getParam("whatsapp.enabled") === "true";
-    const accountSid = safeDecrypt(getParam("whatsapp.account_sid"));
-    const authToken = safeDecrypt(getParam("whatsapp.auth_token"));
-    const fromNumber = getParam("whatsapp.phone_number");
+    // 1. Buscar parâmetros globais do sistema de variáveis de ambiente
+    const globalEnabled = process.env.WHATSAPP_ENABLED === "true";
+    const accountSid = process.env.WHATSAPP_ACCOUNT_SID;
+    const authToken = process.env.WHATSAPP_AUTH_TOKEN;
+    const fromNumber = process.env.WHATSAPP_PHONE_NUMBER;
 
     // Se a integração global estiver desativada ou faltar credenciais, aborta
     if (!globalEnabled || !accountSid || !authToken || !fromNumber) {

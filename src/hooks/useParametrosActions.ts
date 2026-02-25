@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { upsertParametros, testSmtpConnection, testWhatsAppConnection } from "@/actions/parametros";
 
-export type ConfigSection = "smtp" | "whatsapp" | "general";
+export type ConfigSection = "general" | "tests";
 
 interface Parametro {
     chave: string;
@@ -12,7 +12,7 @@ interface Parametro {
 
 export function useParametrosActions(initialData: any[]) {
     const toast = useToast();
-    const [activeSection, setActiveSection] = useState<ConfigSection>("smtp");
+    const [activeSection, setActiveSection] = useState<ConfigSection>("general");
     const [loading, setLoading] = useState(false);
     const [testing, setTesting] = useState(false);
     const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
@@ -20,24 +20,6 @@ export function useParametrosActions(initialData: any[]) {
     const getParam = (key: string): string => {
         return initialData.find(p => p.chave === key)?.valor || "";
     };
-
-    // Configuration States
-    const [smtpConfig, setSmtpConfig] = useState({
-        host: getParam("smtp.host"),
-        port: getParam("smtp.port"),
-        user: getParam("smtp.user"),
-        password: getParam("smtp.password"),
-        fromEmail: getParam("smtp.from_email"),
-        fromName: getParam("smtp.from_name"),
-        useTls: getParam("smtp.use_tls") === "true",
-    });
-
-    const [whatsappConfig, setWhatsappConfig] = useState({
-        accountSid: getParam("whatsapp.account_sid"),
-        authToken: getParam("whatsapp.auth_token"),
-        phoneNumber: getParam("whatsapp.phone_number"),
-        enabled: getParam("whatsapp.enabled") === "true",
-    });
 
     const [generalConfig, setGeneralConfig] = useState({
         appName: getParam("app.name"),
@@ -54,27 +36,6 @@ export function useParametrosActions(initialData: any[]) {
         setLoading(true);
         try {
             const parametros: Parametro[] = [];
-
-            if (activeSection === "smtp") {
-                parametros.push(
-                    { chave: "smtp.host", valor: smtpConfig.host, tipo: "string" },
-                    { chave: "smtp.port", valor: smtpConfig.port, tipo: "number" },
-                    { chave: "smtp.user", valor: smtpConfig.user, tipo: "string" },
-                    { chave: "smtp.password", valor: smtpConfig.password, tipo: "string" },
-                    { chave: "smtp.from_email", valor: smtpConfig.fromEmail, tipo: "string" },
-                    { chave: "smtp.from_name", valor: smtpConfig.fromName, tipo: "string" },
-                    { chave: "smtp.use_tls", valor: smtpConfig.useTls.toString(), tipo: "boolean" }
-                );
-            }
-
-            if (activeSection === "whatsapp") {
-                parametros.push(
-                    { chave: "whatsapp.account_sid", valor: whatsappConfig.accountSid, tipo: "string" },
-                    { chave: "whatsapp.auth_token", valor: whatsappConfig.authToken, tipo: "string" },
-                    { chave: "whatsapp.phone_number", valor: whatsappConfig.phoneNumber, tipo: "string" },
-                    { chave: "whatsapp.enabled", valor: whatsappConfig.enabled.toString(), tipo: "boolean" }
-                );
-            }
 
             if (activeSection === "general") {
                 parametros.push(
@@ -101,20 +62,12 @@ export function useParametrosActions(initialData: any[]) {
     const handleTestSmtp = async () => {
         setTesting(true);
         try {
-            const result = await testSmtpConnection({
-                host: smtpConfig.host,
-                port: parseInt(smtpConfig.port) || 587,
-                user: smtpConfig.user,
-                password: smtpConfig.password,
-                fromEmail: smtpConfig.fromEmail,
-                fromName: smtpConfig.fromName,
-                useTls: smtpConfig.useTls,
-            });
-
+            const result = await testSmtpConnection();
             if (result.success) {
-                toast.success(result.data?.message || "Conexão SMTP testada com sucesso!");
+                const message = (result as any).data?.message || "Conexão SMTP testada com sucesso!";
+                toast.success(message);
             } else {
-                toast.error(result.error || "Erro ao testar conexão SMTP");
+                toast.error(result.error || "Erro ao testar SMTP");
             }
         } catch (error) {
             toast.error("Erro ao testar conexão SMTP");
@@ -126,16 +79,12 @@ export function useParametrosActions(initialData: any[]) {
     const handleTestWhatsApp = async () => {
         setTesting(true);
         try {
-            const result = await testWhatsAppConnection({
-                accountSid: whatsappConfig.accountSid,
-                authToken: whatsappConfig.authToken,
-                phoneNumber: whatsappConfig.phoneNumber,
-            });
-
+            const result = await testWhatsAppConnection();
             if (result.success) {
-                toast.success(result.data?.message || "Conexão WhatsApp testada com sucesso!");
+                const message = (result as any).data?.message || "Conexão WhatsApp testada com sucesso!";
+                toast.success(message);
             } else {
-                toast.error(result.error || "Erro ao testar conexão WhatsApp");
+                toast.error(result.error || "Erro ao testar WhatsApp");
             }
         } catch (error) {
             toast.error("Erro ao testar conexão WhatsApp");
@@ -150,10 +99,6 @@ export function useParametrosActions(initialData: any[]) {
         loading,
         testing,
         showPasswords,
-        smtpConfig,
-        setSmtpConfig,
-        whatsappConfig,
-        setWhatsappConfig,
         generalConfig,
         setGeneralConfig,
         handlers: {

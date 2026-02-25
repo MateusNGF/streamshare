@@ -33,6 +33,10 @@ export async function createTransporter(): Promise<nodemailer.Transporter> {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
+            tls: {
+                // Permite certificados auto-assinados caso o servidor SMTP os utilize
+                rejectUnauthorized: false
+            }
         });
 
         console.log("📧 SMTP configurado:", process.env.SMTP_HOST);

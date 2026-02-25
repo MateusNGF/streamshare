@@ -22,21 +22,6 @@ interface ParametroInput {
     descricao?: string;
 }
 
-interface SmtpConfig {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    fromEmail: string;
-    fromName: string;
-    useTls: boolean;
-}
-
-interface WhatsAppTestConfig {
-    accountSid: string;
-    authToken: string;
-    phoneNumber: string;
-}
 
 async function validateAdmin() {
     const session = await getCurrentUser();
@@ -204,53 +189,90 @@ export async function deleteParametro(chave: string) {
     }
 }
 
-export async function testSmtpConnection(config: SmtpConfig) {
+export async function testSmtpConnection() {
     try {
+        const isAdmin = await validateAdmin();
+        if (!isAdmin.success) return isAdmin;
+
         const nodemailer = await import("nodemailer");
 
+        const host = process.env.SMTP_HOST;
+        const port = parseInt(process.env.SMTP_PORT || "587");
+        const secure = process.env.SMTP_SECURE === "true";
+        const user = process.env.SMTP_USER;
+        const pass = process.env.SMTP_PASS;
+
+        if (!host || !user || !pass) {
+            return {
+                success: false,
+                error: "Configurações SMTP incompletas no ambiente (.env)",
+                code: "CONFIG_MISSING"
+            };
+        }
+
         const transporter = nodemailer.createTransport({
-            host: config.host,
-            port: config.port,
-            secure: config.useTls,
+            host,
+            port,
+            secure,
             auth: {
-                user: safeDecrypt(config.user) || config.user,
-                pass: safeDecrypt(config.password) || config.password,
+                user: safeDecrypt(user) || user,
+                pass: safeDecrypt(pass) || pass,
             },
+            tls: {
+                // Permite certificados auto-assinados (comum em ambientes de teste/desenvolvimento)
+                rejectUnauthorized: false
+            }
         });
 
         await transporter.verify();
 
-        return { success: true, data: { message: "Conexão SMTP estabelecida com sucesso!" } };
+        return { success: true, data: { message: "Conexão SMTP estabelecida com sucesso usando .env!" } };
     } catch (error: any) {
         console.error("SMTP Test Error:", error);
         return {
             success: false,
-            error: "Falha na conexão SMTP. Verifique as configurações e tente novamente.",
+            error: "Falha na conexão SMTP (variáveis de ambiente).",
             code: "SMTP_ERROR",
             metadata: { details: error.message }
         };
     }
 }
 
-export async function testWhatsAppConnection(config: WhatsAppTestConfig) {
+export async function testWhatsAppConnection() {
     try {
+        const isAdmin = await validateAdmin();
+        if (!isAdmin.success) return isAdmin;
+
+        const accountSid = process.env.WHATSAPP_ACCOUNT_SID;
+        const authToken = process.env.WHATSAPP_AUTH_TOKEN;
+
+        if (!accountSid || !authToken) {
+            return {
+                success: false,
+                error: "Configurações WhatsApp incompletas no ambiente (.env)",
+                code: "CONFIG_MISSING"
+            };
+        }
+
+        const decryptedToken = safeDecrypt(authToken) || authToken;
+
         const response = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${config.accountSid}.json`,
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
             {
                 headers: {
                     Authorization: `Basic ${Buffer.from(
-                        `${config.accountSid}:${safeDecrypt(config.authToken) || config.authToken}`
+                        `${accountSid}:${decryptedToken}`
                     ).toString("base64")}`,
                 },
             }
         );
 
         if (response.ok) {
-            return { success: true, data: { message: "Conexão WhatsApp/Twilio estabelecida com sucesso!" } };
+            return { success: true, data: { message: "Conexão WhatsApp/Twilio estabelecida com sucesso usando .env!" } };
         } else {
             return {
                 success: false,
-                error: "Credenciais inválidas",
+                error: "Credenciais de ambiente inválidas",
                 code: "WHATSAPP_ERROR",
                 metadata: { status: response.status }
             };
@@ -259,9 +281,10 @@ export async function testWhatsAppConnection(config: WhatsAppTestConfig) {
         console.error("WhatsApp Test Error:", error);
         return {
             success: false,
-            error: "Falha na conexão WhatsApp. Verifique as credenciais e tente novamente.",
+            error: "Falha na conexão WhatsApp (variáveis de ambiente).",
             code: "WHATSAPP_ERROR",
             metadata: { details: error.message }
         };
     }
 }
+
