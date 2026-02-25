@@ -1,6 +1,7 @@
 import { createTransporter, logPreviewUrl } from "./transporter";
 import { getPasswordResetTemplate } from "./templates/password-reset";
 import { getWelcomeTemplate } from "./templates/welcome";
+import { getTestTemplate } from "./templates/test";
 
 /**
  * Email Service
@@ -85,7 +86,43 @@ export async function sendWelcomeEmail(
 
         return { success: true };
     } catch (error: any) {
-        console.error("❌ Erro ao enviar email:", error);
+        console.error("❌ Erro ao enviar email de boas-vindas:", error);
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Envia um email de teste (Diagnóstico)
+ * @param email Email do destinatário
+ */
+export async function sendTestEmail(
+    email: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+        const transporter = await createTransporter();
+        const now = new Date().toLocaleString("pt-BR");
+
+        const html = getTestTemplate({
+            timestamp: now,
+            host: process.env.SMTP_HOST || "Ethereal/Stream",
+            replyTo: EMAIL_CONFIG.replyTo,
+        });
+
+        const info = await transporter.sendMail({
+            from: EMAIL_CONFIG.from,
+            to: email,
+            subject: "Teste de Conexão SMTP - StreamShare",
+            html,
+        });
+
+        console.log("✅ Email de teste enviado:", info.messageId);
+        logPreviewUrl(info);
+
+        return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+        console.error("❌ Erro ao enviar email de teste:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+

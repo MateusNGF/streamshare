@@ -194,49 +194,29 @@ export async function testSmtpConnection() {
         const isAdmin = await validateAdmin();
         if (!isAdmin.success) return isAdmin;
 
-        const nodemailer = await import("nodemailer");
-
-        const host = process.env.SMTP_HOST;
-        const port = parseInt(process.env.SMTP_PORT || "587");
-        const secure = process.env.SMTP_SECURE === "true";
-        const user = process.env.SMTP_USER;
-        const pass = process.env.SMTP_PASS;
-
-        if (!host || !user || !pass) {
-            return {
-                success: false,
-                error: "Configurações SMTP incompletas no ambiente (.env)",
-                code: "CONFIG_MISSING"
-            };
-        }
-
-        const transporter = nodemailer.createTransport({
-            host,
-            port,
-            secure,
-            auth: {
-                user: safeDecrypt(user) || user,
-                pass: safeDecrypt(pass) || pass,
-            },
-            tls: {
-                // Permite certificados auto-assinados (comum em ambientes de teste/desenvolvimento)
-                rejectUnauthorized: false
-            }
-        });
+        const { createTransporter } = await import("@/lib/email/transporter");
+        const transporter = await createTransporter();
 
         await transporter.verify();
 
-        return { success: true, data: { message: "Conexão SMTP estabelecida com sucesso usando .env!" } };
+        return {
+            success: true,
+            data: {
+                message: "Conexão SMTP estabelecida com sucesso!",
+                details: `Host: ${process.env.SMTP_HOST || "Ethereal"}`
+            }
+        };
     } catch (error: any) {
         console.error("SMTP Test Error:", error);
         return {
             success: false,
-            error: "Falha na conexão SMTP (variáveis de ambiente).",
+            error: "Falha na conexão SMTP (verifique as variáveis de ambiente).",
             code: "SMTP_ERROR",
             metadata: { details: error.message }
         };
     }
 }
+
 
 export async function testWhatsAppConnection() {
     try {
@@ -301,7 +281,7 @@ export async function getConfigParams() {
                     port: process.env.SMTP_PORT || "587",
                     user: process.env.SMTP_USER || "Não configurado",
                     secure: process.env.SMTP_SECURE || "false",
-                    fromEmail: process.env.SMTP_FROM_EMAIL || "Não configurado",
+                    fromEmail: process.env.EMAIL_FROM || "Não configurado",
                 },
                 whatsapp: {
                     accountSid: process.env.WHATSAPP_ACCOUNT_SID || "Não configurado",
