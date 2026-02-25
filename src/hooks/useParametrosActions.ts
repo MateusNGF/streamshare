@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/useToast";
-import { upsertParametros, testSmtpConnection, testWhatsAppConnection } from "@/actions/parametros";
+import { upsertParametros, testSmtpConnection, testWhatsAppConnection, getConfigParams } from "@/actions/parametros";
 
 export type ConfigSection = "general" | "tests";
 
@@ -16,6 +16,7 @@ export function useParametrosActions(initialData: any[]) {
     const [loading, setLoading] = useState(false);
     const [testing, setTesting] = useState(false);
     const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+    const [configParams, setConfigParams] = useState<any>(null);
 
     const getParam = (key: string): string => {
         return initialData.find(p => p.chave === key)?.valor || "";
@@ -27,6 +28,16 @@ export function useParametrosActions(initialData: any[]) {
         timezone: getParam("app.timezone"),
         currency: getParam("app.currency"),
     });
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            const result = await getConfigParams();
+            if (result.success && 'data' in result) {
+                setConfigParams(result.data);
+            }
+        };
+        fetchConfig();
+    }, []);
 
     const togglePasswordVisibility = (field: string) => {
         setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
@@ -101,6 +112,7 @@ export function useParametrosActions(initialData: any[]) {
         showPasswords,
         generalConfig,
         setGeneralConfig,
+        configParams,
         handlers: {
             handleSave,
             handleTestSmtp,

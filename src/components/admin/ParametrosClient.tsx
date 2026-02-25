@@ -30,6 +30,7 @@ export function ParametrosClient({ initialData, error }: ParametrosClientProps) 
         testing,
         generalConfig,
         setGeneralConfig,
+        configParams,
         handlers
     } = useParametrosActions(initialData);
 
@@ -54,6 +55,7 @@ export function ParametrosClient({ initialData, error }: ParametrosClientProps) 
                     onTestSmtp={handlers.handleTestSmtp}
                     onTestWhatsApp={handlers.handleTestWhatsApp}
                     testing={testing}
+                    config={configParams}
                 />
             )
         }
@@ -61,28 +63,32 @@ export function ParametrosClient({ initialData, error }: ParametrosClientProps) 
 
     return (
         <PageContainer>
-            <PageHeader
-                title="Parâmetros do Sistema"
-                description="Gerencie as configurações e testes de integração"
-                action={
-                    activeSection === "general" && (
-                        <button
-                            onClick={handlers.handleSave}
-                            disabled={loading}
-                            className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation disabled:opacity-50"
-                        >
-                            <Save size={20} />
-                            {loading ? "Salvando..." : "Salvar Configurações"}
-                        </button>
-                    )
-                }
-            />
+            <div className="max-w-[1200px] mx-auto">
+                <PageHeader
+                    title="Parâmetros do Sistema"
+                    description="Gestão de infraestrutura, integrações e diagnósticos de conectividade."
+                    action={
+                        activeSection === "general" && (
+                            <button
+                                onClick={handlers.handleSave}
+                                disabled={loading}
+                                className="group flex items-center gap-3 bg-primary hover:bg-accent text-white px-8 py-3.5 rounded-2xl font-black shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                            >
+                                <Save size={20} className="group-hover:rotate-12 transition-transform" />
+                                {loading ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+                            </button>
+                        )
+                    }
+                />
 
-            <Tabs
-                tabs={tabsData}
-                value={activeSection}
-                onValueChange={(val) => setActiveSection(val as ConfigSection)}
-            />
+                <div className="mt-4">
+                    <Tabs
+                        tabs={tabsData}
+                        value={activeSection}
+                        onValueChange={(val) => setActiveSection(val as ConfigSection)}
+                    />
+                </div>
+            </div>
         </PageContainer>
     );
 }

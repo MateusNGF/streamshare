@@ -288,3 +288,30 @@ export async function testWhatsAppConnection() {
     }
 }
 
+export async function getConfigParams() {
+    try {
+        const isAdmin = await validateAdmin();
+        if (!isAdmin.success) return isAdmin;
+
+        return {
+            success: true,
+            data: {
+                smtp: {
+                    host: process.env.SMTP_HOST || "Não configurado",
+                    port: process.env.SMTP_PORT || "587",
+                    user: process.env.SMTP_USER || "Não configurado",
+                    secure: process.env.SMTP_SECURE || "false",
+                    fromEmail: process.env.SMTP_FROM_EMAIL || "Não configurado",
+                },
+                whatsapp: {
+                    accountSid: process.env.WHATSAPP_ACCOUNT_SID || "Não configurado",
+                    fromNumber: process.env.WHATSAPP_PHONE_NUMBER || "Não configurado",
+                    enabled: process.env.WHATSAPP_ENABLED || "false",
+                }
+            }
+        };
+    } catch (error: any) {
+        console.error("[GET_CONFIG_PARAMS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar parâmetros de ambiente" };
+    }
+}

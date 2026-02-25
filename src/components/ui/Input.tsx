@@ -1,11 +1,12 @@
-import { InputHTMLAttributes, useId } from "react";
+import { InputHTMLAttributes, useId, ReactNode } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
+    icon?: ReactNode;
 }
 
-export function Input({ label, error, className = "", id: providedId, ...props }: InputProps) {
+export function Input({ label, error, icon, className = "", id: providedId, ...props }: InputProps) {
     const generatedId = useId();
     const inputId = providedId || generatedId;
     const errorId = `${inputId}-error`;
@@ -18,16 +19,23 @@ export function Input({ label, error, className = "", id: providedId, ...props }
                     {props.required && <span className="text-red-500 ml-1">*</span>}
                 </label>
             )}
-            <input
-                id={inputId}
-                aria-invalid={error ? "true" : "false"}
-                aria-describedby={error ? errorId : undefined}
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all placeholder:text-gray-500 ${error
-                    ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                    : "border-gray-200 focus:border-primary"
-                    } ${className}`}
-                {...props}
-            />
+            <div className="relative group">
+                {icon && (
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
+                        {icon}
+                    </div>
+                )}
+                <input
+                    id={inputId}
+                    aria-invalid={error ? "true" : "false"}
+                    aria-describedby={error ? errorId : undefined}
+                    className={`w-full ${icon ? "pl-11" : "px-4"} py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all placeholder:text-gray-500 ${error
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        : "border-gray-200 focus:border-primary"
+                        } ${className}`}
+                    {...props}
+                />
+            </div>
             {error && (
                 <p id={errorId} role="alert" className="mt-1 text-sm text-red-600">
                     {error}
