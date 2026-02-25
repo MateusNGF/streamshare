@@ -39,16 +39,20 @@ export async function createTransporter(): Promise<nodemailer.Transporter> {
 
     // 2. Se configuração SMTP existe, usar SMTP real
     if (process.env.SMTP_HOST) {
+        const user = process.env.SMTP_USER;
+        const pass = process.env.SMTP_PASS;
+
+        console.log(`📡 Criando transporter SMTP Real: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT} (Secure: ${process.env.SMTP_SECURE})`);
+
         return nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: parseInt(process.env.SMTP_PORT || "587"),
-            secure: process.env.SMTP_SECURE === "true", // true para 465, false para outros
+            secure: process.env.SMTP_SECURE === "true",
             auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
+                user: user,
+                pass: pass,
             },
             tls: {
-                // Permite certificados auto-assinados caso o servidor SMTP os utilize
                 rejectUnauthorized: false
             }
         });

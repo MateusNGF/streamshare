@@ -9,11 +9,15 @@ import { getTestTemplate } from "./templates/test";
  * Main module for sending emails with clean, modular architecture.
  */
 
-// Configurações de email
-const EMAIL_CONFIG = {
-    from: process.env.EMAIL_FROM || "StreamShare <atendimento@streamshare.com.br>",
-    replyTo: process.env.EMAIL_REPLY_TO || "atendimento@streamshare.com.br",
-};
+/**
+ * Helper para obter configurações de email atualizadas
+ */
+function getEmailConfig() {
+    return {
+        from: process.env.EMAIL_FROM || "StreamShare <atendimento@streamshare.com.br>",
+        replyTo: process.env.EMAIL_REPLY_TO || "atendimento@streamshare.com.br",
+    };
+}
 
 /**
  * Envia email de recuperação de senha
@@ -27,32 +31,32 @@ export async function sendPasswordResetEmail(
     userName?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const config = getEmailConfig();
         const resetUrl = `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/redefinir-senha/${token}`;
         const transporter = await createTransporter();
 
         const html = getPasswordResetTemplate({
             resetUrl,
             userName,
-            replyTo: EMAIL_CONFIG.replyTo,
+            replyTo: config.replyTo,
         });
 
         const info = await transporter.sendMail({
-            from: EMAIL_CONFIG.from,
+            from: config.from,
             to: email,
-            replyTo: EMAIL_CONFIG.replyTo,
+            replyTo: config.replyTo,
             subject: "Redefinir sua senha - StreamShare",
             html,
         });
 
-        console.log("✅ Email enviado:", info.messageId);
-        logPreviewUrl(info);
-
+        console.log("✅ Email de reset enviado:", info.messageId);
         return { success: true };
     } catch (error: any) {
-        console.error("❌ Erro ao enviar email:", error);
+        console.error("❌ Erro ao enviar email de reset:", error);
         return { success: false, error: error.message };
     }
 }
+
 
 /**
  * Envia email de boas-vindas
@@ -64,24 +68,26 @@ export async function sendWelcomeEmail(
     userName: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const config = getEmailConfig();
         const dashboardUrl = `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/dashboard`;
         const transporter = await createTransporter();
 
         const html = getWelcomeTemplate({
             userName,
             dashboardUrl,
-            replyTo: EMAIL_CONFIG.replyTo,
+            replyTo: config.replyTo,
         });
 
         const info = await transporter.sendMail({
-            from: EMAIL_CONFIG.from,
+            from: config.from,
             to: email,
-            replyTo: EMAIL_CONFIG.replyTo,
+            replyTo: config.replyTo,
             subject: "Bem-vindo ao StreamShare! 🎉",
             html,
         });
 
         console.log("✅ Email de boas-vindas enviado:", info.messageId);
+        console.log("📊 Stats - Aceitos:", info.accepted, "Rejeitados:", info.rejected);
         logPreviewUrl(info);
 
         return { success: true };
@@ -91,6 +97,7 @@ export async function sendWelcomeEmail(
     }
 }
 
+
 /**
  * Envia um email de teste (Diagnóstico)
  * @param email Email do destinatário
@@ -99,23 +106,27 @@ export async function sendTestEmail(
     email: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
+        const config = getEmailConfig();
         const transporter = await createTransporter();
         const now = new Date().toLocaleString("pt-BR");
 
         const html = getTestTemplate({
             timestamp: now,
             host: process.env.SMTP_HOST || "Ethereal/Stream",
-            replyTo: EMAIL_CONFIG.replyTo,
+            replyTo: config.replyTo,
         });
 
         const info = await transporter.sendMail({
-            from: EMAIL_CONFIG.from,
+            from: config.from,
             to: email,
             subject: "Teste de Conexão SMTP - StreamShare",
             html,
         });
 
+
         console.log("✅ Email de teste enviado:", info.messageId);
+        console.log("📊 Resposta SMTP:", info.response);
+        console.log("📊 Stats - Aceitos:", info.accepted, "Rejeitados:", info.rejected);
         logPreviewUrl(info);
 
         return { success: true, messageId: info.messageId };

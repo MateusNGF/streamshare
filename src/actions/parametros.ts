@@ -194,18 +194,37 @@ export async function testSmtpConnection() {
         const isAdmin = await validateAdmin();
         if (!isAdmin.success) return isAdmin;
 
-        const { createTransporter } = await import("@/lib/email/transporter");
-        const transporter = await createTransporter();
 
+        const FROM = process.env.SMTP_USER as string;
+
+
+
+        const { createTransporter } = await import("@/lib/email/transporter");
+        const { sendTestEmail } = await import("@/lib/email");
+
+        // 1. Primeiro verifica a conexão (handshake)
+        const transporter = await createTransporter();
         await transporter.verify();
 
-        return {
-            success: true,
-            data: {
-                message: "Conexão SMTP estabelecida com sucesso!",
-                details: `Host: ${process.env.SMTP_HOST || "Ethereal"}`
-            }
-        };
+        // 2. Tenta enviar um email real de teste para o próprio admin
+        const result = await sendTestEmail(FROM);
+
+        if (result.success) {
+            return {
+                success: true,
+                data: {
+                    message: `Conexão SMTP OK e email de teste enviado para ${FROM}!`,
+                    details: `Message ID: ${result.messageId} | Host: ${process.env.SMTP_HOST || "Ethereal"}`
+                }
+            };
+        } else {
+            return {
+                success: false,
+                error: "Conexão SMTP estabelecida, mas falhou ao enviar o e-mail de teste.",
+                code: "SEND_ERROR",
+                metadata: { details: result.error }
+            };
+        }
     } catch (error: any) {
         console.error("SMTP Test Error:", error);
         return {
