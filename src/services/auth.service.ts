@@ -29,7 +29,17 @@ export class AuthService {
             // Let's update provider to allow future logins via this provider.
             user = await prisma.usuario.update({
                 where: { id: user.id },
-                data: { provider: payload.provider }
+                data: {
+                    provider: payload.provider,
+                    // If logging in via Google, we treat the email as verified
+                    emailVerificado: payload.provider === "google" ? true : user.emailVerificado
+                }
+            });
+        } else if (payload.provider === "google" && !user.emailVerificado) {
+            // Already same provider, but ensure verified if it's google
+            user = await prisma.usuario.update({
+                where: { id: user.id },
+                data: { emailVerificado: true }
             });
         }
 
@@ -66,6 +76,7 @@ export class AuthService {
                     nome: payload.nome,
                     email: payload.email,
                     provider: payload.provider,
+                    emailVerificado: payload.provider === "google",
                     isAtivo: true
                 },
             });

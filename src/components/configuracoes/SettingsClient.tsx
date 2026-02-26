@@ -18,6 +18,8 @@ const ProfileTab = dynamic(() => import("./ProfileTab").then(mod => mod.ProfileT
 const AccountTab = dynamic(() => import("./AccountTab").then(mod => mod.AccountTab), {
     loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
 });
+
+const EmailVerificationModal = dynamic(() => import("@/components/auth/EmailVerificationModal").then(mod => mod.EmailVerificationModal));
 const SocialAccountsTab = dynamic(() => import("./SocialAccountsTab").then(mod => mod.SocialAccountsTab), {
     loading: () => <Skeleton className="w-full h-[300px] rounded-[32px]" />
 });
@@ -34,6 +36,9 @@ interface SettingsClientProps {
             nome: string;
             email: string;
             whatsapp?: string | null;
+            whatsappNumero?: string | null;
+            whatsappVerificado?: boolean;
+            emailVerificado: boolean;
             provider?: string;
             hasPassword?: boolean;
         } | null;
@@ -80,7 +85,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [profileData, setProfileData] = useState({
         nome: initialData.user?.nome || "",
         email: initialData.user?.email || "",
-        whatsapp: initialData.user?.whatsapp || "",
+        whatsapp: initialData.user?.whatsappNumero || initialData.user?.whatsapp || "",
     });
 
     const [accountData, setAccountData] = useState({
@@ -96,7 +101,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     // Detectar alterações pendentes
     const hasProfileChanges =
         profileData.nome !== initialData.user?.nome ||
-        profileData.whatsapp !== (initialData.user?.whatsapp || "");
+        profileData.whatsapp !== (initialData.user?.whatsappNumero || initialData.user?.whatsapp || "");
 
     const hasAccountChanges =
         accountData.nome !== (initialData.conta?.nome || "") ||
@@ -229,6 +234,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                     handleRemoteLogout={handleRemoteLogout}
                     loadingRemoteLogout={loadingRemoteLogout}
                     setIsLogoutModalOpen={setIsLogoutModalOpen}
+                    emailVerificado={initialData.user?.emailVerificado || false}
                 />
             )
         },
@@ -295,6 +301,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                 onClose={() => setIsChangePasswordModalOpen(false)}
                 onSuccess={() => showToast("Senha alterada com sucesso!", "success")}
             />
+
         </PageContainer>
     );
 }

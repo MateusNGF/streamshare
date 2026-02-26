@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
-import { generateToken, setAuthCookie } from "@/lib/auth";
-import { sendWelcomeEmail } from "@/lib/email";
+import { SignJWT } from "jose";
+import { sendOTP } from "@/lib/verification-service";
+import { encodedSecret } from "@/lib/jwt";
 
 export async function POST(request: NextRequest) {
     try {
@@ -46,64 +47,37 @@ export async function POST(request: NextRequest) {
         // Hash password
         const hashedPassword = await hashPassword(senha);
 
-        // Create user and account in a transaction
-        const user = await prisma.$transaction(async (tx) => {
-            const newUser = await tx.usuario.create({
-                data: {
-                    nome,
-                    email,
-                    senhaHash: hashedPassword,
-                    termsAcceptedAt: new Date(),
-                    termsVersion: termsVersion || "1.0.0",
-                    privacyAcceptedAt: new Date(),
-                    privacyVersion: privacyVersion || "1.0.0",
-                },
-            });
+        // Generate a temporary token for pending registration
+        // Expires in 15 minutes
+        const pendingToken = await new SignJWT({
+            nome,
+            email,
+            senhaHash: hashedPassword,
+            termsVersion: termsVersion || "1.0.0",
+            privacyVersion: privacyVersion || "1.0.0",
+            type: "PENDING_SIGNUP"
+        })
+            .setProtectedHeader({ alg: "HS256" })
+            .setIssuedAt()
+            .setExpirationTime("15m")
+            .sign(encodedSecret);
 
-            const newConta = await tx.conta.create({
-                data: {
-                    nome: `Conta de ${nome}`,
-                    email: email, // Use user email for account email
-                    plano: "free",
-                },
-            });
 
-            await tx.contaUsuario.create({
-                data: {
-                    contaId: newConta.id,
-                    usuarioId: newUser.id,
-                    nivelAcesso: "owner",
-                },
-            });
-
-            return {
-                id: newUser.id,
-                nome: newUser.nome,
-                email: newUser.email,
-                createdAt: newUser.createdAt,
-                sessionVersion: newUser.sessionVersion,
-            };
-        });
-
-        // Generate JWT token
-        const token = await generateToken({
-            userId: user.id,
-            email: user.email,
-            sessionVersion: user.sessionVersion,
-        });
-
-        // Set cookie
-        await setAuthCookie(token);
-
-        // Envia email de boas-vindas assincronamente (não bloqueia a resposta)
-        sendWelcomeEmail(user.email, user.nome).catch((error) => {
-            console.error("Erro ao enviar email de boas-vindas:", error);
-        });
+        try {
+            // Send OTP purely on the server to guarantee consistency
+            await sendOTP(email, "EMAIL");
+        } catch (otpErr) {
+            console.error("Signup: Erro ao enviar OTP inicial", otpErr);
+            // We ignore OTP error here because user can resend from the modal using pendingToken
+        }
 
         return NextResponse.json({
-            message: "Usuário criado com sucesso",
-            user,
-        }, { status: 201 });
+            message: "Código de verificação enviado",
+            pendingToken,
+            email
+        }, { status: 200 });
+
+
     } catch (error) {
         console.error("Signup error:", error);
         return NextResponse.json(

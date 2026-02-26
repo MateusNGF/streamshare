@@ -135,5 +135,35 @@ export async function sendTestEmail(
         return { success: false, error: error.message };
     }
 }
+/**
+ * Generic transactional email sender.
+ * Used by the OTP verification engine and other internal services.
+ */
+export async function sendEmail(opts: {
+    to: string;
+    subject: string;
+    html: string;
+    text?: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const config = getEmailConfig();
+        const transporter = await createTransporter();
 
+        const info = await transporter.sendMail({
+            from: config.from,
+            to: opts.to,
+            replyTo: config.replyTo,
+            subject: opts.subject,
+            html: opts.html,
+            text: opts.text,
+        });
 
+        console.log(`✅ [sendEmail] Enviado para ${opts.to} | Subject: "${opts.subject}" | ID: ${info.messageId}`);
+        logPreviewUrl(info);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error(`❌ [sendEmail] Falha ao enviar para ${opts.to}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}

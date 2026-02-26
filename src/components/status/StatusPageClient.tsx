@@ -46,6 +46,17 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-26",
+        date: "26/02/2026",
+        changes: [
+            { category: "Segurança", description: "Reformulação do **Fluxo de Cadastro**, implementando validação de identidade obrigatória antes da criação da conta, eliminando o risco de registros com dados não verificados." },
+            { category: "Experiência", description: "Aprimoramento da **Interface de Validação**, com preenchimento automático e navegação inteligente entre campos, otimizando a agilidade durante o acesso." },
+            { category: "Integrações", description: "Expansão da **Verificação Multicanal**, integrando fluxos de validação de identidade via mensagens instantâneas para usuários e parceiros do ecossistema." },
+            { category: "Interface", description: "Atualização das **Comunicações de Identidade**, com novo design focado em acessibilidade e rapidez na interação com dados de acesso." },
+            { category: "Segurança", description: "Implementação de camadas de **Proteção Anti-Abuso** no motor de acesso, com bloqueios inteligentes e limites de tentativas para preservar a integridade das contas." },
+        ],
+    },
+    {
         id: "2026-02-24",
         date: "24/02/2026",
         changes: [

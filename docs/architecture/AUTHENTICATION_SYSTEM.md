@@ -29,6 +29,7 @@ O sistema de autenticação do StreamShare é construído com Next.js 14 (App Ro
 - ✅ Cadastro de novos usuários
 - ✅ Recuperação de senha via email
 - ✅ Alteração de senha para usuários logados
+- ✅ **Verificação de e-mail via OTP** (Email-First Signup)
 - 🔄 OAuth com Google (planejado)
 - 🔄 Autenticação 2FA (planejado)
 
@@ -49,6 +50,7 @@ graph TB
     subgraph "Components"
         LoginForm["LoginForm"]
         SignupForm["SignupForm"]
+        EmailVerifModal["EmailVerificationModal"]
         ForgotForm["ForgotPasswordForm"]
         ResetForm["ResetPasswordForm"]
         ChangeModal["ChangePasswordModal"]
@@ -57,6 +59,7 @@ graph TB
     subgraph "API Routes"
         LoginAPI["/api/auth/login"]
         SignupAPI["/api/auth/signup"]
+        VerifAction["actions/verificacao.ts"]
         LogoutAPI["/api/auth/logout"]
         ForgotAPI["/api/auth/forgot-password"]
         ResetAPI["/api/auth/reset-password"]
@@ -163,50 +166,69 @@ sequenceDiagram
 
 ---
 
-### 2. Cadastro
+### 2. Cadastro (Email-First + OTP)
+
+> [!IMPORTANT]
+> O usuário **não é criado** no banco durante o signup. O registro ocorre somente após a validação do código OTP. Para o fluxo completo, consulte [OTP_VERIFICATION_FLOW.md](file:///w:/projetos/streamsharev2/docs/features/OTP_VERIFICATION_FLOW.md).
 
 ```mermaid
 sequenceDiagram
     actor User
     participant SignupForm
     participant API as /api/auth/signup
+    participant VerifService as verification-service
+    participant Email as Email Service
+    participant Modal as EmailVerificationModal
+    participant Action as verificacao.ts
     participant DB as Database
     participant Auth as lib/auth
-    participant Dashboard
 
     User->>SignupForm: Preenche formulário
-    User->>SignupForm: Nome, Email, Senha
-    User->>SignupForm: Clica "Cadastrar"
-    
-    SignupForm->>SignupForm: Validação client-side
-    SignupForm->>API: POST {nome, email, senha}
-    
+    User->>SignupForm: Clica "Criar minha conta"
+    SignupForm->>API: POST {nome, email, senha, terms...}
+
     API->>DB: Verifica se email existe
     alt Email já cadastrado
-        DB-->>API: Usuario existente
-        API-->>SignupForm: 400 "Email já cadastrado"
-        SignupForm-->>User: Exibe erro
+        DB-->>API: Usuário existente
+        API-->>SignupForm: 409 "Email já cadastrado"
     else Email disponível
-        API->>API: bcrypt.hash(senha, 10)
-        API->>DB: Cria Usuario e Conta
-        DB-->>API: Usuario criado
-        API->>Auth: generateToken({userId, email})
-        Auth-->>API: JWT token
-        API->>API: setAuthCookie(token)
-        API-->>SignupForm: 200 {success: true}
-        SignupForm->>Dashboard: router.push('/dashboard')
-        Dashboard-->>User: Página protegida
+        API->>API: hashPassword(senha)
+        API->>API: SignJWT(dados) → pendingToken (15min)
+        API->>VerifService: sendOTP(email, "EMAIL")
+        VerifService->>DB: Cria VerificacaoCodigo
+        VerifService->>Email: Envia código OTP
+        Email-->>User: 📧 Código de 6 dígitos
+        API-->>SignupForm: 200 { pendingToken, email }
+
+        SignupForm->>Modal: Abre modal (isOpen=true, pendingToken)
+        User->>Modal: Digita código
+        Modal->>Action: verifyEmailOTP(email, codigo, pendingToken)
+
+        alt Código válido
+            Action->>DB: $transaction → usuario + conta + contaUsuario
+            DB-->>Action: Usuário criado (emailVerificado: true)
+            Action->>Auth: generateToken + setAuthCookie
+            Auth-->>Modal: Cookie de sessão definido
+            Modal-->>User: Redireciona /dashboard
+        else Código inválido/expirado
+            Action-->>Modal: { success: false, error }
+            Modal-->>User: Exibe erro
+        end
     end
 ```
 
-**Arquivo**: [SignupForm.tsx](file:///w:/projetos/streamsharev2/apps/web/src/components/auth/SignupForm.tsx)
+**Arquivos:**
+- [signup/route.ts](file:///w:/projetos/streamsharev2/src/app/api/auth/signup/route.ts)
+- [verificacao.ts](file:///w:/projetos/streamsharev2/src/actions/verificacao.ts)
+- [EmailVerificationModal.tsx](file:///w:/projetos/streamsharev2/src/components/auth/EmailVerificationModal.tsx)
+- [useSignupForm.ts](file:///w:/projetos/streamsharev2/src/hooks/useSignupForm.ts)
 
-**Características**:
-- Validação de nome, email e senha
-- Verificação de email duplicado
-- Criação automática de conta (multi-tenant)
-- Login automático após cadastro
-- Termos de uso e política de privacidade
+**Características:**
+- Usuário **não é criado** sem verificação
+- `pendingToken` JWT expira em 15 minutos
+- OTP enviado exclusivamente pelo servidor (sem disparo duplo)
+- Cookie de sessão definido server-side após criação
+- E-mail de boas-vindas assíncrono após verificação
 
 ---
 
@@ -886,7 +908,7 @@ export async function sendPasswordResetEmail(
 - [ ] **2FA**: Autenticação de dois fatores
 - [ ] **Logs de Auditoria**: Rastrear tentativas de login
 - [ ] **Sessões Múltiplas**: Gerenciar dispositivos
-- [ ] **Email Verification**: Verificar email no cadastro
+- [x] ~~**Email Verification**: Verificar email no cadastro~~ → [OTP_VERIFICATION_FLOW.md](file:///w:/projetos/streamsharev2/docs/features/OTP_VERIFICATION_FLOW.md)
 - [ ] **Password Strength Meter**: Indicador visual
 - [ ] **Biometria**: Suporte para WebAuthn
 
@@ -912,6 +934,6 @@ Para contribuir com melhorias no sistema de autenticação:
 
 ---
 
-**Última atualização**: 2026-01-14  
-**Versão**: 1.0.0  
-**Status**: ✅ Frontend Completo | 🔄 Backend em Desenvolvimento
+**Última atualização**: 2026-02-26
+**Versão**: 2.0.0
+**Status**: ✅ Login | ✅ Signup com OTP | ✅ Recuperação de Senha | ✅ Verificação de E-mail

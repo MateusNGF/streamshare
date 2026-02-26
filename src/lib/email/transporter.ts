@@ -1,13 +1,5 @@
 import nodemailer from "nodemailer";
 
-/**
- * Email Transporter
- * 
- * Manages SMTP transporter creation with support for:
- * - Gmail, Outlook, and custom SMTP servers
- * - Ethereal Email for development/testing
- * - Build-time fallback
- */
 
 /**
  * Email Transporter
@@ -86,13 +78,9 @@ export async function createTransporter(): Promise<nodemailer.Transporter> {
         console.error("❌ Erro ao criar conta Ethereal:", error);
     }
 
-    // 4. Fallback final: transporter fake que apenas loga
-    console.warn("⚠️ Fallback: nenhum provedor de email configurado. Usando stream transport.");
-    return nodemailer.createTransport({
-        streamTransport: true,
-        newline: 'unix',
-        buffer: true
-    });
+    // 4. Fallback final: se chegou aqui, não há provedor configurado.
+    // Lançar erro ao invés de usar stream falso.
+    throw new Error("SMTP_HOST não configurado. Adicione no .env para enviar emails.");
 }
 
 /**

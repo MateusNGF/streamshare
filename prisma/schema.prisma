@@ -123,6 +123,21 @@ enum StatusSuporte {
   finalizado
 }
 
+// Omnichannel OTP Verification Engine
+model VerificacaoCodigo {
+  id         Int      @id @default(autoincrement())
+  destino    String // E-mail or +55... phone (E.164)
+  canal      String   @default("EMAIL") // "EMAIL" or "WHATSAPP"
+  codigo     String // 6-digit numeric PIN
+  tentativas Int      @default(0)
+  verificado Boolean  @default(false)
+  expiracao  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([destino, codigo])
+  @@map("verificacao_codigo")
+}
+
 model Suporte {
   id        Int           @id @default(autoincrement())
   nome      String
@@ -172,25 +187,34 @@ model Conta {
 }
 
 model Usuario {
-  id                Int          @id @default(autoincrement())
-  email             String       @unique
-  nome              String
-  whatsapp          String?
-  senhaHash         String?
-  provider          ProviderAuth @default(local)
-  isAtivo           Boolean      @default(true)
-  ultimoLogin       DateTime?
-  sessionVersion    Int          @default(1)
-  lastIp            String?
-  lastUserAgent     String?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
+  id        Int          @id @default(autoincrement())
+  email     String       @unique
+  nome      String
+  senhaHash String?
+  provider  ProviderAuth @default(local)
+  isAtivo   Boolean      @default(true)
+
+  // Contacts & Verification
+  emailVerificado    Boolean @default(false)
+  whatsappNumero     String? // E.164 format
+  whatsappVerificado Boolean @default(false)
+
+  // Security
+  ultimoLogin      DateTime?
+  sessionVersion   Int       @default(1)
+  lastIp           String?
+  lastUserAgent    String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  // Terms
   termsAcceptedAt   DateTime?
   termsVersion      String?
   privacyAcceptedAt DateTime?
   privacyVersion    String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   contas                ContaUsuario[]
   participantes         Participante[]
@@ -305,14 +329,18 @@ model GrupoStreaming {
 }
 
 model Participante {
-  id             Int                @id @default(autoincrement())
-  contaId        Int
-  nome           String
-  whatsappNumero String?
-  cpf            String?
-  email          String?
-  userId         Int?
-  status         StatusParticipante @default(ativo)
+  id      Int                @id @default(autoincrement())
+  contaId Int
+  nome    String
+  cpf     String?
+  userId  Int?
+  status  StatusParticipante @default(ativo)
+
+  // Contacts & Verification
+  email              String?
+  emailVerificado    Boolean @default(false)
+  whatsappNumero     String? // E.164 format
+  whatsappVerificado Boolean @default(false) // opt-in or inherited
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

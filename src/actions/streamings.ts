@@ -18,6 +18,16 @@ export async function getCatalogos() {
         const data = await prisma.streamingCatalogo.findMany({
             where: { isAtivo: true },
             orderBy: { nome: "asc" },
+            select: {
+                id: true,
+                nome: true,
+                categoria: true,
+                isConteudoAdulto: true,
+                siteOficial: true,
+                iconeUrl: true,
+                corPrimaria: true,
+                isAtivo: true,
+            }
         });
         return { success: true, data };
     } catch (error: any) {

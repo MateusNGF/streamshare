@@ -6,6 +6,7 @@ import { SubscriptionAlert } from "@/components/dashboard/SubscriptionAlert";
 import { CurrencyInitializer } from "@/components/CurrencyInitializer";
 import { CURRENT_TERMS_VERSION, CURRENT_PRIVACY_VERSION } from "@/config/legal";
 import { TermsAuditModal } from "@/components/modals/TermsAuditModal";
+import { VerificationTrigger } from "@/components/auth/VerificationTrigger";
 
 export default async function DashboardLayout({
     children,
@@ -21,7 +22,7 @@ export default async function DashboardLayout({
     const [userData, userAccount, systemAdmin] = await Promise.all([
         prisma.usuario.findUnique({
             where: { id: session.userId },
-            select: { termsVersion: true, privacyVersion: true }
+            select: { termsVersion: true, privacyVersion: true, email: true, emailVerificado: true }
         }),
         prisma.contaUsuario.findFirst({
             where: { usuarioId: session.userId, isAtivo: true, nivelAcesso: "owner" },
@@ -47,6 +48,10 @@ export default async function DashboardLayout({
                 isOpen={needsLegalUpdate}
                 needsTerms={needsTermsAcceptance}
                 needsPrivacy={needsPrivacyAcceptance}
+            />
+            <VerificationTrigger
+                email={userData?.email || ""}
+                emailVerificado={!!userData?.emailVerificado}
             />
             <Sidebar isSystemAdmin={isSystemAdmin} userPlan={userPlan} />
             <main className="flex-1 overflow-y-auto h-screen pt-16 lg:pt-0">

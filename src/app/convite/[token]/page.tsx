@@ -78,7 +78,7 @@ export default async function ConvitePage({
                                             userId: user.userId,
                                             nome: user.nome,
                                             email: user.email,
-                                            whatsappNumero: user.whatsapp || "",
+                                            whatsappNumero: "", // fetched separately if needed
                                             cpf: "" // Can't fetch from user directly, JoinStreamingForm will ask or get from Participante Table internally if adapted
                                         }}
                                         vagasRestantes={1} // Assuming 1 slot is guaranteed by the invite
