@@ -19,6 +19,11 @@ import { getNextStreamingNumber } from "@/actions/streamings";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Switch } from "@/components/ui/Switch";
 import { QuantityInput } from "@/components/ui/QuantityInput";
+import {
+    StepIndicator,
+    StepContainer,
+    StepNavigation
+} from "@/components/ui/step-modal";
 import { useToast } from "@/hooks/useToast";
 
 interface StreamingModalProps {
@@ -171,8 +176,8 @@ export function StreamingModal({
         setStep(2);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
         if (loading) return;
         if (validate()) {
             onSave({
@@ -198,62 +203,22 @@ export function StreamingModal({
             onClose={onClose}
             title={streaming ? "Editar Streaming" : "Novo Streaming"}
             footer={
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
-                    {step === 2 && !streaming && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setStep(1)}
-                            disabled={loading}
-                            className="w-full sm:w-auto sm:mr-auto"
-                        >
-                            Voltar
-                        </Button>
-                    )}
-                    {step === 1 ? (
-                        <Button
-                            type="button"
-                            variant="default"
-                            onClick={handleNextStep}
-                            disabled={!formData.catalogoId}
-                            className="w-full sm:w-auto ml-auto"
-                        >
-                            Próximo
-                        </Button>
-                    ) : (
-                        <Button
-                            type="button"
-                            variant="default"
-                            onClick={handleSubmit}
-                            disabled={loading || catalogos.length === 0}
-                            className="w-full sm:w-auto ml-auto"
-                        >
-                            {loading && <Spinner size="sm" color="white" />}
-                            {loading ? "Processando..." : streaming ? "Salvar" : "Criar"}
-                        </Button>
-                    )}
-                </div>
+                <StepNavigation
+                    step={step}
+                    totalSteps={2}
+                    isLoading={loading}
+                    onBack={step === 2 && !streaming ? () => setStep(1) : undefined}
+                    onNext={step === 1 ? () => handleNextStep() : () => handleSubmit()}
+                    canNext={step === 1 ? !!formData.catalogoId : (catalogos.length > 0)}
+                    nextLabel={step === 2 ? (streaming ? "Salvar" : "Criar") : "Próximo"}
+                />
             }
         >
-            <div className="mb-8 flex items-center gap-4 max-w-xs mx-auto">
-                <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all",
-                    step === 1 ? "bg-primary border-primary text-white" : "bg-green-100 border-green-200 text-green-600"
-                )}>
-                    {step === 1 ? "1" : "✓"}
-                </div>
-                <div className="h-px bg-gray-100 flex-1" />
-                <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all",
-                    step === 2 ? "bg-primary border-primary text-white" : "bg-gray-50 border-gray-200 text-gray-400"
-                )}>
-                    2
-                </div>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <StepIndicator currentStep={step} totalSteps={2} />
 
+            <form onSubmit={handleSubmit} className="space-y-6">
                 {step === 1 ? (
-                    <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+                    <StepContainer step={1}>
                         <label className="block text-sm font-medium text-gray-700 mb-4">
                             Selecione o Serviço do Catálogo
                         </label>
@@ -288,9 +253,9 @@ export function StreamingModal({
                                 disabled={!!streaming}
                             />
                         )}
-                    </div>
+                    </StepContainer>
                 ) : (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                    <StepContainer step={2}>
                         {selectedCatalogo && (
                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-6">
                                 <StreamingLogo
@@ -536,7 +501,7 @@ export function StreamingModal({
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </StepContainer>
                 )}
             </form>
         </Modal>

@@ -559,3 +559,4 @@ Preparado para dark mode:
 - **Ícones**: [Lucide React](https://lucide.dev/)
 - **Tailwind CSS**: [Documentação](https://tailwindcss.com/docs)
 - **Fontes**: [Google Fonts - Inter](https://fonts.google.com/specimen/Inter)
+- **Padrão de Modais em Etapas**: [STEP_MODAL.md](file:///w:/projetos/streamsharev2/docs/frontend/STEP_MODAL.md)
