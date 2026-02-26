@@ -9,12 +9,14 @@ import { getBaseTemplate } from "./base";
 interface TestTemplateProps {
     timestamp: string;
     host: string;
+    origin?: string;
     replyTo: string;
 }
 
 export function getTestTemplate({
     timestamp,
     host,
+    origin = process.env.NEXT_PUBLIC_URL,
     replyTo,
 }: TestTemplateProps): string {
     const content = `
@@ -40,6 +42,10 @@ export function getTestTemplate({
                 <tr>
                     <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">🌐 SMTP Host:</td>
                     <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 500;">${host}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0; color: #6b7280; font-size: 14px;">🔗 Origem:</td>
+                    <td style="padding: 4px 0; color: #1f2937; font-size: 14px; font-weight: 500;">${origin}</td>
                 </tr>
             </table>
         </div>
