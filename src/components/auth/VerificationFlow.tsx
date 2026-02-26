@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { cn } from "@/lib/utils";
 import { requestOTP, verifyEmailOTP } from "@/actions/verificacao";
 import { useOtpInput } from "@/hooks/useOtpInput";
 import { useCountdown } from "@/hooks/useCountdown";
@@ -35,7 +36,7 @@ export function VerificationFlow({
     onVerified
 }: VerificationFlowProps) {
     const toast = useToast();
-    const [step, setStep] = useState<"intro" | "otp">("intro");
+    const [step, setStep] = useState<1 | 2>(1);
     const [isVisible, setIsVisible] = useState(false);
 
     const {
@@ -81,7 +82,7 @@ export function VerificationFlow({
         }
 
         setIsVisible(true);
-        setStep("intro");
+        setStep(1);
         resetOtp();
         setError(null);
         setIsSuccess(false);
@@ -100,7 +101,7 @@ export function VerificationFlow({
         try {
             const res = await requestOTP(email, "EMAIL");
             if (res.success) {
-                setStep("otp");
+                setStep(2);
                 resetCountdown();
             } else {
                 setError(res.error || "Erro ao enviar código.");
@@ -161,17 +162,81 @@ export function VerificationFlow({
 
     if (!isVisible) return null;
 
+    const footer = (
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+            {step === 1 ? (
+                <>
+                    <Button
+                        variant="outline"
+                        onClick={handleSkip}
+                        className="w-full sm:w-auto sm:mr-auto text-gray-400 hover:text-gray-600 border-none px-0"
+                    >
+                        Pular por 3 dias
+                    </Button>
+                    <Button
+                        onClick={handleStartVerification}
+                        className="w-full sm:w-auto gap-2"
+                        disabled={isResending}
+                    >
+                        {isResending ? <Loader2 className="animate-spin" size={20} /> : "Começar Validação"}
+                        <ChevronRight size={18} />
+                    </Button>
+                </>
+            ) : (
+                <>
+                    {!isSuccess && (
+                        <Button
+                            variant="outline"
+                            onClick={() => setStep(1)}
+                            disabled={isVerifying}
+                            className="w-full sm:w-auto sm:mr-auto"
+                        >
+                            Voltar
+                        </Button>
+                    )}
+                    {!isSuccess && (
+                        <Button
+                            onClick={handleVerifyEmail}
+                            disabled={isVerifying || !isComplete}
+                            className="w-full sm:w-auto"
+                        >
+                            {isVerifying ? <Loader2 className="animate-spin" size={20} /> : "Verificar agora"}
+                        </Button>
+                    )}
+                </>
+            )}
+        </div>
+    );
+
     return (
         <Modal
             isOpen={isVisible}
             onClose={onClose}
-            title={step === "intro" ? "Segurança da Conta" : "Verificação de E-mail"}
-            className="sm:max-w-md"
-            showCloseButton={step === "intro"} // Only allow closing/skipping on first step
+            title="Verificação de Acesso"
+            className="sm:max-w-2xl"
+            showCloseButton={step === 1}
+            footer={footer}
         >
-            <div className="flex flex-col items-center text-center py-2">
-                {step === "intro" ? (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Step Indicators (StreamingModal Style) */}
+            <div className="mb-8 flex flex-row justify-center mx-auto sm:max-w-md max-w-xs  items-center  gap-4  ">
+                <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all",
+                    step === 1 ? "bg-primary border-primary text-white" : "bg-green-100 border-green-200 text-green-600"
+                )}>
+                    {step === 1 ? "1" : "✓"}
+                </div>
+                <div className="h-px bg-gray-100 flex-1" />
+                <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all",
+                    step === 2 ? "bg-primary border-primary text-white" : "bg-gray-50 border-gray-200 text-gray-400"
+                )}>
+                    2
+                </div>
+            </div>
+
+            <div className="mb-8 flex flex-col items-center text-center py-2">
+                {step === 1 ? (
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-500 w-full">
                         <div className="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-6 mx-auto shadow-inner">
                             <ShieldCheck size={40} />
                         </div>
@@ -180,30 +245,12 @@ export function VerificationFlow({
                             Verifique sua identidade
                         </h3>
 
-                        <p className="text-gray-500 text-sm leading-relaxed mb-8 px-4">
-                            Sua conta ainda não possui um e-mail verificado. Para garantir a segurança dos seus dados e receber notificações importantes, valide seu acesso agora.
+                        <p className="text-gray-500 text-sm leading-relaxed mb-4 px-4">
+                            Sua conta ainda não possui um e-mail verificado. Para garantir a segurança dos seus dados, valide seu acesso.
                         </p>
-
-                        <div className="space-y-3 w-full">
-                            <Button
-                                onClick={handleStartVerification}
-                                className="w-full h-14 rounded-2xl font-bold gap-2"
-                                disabled={isResending}
-                            >
-                                {isResending ? <Loader2 className="animate-spin" size={20} /> : "Validar E-mail"}
-                                <ChevronRight size={18} />
-                            </Button>
-
-                            <button
-                                onClick={handleSkip}
-                                className="w-full py-4 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                Pular por 3 dias
-                            </button>
-                        </div>
                     </div>
                 ) : (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-500 w-full">
                         <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 mx-auto shadow-inner ${isSuccess ? "bg-green-100 text-green-600" : "bg-primary/10 text-primary"
                             }`}>
                             {isSuccess ? <ShieldCheck size={40} /> : <Mail size={40} />}
@@ -234,10 +281,12 @@ export function VerificationFlow({
                                             onChange={(e) => handleOtpChange(index, e.target.value)}
                                             onKeyDown={(e) => handleOtpKeyDown(index, e)}
                                             onPaste={(e) => handleOtpPaste(index, e)}
-                                            className={`w-full h-14 text-center text-xl font-bold rounded-2xl border-2 transition-all outline-none ${error
+                                            className={cn(
+                                                "w-full h-14 text-center text-xl font-bold rounded-2xl border-2 transition-all outline-none",
+                                                error
                                                     ? "border-red-200 bg-red-50 text-red-600"
                                                     : "border-gray-100 bg-gray-50 focus:border-primary focus:ring-4 focus:ring-primary/10"
-                                                }`}
+                                            )}
                                         />
                                     ))}
                                 </div>
@@ -249,14 +298,6 @@ export function VerificationFlow({
                                     </div>
                                 )}
 
-                                <Button
-                                    onClick={handleVerifyEmail}
-                                    disabled={isVerifying || !isComplete}
-                                    className="w-full h-14 rounded-2xl font-bold"
-                                >
-                                    {isVerifying ? <Loader2 className="animate-spin" size={20} /> : "Verificar agora"}
-                                </Button>
-
                                 <div className="text-center">
                                     {isTimerActive ? (
                                         <div className="flex items-center justify-center gap-2 text-xs text-gray-400 font-medium">
@@ -265,6 +306,7 @@ export function VerificationFlow({
                                         </div>
                                     ) : (
                                         <button
+                                            type="button"
                                             onClick={handleResendOtp}
                                             disabled={isResending}
                                             className="text-xs font-bold text-primary hover:underline flex items-center gap-1.5 mx-auto"
