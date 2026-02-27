@@ -66,7 +66,7 @@ O **StreamShare** é uma plataforma SaaS *multi-tenant* para gestão financeira 
     5.  Sistema gera automaticamente a primeira cobrança pendente.
     6.  Sistema envia notificação de boas-vindas (WhatsApp/In-app).
 *   **Fluxo de Exceção**:
-    *   **Sem Vagas**: Sistema exibe erro informando limite atingido (`streamings.ts`).
+    *   **Sem Vagas**: Sistema exibe erro informando limite atingido ([`streamings.ts`](../src/actions/streamings.ts)).
     *   **Duplicidade**: Sistema bloqueia se participante já assina o serviço.
 
 #### UC-02: Processamento de Cobranças
@@ -95,11 +95,11 @@ O **StreamShare** é uma plataforma SaaS *multi-tenant* para gestão financeira 
 
 | Regra | Descrição | Implementação |
 | :--- | :--- | :--- |
-| **RN-01: Isolamento Multi-tenant** | Todo acesso a dados deve filtrar obrigatoriamente pelo `contaId` do usuário autenticado. | `getContext()` em todas as Actions. |
-| **RN-02: Limite de Vagas** | Não é permitido criar assinatura se `total_assinaturas >= streaming.limite`. | `assinaturas.ts` (linha 145) e `streamings.ts`. |
+| **RN-01: Isolamento Multi-tenant** | Todo acesso a dados deve filtrar obrigatoriamente pelo `contaId` do usuário autenticado. | [`getContext()`](../src/lib/action-context.ts) em todas as Actions. |
+| **RN-02: Limite de Vagas** | Não é permitido criar assinatura se `total_assinaturas >= streaming.limite`. | [`assinaturas.ts`](../src/actions/assinaturas.ts) (linha 145) e [`streamings.ts`](../src/actions/streamings.ts). |
 | **RN-03: Integridade de Exclusão** | Entidades (Participante, Streaming) não podem ser excluídas se possuírem vínculos ativos (Assinaturas). | `deleteParticipante` e `deleteStreaming`. |
-| **RN-04: Anti-Spam WhatsApp** | Proibido enviar notificação automática para o mesmo participante/gatilho em intervalo < 24h. | `cobrancas.ts` (verificação de `WhatsAppLog`). |
-| **RN-05: Validação Financeira** | Valores de cobrança e assinatura devem ser sempre positivos. Datas não podem ser retroativas (> 1 ano). | `assinaturas.ts` e `validators`. |
+| **RN-04: Anti-Spam WhatsApp** | Proibido enviar notificação automática para o mesmo participante/gatilho em intervalo < 24h. | [`cobrancas.ts`](../src/actions/cobrancas.ts) (verificação de `WhatsAppLog`). |
+| **RN-05: Validação Financeira** | Valores de cobrança e assinatura devem ser sempre positivos. Datas não podem ser retroativas (> 1 ano). | [`assinaturas.ts`](../src/actions/assinaturas.ts) e validators. |
 
 ### 2.4 Parecer de Viabilidade
 
