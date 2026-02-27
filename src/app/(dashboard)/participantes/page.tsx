@@ -5,6 +5,8 @@ import { ParticipantesClient } from "@/components/participantes/ParticipantesCli
 import { getStreamings } from "@/actions/streamings";
 import { getCurrentPlan } from "@/actions/planos";
 
+export const dynamic = "force-dynamic";
+
 export default async function ParticipantesPage() {
     const results = await Promise.all([
         getParticipantes(),
