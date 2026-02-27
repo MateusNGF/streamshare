@@ -25,7 +25,7 @@ No Dashboard do Stripe (Modo Teste):
 
 ### 2. Configurar Variáveis de Ambiente
 
-No arquivo `.env` (na raiz e/ou `apps/web/.env`):
+No arquivo `.env` na raiz:
 
 ```bash
 # Stripe Public Key (Frontend)
@@ -66,7 +66,7 @@ NEXT_PUBLIC_STRIPE_PRICE_PRO="price_pro_id..."
 NEXT_PUBLIC_STRIPE_PRICE_BUSINESS="price_business_id..."
 ```
 
-**Arquivo `apps/web/src/config/plans.ts`**:
+**Arquivo [`src/config/plans.ts`](../../src/config/plans.ts)**:
 O código já lê automaticamente as variáveis de ambiente.
 
 > **Nota**: O plano **Free** é gratuito e não requer ID.
@@ -145,7 +145,7 @@ Quando for para produção (Live Mode):
 
 ---
 
-- `apps/web/src/app/api/webhooks/stripe/route.ts`: Handler do Webhook.
+- [`src/app/api/webhooks/stripe/route.ts`](../../src/app/api/webhooks/stripe/route.ts): Handler do Webhook.
 
 ---
 

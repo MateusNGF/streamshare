@@ -415,7 +415,7 @@ if (ultimoLog) {
 
 ### Estrutura dos Templates
 
-Todos os templates estão definidos em [whatsapp-service.ts](file:///w:/projetos/streamsharev2/apps/web/src/lib/whatsapp-service.ts#L203-L221).
+Todos os templates estão definidos em [`src/lib/whatsapp/whatsapp-service.ts`](../../src/lib/whatsapp/whatsapp-service.ts).
 
 ```typescript
 export const whatsappTemplates = {
@@ -895,7 +895,7 @@ console.log(generateWhatsAppLink(phone, message));
 **Diagnóstico:**
 1. Verifique se o cron foi inicializado:
 ```typescript
-// Em apps/web/src/cron/init.ts
+// Em [`src/cron/init.ts`](../../src/cron/init.ts)
 startBillingNotificationCron();
 ```
 
@@ -1089,11 +1089,11 @@ ORDER BY quantidade DESC;
 
 | Arquivo | Descrição |
 |---------|-----------|
-| [whatsapp-service.ts](file:///w:/projetos/streamsharev2/apps/web/src/lib/whatsapp-service.ts) | Service principal, templates, Twilio provider |
-| [whatsapp-link-utils.ts](file:///w:/projetos/streamsharev2/apps/web/src/lib/whatsapp-link-utils.ts) | Geração de links wa.me |
-| [whatsapp-config.ts](file:///w:/projetos/streamsharev2/apps/web/src/actions/whatsapp-config.ts) | Server actions para configuração |
-| [cobrancas.ts](file:///w:/projetos/streamsharev2/apps/web/src/actions/cobrancas.ts) | Server action enviarNotificacaoCobranca |
-| [check-billing-notifications.ts](file:///w:/projetos/streamsharev2/apps/web/src/cron/check-billing-notifications.ts) | Cron jobs de notificações |
+| [`src/lib/whatsapp/whatsapp-service.ts`](../../src/lib/whatsapp/whatsapp-service.ts) | Service principal, templates, Meta Cloud API |
+| [`src/lib/whatsapp/whatsapp-link-utils.ts`](../../src/lib/whatsapp/whatsapp-link-utils.ts) | Geração de links wa.me |
+| [`src/actions/whatsapp-config.ts`](../../src/actions/whatsapp-config.ts) | Server actions para configuração |
+| [`src/actions/cobrancas.ts`](../../src/actions/cobrancas.ts) | Server action enviarNotificacaoCobranca |
+| [`src/cron/check-billing-notifications.ts`](../../src/cron/check-billing-notifications.ts) | Cron jobs de notificações (Simulado) |
 
 ### Links Externos
 

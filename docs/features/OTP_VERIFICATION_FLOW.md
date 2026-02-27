@@ -226,11 +226,11 @@ sequenceDiagram
 ```
 
 **Arquivos envolvidos:**
-- [signup/route.ts](file:///w:/projetos/streamsharev2/src/app/api/auth/signup/route.ts) — Valida, gera hash da senha, emite pendingToken e dispara OTP
-- [verificacao.ts](file:///w:/projetos/streamsharev2/src/actions/verificacao.ts) — `verifyEmailOTP` cria o usuário após validação
-- [useSignupForm.ts](file:///w:/projetos/streamsharev2/src/hooks/useSignupForm.ts) — Gerencia estado do form e do pendingToken
-- [EmailVerificationModal.tsx](file:///w:/projetos/streamsharev2/src/components/auth/EmailVerificationModal.tsx) — Interface de digitação do código
-- [SignupForm.tsx](file:///w:/projetos/streamsharev2/src/components/auth/SignupForm.tsx) — Passa o pendingToken para o modal
+- [`src/app/api/auth/signup/route.ts`](../../src/app/api/auth/signup/route.ts) — Valida, gera hash da senha, emite pendingToken e dispara OTP
+- [`src/actions/verificacao.ts`](../../src/actions/verificacao.ts) — `verifyEmailOTP` cria o usuário após validação
+- [`src/hooks/useSignupForm.ts`](../../src/hooks/useSignupForm.ts) — Gerencia estado do form e do pendingToken
+- [`src/components/auth/EmailVerificationModal.tsx`](../../src/components/auth/EmailVerificationModal.tsx) — Interface de digitação do código
+- [`src/components/auth/SignupForm.tsx`](../../src/components/auth/SignupForm.tsx) — Passa o pendingToken para o modal
 
 ---
 
@@ -529,7 +529,7 @@ flowchart TD
 6. Usuário pode tentar "Reenviar" → mesmo erro silencioso
 
 > [!CAUTION]
-> Sem SMTP configurado, o cadastro ficará bloqueado na etapa de verificação. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` e `SMTP_PASS` no `.env`. Consulte [EMAIL_SETUP.md](file:///w:/projetos/streamsharev2/docs/setup/EMAIL_SETUP.md).
+> Sem SMTP configurado, o cadastro ficará bloqueado na etapa de verificação. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` e `SMTP_PASS` no `.env`. Consulte [EMAIL_SETUP.md](../setup/EMAIL_SETUP.md).
 
 ---
 
@@ -568,7 +568,7 @@ flowchart TD
 3. Verifique a pasta de spam do destinatário
 4. Confirme que `EMAIL_FROM` usa o mesmo domínio do `SMTP_USER`
 
-Consulte [EMAIL_SETUP.md](file:///w:/projetos/streamsharev2/docs/setup/EMAIL_SETUP.md) para configurações avançadas.
+Consulte [EMAIL_SETUP.md](../setup/EMAIL_SETUP.md) para configurações avançadas.
 
 ---
 

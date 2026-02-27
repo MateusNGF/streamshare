@@ -87,8 +87,8 @@ O **StreamShare** é uma plataforma SaaS *multi-tenant* para gestão financeira 
 *   **Fluxo Principal**:
     1.  Evento de negócio ocorre (ex: Cobrança gerada).
     2.  Sistema consulta configuração de WhatsApp da conta.
-    3.  Se `Twilio` ativo: Envia mensagem template automaticamente.
-    4.  Se inativo: Gera link `wa.me` para envio manual.
+    3.  **WhatsApp Oficial (Meta)**: Envia mensagem template automaticamente via API Cloud.
+    4.  **WhatsApp Link (wa.me)**: Gera link para envio manual se API não configurada.
     5.  Registra log para auditoria e prevenção de spam (bloqueio de 24h).
 
 ### 2.3 Dicionário de Regras de Negócio

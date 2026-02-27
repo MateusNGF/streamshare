@@ -11,9 +11,9 @@ O padrão **StepModal** é o padrão oficial do projeto para criar fluxos guiado
 **Exemplos de uso no projeto:**
 | Componente | Etapas | Referência |
 |---|---|---|
-| `StreamingModal` | 2 — Catálogo → Configuração | [StreamingModal.tsx](file:///w:/projetos/streamsharev2/src/components/modals/StreamingModal.tsx) |
-| `VerificationFlow` | 2 — Intro → OTP | [VerificationFlow.tsx](file:///w:/projetos/streamsharev2/src/components/auth/VerificationFlow.tsx) |
-| `AssinaturaMultiplaModal` | 4 — Streamings → Valores → Participantes → Resumo | [AssinaturaMultiplaModal.tsx](file:///w:/projetos/streamsharev2/src/components/modals/AssinaturaMultiplaModal.tsx) |
+| `StreamingModal` | 2 — Catálogo → Configuração | [`src/components/modals/StreamingModal.tsx`](../../src/components/modals/StreamingModal.tsx) |
+| `VerificationFlow` | 2 — Intro → OTP | [`src/components/auth/VerificationFlow.tsx`](../../src/components/auth/VerificationFlow.tsx) |
+| `AssinaturaMultiplaModal` | 4 — Streamings → Valores → Participantes → Resumo | [`src/components/modals/AssinaturaMultiplaModal.tsx`](../../src/components/modals/AssinaturaMultiplaModal.tsx) |
 
 ---
 
@@ -217,8 +217,8 @@ export function MyModal({ isOpen, onClose }) {
 
 | Arquivo | Tipo | Etapas |
 |---|---|---|
-| [StreamingModal.tsx](file:///w:/projetos/streamsharev2/src/components/modals/StreamingModal.tsx) | Simples | 2 |
-| [VerificationFlow.tsx](file:///w:/projetos/streamsharev2/src/components/auth/VerificationFlow.tsx) | Simples | 2 |
-| [AssinaturaMultiplaModal.tsx](file:///w:/projetos/streamsharev2/src/components/modals/AssinaturaMultiplaModal.tsx) | Complexo (extraído) | 4 |
-| [Modal.tsx](file:///w:/projetos/streamsharev2/src/components/ui/Modal.tsx) | Base | — |
-| [Button.tsx](file:///w:/projetos/streamsharev2/src/components/ui/Button.tsx) | UI | — |
+| `StreamingModal.tsx` | Simples | 2 |
+| `VerificationFlow.tsx` | Simples | 2 |
+| `AssinaturaMultiplaModal.tsx` | Complexo (extraído) | 4 |
+| `Modal.tsx` | Base | — |
+| `Button.tsx` | UI | — |

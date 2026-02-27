@@ -154,7 +154,7 @@ sequenceDiagram
     end
 ```
 
-**Arquivo**: [LoginForm.tsx](file:///w:/projetos/streamsharev2/apps/web/src/components/auth/LoginForm.tsx)
+**Arquivo**: [`src/components/auth/LoginForm.tsx`](../../src/components/auth/LoginForm.tsx)
 
 **Características**:
 - Validação de email e senha
@@ -169,7 +169,7 @@ sequenceDiagram
 ### 2. Cadastro (Email-First + OTP)
 
 > [!IMPORTANT]
-> O usuário **não é criado** no banco durante o signup. O registro ocorre somente após a validação do código OTP. Para o fluxo completo, consulte [OTP_VERIFICATION_FLOW.md](file:///w:/projetos/streamsharev2/docs/features/OTP_VERIFICATION_FLOW.md).
+> O usuário **não é criado** no banco durante o signup. O registro ocorre somente após a validação do código OTP. Para o fluxo completo, consulte [OTP_VERIFICATION_FLOW.md](../features/OTP_VERIFICATION_FLOW.md).
 
 ```mermaid
 sequenceDiagram
@@ -218,10 +218,10 @@ sequenceDiagram
 ```
 
 **Arquivos:**
-- [signup/route.ts](file:///w:/projetos/streamsharev2/src/app/api/auth/signup/route.ts)
-- [verificacao.ts](file:///w:/projetos/streamsharev2/src/actions/verificacao.ts)
-- [EmailVerificationModal.tsx](file:///w:/projetos/streamsharev2/src/components/auth/EmailVerificationModal.tsx)
-- [useSignupForm.ts](file:///w:/projetos/streamsharev2/src/hooks/useSignupForm.ts)
+- [`src/app/api/auth/signup/route.ts`](../../src/app/api/auth/signup/route.ts)
+- [`src/actions/verificacao.ts`](../../src/actions/verificacao.ts)
+- [`src/components/auth/EmailVerificationModal.tsx`](../../src/components/auth/EmailVerificationModal.tsx)
+- [`src/hooks/useSignupForm.ts`](../../src/hooks/useSignupForm.ts)
 
 **Características:**
 - Usuário **não é criado** sem verificação
@@ -297,10 +297,10 @@ sequenceDiagram
 ```
 
 **Arquivos**:
-- [ForgotPasswordForm.tsx](file:///w:/projetos/streamsharev2/apps/web/src/components/auth/ForgotPasswordForm.tsx)
-- [ResetPasswordForm.tsx](file:///w:/projetos/streamsharev2/apps/web/src/components/auth/ResetPasswordForm.tsx)
-- [forgot-password/route.ts](file:///w:/projetos/streamsharev2/apps/web/src/app/api/auth/forgot-password/route.ts)
-- [reset-password/route.ts](file:///w:/projetos/streamsharev2/apps/web/src/app/api/auth/reset-password/route.ts)
+- [`src/components/auth/ForgotPasswordForm.tsx`](../../src/components/auth/ForgotPasswordForm.tsx)
+- [`src/components/auth/ResetPasswordForm.tsx`](../../src/components/auth/ResetPasswordForm.tsx)
+- [`src/app/api/auth/forgot-password/route.ts`](../../src/app/api/auth/forgot-password/route.ts)
+- [`src/app/api/auth/reset-password/route.ts`](../../src/app/api/auth/reset-password/route.ts)
 
 **Características**:
 - Mensagem genérica (anti-enumeração)
@@ -368,9 +368,9 @@ sequenceDiagram
 ```
 
 **Arquivos**:
-- [ChangePasswordModal.tsx](file:///w:/projetos/streamsharev2/apps/web/src/components/modals/ChangePasswordModal.tsx)
-- [change-password/route.ts](file:///w:/projetos/streamsharev2/apps/web/src/app/api/auth/change-password/route.ts)
-- [SettingsClient.tsx](file:///w:/projetos/streamsharev2/apps/web/src/components/configuracoes/SettingsClient.tsx)
+- [`src/components/modals/ChangePasswordModal.tsx`](../../src/components/modals/ChangePasswordModal.tsx)
+- [`src/app/api/auth/change-password/route.ts`](../../src/app/api/auth/change-password/route.ts)
+- [`src/components/configuracoes/SettingsClient.tsx`](../../src/components/configuracoes/SettingsClient.tsx)
 
 **Características**:
 - Requer autenticação (JWT)
@@ -438,12 +438,12 @@ graph TD
 
 | Componente | Localização | Responsabilidade |
 |------------|-------------|------------------|
-| **LoginForm** | `components/auth/LoginForm.tsx` | Formulário de login com validação |
-| **SignupForm** | `components/auth/SignupForm.tsx` | Formulário de cadastro |
-| **ForgotPasswordForm** | `components/auth/ForgotPasswordForm.tsx` | Solicitação de reset de senha |
-| **ResetPasswordForm** | `components/auth/ResetPasswordForm.tsx` | Redefinição de senha com token |
-| **ChangePasswordModal** | `components/modals/ChangePasswordModal.tsx` | Modal de alteração de senha |
-| **Input** | `components/ui/Input.tsx` | Input reutilizável com label |
+| **LoginForm** | [`src/components/auth/LoginForm.tsx`](../../src/components/auth/LoginForm.tsx) | Formulário de login com validação |
+| **SignupForm** | [`src/components/auth/SignupForm.tsx`](../../src/components/auth/SignupForm.tsx) | Formulário de cadastro |
+| **ForgotPasswordForm** | [`src/components/auth/ForgotPasswordForm.tsx`](../../src/components/auth/ForgotPasswordForm.tsx) | Solicitação de reset de senha |
+| **ResetPasswordForm** | [`src/components/auth/ResetPasswordForm.tsx`](../../src/components/auth/ResetPasswordForm.tsx) | Redefinição de senha com token |
+| **ChangePasswordModal** | [`src/components/modals/ChangePasswordModal.tsx`](../../src/components/modals/ChangePasswordModal.tsx) | Modal de alteração de senha |
+| **Input** | [`src/components/ui/Input.tsx`](../../src/components/ui/Input.tsx) | Input reutilizável com label |
 
 ---
 
@@ -908,7 +908,7 @@ export async function sendPasswordResetEmail(
 - [ ] **2FA**: Autenticação de dois fatores
 - [ ] **Logs de Auditoria**: Rastrear tentativas de login
 - [ ] **Sessões Múltiplas**: Gerenciar dispositivos
-- [x] ~~**Email Verification**: Verificar email no cadastro~~ → [OTP_VERIFICATION_FLOW.md](file:///w:/projetos/streamsharev2/docs/features/OTP_VERIFICATION_FLOW.md)
+- [x] ~~**Email Verification**: Verificar email no cadastro~~ → [OTP_VERIFICATION_FLOW.md](../features/OTP_VERIFICATION_FLOW.md)
 - [ ] **Password Strength Meter**: Indicador visual
 - [ ] **Biometria**: Suporte para WebAuthn
 

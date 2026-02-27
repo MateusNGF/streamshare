@@ -10,16 +10,22 @@ Este guia auxilia na configuração do ambiente de desenvolvimento local para o 
 
 ## Passos para Instalação
 
-1. **Clone o repositório** (se ainda não o fez).
+1. **Clone o repositório**.
+    ```bash
+    git clone https://github.com/MateusNGF/streamshare.git
+    cd streamshare
+    ```
 
 2. **Instale as dependências**:
-   Na raiz do projeto (`w:\projetos\streamsharev2`), execute:
    ```bash
    pnpm install
    ```
 
 3. **Configure as variáveis de ambiente**:
-   Um arquivo `.env` foi criado na raiz com a `DATABASE_URL`. Certifique-se de que ele aponta para o seu banco local.
+   Copie o arquivo de exemplo e ajuste as credenciais:
+   ```bash
+   cp .env.example .env
+   ```
 
 4. **Suba o Banco de Dados**:
    Utilize o Docker Compose para iniciar o PostgreSQL:
@@ -27,16 +33,16 @@ Este guia auxilia na configuração do ambiente de desenvolvimento local para o 
    docker-compose up -d
    ```
 
-4. **Gere o Cliente do Banco de Dados**:
+5. **Gere o Cliente do Banco de Dados**:
    Isso cria as tabelas e gera a tipagem do Prisma:
    ```bash
-   pnpm --filter @streamshare/database push
-   pnpm --filter @streamshare/database generate
+   pnpm db:push
+   pnpm db:generate
    ```
 
 ## Executando o Projeto
 
-Para iniciar o ambiente de desenvolvimento (todas as aplicações):
+Para iniciar o ambiente de desenvolvimento:
 
 ```bash
 pnpm dev
@@ -46,9 +52,9 @@ Acesse a aplicação Web em: [http://localhost:3000](http://localhost:3000)
 
 ## Comandos Úteis
 
-- **`pnpm build`**: Roda o build de todas as aplicações e pacotes.
-- **`pnpm db:studio`**: (Requer script no package.json ou acesso direto) Abre o Prisma Studio para visualizar os dados.
-  - Alternativa: `cd packages/database && npx prisma studio`
+- **`pnpm build`**: Roda o build da aplicação.
+- **`pnpm db:studio`**: Abre o Prisma Studio para visualizar os dados.
+- **`pnpm db:seed`**: Alimenta o banco com dados padrão.
 
 ## Solução de Problemas Comuns
 

@@ -1,10 +1,6 @@
-A seguir apresento um **resumo consolidado e detalhado do domínio**, já **alinhado estritamente ao schema Prisma**, integrando visão conceitual e implementação real, sem extrapolações não persistidas.
+# Modelo de Domínio - StreamShare
 
----
-
-# RESUMO CONSOLIDADO DO DOMÍNIO
-
-**Sistema de Gestão de Streamings Compartilhados**
+Este documento consolida a visão técnica e de negócio do ecossistema StreamShare, alinhado estritamente ao schema Prisma.
 
 ---
 
@@ -22,15 +18,13 @@ O foco central não é o streaming em si, mas a **assinatura recorrente**, que r
 
 A **Conta** é o nível mais alto de organização do domínio e funciona como o *tenant* do sistema.
 
-Responsabilidades:
-
-* Define o **plano contratado** (`basico`, `pro`, `premium`)
+**Responsabilidades:**
+* Define o **plano contratado** (`basico`, `pro`, `business`)
 * Impõe **limites operacionais** (ex.: número máximo de grupos)
 * Centraliza:
-
-  * usuários administradores
-  * grupos
-  * participantes
+  * Usuários administradores
+  * Grupos
+  * Participantes
 
 A Conta representa quem **opera** o sistema, não quem consome o streaming.
 
@@ -42,16 +36,14 @@ A Conta representa quem **opera** o sistema, não quem consome o streaming.
 
 O **Usuário** representa uma identidade autenticável no sistema.
 Pode atuar como:
-
-* administrador de uma ou mais contas
-* ou estar vinculado a um participante (opcional)
+* Administrador de uma ou mais contas
+* Ou estar vinculado a um participante (opcional)
 
 ### ContaUsuario
 
 Entidade de junção que define o **papel do usuário dentro de uma conta específica**.
 
-Características:
-
+**Características:**
 * Controle de acesso **por conta**
 * Níveis de acesso limitados (`owner`, `admin`)
 * Um mesmo usuário pode administrar múltiplas contas
@@ -66,37 +58,23 @@ Esse modelo separa claramente **identidade**, **permissão** e **contexto organi
 
 O **Grupo** representa um **contexto organizacional e social**, geralmente associado a um grupo real (ex.: WhatsApp).
 
-Funções:
-
+**Funções:**
 * Agrupa streamings disponíveis
 * Define regras gerais de participação
 * Serve como ponto de entrada via **link de convite**
 
-Importante:
-
-> O grupo **não possui participantes diretamente**.
-> A relação social se materializa apenas quando um participante assina um streaming.
+> [!IMPORTANT]
+> O grupo **não possui participantes diretamente**. A relação social se materializa apenas quando um participante assina um streaming.
 
 ---
 
 ## 5. Modelagem de Streaming (Três Camadas)
 
 ### 5.1 StreamingCatalogo
-
-Representa o **tipo abstrato de serviço**:
-
-* Netflix
-* Spotify
-* Disney+
-
-É apenas referencial, sem regras financeiras ou operacionais.
-
----
+Representa o **tipo abstrato de serviço** (Netflix, Spotify, Disney+). É apenas referencial, sem regras financeiras ou operacionais.
 
 ### 5.2 Streaming
-
 Representa a **assinatura concreta de um serviço**, com regras próprias:
-
 * Valor integral
 * Limite máximo de participantes
 * Data de vencimento
@@ -108,24 +86,11 @@ O Streaming é **independente de grupos** e pode ser reutilizado.
 
 ---
 
-### 5.3 GrupoStreaming
-
-Tabela de associação que define **quais streamings estão disponíveis em cada grupo**.
-
-Esse design:
-
-* evita duplicação de dados
-* permite reutilização de streamings
-* desacopla regras sociais (grupo) das regras financeiras (streaming)
-
----
-
 ## 6. Participante
 
 O **Participante** representa o **consumidor final**, ou seja, quem efetivamente paga e utiliza o serviço.
 
-Características:
-
+**Características:**
 * Pertence diretamente a uma Conta
 * Identificado por WhatsApp e CPF
 * Pode ou não estar vinculado a um Usuário autenticado
@@ -137,55 +102,26 @@ O participante só “entra” no sistema quando cria uma **assinatura**.
 
 ## 7. Assinatura: Centro do Domínio
 
-A **Assinatura** é a **entidade central do sistema**.
+A **Assinatura** é a **entidade central do sistema**. Ela conecta um Participante a um Streaming específico.
 
-Ela conecta:
+**Concentra:**
+* Frequência de pagamento
+* Valor cobrado
+* Datas de início e vencimento
+* Status (ativa, suspensa, cancelada)
+* Controle de atraso e suspensão
 
-* um Participante
-* a um Streaming específico
+Tudo que diz respeito a cobrança, acesso, inadimplência e renovação é representado, direta ou indiretamente, pela Assinatura.
 
-E concentra:
-
-* frequência de pagamento
-* valor cobrado
-* datas de início e vencimento
-* status (ativa, suspensa, cancelada)
-* controle de atraso e suspensão
-
-Tudo que diz respeito a:
-
-* cobrança
-* acesso
-* inadimplência
-* renovação
-
-é representado, direta ou indiretamente, pela Assinatura.
-
+> [!NOTE]
 > No domínio persistente, **não existe pagamento sem assinatura**.
 
 ---
 
-## 8. Regras Implícitas no Modelo
-
-Mesmo sem entidades explícitas, o schema suporta:
-
-* Assinaturas únicas por participante e streaming
-* Suspensão automática baseada em status e datas
-* Controle de limites via streaming
-* Gestão de ciclo recorrente via vencimento e frequência
-
-O domínio financeiro detalhado (pagamentos, cobranças, webhooks) é **intencionalmente externo**, pertencendo à camada de aplicação ou integração.
-
----
-
-## 9. Escopo Atual do Domínio Persistente
+## 8. Escopo do Domínio Persistente
 
 O modelo implementado foca em:
-
 ✔ Estrutura organizacional
 ✔ Controle de acesso administrativo
 ✔ Modelagem correta de streaming compartilhado
 ✔ Ciclo de vida da assinatura
-
-
-

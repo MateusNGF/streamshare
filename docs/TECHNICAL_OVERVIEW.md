@@ -96,7 +96,7 @@ src/
 -   **Autenticação**: Rotas protegidas via Middleware e verificação de sessão (`auth.ts`).
 -   **Gestão de Sessão**: Invalidação remota (`sessionVersion`), rastreamento de IP e proteção contra Session Hijacking.
 -   **Dados Sensíveis**: Senhas criptografadas (`bcryptjs`) e tokens seguros.
--   *Consulte [docs/features/SECURITY_AND_AUTH.md](../features/SECURITY_AND_AUTH.md) para detalhes completos.*
+- *Consulte [docs/features/SECURITY_AND_AUTH.md](./features/SECURITY_AND_AUTH.md) para detalhes completos.*
 
 ### 4.3. Performance
 -   **Dynamic Imports**: Componentes pesados (gráficos, modais complexos) carregados sob demanda (`next/dynamic`).
