@@ -10,32 +10,129 @@ import { prisma } from "@/lib/db";
 import { TipoNotificacaoWhatsApp } from "@prisma/client";
 import { PLANS } from "@/config/plans";
 import { sendWhatsApp } from "@/lib/whatsapp-meta";
-import type { WhatsAppSendResult } from "@/lib/whatsapp-meta";
+import type { WhatsAppSendResult, WhatsAppTemplateConfig } from "@/lib/whatsapp-meta";
 
 export type { WhatsAppSendResult };
+
+export interface EnvioWhatsAppObj {
+    texto: string;
+    template: WhatsAppTemplateConfig;
+}
 
 // ---------------------------------------------------------------------------
 // Templates
 // ---------------------------------------------------------------------------
 
 export const whatsappTemplates = {
-    novaAssinatura: (participante: string, streaming: string, valor: string, dataInicio: string) =>
-        `Olá ${participante}! ✨\n\nSua assinatura de *${streaming}* foi confirmada!\n\n💰 Valor: ${valor}\n📅 Início: ${dataInicio}\n\nEm breve você receberá as credenciais de acesso.`,
+    novaAssinatura: (participante: string, streaming: string, valor: string, dataInicio: string): EnvioWhatsAppObj => ({
+        texto: `Olá ${participante}! ✨\n\nSua assinatura de *${streaming}* foi confirmada!\n\n💰 Valor: ${valor}\n📅 Início: ${dataInicio}\n\nEm breve você receberá as credenciais de acesso.`,
+        template: {
+            name: "nova_assinatura", // Placeholder para o nome exato aprovado na WABA
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: valor },
+                        { type: "text", text: dataInicio },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    cobrancaGerada: (participante: string, streaming: string, valor: string, vencimento: string) =>
-        `Olá ${participante}! 📝\n\nNova cobrança gerada para *${streaming}*:\n\n💰 Valor: ${valor}\n📅 Vencimento: ${vencimento}\n\nAguardamos seu pagamento!`,
+    cobrancaGerada: (participante: string, streaming: string, valor: string, vencimento: string): EnvioWhatsAppObj => ({
+        texto: `Olá ${participante}! 📝\n\nNova cobrança gerada para *${streaming}*:\n\n💰 Valor: ${valor}\n📅 Vencimento: ${vencimento}\n\nAguardamos seu pagamento!`,
+        template: {
+            name: "cobranca_gerada",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: valor },
+                        { type: "text", text: vencimento },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    cobrancaVencendo: (participante: string, streaming: string, valor: string, dias: number) =>
-        `Lembrete: Sua cobrança de *${streaming}* vence em ${dias} dia(s)! ⏰\n\n💰 Valor: ${valor}\n\nEvite suspensão do serviço realizando o pagamento.`,
+    cobrancaVencendo: (participante: string, streaming: string, valor: string, dias: number): EnvioWhatsAppObj => ({
+        texto: `Lembrete: Sua cobrança de *${streaming}* vence em ${dias} dia(s)! ⏰\n\n💰 Valor: ${valor}\n\nEvite suspensão do serviço realizando o pagamento.`,
+        template: {
+            name: "cobranca_vencendo",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: streaming },
+                        { type: "text", text: String(dias) },
+                        { type: "text", text: valor },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    cobrancaAtrasada: (participante: string, streaming: string, valor: string, diasAtraso: number) =>
-        `⚠️ ${participante}, sua cobrança de *${streaming}* está ${diasAtraso} dia(s) em atraso.\n\n💰 Valor: ${valor}\n\nRealize o pagamento para manter seu acesso ativo.`,
+    cobrancaAtrasada: (participante: string, streaming: string, valor: string, diasAtraso: number): EnvioWhatsAppObj => ({
+        texto: `⚠️ ${participante}, sua cobrança de *${streaming}* está ${diasAtraso} dia(s) em atraso.\n\n💰 Valor: ${valor}\n\nRealize o pagamento para manter seu acesso ativo.`,
+        template: {
+            name: "cobranca_atrasada",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: String(diasAtraso) },
+                        { type: "text", text: valor },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    assinaturaSuspensa: (participante: string, streaming: string) =>
-        `❌ ${participante}, sua assinatura de *${streaming}* foi suspensa por falta de pagamento.\n\nRegularize para reativar o acesso.`,
+    assinaturaSuspensa: (participante: string, streaming: string): EnvioWhatsAppObj => ({
+        texto: `❌ ${participante}, sua assinatura de *${streaming}* foi suspensa por falta de pagamento.\n\nRegularize para reativar o acesso.`,
+        template: {
+            name: "assinatura_suspensa",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    pagamentoConfirmado: (participante: string, streaming: string, valor: string) =>
-        `✅ ${participante}, pagamento confirmado!\n\n*${streaming}*\n💰 ${valor}\n\nObrigado! Seu acesso continua ativo.`,
+    pagamentoConfirmado: (participante: string, streaming: string, valor: string): EnvioWhatsAppObj => ({
+        texto: `✅ ${participante}, pagamento confirmado!\n\n*${streaming}*\n💰 ${valor}\n\nObrigado! Seu acesso continua ativo.`,
+        template: {
+            name: "pagamento_confirmado",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: valor },
+                    ]
+                }
+            ]
+        }
+    }),
 };
 
 // ---------------------------------------------------------------------------
@@ -62,7 +159,7 @@ export async function sendWhatsAppNotification(
     contaId: number,
     tipo: TipoNotificacaoWhatsApp,
     participanteId: number,
-    mensagem: string
+    mensagemContexto: EnvioWhatsAppObj // Mudado de 'string' para objeto que contém Template
 ): Promise<WhatsAppSendResult> {
     // 1. Load account plan config
     const config = await prisma.whatsAppConfig.findUnique({
@@ -92,8 +189,11 @@ export async function sendWhatsAppNotification(
     // 4. Determine if plan allows automation
     const automated = PLANS[config.conta.plano]?.automationEnabled === true;
 
-    // 5. Send (automated for Business, link-only for Free/Pro)
-    const result = await sendWhatsApp(participante.whatsappNumero, mensagem, automated);
+    const mensagemTextoLogs = mensagemContexto.texto;
+    const templateConfig = mensagemContexto.template;
+
+    // 5. Send (automated uses Meta template API, manual uses wa.me links with pure text)
+    const result = await sendWhatsApp(participante.whatsappNumero, mensagemTextoLogs, automated, templateConfig);
 
     // 6. Log the attempt
     await prisma.whatsAppLog.create({
@@ -102,7 +202,7 @@ export async function sendWhatsAppNotification(
             participanteId,
             tipo,
             numeroDestino: participante.whatsappNumero,
-            mensagem,
+            mensagem: mensagemTextoLogs, // Prisma required string field
             enviado: result.success,
             erro: result.error,
             providerId: result.messageId,
