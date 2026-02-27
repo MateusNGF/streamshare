@@ -83,4 +83,5 @@ export interface ParticipantSubscription {
     valorIntegral: number;
     proximoVencimento: Date | null;
     hasCredentials: boolean;
+    pendingCobrancaId?: number | null;
 }

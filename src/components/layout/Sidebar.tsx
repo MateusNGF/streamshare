@@ -77,6 +77,7 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
                 { icon: Tv, label: "Streamings", href: "/streamings" },
                 { icon: FileSignature, label: "Assinaturas", href: "/assinaturas" },
                 { icon: CreditCard, label: "Cobranças", href: "/cobrancas" },
+                { icon: FileSignature, label: "Lotes", href: "/cobrancas/lotes" },
                 { icon: Users, label: "Participantes", href: "/participantes" },
                 { icon: FolderOpen, label: "Grupos", href: "/grupos" },
             ]

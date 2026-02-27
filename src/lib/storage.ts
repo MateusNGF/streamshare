@@ -1,15 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Usando a service role key do .env que possui permissões completas
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Credenciais do Supabase não encontradas. Verifique NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no arquivo .env");
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+function checkConfig() {
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Credenciais do Supabase não encontradas. Verifique NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no arquivo .env");
+    }
+}
 
 /**
  * Realiza o upload de um comprovante para o bucket "comprovantes" no Supabase Storage.
@@ -18,6 +19,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
  * @returns A URL pública da imagem recém-salva
  */
 export async function uploadComprovante(file: File | Blob | ArrayBuffer, fileName: string): Promise<string> {
+    checkConfig();
     const fileExt = fileName.split('.').pop() || 'tmp';
     const filePath = `comprovantes_streamshare/${uuidv4()}.${fileExt}`;
 

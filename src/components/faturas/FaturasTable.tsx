@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, Check, MessageCircle, AlertCircle, Trash } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, Check, MessageCircle, AlertCircle, Trash, UploadCloud, RefreshCw } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -37,7 +37,10 @@ export function FaturasTable({
     onCancelPayment
 }: FaturasTableProps) {
     const { success, error: toastError } = useToast();
-    const [faturaToPay, setFaturaToPay] = useState<any>(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+    // The table manages its own payment modal for direct pay actions
+    const [faturaToPayOrResend, setFaturaToPayOrResend] = useState<any>(null);
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -131,7 +134,15 @@ export function FaturasTable({
                                     {
                                         label: "Pagar Fatura",
                                         icon: <DollarSign size={16} />,
-                                        onClick: () => setFaturaToPay(fatura)
+                                        onClick: () => setFaturaToPayOrResend(fatura)
+                                    }
+                                ] : []),
+                                ...(!isPaid && !isCancelled && isAwaiting && !isAdmin ? [
+                                    { type: "separator" as const },
+                                    {
+                                        label: "Ver Comprovante",
+                                        icon: <Eye size={16} className="text-amber-500" />,
+                                        onClick: () => onViewDetails(fatura.id)
                                     }
                                 ] : []),
                                 ...(!isPaid && !isCancelled && isAdmin ? [
@@ -231,9 +242,9 @@ export function FaturasTable({
             </div>
 
             <ModalPagamentoCobranca
-                isOpen={!!faturaToPay}
-                onClose={() => setFaturaToPay(null)}
-                fatura={faturaToPay}
+                isOpen={!!faturaToPayOrResend}
+                onClose={() => setFaturaToPayOrResend(null)}
+                fatura={faturaToPayOrResend}
             />
         </div>
     );

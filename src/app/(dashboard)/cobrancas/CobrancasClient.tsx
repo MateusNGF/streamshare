@@ -35,6 +35,7 @@ const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard")
 });
 
 const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
+const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
 
 interface CobrancasClientProps {
     kpis: {
@@ -58,6 +59,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
         loading,
+        whatsappLoading,
         cancelModalOpen, setCancelModalOpen,
         confirmPaymentModalOpen, setConfirmPaymentModalOpen,
         detailsModalOpen, setDetailsModalOpen,
@@ -75,7 +77,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         handleClearFilters,
         handleViewQrCode,
         qrModalOpen, setQrModalOpen,
-        setSelectedCobrancaId
+        setSelectedCobrancaId,
+        selectedIds, toggleSelection, selectAll, clearSelection,
+        batchTotal, hasMixedParticipants, activeLote, batchPixModalOpen, setBatchPixModalOpen,
+        handleAbrirLote, handleConfirmarLoteAdmin, handleEnviarWhatsAppLote
     } = useCobrancasActions(cobrancasIniciais);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
@@ -273,9 +278,24 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                         searchTerm={searchTerm}
                         statusFilter={statusFilter}
                         onViewQrCode={handleViewQrCode}
+                        selectedIds={selectedIds}
+                        onToggleSelect={toggleSelection}
+                        onSelectAll={selectAll}
                     />
                 )}
             </div>
+
+            <BatchActionBar
+                count={selectedIds.size}
+                total={batchTotal}
+                isAdmin={true}
+                onPay={handleAbrirLote}
+                onWhatsApp={handleEnviarWhatsAppLote}
+                onClear={clearSelection}
+                loading={loading}
+                whatsappLoading={whatsappLoading}
+                hasMixedParticipants={hasMixedParticipants}
+            />
 
             <CobrancasModals
                 cancelModalOpen={cancelModalOpen}
@@ -293,6 +313,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 loading={loading}
                 qrModalOpen={qrModalOpen}
                 onCloseQrModal={() => setQrModalOpen(false)}
+                batchPixModalOpen={batchPixModalOpen}
+                onCloseBatchPix={() => setBatchPixModalOpen(false)}
+                activeLote={activeLote}
+                isAdmin={true}
             />
         </PageContainer>
     );
