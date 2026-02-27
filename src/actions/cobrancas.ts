@@ -568,7 +568,7 @@ export async function enviarNotificacaoCobranca(
             return { success: false, error: `Já foi enviada uma notificação WhatsApp ${tempoDecorrido}. Aguarde 24 horas para enviar novamente.` };
         }
 
-        // **SE CONFIGURADO: Enviar via Twilio API**
+        // **SE CONFIGURADO: Enviar via Meta Cloud API**
         const result = await sendWhatsAppNotification(
             contaId,
             tipo,

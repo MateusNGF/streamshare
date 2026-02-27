@@ -99,7 +99,7 @@ async function processBillingNotifications({
 
             if (result.success) {
                 console.log(`[${logPrefix}] ✅ Notificação enviada para cobrança ${cobranca.id}`);
-            } else if ('reason' in result && result.reason === 'not_configured') {
+            } else if (result.error === 'account_disabled') {
                 // Registrar log persistente caso o WhatsApp não esteja configurado no momento
                 try {
                     await prisma.whatsAppLog.create({
