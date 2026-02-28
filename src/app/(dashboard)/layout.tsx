@@ -54,7 +54,7 @@ export default async function DashboardLayout({
                 emailVerificado={!!userData?.emailVerificado}
             />
             <Sidebar isSystemAdmin={isSystemAdmin} userPlan={userPlan} />
-            <main className="flex-1 overflow-y-auto h-screen pt-16 lg:pt-0">
+            <main className="flex-1 overflow-y-auto h-screen pt-16 pb-16 lg:pt-0 lg:pb-0">
                 <div className="p-4 md:p-8 max-w-7xl mx-auto">
                     <SubscriptionAlert status={status} />
                     {children}
