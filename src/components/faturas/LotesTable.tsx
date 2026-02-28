@@ -8,8 +8,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, FileText } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Clock, Hash, FileText, Trash } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell } from "@/components/cobrancas/shared/BillingTableCells";
@@ -18,11 +19,13 @@ import { formatCurrency } from "@/lib/formatCurrency";
 interface LotesTableProps {
     lotes: any[];
     onViewDetails: (id: number) => void;
+    onCancelLote?: (id: number) => void;
 }
 
 export function LotesTable({
     lotes,
     onViewDetails,
+    onCancelLote,
 }: LotesTableProps) {
     if (lotes.length === 0) {
         return (
@@ -129,12 +132,22 @@ export function LotesTable({
                                     </TableCell>
 
                                     <TableCell className="text-center">
-                                        <button
-                                            onClick={() => onViewDetails(lote.id)}
-                                            className="p-2 text-gray-400 hover:text-primary transition-colors hover:bg-primary/5 rounded-lg"
-                                        >
-                                            <Eye size={18} />
-                                        </button>
+                                        <Dropdown options={[
+                                            {
+                                                label: "Ver Detalhes",
+                                                icon: <Eye size={16} />,
+                                                onClick: () => onViewDetails(lote.id)
+                                            },
+                                            ...((lote.status === "pendente" || lote.status === "aguardando_aprovacao") ? [
+                                                { type: "separator" as const },
+                                                {
+                                                    label: "Cancelar Lote",
+                                                    icon: <Trash size={16} />,
+                                                    variant: "danger" as const,
+                                                    onClick: () => onCancelLote?.(lote.id)
+                                                }
+                                            ] : [])
+                                        ]} />
                                     </TableCell>
                                 </TableRow>
                             );

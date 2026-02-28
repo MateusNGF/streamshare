@@ -103,10 +103,10 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura, isAdmin = fals
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
-        if (selectedFile && selectedFile.size <= 5 * 1024 * 1024) {
+        if (selectedFile && selectedFile.size <= 5 * 1024 * 1024 && (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf')) {
             setFile(selectedFile);
         } else if (selectedFile) {
-            toastError("Arquivo muito grande. Limite 5MB.");
+            toastError("Arquivo inválido ou muito grande. Limite 5MB (PNG, JPG, PDF).");
         }
         e.target.value = '';
     };
