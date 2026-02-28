@@ -63,6 +63,10 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
 
     const valor = Number(lote?.valorTotal || 0);
     const status = lote?.status || "pendente";
+
+    const chavePix = lote?.participante?.conta?.chavePix;
+    const nomeConta = lote?.participante?.conta?.nome || "Titular";
+
     const steps = isAdmin
         ? ["Resumo", "Comprovante", "Histórico"]
         : (status === "pendente" ? ["Pagar", "Comprovante", "Sucesso"] : ["Resumo", "Status", "Comprovante"]);
@@ -77,8 +81,6 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
 
     useEffect(() => {
         async function loadPix() {
-            const chavePix = lote?.participante?.conta?.chavePix;
-            const nomeConta = lote?.participante?.conta?.nome || "Titular";
             if (isOpen && chavePix && lote?.id && status === "pendente") {
                 setIsLoadingPix(true);
                 try {
@@ -92,7 +94,7 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
             }
         }
         loadPix();
-    }, [isOpen, lote, status, valor]);
+    }, [isOpen, chavePix, nomeConta, valor, lote?.id, status]);
 
     if (!lote) return null;
 
@@ -211,25 +213,37 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
             </div>
 
             {!isAdmin && status === "pendente" && (
-                <div className="flex flex-col sm:flex-row gap-4 items-center bg-white p-5 rounded-[32px] border border-zinc-100 shadow-sm ring-1 ring-blue-50 group">
-                    <div className="bg-zinc-50 p-2.5 rounded-[28px] border border-zinc-100 transition-transform group-hover:scale-105 duration-500">
-                        <div className="p-1.5 bg-white rounded-xl shadow-inner">
-                            {isLoadingPix ? <div className="w-20 h-20 flex items-center justify-center"><Loader2 className="animate-spin text-zinc-200" size={24} /></div> : pixPayload ? <QRCode value={pixPayload} size={84} /> : <div className="w-20 h-20 flex items-center justify-center bg-red-50 text-red-500 font-black text-xs">ERRO</div>}
+                !chavePix ? (
+                    <div className="flex flex-col items-center gap-4 py-8 text-center bg-zinc-50 rounded-[32px] border border-zinc-100">
+                        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+                            <AlertCircle size={32} className="text-red-500" />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="font-black text-zinc-900 text-lg">Pagamento Indisponível</h3>
+                            <p className="text-sm text-zinc-500 max-w-[300px]">O administrador ainda não configurou a chave PIX para recebimento.</p>
                         </div>
                     </div>
-                    <div className="flex-1 space-y-3 w-full">
-                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">PIX Copia e Cola</p>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <Button onClick={copyPix} variant="outline" size="sm" className="flex-1 text-[11px] h-9 gap-2 rounded-xl border-zinc-100 text-zinc-600 font-bold hover:bg-zinc-50 transition-all">
-                                {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                                {isCopied ? "Copiado!" : "Copiar"}
-                            </Button>
-                            <Button onClick={() => window.open(generateWhatsAppLink(lote.participante?.whatsappNumero || "", `PIX para pagamento do lote: ${pixPayload}`), "_blank")} variant="outline" size="sm" className="flex-1 text-[11px] h-9 gap-2 rounded-xl border-green-100 text-green-700 font-bold hover:bg-green-50 transition-all">
-                                <MessageCircle size={14} /> WhatsApp
-                            </Button>
+                ) : (
+                    <div className="flex flex-col sm:flex-row gap-4 items-center bg-white p-5 rounded-[32px] border border-zinc-100 shadow-sm ring-1 ring-blue-50 group">
+                        <div className="bg-zinc-50 p-2.5 rounded-[28px] border border-zinc-100 transition-transform group-hover:scale-105 duration-500">
+                            <div className="p-1.5 bg-white rounded-xl shadow-inner">
+                                {isLoadingPix ? <div className="w-20 h-20 flex items-center justify-center"><Loader2 className="animate-spin text-zinc-200" size={24} /></div> : pixPayload ? <QRCode value={pixPayload} size={84} /> : <div className="w-20 h-20 flex items-center justify-center bg-red-50 text-red-500 font-black text-xs">ERRO</div>}
+                            </div>
+                        </div>
+                        <div className="flex-1 space-y-3 w-full">
+                            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">PIX Copia e Cola</p>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Button onClick={copyPix} variant="outline" size="sm" className={cn("flex-1 text-[11px] h-9 gap-2 rounded-xl font-bold transition-all", isCopied ? "border-green-200 bg-green-50 text-green-700" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50")}>
+                                    {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                    {isCopied ? "Copiado!" : "Copiar PIX"}
+                                </Button>
+                                <Button onClick={() => window.open(generateWhatsAppLink(lote.participante?.whatsappNumero || "", `PIX para pagamento do lote: ${pixPayload}`), "_blank")} variant="outline" size="sm" className="flex-1 text-[11px] h-9 gap-2 rounded-xl border-green-100 text-green-700 font-bold hover:bg-green-50 transition-all">
+                                    <MessageCircle size={14} /> WhatsApp
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )
             )}
 
             <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm mt-4">
@@ -275,7 +289,7 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
                     <div className={cn("absolute left-1.5 top-0 w-5 h-5 rounded-full shadow-lg border-4 border-white", status !== "pendente" ? "bg-green-500 shadow-green-100" : "bg-zinc-200")} />
                     <div className="space-y-0.5">
                         <p className={cn("text-[11px] font-black uppercase", status !== "pendente" ? "text-zinc-900" : "text-zinc-400")}>Comprovante Enviado</p>
-                        <p className="text-xs text-zinc-500 font-medium">{status !== "pendente" ? new Date(lote.updatedAt).toLocaleString() : "Aguardando..."}</p>
+                        <p className="text-xs text-zinc-500 font-medium">{status !== "pendente" && lote.updatedAt ? new Date(lote.updatedAt).toLocaleString() : "Aguardando..."}</p>
                     </div>
                 </div>
 

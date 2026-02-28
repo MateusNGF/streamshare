@@ -299,6 +299,71 @@ export async function confirmarPagamento(
 }
 
 /**
+ * Rejects a charge, reverting it to pendente and clearing comprovante
+ */
+export async function rejeitarCobrancaAction(cobrancaId: number, motivo?: string) {
+    try {
+        const { contaId } = await getContext();
+
+        const cobranca = await prisma.cobranca.findFirst({
+            where: {
+                id: cobrancaId,
+                status: "aguardando_aprovacao",
+                assinatura: {
+                    participante: { contaId }
+                }
+            },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: { include: { usuario: true } },
+                        streaming: { include: { catalogo: true } }
+                    }
+                }
+            }
+        });
+
+        if (!cobranca) {
+            return { success: false, error: "Cobrança não encontrada ou não está aguardando aprovação" };
+        }
+
+        const txResult = await prisma.$transaction(async (tx) => {
+            const updated = await tx.cobranca.update({
+                where: { id: cobrancaId },
+                data: {
+                    status: "pendente",
+                    comprovanteUrl: null // Limpa o comprovante para reenvio
+                }
+            });
+
+            // Notifica o participante
+            if (cobranca.assinatura.participante.userId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: cobranca.assinatura.participante.userId,
+                        tipo: "cobranca_cancelada",
+                        titulo: "Pagamento Rejeitado",
+                        descricao: `O comprovante da fatura #${cobrancaId} foi rejeitado. Motivo: ${motivo || 'inválido'}. Por favor, reenvie.`,
+                        entidadeId: cobrancaId,
+                        lida: false
+                    }
+                });
+            }
+
+            return updated;
+        });
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        return { success: true, data: txResult };
+    } catch (error: any) {
+        console.error("[REJEITAR_COBRANCA_ERROR]", error);
+        return { success: false, error: "Erro ao rejeitar cobrança" };
+    }
+}
+
+/**
  * Cancel a charge
  */
 export async function cancelarCobranca(cobrancaId: number) {
@@ -647,7 +712,7 @@ export async function criarLotePagamento(cobrancaIds: number[]) {
         const cobrancas = await prisma.cobranca.findMany({
             where: {
                 id: { in: cobrancaIds },
-                status: "pendente",
+                status: { in: ["pendente", "atrasado"] },
                 lotePagamentoId: null,
                 assinatura: {
                     participante: activeContaId ? { contaId: activeContaId } : { userId: user.userId }
@@ -1016,6 +1081,8 @@ export async function getLotesUsuario() {
                 status: true,
                 valorTotal: true,
                 createdAt: true,
+                updatedAt: true,
+                comprovanteUrl: true,
                 participante: {
                     select: {
                         id: true,
@@ -1085,6 +1152,8 @@ export async function getLotesGestor() {
                 status: true,
                 valorTotal: true,
                 createdAt: true,
+                updatedAt: true,
+                comprovanteUrl: true,
                 participante: {
                     select: {
                         id: true,

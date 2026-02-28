@@ -245,6 +245,7 @@ export function FaturasTable({
                 isOpen={!!faturaToPayOrResend}
                 onClose={() => setFaturaToPayOrResend(null)}
                 fatura={faturaToPayOrResend}
+                isAdmin={isAdmin}
             />
         </div>
     );
