@@ -79,7 +79,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 1. Sidebar
 
-**Arquivo**: `src/components/layout/Sidebar.tsx`
+**Arquivo**: [`src/components/layout/Sidebar.tsx`](../../src/components/layout/Sidebar.tsx)
 
 **Características**:
 - Largura fixa: `w-64` (256px)
@@ -106,7 +106,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 2. KPICard
 
-**Arquivo**: `src/components/dashboard/KPICard.tsx`
+**Arquivo**: [`src/components/dashboard/KPICard.tsx`](../../src/components/dashboard/KPICard.tsx)
 
 **Características**:
 - Background: `bg-white`
@@ -138,7 +138,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 3. StreamingCard
 
-**Arquivo**: `src/components/dashboard/StreamingCard.tsx`
+**Arquivo**: [`src/components/dashboard/StreamingCard.tsx`](../../src/components/dashboard/StreamingCard.tsx)
 
 **Características**:
 - Hover: `hover:bg-gray-50`
@@ -166,7 +166,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 4. RecentSubscription
 
-**Arquivo**: `src/components/dashboard/RecentSubscription.tsx`
+**Arquivo**: [`src/components/dashboard/RecentSubscription.tsx`](../../src/components/dashboard/RecentSubscription.tsx)
 
 **Características**:
 - Hover: `hover:bg-gray-50`
@@ -193,7 +193,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 5. FaturaCard
 
-**Arquivo**: `src/components/faturas/FaturaCard.tsx`
+**Arquivo**: [`src/components/faturas/FaturaCard.tsx`](../../src/components/faturas/FaturaCard.tsx)
 
 **Características**:
 - Border Radius: `rounded-2xl`
