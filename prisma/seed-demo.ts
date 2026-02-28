@@ -1,207 +1,346 @@
-import { PrismaClient, PlanoConta, ProviderAuth, NivelAcesso, StatusAssinatura, StatusCobranca, StatusParticipante, FrequenciaPagamento, TipoNotificacao } from "@prisma/client";
+import {
+    PrismaClient,
+    PlanoConta,
+    ProviderAuth,
+    NivelAcesso,
+    StatusAssinatura,
+    StatusCobranca,
+    StatusParticipante,
+    FrequenciaPagamento,
+    TipoNotificacao,
+    StatusLote,
+    Streaming,
+    Participante,
+    StreamingCatalogo,
+    Conta,
+    Usuario
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays, subDays, startOfMonth, subMonths } from "date-fns";
+
 const prisma = new PrismaClient();
 
-async function main() {
-    console.log("🚀 Iniciando Seed de DEMONSTRAÇÃO...\n");
-    const now = new Date();
-
-    // 1. Verificar Catálogos Existentes
-    console.log("🎬 Verificando Catálogos da Base de Dados...");
-    const netflixExists = await prisma.streamingCatalogo.findFirst({ where: { nome: "Netflix" } });
-
-    if (!netflixExists) {
-        console.error("❌ ERRO: O catálogo oficial não foi encontrado.");
-        console.error("👉 Por favor, rode o comando 'npm run db:seed' primeiro para popular o banco base.");
-        process.exit(1);
-    }
-    console.log("  ✅ Catálogo Base encontrado.");
-    // 2. Conta Demo
-    console.log("🏢 Criando Conta Demo...");
-    const emailDemo = "demo@streamshare.com.br";
-    const senhaHash = await bcrypt.hash("demo123", 10);
-
-    let contaDemo = await prisma.conta.upsert({
-        where: { email: emailDemo },
-        update: { nome: "StreamShare Demo", plano: PlanoConta.pro, isAtivo: true },
-        create: { nome: "StreamShare Demo", email: emailDemo, plano: PlanoConta.pro, isAtivo: true },
-    });
-
-    let usuarioDemo = await prisma.usuario.upsert({
-        where: { email: emailDemo },
-        update: { nome: "Admin Demo", senhaHash, provider: ProviderAuth.local, isAtivo: true },
-        create: { email: emailDemo, nome: "Admin Demo", senhaHash, provider: ProviderAuth.local, isAtivo: true, ultimoLogin: now },
-    });
-
-    await prisma.contaUsuario.upsert({
-        where: { contaId_usuarioId: { contaId: contaDemo.id, usuarioId: usuarioDemo.id } },
-        update: { nivelAcesso: NivelAcesso.owner, isAtivo: true },
-        create: { contaId: contaDemo.id, usuarioId: usuarioDemo.id, nivelAcesso: NivelAcesso.owner, isAtivo: true },
-    });
-
-    // 3. Participantes Variados
-    console.log("👥 Gerando Participantes...");
-    const participantesFake = [
-        { nome: "Ana Silva", status: StatusParticipante.ativo, whatsappNumero: "5511999991111" },
-        { nome: "Carlos Mendes", status: StatusParticipante.ativo, whatsappNumero: "5511999992222" },
-        { nome: "Beatriz Sousa", status: StatusParticipante.pendente, whatsappNumero: "5511999993333" },
-        { nome: "Daniel Costa", status: StatusParticipante.bloqueado, whatsappNumero: "5511999994444" },
-        { nome: "Eduardo Rocha", status: StatusParticipante.ativo, whatsappNumero: "5511999995555" }
-    ];
-
-    const participantesCriados = [];
-    for (const p of participantesFake) {
-        const criado = await prisma.participante.upsert({
-            where: { contaId_whatsappNumero: { contaId: contaDemo.id, whatsappNumero: p.whatsappNumero } },
-            update: { nome: p.nome, status: p.status },
-            create: { contaId: contaDemo.id, nome: p.nome, status: p.status, whatsappNumero: p.whatsappNumero, whatsappVerificado: true },
-        });
-        participantesCriados.push(criado);
-    }
-
-    // 4. Streamings da Conta
-    console.log("📺 Gerando Streamings Ativos...");
-    const netflixCat = await prisma.streamingCatalogo.findFirst({ where: { nome: "Netflix" } });
-    const spotifyCat = await prisma.streamingCatalogo.findFirst({ where: { nome: "Spotify" } });
-    const xboxCat = await prisma.streamingCatalogo.findFirst({ where: { nome: "Xbox Game Pass" } });
-
-    const strNetflix = await prisma.streaming.create({
-        data: {
-            contaId: contaDemo.id,
-            streamingCatalogoId: netflixCat!.id,
-            apelido: "Netflix Premium Family",
-            valorIntegral: 59.90,
-            limiteParticipantes: 4,
-            isPublico: true,
-        }
-    });
-
-    const strSpotify = await prisma.streaming.create({
-        data: {
-            contaId: contaDemo.id,
-            streamingCatalogoId: spotifyCat!.id,
-            apelido: "Spotify Familia Amigos",
-            valorIntegral: 34.90,
-            limiteParticipantes: 5,
-            isPublico: false,
-        }
-    });
-
-    // 5. Assinaturas e Histórico Financeiro
-    console.log("💳 Gerando Assinaturas e Cobranças Realistas...");
-    // Ana in Netflix (Active, perfectly paid)
-    const assAnaNet = await prisma.assinatura.create({
-        data: {
-            participanteId: participantesCriados[0].id,
-            streamingId: strNetflix.id,
-            frequencia: FrequenciaPagamento.mensal,
-            status: StatusAssinatura.ativa,
-            dataInicio: subMonths(now, 2),
-            valor: 14.90
-        }
-    });
-
-    // Ana Billing History: M-2 (Paid), M-1 (Paid), M0 (Pending)
-    await prisma.cobranca.createMany({
-        data: [
-            { assinaturaId: assAnaNet.id, valor: 14.90, periodoInicio: subMonths(now, 2), periodoFim: subMonths(now, 1), dataVencimento: subMonths(now, 2), status: StatusCobranca.pago, dataPagamento: subMonths(now, 2) },
-            { assinaturaId: assAnaNet.id, valor: 14.90, periodoInicio: subMonths(now, 1), periodoFim: startOfMonth(now), dataVencimento: subMonths(now, 1), status: StatusCobranca.pago, dataPagamento: subMonths(now, 1) },
-            { assinaturaId: assAnaNet.id, valor: 14.90, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: addDays(now, 5), status: StatusCobranca.pendente }
-        ]
-    });
-
-    // Carlos in Spotify (Active, Late Payment)
-    const assCarlosSpo = await prisma.assinatura.create({
-        data: {
-            participanteId: participantesCriados[1].id,
-            streamingId: strSpotify.id,
-            frequencia: FrequenciaPagamento.mensal,
-            status: StatusAssinatura.ativa,
-            dataInicio: subMonths(now, 1),
-            valor: 6.90
-        }
-    });
-
-    await prisma.cobranca.createMany({
-        data: [
-            { assinaturaId: assCarlosSpo.id, valor: 6.90, periodoInicio: subMonths(now, 1), periodoFim: startOfMonth(now), dataVencimento: subMonths(now, 1), status: StatusCobranca.pago, dataPagamento: subMonths(now, 1) },
-            { assinaturaId: assCarlosSpo.id, valor: 6.90, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: subDays(now, 2), status: StatusCobranca.atrasado }
-        ]
-    });
-
-    // Daniel in Netflix (Suspended due to non-payment)
-    const assDanielNet = await prisma.assinatura.create({
-        data: {
-            participanteId: participantesCriados[3].id,
-            streamingId: strNetflix.id,
-            frequencia: FrequenciaPagamento.mensal,
-            status: StatusAssinatura.suspensa,
-            dataInicio: subMonths(now, 3),
-            dataSuspensao: subDays(now, 5),
-            motivoSuspensao: "Falta de pagamento contínuo",
-            valor: 14.90
-        }
-    });
-
-    await prisma.cobranca.create({
-        data: { assinaturaId: assDanielNet.id, valor: 14.90, periodoInicio: subMonths(now, 1), periodoFim: startOfMonth(now), dataVencimento: subMonths(now, 1), status: StatusCobranca.atrasado }
-    });
-
-    // 6. Grupo Público
-    console.log("🔗 Criando Grupo Público...");
-    const grupo = await prisma.grupo.upsert({
-        where: { linkConvite: "discord-squad" },
-        update: {
-            nome: "Amigos do Discord",
-            descricao: "Grupo para rachar as contas da galera",
-            isPublico: true,
-            contaId: contaDemo.id
-        },
-        create: {
-            contaId: contaDemo.id,
-            nome: "Amigos do Discord",
-            descricao: "Grupo para rachar as contas da galera",
-            isPublico: true,
-            linkConvite: "discord-squad"
-        }
-    });
-
-    await prisma.grupoStreaming.createMany({
-        data: [
-            { grupoId: grupo.id, streamingId: strNetflix.id },
-            { grupoId: grupo.id, streamingId: strSpotify.id }
-        ]
-    });
-
-    // 7. Notificações e Suporte
-    console.log("🔔 Gerando Notificações Falsas e Chamados de Suporte...");
-    await prisma.notificacao.createMany({
-        data: [
-            { contaId: contaDemo.id, tipo: TipoNotificacao.cobranca_confirmada, titulo: "Pagamento Confirmado", descricao: "Ana Silva pagou a assinatura da Netflix", lida: false },
-            { contaId: contaDemo.id, tipo: TipoNotificacao.assinatura_suspensa, titulo: "Assinatura Suspensa", descricao: "Daniel Costa foi suspenso automaticamente na Netflix", lida: false },
-            { contaId: contaDemo.id, tipo: TipoNotificacao.solicitacao_participacao_criada, titulo: "Novo pedido de participação", descricao: "Beatriz Sousa quer entrar no Spotify", lida: true }
-        ]
-    });
-
-    await prisma.suporte.create({
-        data: {
-            nome: "Admin Demo",
-            email: emailDemo,
-            assunto: "Dúvida sobre Gateway de Pagamento",
-            descricao: "Gostaria de saber como integrar a Stripe na minha conta.",
-            usuarioId: usuarioDemo.id
-        }
-    });
-
-    console.log(`\n🎉 SEED DE DEMONSTRAÇÃO CONCLUÍDO!`);
-    console.log(`Email de acesso: ${emailDemo}`);
-    console.log(`Senha: demo123\n`);
+interface SeedContext {
+    now: Date;
+    emailDemo: string;
+    catalogos: Record<string, StreamingCatalogo>;
+    conta: Conta | null;
+    usuario: Usuario | null;
+    participantes: Record<string, Participante>;
+    streamings: Record<string, Streaming>;
 }
 
-main()
+class Logger {
+    static info(msg: string) { console.log(`\n🔹 ${msg}`); }
+    static success(msg: string) { console.log(`   ✅ ${msg}`); }
+    static warn(msg: string) { console.log(`   ⚠️  ${msg}`); }
+    static error(msg: string) { console.error(`   ❌ ${msg}`); }
+    static step(msg: string) { console.log(`      ➔ ${msg}`); }
+}
+
+class DemoCleanupService {
+    constructor(private prisma: PrismaClient) { }
+
+    async clearUserContext(email: string) {
+        Logger.info(`Verificando e limpando contexto para: ${email}`);
+
+        const conta = await this.prisma.conta.findUnique({ where: { email } });
+        if (conta) {
+            await this.deleteContaRecursively(conta.id);
+            Logger.success("Conta Demo e relacionamentos apagados.");
+        }
+
+        const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+        if (usuario) {
+            await this.deleteUsuarioRelatedData(usuario.id);
+            await this.prisma.usuario.delete({ where: { id: usuario.id } });
+            Logger.success("Usuário Demo apagado.");
+        }
+    }
+
+    private async deleteContaRecursively(contaId: number) {
+        Logger.step("Limpando dados financeiros e participantes...");
+        const pIds = await this.prisma.participante.findMany({ where: { contaId }, select: { id: true } });
+        const participanteIds = pIds.map(p => p.id);
+
+        if (participanteIds.length > 0) {
+            await this.prisma.cobranca.deleteMany({ where: { assinatura: { participanteId: { in: participanteIds } } } });
+            await this.prisma.assinatura.deleteMany({ where: { participanteId: { in: participanteIds } } });
+            await this.prisma.lotePagamento.deleteMany({ where: { participanteId: { in: participanteIds } } });
+            await this.prisma.whatsAppLog.deleteMany({ where: { participanteId: { in: participanteIds } } });
+            await this.prisma.participante.deleteMany({ where: { contaId } });
+        }
+
+        Logger.step("Limpando comunicação e grupos...");
+        await this.prisma.notificacao.deleteMany({ where: { contaId } });
+        await this.prisma.convite.deleteMany({ where: { contaId } });
+        await this.prisma.grupoStreaming.deleteMany({ where: { grupo: { contaId } } });
+        await this.prisma.grupo.deleteMany({ where: { contaId } });
+
+        Logger.step("Limpando streamings e configurações...");
+        await this.prisma.streamingCredenciais.deleteMany({ where: { streaming: { contaId } } });
+        await this.prisma.streaming.deleteMany({ where: { contaId } });
+        await this.prisma.whatsAppConfig.deleteMany({ where: { contaId } });
+        await this.prisma.contaUsuario.deleteMany({ where: { contaId } });
+
+        await this.prisma.conta.delete({ where: { id: contaId } });
+    }
+
+    private async deleteUsuarioRelatedData(usuarioId: number) {
+        await this.prisma.suporte.deleteMany({ where: { usuarioId } });
+        await this.prisma.convite.deleteMany({ where: { convidadoPorId: usuarioId } });
+        await this.prisma.convite.deleteMany({ where: { usuarioId } });
+    }
+}
+
+class DemoSeedRunner {
+    private ctx: SeedContext;
+
+    constructor(private prisma: PrismaClient) {
+        this.ctx = {
+            now: new Date(),
+            emailDemo: "demo@streamshare.com.br",
+            catalogos: {},
+            conta: null,
+            usuario: null,
+            participantes: {},
+            streamings: {},
+        };
+    }
+
+    async run() {
+        try {
+            Logger.info("INICIANDO REBORN DA SEED DEMO");
+
+            await new DemoCleanupService(this.prisma).clearUserContext(this.ctx.emailDemo);
+            await this.setupBaseCatalogos();
+            await this.setupAuthContext();
+            await this.setupParticipantes();
+            await this.setupStreamings();
+            await this.setupFinancialScenarios();
+            await this.setupSocialData();
+
+            this.finish();
+        } catch (error) {
+            Logger.error("Falha crítica no processo de Seed.");
+            throw error;
+        }
+    }
+
+    private async setupBaseCatalogos() {
+        Logger.info("Validando Catálogos...");
+        const nomes = ["Netflix", "Spotify", "Xbox Game Pass"];
+
+        for (const nome of nomes) {
+            const cat = await this.prisma.streamingCatalogo.findFirst({ where: { nome } });
+            if (!cat) throw new Error(`Catálogo '${nome}' não encontrado. Rode a seed base primeiro.`);
+            this.ctx.catalogos[nome] = cat;
+        }
+        Logger.success("Catálogos validados.");
+    }
+
+    private async setupAuthContext() {
+        Logger.info("Configurando Identidade...");
+        const senhaHash = await bcrypt.hash("demo123", 10);
+
+        this.ctx.conta = await this.prisma.conta.create({
+            data: {
+                nome: "StreamShare Demo",
+                email: this.ctx.emailDemo,
+                plano: PlanoConta.pro,
+                isAtivo: true,
+                chavePix: "11999999999"
+            },
+        });
+
+        this.ctx.usuario = await this.prisma.usuario.create({
+            data: {
+                email: this.ctx.emailDemo,
+                nome: "Admin Demo",
+                senhaHash,
+                provider: ProviderAuth.local,
+                isAtivo: true,
+                ultimoLogin: this.ctx.now
+            },
+        });
+
+        await this.prisma.contaUsuario.create({
+            data: {
+                contaId: this.ctx.conta.id,
+                usuarioId: this.ctx.usuario.id,
+                nivelAcesso: NivelAcesso.owner
+            },
+        });
+        Logger.success("Identidade Admin criada.");
+    }
+
+    private async setupParticipantes() {
+        Logger.info("Criando Ecossistema de Participantes...");
+        const fakes = [
+            { nome: "Ana Silva", status: StatusParticipante.ativo, whatsapp: "5511999991111" },
+            { nome: "Carlos Mendes", status: StatusParticipante.ativo, whatsapp: "5511999992222" },
+            { nome: "Beatriz Sousa", status: StatusParticipante.pendente, whatsapp: "5511999993333" },
+            { nome: "Daniel Costa", status: StatusParticipante.bloqueado, whatsapp: "5511999994444" },
+            { nome: "Eduardo Rocha", status: StatusParticipante.ativo, whatsapp: "5511999995555" }
+        ];
+
+        for (const p of fakes) {
+            this.ctx.participantes[p.nome] = await this.prisma.participante.create({
+                data: {
+                    contaId: this.ctx.conta!.id,
+                    nome: p.nome,
+                    status: p.status,
+                    whatsappNumero: p.whatsapp,
+                    whatsappVerificado: true
+                },
+            });
+        }
+    }
+
+    private async setupStreamings() {
+        Logger.info("Publicando Streamings...");
+
+        this.ctx.streamings["Netflix"] = await this.prisma.streaming.create({
+            data: {
+                contaId: this.ctx.conta!.id,
+                streamingCatalogoId: this.ctx.catalogos["Netflix"].id,
+                apelido: "Netflix Premium Family",
+                valorIntegral: 59.90,
+                limiteParticipantes: 4,
+                isPublico: true,
+            }
+        });
+
+        this.ctx.streamings["Spotify"] = await this.prisma.streaming.create({
+            data: {
+                contaId: this.ctx.conta!.id,
+                streamingCatalogoId: this.ctx.catalogos["Spotify"].id,
+                apelido: "Spotify Familia Amigos",
+                valorIntegral: 34.90,
+                limiteParticipantes: 5,
+            }
+        });
+
+        this.ctx.streamings["Xbox"] = await this.prisma.streaming.create({
+            data: {
+                contaId: this.ctx.conta!.id,
+                streamingCatalogoId: this.ctx.catalogos["Xbox Game Pass"].id,
+                apelido: "Xbox GamePass Ultimate",
+                valorIntegral: 49.99,
+                limiteParticipantes: 3,
+                isPublico: true,
+            }
+        });
+    }
+
+    private async setupFinancialScenarios() {
+        Logger.info("Simulando Cenários Financeiros (Lotes e Débitos)...");
+
+        const { participantes, streamings, now } = this.ctx;
+
+        // SCENARIO 1: Ana (Paid History + Current Batch/Lote Pending)
+        const assAnaNet = await this.prisma.assinatura.create({
+            data: { participanteId: participantes["Ana Silva"].id, streamingId: streamings["Netflix"].id, frequencia: FrequenciaPagamento.mensal, status: StatusAssinatura.ativa, dataInicio: subMonths(now, 2), valor: 14.90 }
+        });
+        const assAnaXbx = await this.prisma.assinatura.create({
+            data: { participanteId: participantes["Ana Silva"].id, streamingId: streamings["Xbox"].id, frequencia: FrequenciaPagamento.mensal, status: StatusAssinatura.ativa, dataInicio: subMonths(now, 1), valor: 16.50 }
+        });
+
+        await this.prisma.cobranca.createMany({
+            data: [
+                { assinaturaId: assAnaNet.id, valor: 14.90, periodoInicio: subMonths(now, 2), periodoFim: subMonths(now, 1), dataVencimento: subMonths(now, 2), status: StatusCobranca.pago, dataPagamento: subMonths(now, 2) },
+                { assinaturaId: assAnaNet.id, valor: 14.90, periodoInicio: subMonths(now, 1), periodoFim: startOfMonth(now), dataVencimento: subMonths(now, 1), status: StatusCobranca.pago, dataPagamento: subMonths(now, 1) },
+            ]
+        });
+
+        const cobAnaNet = await this.prisma.cobranca.create({ data: { assinaturaId: assAnaNet.id, valor: 14.90, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: addDays(now, 5), status: StatusCobranca.pendente } });
+        const cobAnaXbx = await this.prisma.cobranca.create({ data: { assinaturaId: assAnaXbx.id, valor: 16.50, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: addDays(now, 2), status: StatusCobranca.pendente } });
+
+        const loteAna = await this.prisma.lotePagamento.create({
+            data: { participanteId: participantes["Ana Silva"].id, valorTotal: 14.90 + 16.50, status: StatusLote.pendente }
+        });
+        await this.prisma.cobranca.updateMany({ where: { id: { in: [cobAnaNet.id, cobAnaXbx.id] } }, data: { lotePagamentoId: loteAna.id } });
+
+        // SCENARIO 2: Carlos (Delinquent/Atrasado)
+        const assCarlos = await this.prisma.assinatura.create({
+            data: { participanteId: participantes["Carlos Mendes"].id, streamingId: streamings["Spotify"].id, frequencia: FrequenciaPagamento.mensal, status: StatusAssinatura.ativa, dataInicio: subMonths(now, 1), valor: 6.90 }
+        });
+        await this.prisma.cobranca.create({
+            data: { assinaturaId: assCarlos.id, valor: 6.90, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: subDays(now, 2), status: StatusCobranca.atrasado }
+        });
+
+        // SCENARIO 3: Eduardo (Waiting Approval Batch/Lote with Receipt)
+        const assEduNet = await this.prisma.assinatura.create({ data: { participanteId: participantes["Eduardo Rocha"].id, streamingId: streamings["Netflix"].id, frequencia: FrequenciaPagamento.mensal, status: StatusAssinatura.ativa, dataInicio: startOfMonth(now), valor: 14.90 } });
+        const assEduSpo = await this.prisma.assinatura.create({ data: { participanteId: participantes["Eduardo Rocha"].id, streamingId: streamings["Spotify"].id, frequencia: FrequenciaPagamento.mensal, status: StatusAssinatura.ativa, dataInicio: startOfMonth(now), valor: 6.90 } });
+
+        const loteEdu = await this.prisma.lotePagamento.create({
+            data: {
+                participanteId: participantes["Eduardo Rocha"].id,
+                valorTotal: 14.90 + 6.90,
+                status: StatusLote.aguardando_aprovacao,
+                comprovanteUrl: "https://images.unsplash.com/photo-1620054992576-9d8e7c10b27b?q=80&w=600&auto=format&fit=crop"
+            }
+        });
+
+        await this.prisma.cobranca.create({ data: { assinaturaId: assEduNet.id, valor: 14.90, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: now, status: StatusCobranca.aguardando_aprovacao, lotePagamentoId: loteEdu.id } });
+        await this.prisma.cobranca.create({ data: { assinaturaId: assEduSpo.id, valor: 6.90, periodoInicio: startOfMonth(now), periodoFim: addDays(startOfMonth(now), 30), dataVencimento: now, status: StatusCobranca.aguardando_aprovacao, lotePagamentoId: loteEdu.id } });
+    }
+
+    private async setupSocialData() {
+        Logger.info("Construindo Social e Notificações...");
+
+        const grupo = await this.prisma.grupo.create({
+            data: {
+                contaId: this.ctx.conta!.id,
+                nome: "Amigos do Discord",
+                descricao: "Grupo para rachar as contas da galera",
+                isPublico: true,
+                linkConvite: "discord-squad"
+            }
+        });
+
+        await this.prisma.grupoStreaming.createMany({
+            data: [
+                { grupoId: grupo.id, streamingId: this.ctx.streamings["Netflix"].id },
+                { grupoId: grupo.id, streamingId: this.ctx.streamings["Spotify"].id }
+            ]
+        });
+
+        await this.prisma.notificacao.createMany({
+            data: [
+                { contaId: this.ctx.conta!.id, tipo: TipoNotificacao.cobranca_confirmada, titulo: "Pagamento Confirmado", descricao: "Ana Silva pagou sua cota", lida: false },
+                { contaId: this.ctx.conta!.id, tipo: TipoNotificacao.assinatura_suspensa, titulo: "Daniel Costa Bloqueado", descricao: "Acesso removido por inadimplência", lida: false }
+            ]
+        });
+
+        await this.prisma.suporte.create({
+            data: {
+                nome: "Admin Demo",
+                email: this.ctx.emailDemo,
+                assunto: "Gateway Setup",
+                descricao: "Como habilitar PIX automático no painel?",
+                usuarioId: this.ctx.usuario!.id
+            }
+        });
+    }
+
+    private finish() {
+        console.log(`\n🎉 SEED DE DEMONSTRAÇÃO CONCLUÍDO!`);
+        console.log(`-----------------------------------`);
+        console.log(`Email de acesso: ${this.ctx.emailDemo}`);
+        console.log(`Senha: demo123`);
+        console.log(`-----------------------------------\n`);
+    }
+}
+
+async function start() {
+    const runner = new DemoSeedRunner(prisma);
+    await runner.run();
+}
+
+start()
     .catch((e) => {
-        console.error("❌ Erro ao executar seed de demonstração:", e);
+        Logger.error(`Erro: ${e.message}`);
         process.exit(1);
     })
     .finally(async () => {

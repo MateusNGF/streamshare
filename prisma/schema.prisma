@@ -62,6 +62,13 @@ enum StatusConvite {
   solicitado
 }
 
+enum StatusLote {
+  pendente
+  aguardando_aprovacao
+  pago
+  cancelado
+}
+
 enum TipoNotificacaoWhatsApp {
   nova_assinatura
   cobranca_gerada
@@ -351,6 +358,8 @@ model Participante {
   assinaturas  Assinatura[]
   whatsappLogs WhatsAppLog[]
 
+  lotesPagamento LotePagamento[]
+
   @@unique([contaId, cpf])
   @@unique([contaId, whatsappNumero])
   @@unique([contaId, userId])
@@ -404,8 +413,28 @@ model Cobranca {
 
   assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
 
+  lotePagamentoId Int?
+  lotePagamento   LotePagamento? @relation("CobrancaLote", fields: [lotePagamentoId], references: [id])
+
   @@unique([assinaturaId, periodoInicio])
   @@map("cobranca")
+}
+
+model LotePagamento {
+  id             Int        @id @default(autoincrement())
+  participanteId Int
+  valorTotal     Decimal
+  status         StatusLote @default(pendente)
+  comprovanteUrl String?
+  expiresAt      DateTime?
+  motivoRejeicao String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  participante Participante @relation(fields: [participanteId], references: [id])
+  cobrancas    Cobranca[]   @relation("CobrancaLote")
+
+  @@map("lote_pagamento")
 }
 
 model WhatsAppConfig {

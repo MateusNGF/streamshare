@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 
-import { StatusCobranca } from "@prisma/client";
+import { StatusCobranca, StatusLote, Prisma, NivelAcesso } from "@prisma/client";
 import {
     calcularProximoVencimento,
     calcularValorPeriodo, calcularDataVencimentoPadrao
@@ -13,6 +13,9 @@ import type { CurrencyCode } from "@/types/currency.types";
 
 import { getContext } from "@/lib/action-context";
 import { billingService } from "@/services/billing-service";
+import { uploadComprovante } from "@/lib/storage";
+import { getCurrentUser } from "@/lib/auth";
+import { LotePagamentoService } from "@/services/lote-pagamento.service";
 
 /**
  * Get all charges for the current account with optional filters
@@ -70,22 +73,51 @@ export async function getCobrancas(filters?: {
 
         const cobrancas = await prisma.cobranca.findMany({
             where,
-            include: {
+            select: {
+                id: true,
+                status: true,
+                valor: true,
+                dataVencimento: true,
+                periodoInicio: true,
+                periodoFim: true,
+                createdAt: true,
+                updatedAt: true,
+                deletedAt: true,
+                dataPagamento: true,
+                comprovanteUrl: true,
+                dataEnvioComprovante: true,
+                gatewayTransactionId: true,
+                gatewayProvider: true,
+                tentativas: true,
+                metadataJson: true,
+                lotePagamentoId: true,
+                assinaturaId: true,
                 assinatura: {
-                    include: {
+                    select: {
+                        id: true,
+                        participanteId: true,
+                        frequencia: true,
+                        valor: true,
                         participante: {
-                            include: {
-                                conta: {
-                                    select: {
-                                        id: true,
-                                        nome: true,
-                                        chavePix: true,
-                                    }
-                                }
+                            select: {
+                                id: true,
+                                nome: true,
+                                whatsappNumero: true,
+                                contaId: true
                             }
                         },
                         streaming: {
-                            include: { catalogo: true }
+                            select: {
+                                id: true,
+                                apelido: true,
+                                catalogo: {
+                                    select: {
+                                        nome: true,
+                                        iconeUrl: true,
+                                        corPrimaria: true
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -264,6 +296,71 @@ export async function confirmarPagamento(
     } catch (error: any) {
         console.error("[CONFIRMAR_PAGAMENTO_ERROR]", error);
         return { success: false, error: error.message || "Erro ao confirmar pagamento" };
+    }
+}
+
+/**
+ * Rejects a charge, reverting it to pendente and clearing comprovante
+ */
+export async function rejeitarCobrancaAction(cobrancaId: number, motivo?: string) {
+    try {
+        const { contaId } = await getContext();
+
+        const cobranca = await prisma.cobranca.findFirst({
+            where: {
+                id: cobrancaId,
+                status: "aguardando_aprovacao",
+                assinatura: {
+                    participante: { contaId }
+                }
+            },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: { include: { usuario: true } },
+                        streaming: { include: { catalogo: true } }
+                    }
+                }
+            }
+        });
+
+        if (!cobranca) {
+            return { success: false, error: "Cobrança não encontrada ou não está aguardando aprovação" };
+        }
+
+        const txResult = await prisma.$transaction(async (tx) => {
+            const updated = await tx.cobranca.update({
+                where: { id: cobrancaId },
+                data: {
+                    status: "pendente",
+                    comprovanteUrl: null // Limpa o comprovante para reenvio
+                }
+            });
+
+            // Notifica o participante
+            if (cobranca.assinatura.participante.userId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: cobranca.assinatura.participante.userId,
+                        tipo: "cobranca_cancelada",
+                        titulo: "Pagamento Rejeitado",
+                        descricao: `O comprovante da fatura #${cobrancaId} foi rejeitado. Motivo: ${motivo || 'inválido'}. Por favor, reenvie.`,
+                        entidadeId: cobrancaId,
+                        lida: false
+                    }
+                });
+            }
+
+            return updated;
+        });
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        return { success: true, data: txResult };
+    } catch (error: any) {
+        console.error("[REJEITAR_COBRANCA_ERROR]", error);
+        return { success: false, error: "Erro ao rejeitar cobrança" };
     }
 }
 
@@ -588,5 +685,454 @@ export async function enviarNotificacaoCobranca(
     } catch (error: any) {
         console.error("[ENVIAR_NOTIFICACAO_COBRANCA_ERROR]", error);
         return { success: false, error: error.message || "Erro ao enviar notificação" };
+    }
+}
+
+/**
+ * Cria um lote de pagamento para múltiplas cobranças do mesmo participante.
+ */
+export async function criarLotePagamento(cobrancaIds: number[]) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true }
+        });
+
+        const lote = await LotePagamentoService.criarLote(cobrancaIds, {
+            userId: user.userId,
+            contaId: userAccount?.contaId,
+            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
+        });
+
+        revalidatePath("/faturas");
+        return { success: true, data: lote };
+    } catch (error: any) {
+        console.error("[CRIAR_LOTE_PAGAMENTO_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao criar lote de pagamento" };
+    }
+}
+
+/**
+ * Confirma o pagamento de um lote inteiro.
+ * @param loteId ID do lote
+ * @param data Pode ser a URL do comprovante (string) ou um FormData contendo o arquivo
+ */
+export async function confirmarLotePagamento(loteId: number, data?: FormData | string) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        let comprovanteUrl = typeof data === "string" ? data : undefined;
+
+        if (data instanceof FormData) {
+            const file = data.get("comprovante") as File;
+            if (file && file.size > 0) {
+                comprovanteUrl = await uploadComprovante(file, file.name);
+            }
+        }
+
+        if (!comprovanteUrl) {
+            return { success: false, error: "Comprovante não fornecido." };
+        }
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true },
+        });
+
+        const result = await LotePagamentoService.confirmarLote(loteId, comprovanteUrl!, {
+            userId: user.userId,
+            contaId: userAccount?.contaId,
+            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
+        });
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        revalidatePath("/");
+
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("[CONFIRMAR_LOTE_PAGAMENTO_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao confirmar lote" };
+    }
+}
+
+/**
+ * Envia notificação WhatsApp consolidada para múltiplas cobranças por participante.
+ */
+export async function enviarWhatsAppEmLote(cobrancaIds: number[]) {
+    try {
+        const { contaId } = await getContext();
+
+        const cobrancas = await prisma.cobranca.findMany({
+            where: {
+                id: { in: cobrancaIds },
+                assinatura: { participante: { contaId } }
+            },
+            include: {
+                assinatura: {
+                    include: {
+                        participante: true,
+                        streaming: { include: { catalogo: true } }
+                    }
+                }
+            }
+        });
+
+        if (cobrancas.length === 0) return { success: false, error: "Nenhuma cobrança válida encontrada." };
+
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { moedaPreferencia: true, chavePix: true, nome: true }
+        });
+
+        // Agrupar e enviar
+        const porParticipante = groupCobrancasByParticipante(cobrancas);
+        const results = [];
+
+        for (const pId in porParticipante) {
+            const itens = porParticipante[pId];
+            const participante = itens[0].assinatura.participante;
+
+            if (!participante.whatsappNumero) {
+                results.push({ participante: participante.nome, status: "Sem telefone" });
+                continue;
+            }
+
+            const message = await buildConsolidatedWhatsAppMessage(itens, conta);
+            const sendResult = await enviarWhatsAppConsolidadoHelper(contaId, pId, message, participante.whatsappNumero);
+
+            results.push({ participante: participante.nome, success: sendResult.success });
+        }
+
+        revalidatePath("/cobrancas");
+        return { success: true, data: results };
+    } catch (error: any) {
+        console.error("[ENVIAR_WHATSAPP_LOTE_ERROR]", error);
+        return { success: false, error: "Ocorreu um erro ao processar o envio em lote." };
+    }
+}
+
+/**
+ * Agrupador de cobranças (Clean Code)
+ */
+function groupCobrancasByParticipante(cobrancas: any[]) {
+    return cobrancas.reduce((acc, c) => {
+        const pId = c.assinatura.participanteId;
+        if (!acc[pId]) acc[pId] = [];
+        acc[pId].push(c);
+        return acc;
+    }, {} as Record<number, any[]>);
+}
+
+/**
+ * Montador de mensagem consolidada (Single Responsibility)
+ */
+async function buildConsolidatedWhatsAppMessage(itens: any[], conta: any) {
+    const { formatCurrency } = await import("@/lib/formatCurrency");
+    const moeda = (conta?.moedaPreferencia as CurrencyCode) || 'BRL';
+    const total = itens.reduce((sum, i) => sum.plus(i.valor), new Prisma.Decimal(0));
+
+    const participante = itens[0].assinatura.participante;
+
+    const listaServicos = itens.map(i => {
+        const sName = i.assinatura.streaming.apelido || i.assinatura.streaming.catalogo.nome;
+        return `- *${sName}*: ${formatCurrency(i.valor.toNumber(), moeda)}`;
+    }).join("\n");
+
+    return [
+        `Olá *${participante.nome}*! 👋`,
+        `Identificamos faturas pendentes para seus serviços:`,
+        "",
+        listaServicos,
+        "",
+        `*Total a pagar: ${formatCurrency(total.toNumber(), moeda)}*`,
+        "",
+        `Chave PIX: *${conta?.chavePix}*`,
+        `Titular: ${conta?.nome || 'StreamShare'}`,
+        "",
+        `Envie o comprovante pelo painel para liberação automática:`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+        "",
+        `Obrigado! 🚀`
+    ].join("\n");
+}
+
+async function enviarWhatsAppConsolidadoHelper(contaId: number, participanteId: any, mensagem: string, numero: string) {
+    try {
+        const whatsappConfig = await prisma.whatsAppConfig.findUnique({
+            where: { contaId },
+            select: { id: true, isAtivo: true }
+        });
+
+        // Se offline ou desativado, retorna link manual
+        if (!whatsappConfig || !whatsappConfig.isAtivo) {
+            const { generateWhatsAppLink } = await import("@/lib/whatsapp-link-utils");
+            return { success: true, manualLink: generateWhatsAppLink(numero, mensagem) };
+        }
+
+        const { sendWhatsAppNotification } = await import("@/lib/whatsapp-service");
+        // Nota: 'cobranca_gerada' é usado como template base para mensagens livres quando o template oficial não cobre
+        const res = await sendWhatsAppNotification(contaId, "cobranca_gerada" as any, Number(participanteId), {
+            texto: mensagem,
+            template: { name: "cobranca_gerada", language: "pt_BR", components: [] } as any
+        });
+        return { success: res.success };
+    } catch (e) {
+        return { success: false };
+    }
+}
+
+export async function getLotesUsuario() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const lotes = await prisma.lotePagamento.findMany({
+            where: {
+                participante: { userId: user.userId }
+            },
+            select: {
+                id: true,
+                status: true,
+                valorTotal: true,
+                createdAt: true,
+                updatedAt: true,
+                comprovanteUrl: true,
+                participante: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        whatsappNumero: true,
+                        conta: {
+                            select: {
+                                nome: true,
+                                chavePix: true
+                            }
+                        }
+                    }
+                },
+                cobrancas: {
+                    select: {
+                        id: true,
+                        valor: true,
+                        assinatura: {
+                            select: {
+                                streaming: {
+                                    select: {
+                                        apelido: true,
+                                        catalogo: {
+                                            select: {
+                                                nome: true,
+                                                iconeUrl: true,
+                                                corPrimaria: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { createdAt: "desc" }
+        });
+
+        return { success: true, data: lotes };
+    } catch (error: any) {
+        console.error("[GET_LOTES_USUARIO_ERROR]", error);
+        return { success: false, error: "Erro ao buscar lotes do usuário" };
+    }
+}
+
+export async function getLotesGestor() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true },
+        });
+
+        if (!userAccount || (userAccount.nivelAcesso !== "admin" && userAccount.nivelAcesso !== "owner")) {
+            return { success: false, error: "Acesso negado" };
+        }
+
+        const lotes = await prisma.lotePagamento.findMany({
+            where: {
+                participante: { contaId: userAccount.contaId }
+            },
+            select: {
+                id: true,
+                status: true,
+                valorTotal: true,
+                createdAt: true,
+                updatedAt: true,
+                comprovanteUrl: true,
+                participante: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        whatsappNumero: true,
+                        conta: {
+                            select: {
+                                nome: true,
+                                chavePix: true
+                            }
+                        }
+                    }
+                },
+                cobrancas: {
+                    select: {
+                        id: true,
+                        valor: true,
+                        assinatura: {
+                            select: {
+                                streaming: {
+                                    select: {
+                                        apelido: true,
+                                        catalogo: {
+                                            select: {
+                                                nome: true,
+                                                iconeUrl: true,
+                                                corPrimaria: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { createdAt: "desc" }
+        });
+
+        return { success: true, data: lotes };
+    } catch (error: any) {
+        console.error("[GET_LOTES_GESTOR_ERROR]", error);
+        return { success: false, error: "Erro ao buscar lotes da conta" };
+    }
+}
+
+/**
+ * Aprova um Lote de Pagamento manualmente (como admin)
+ */
+export async function aprovarLoteAction(loteId: number) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true },
+        });
+
+        const result = await LotePagamentoService.aprovarLote(loteId, {
+            userId: user.userId,
+            contaId: userAccount?.contaId,
+            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
+        });
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        revalidatePath("/");
+
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("[APROVAR_LOTE_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao aprovar lote." };
+    }
+}
+
+/**
+ * Rejeita um Lote de Pagamento manualmente (como admin)
+ */
+export async function rejeitarLoteAction(loteId: number, motivo?: string) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true },
+        });
+
+        const result = await LotePagamentoService.rejeitarLote(loteId, {
+            userId: user.userId,
+            contaId: userAccount?.contaId,
+            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
+        }, motivo);
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        revalidatePath("/");
+
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("[REJEITAR_LOTE_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao rejeitar lote." };
+    }
+}
+
+/**
+ * Retorna a contagem de lotes Pendentes de Avaliação (Aguardando Aprovação) para notificar o admin
+ */
+export async function getPendingLotesCount() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, data: 0 };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true },
+        });
+
+        if (!userAccount || (userAccount.nivelAcesso !== "admin" && userAccount.nivelAcesso !== "owner")) {
+            return { success: false, data: 0 };
+        }
+
+        const count = await prisma.lotePagamento.count({
+            where: {
+                participante: { contaId: userAccount.contaId },
+                status: "aguardando_aprovacao"
+            }
+        });
+
+        return { success: true, data: count };
+    } catch (error) {
+        return { success: false, data: 0 };
+    }
+}
+
+/**
+ * Cancela um Lote de Pagamento (Admin ou Participante)
+ */
+export async function cancelarLotePagamento(loteId: number, motivo?: string) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true },
+        });
+
+        await LotePagamentoService.cancelarLote(loteId, {
+            userId: user.userId,
+            contaId: userAccount?.contaId,
+            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
+        }, motivo);
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[CANCELAR_LOTE_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao cancelar lote." };
     }
 }

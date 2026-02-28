@@ -1,17 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
-import { confirmarPagamento, enviarNotificacaoCobranca, cancelarCobranca } from "@/actions/cobrancas";
+import {
+    confirmarPagamento,
+    enviarNotificacaoCobranca,
+    cancelarCobranca,
+    criarLotePagamento,
+    confirmarLotePagamento,
+    enviarWhatsAppEmLote
+} from "@/actions/cobrancas";
 
 export function useCobrancasActions(cobrancasIniciais: any[]) {
     const toast = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     // Filters State
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
     const [vencimentoRange, setVencimentoRange] = useState("");
     const [pagamentoRange, setPagamentoRange] = useState("");
     const [valorRange, setValorRange] = useState("");
@@ -19,6 +27,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
 
     // UI State
     const [loading, setLoading] = useState(false);
+    const [whatsappLoading, setWhatsappLoading] = useState(false);
 
     // Modal State
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -26,6 +35,11 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const [selectedCobrancaId, setSelectedCobrancaId] = useState<number | null>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [qrModalOpen, setQrModalOpen] = useState(false);
+
+    // Batch Selection State
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [activeLote, setActiveLote] = useState<any | null>(null);
+    const [batchPixModalOpen, setBatchPixModalOpen] = useState(false);
 
     const filteredCobrancas = cobrancasIniciais.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
@@ -70,6 +84,108 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
 
         return matchesSearch && matchesStatus && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
     });
+
+    // Batch Calculations
+    const batchTotal = Array.from(selectedIds).reduce((sum, id) => {
+        const cobranca = cobrancasIniciais.find(c => c.id === id);
+        return sum + (cobranca ? Number(cobranca.valor) : 0);
+    }, 0);
+
+    const hasMixedParticipants = (() => {
+        if (selectedIds.size <= 1) return false;
+        const idsArray = Array.from(selectedIds);
+        const firstCobranca = cobrancasIniciais.find(c => c.id === idsArray[0]);
+        if (!firstCobranca) return false;
+
+        const firstParticipantId = firstCobranca.assinatura.participanteId;
+        return idsArray.some(id => {
+            const c = cobrancasIniciais.find(curr => curr.id === id);
+            return c && c.assinatura.participanteId !== firstParticipantId;
+        });
+    })();
+
+    // Selection Handlers
+    const toggleSelection = (id: number) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const selectAll = (ids: number[]) => {
+        setSelectedIds(new Set(ids));
+    };
+
+    const clearSelection = () => {
+        setSelectedIds(new Set());
+    };
+
+    // Batch Actions
+    const handleAbrirLote = async () => {
+        if (selectedIds.size === 0) return;
+        setLoading(true);
+        try {
+            const result = await criarLotePagamento(Array.from(selectedIds));
+            if (result.success && result.data) {
+                router.push(`/cobrancas/lotes?loteId=${result.data.id}`);
+            } else if (result.error) {
+                toast.error(result.error);
+            }
+        } catch (error) {
+            toast.error("Erro ao preparar lote de pagamento");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConfirmarLoteAdmin = async (loteId: number) => {
+        setLoading(true);
+        try {
+            const result = await confirmarLotePagamento(loteId);
+            if (result.success) {
+                toast.success("Lote confirmado com sucesso!");
+                setBatchPixModalOpen(false);
+                clearSelection();
+                router.refresh();
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                toast.error(result.error || "Erro ao confirmar lote");
+            }
+        } catch (error) {
+            toast.error("Erro ao confirmar lote");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEnviarWhatsAppLote = async () => {
+        if (selectedIds.size === 0) return;
+        setWhatsappLoading(true);
+        try {
+            const result = await enviarWhatsAppEmLote(Array.from(selectedIds));
+            if (result.success && result.data) {
+                const manualLinks = result.data.filter((r: any) => r.manualLink);
+                const sentCount = result.data.filter((r: any) => r.success).length;
+
+                if (manualLinks.length > 0) {
+                    manualLinks.forEach((l: any) => window.open(l.manualLink, '_blank'));
+                    toast.info(`${manualLinks.length} links do WhatsApp abertos!`);
+                } else if (sentCount > 0) {
+                    toast.success(`${sentCount} notificações enviadas com sucesso!`);
+                }
+
+                clearSelection();
+            } else if (result.error) {
+                toast.error(result.error);
+            }
+        } catch (error) {
+            toast.error("Erro ao enviar mensagens em lote");
+        } finally {
+            setWhatsappLoading(false);
+        }
+    };
 
     const handleConfirmarPagamento = (id: number) => {
         setSelectedCobrancaId(id);
@@ -162,6 +278,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         valorRange, setValorRange,
         hasWhatsappFilter, setHasWhatsappFilter,
         loading,
+        whatsappLoading,
 
         // Modal States
         cancelModalOpen, setCancelModalOpen,
@@ -174,6 +291,11 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         filteredCobrancas,
         selectedCobranca: cobrancasIniciais.find(c => c.id === selectedCobrancaId),
 
+        // Batch States
+        selectedIds, toggleSelection, selectAll, clearSelection,
+        batchTotal, hasMixedParticipants, activeLote, setActiveLote,
+        batchPixModalOpen, setBatchPixModalOpen,
+
         // Actions
         handleConfirmarPagamento,
         executePaymentConfirmation,
@@ -181,6 +303,9 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         confirmCancellation,
         handleEnviarWhatsApp,
         handleClearFilters,
-        handleViewQrCode
+        handleViewQrCode,
+        handleAbrirLote,
+        handleConfirmarLoteAdmin,
+        handleEnviarWhatsAppLote
     };
 }

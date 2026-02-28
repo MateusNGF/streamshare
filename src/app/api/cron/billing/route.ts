@@ -35,6 +35,11 @@ export async function GET(req: NextRequest) {
         const renewalResult = await billingService.processarRenovacoes();
         console.info(`[CRON_BILLING] Renewals completed: ${JSON.stringify(renewalResult)}`);
 
+        // 1.5. Cancel expired payment batches
+        console.info('[CRON_BILLING] Step 1.5: Canceling expired payment batches...');
+        const expiredBatchesResult = await billingService.cancelarLotesExpirados();
+        console.info(`[CRON_BILLING] Expired batches canceled: ${expiredBatchesResult.cancelados}`);
+
         // 2. Notify about upcoming expirations
         console.info('[CRON_BILLING] Step 2: Checking for pending billing notifications...');
         await checkAndNotifyPendingBillings();
