@@ -471,11 +471,17 @@ model WhatsAppLog {
   erro       String? @db.Text
   providerId String?
 
+  // Rastreamento de Webhooks da Meta
+  statusEntrega String?   @default("sent") // sent, delivered, read, failed
+  deliveredAt   DateTime?
+  readAt        DateTime?
+
   createdAt DateTime @default(now())
 
   config       WhatsAppConfig @relation(fields: [configId], references: [id])
   participante Participante?  @relation(fields: [participanteId], references: [id])
 
+  @@index([providerId])
   @@index([configId, createdAt])
   @@map("whatsapp_log")
 }

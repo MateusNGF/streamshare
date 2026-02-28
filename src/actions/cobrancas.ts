@@ -497,7 +497,7 @@ export async function enviarNotificacaoCobranca(
 
         // Determinar tipo de notificação e mensagem baseado no status
         let tipo: typeof TipoNotificacaoWhatsApp[keyof typeof TipoNotificacaoWhatsApp];
-        let mensagem: string;
+        let mensagem: any;
 
         const participante = cobranca.assinatura.participante.nome;
         const streaming = cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome;
@@ -536,13 +536,15 @@ export async function enviarNotificacaoCobranca(
                 return { success: false, error: "Status da cobrança não permite envio de notificação" };
         }
 
+        const mensagemTexto = typeof mensagem === "string" ? mensagem : mensagem?.texto;
+
         // **SE NÃO CONFIGURADO: Retornar link wa.me para envio manual**
         if (!whatsappConfig || !whatsappConfig.isAtivo) {
             try {
                 const { generateWhatsAppLink } = await import("@/lib/whatsapp-link-utils");
                 const link = generateWhatsAppLink(
                     cobranca.assinatura.participante.whatsappNumero,
-                    mensagem
+                    mensagemTexto
                 );
 
                 // Criar log de tentativa manual (não bloqueia se falhar)
@@ -554,7 +556,7 @@ export async function enviarNotificacaoCobranca(
                                 participanteId: cobranca.assinatura.participanteId,
                                 tipo,
                                 numeroDestino: cobranca.assinatura.participante.whatsappNumero,
-                                mensagem,
+                                mensagem: mensagemTexto,
                                 enviado: false,
                                 erro: "Envio manual via wa.me - WhatsApp não configurado"
                             }
