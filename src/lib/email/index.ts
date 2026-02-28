@@ -2,6 +2,7 @@ import { createTransporter, logPreviewUrl } from "./transporter";
 import { getPasswordResetTemplate } from "./templates/password-reset";
 import { getWelcomeTemplate } from "./templates/welcome";
 import { getTestTemplate } from "./templates/test";
+import { getLoteAprovadoTemplate, getLoteRejeitadoTemplate } from "./templates/lote-pagamento";
 
 /**
  * Email Service
@@ -164,6 +165,66 @@ export async function sendEmail(opts: {
         return { success: true };
     } catch (error: any) {
         console.error(`❌ [sendEmail] Falha ao enviar para ${opts.to}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Envia email de lote de pagamento aprovado
+ */
+export async function sendLoteAprovadoEmail(opts: {
+    to: string;
+    participanteNome: string;
+    loteId: number;
+    quantidadeItens: number;
+    valorTotal: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const config = getEmailConfig();
+        const html = getLoteAprovadoTemplate({
+            participanteNome: opts.participanteNome,
+            loteId: opts.loteId,
+            quantidadeItens: opts.quantidadeItens,
+            valorTotal: opts.valorTotal,
+            replyTo: config.replyTo,
+        });
+
+        return await sendEmail({
+            to: opts.to,
+            subject: `Pagamento Confirmado! Lote #${opts.loteId} 🎉`,
+            html,
+        });
+    } catch (error: any) {
+        console.error("❌ Erro ao enviar email de lote aprovado:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Envia email de lote de pagamento rejeitado
+ */
+export async function sendLoteRejeitadoEmail(opts: {
+    to: string;
+    participanteNome: string;
+    loteId: number;
+    motivo: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const config = getEmailConfig();
+        const html = getLoteRejeitadoTemplate({
+            participanteNome: opts.participanteNome,
+            loteId: opts.loteId,
+            motivo: opts.motivo,
+            replyTo: config.replyTo,
+        });
+
+        return await sendEmail({
+            to: opts.to,
+            subject: `Ação Necessária: Pagamento Rejeitado (Lote #${opts.loteId}) ⚠️`,
+            html,
+        });
+    } catch (error: any) {
+        console.error("❌ Erro ao enviar email de lote rejeitado:", error);
         return { success: false, error: error.message };
     }
 }

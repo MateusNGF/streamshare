@@ -4,13 +4,14 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
-import { Copy, UploadCloud, CheckCircle2, CheckCircle, Loader2, MessageCircle, AlertCircle, ChevronRight, ChevronLeft, Info } from "lucide-react";
+import { Copy, UploadCloud, CheckCircle2, CheckCircle, Loader2, MessageCircle, AlertCircle, ChevronRight, ChevronLeft, Info, Check } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { generateStaticPix } from "@/lib/pix-generator";
 import { useToast } from "@/hooks/useToast";
 import { enviarComprovanteAction } from "@/actions/comprovantes";
 import { generateWhatsAppLink, generateWhatsAppLinkTextOnly } from "@/lib/whatsapp-link-utils";
 import { cn } from "@/lib/utils";
+import { StepContainer, StepIndicator, StepNavigation, StepHeader } from "@/components/ui/step-modal";
 
 interface ModalPagamentoCobrancaProps {
     isOpen: boolean;
@@ -27,6 +28,7 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura }: ModalPagamen
     const [isLoadingPix, setIsLoadingPix] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
 
     const valor = Number(fatura?.valor || 0);
     const chavePix = fatura?.assinatura?.participante?.conta?.chavePix;
@@ -62,6 +64,8 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura }: ModalPagamen
         if (!pixPayload) return;
         navigator.clipboard.writeText(pixPayload);
         success("Código Pix Copia e Cola transferido!");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     const shareWhatsApp = () => {
@@ -107,197 +111,153 @@ export function ModalPagamentoCobranca({ isOpen, onClose, fatura }: ModalPagamen
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Pagamento e Liberação"
-            className="sm:max-w-[500px] overflow-hidden"
+            title="Pagar Fatura"
+            className="sm:max-w-[480px]"
             footer={
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:justify-end">
-                    {step === 1 ? (
-                        <>
-                            <Button
-                                onClick={() => setStep(2)}
-                                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white gap-2 font-bold"
-                            >
-                                Enviar Comprovante <ChevronRight size={16} />
-                            </Button>
-                        </>
-                    ) : (
-                        <div className="flex flex-row items-center gap-2 w-full sm:justify-end">
-                            <Button
-                                variant="outline"
-                                onClick={() => setStep(1)}
-                                className="w-auto px-3 font-bold"
-                                disabled={isUploading}
-                            >
-                                <ChevronLeft size={16} />
-                            </Button>
-                            <Button
-                                onClick={handleEnviar}
-                                className="flex-1 sm:flex-none sm:w-auto bg-green-600 hover:bg-green-700 text-white gap-2 font-bold whitespace-nowrap"
-                                disabled={!file || isUploading}
-                            >
-                                {isUploading ? (
-                                    <>
-                                        <Loader2 size={16} className="animate-spin" />
-                                        Confirmando ...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle size={16} /> Confirmar Pagamento
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    )}
-                </div>
+                <StepNavigation
+                    step={step}
+                    totalSteps={2}
+                    onBack={step === 2 && !chavePix ? undefined : step === 2 ? () => setStep(1) : undefined}
+                    onNext={() => {
+                        if (step === 1) setStep(2);
+                        else handleEnviar();
+                    }}
+                    isLoading={isUploading}
+                    canNext={step === 1 ? true : !!file}
+                    nextLabel={step === 1 ? "Já paguei, anexar comprovante" : "Confirmar Envio"}
+                    nextIcon={step === 1 ? ChevronRight : CheckCircle}
+                    className="justify-end w-full"
+                />
             }
         >
-            <div className="space-y-6 py-2">
+            <div className="space-y-8 pt-2">
                 {chavePix && (
-                    /* Stepper Indicator */
-                    <div className="flex items-center justify-center gap-4 mb-2">
-                        <div className={cn(
-                            "flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-black transition-all",
-                            step === 1 ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-green-100 text-green-600 border border-green-200"
-                        )}>
-                            {step > 1 ? <CheckCircle2 size={14} /> : "1"}
-                        </div>
-                        <div className={cn("h-0.5 w-10 rounded-full transition-all", step > 1 ? "bg-green-500" : "bg-gray-100")} />
-                        <div className={cn(
-                            "flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-black transition-all",
-                            step === 2 ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-gray-100 text-gray-400"
-                        )}>
-                            2
-                        </div>
-                    </div>
+                    <StepIndicator currentStep={step} totalSteps={2} />
                 )}
 
-                {!chavePix ? (
-                    <div className="flex flex-col items-center gap-4 py-8 text-center">
-                        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-                            <AlertCircle size={32} className="text-red-500" />
+                <div className="min-h-[300px] flex flex-col justify-center">
+                    {!chavePix ? (
+                        <div className="flex flex-col items-center gap-4 py-8 text-center">
+                            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+                                <AlertCircle size={32} className="text-red-500" />
+                            </div>
+                            <div className="space-y-1">
+                                <h3 className="font-black text-gray-900 text-lg">Indisponível</h3>
+                                <p className="text-sm text-gray-500 max-w-[300px]">O dono da plataforma não configurou a chave PIX. Impossível realizar o pagamento agora.</p>
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <h3 className="font-black text-gray-900 text-lg">Indisponível</h3>
-                            <p className="text-sm text-gray-500 max-w-[300px]">O dono da plataforma não configurou a chave PIX. Impossível realizar o pagamento agora.</p>
-                        </div>
-                    </div>
-                ) : step === 1 ? (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="text-center">
-                            <h3 className="font-black text-gray-900 text-base tracking-tight leading-tight">Pagamento via PIX</h3>
-                            <p className="text-[11px] text-gray-400 font-medium">Escaneie o QR ou copie a chave</p>
-                        </div>
+                    ) : step === 1 ? (
+                        <StepContainer step={step} className="space-y-4">
+                            <StepHeader
+                                title="Pagamento via PIX"
+                                description="Escaneie o QR ou copie a chave"
+                            />
 
-                        <div className="flex flex-row items-center gap-4 bg-gray-50/50 p-3 rounded-2xl border border-gray-100/60 shadow-sm">
-                            {/* Lado Esquerdo: QR Code */}
-                            <div className="bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 flex justify-center items-center w-[120px] h-[120px] shrink-0 transition-transform hover:scale-[1.02]">
-                                {isLoadingPix ? (
-                                    <div className="flex flex-col items-center gap-1">
-                                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                                        <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">Gerando</span>
+                            <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-100 shadow-sm ring-1 ring-blue-50 relative overflow-hidden">
+                                {/* Lado Esquerdo: QR Code */}
+                                <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex justify-center items-center w-[130px] h-[130px] shrink-0 transition-transform hover:scale-[1.02] z-10">
+                                    {isLoadingPix ? (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">Gerando</span>
+                                        </div>
+                                    ) : (
+                                        pixPayload ? <QRCode value={pixPayload} size={110} /> : <span className="text-gray-400 text-[10px] uppercase font-bold">Erro QR</span>
+                                    )}
+                                </div>
+
+                                {/* Lado Direito: Valor e Título */}
+                                <div className="flex-1 space-y-3 w-full text-center sm:text-left z-10">
+                                    <div className="flex flex-col justify-center">
+                                        <span className="text-[10px] font-black  text-blue-500 uppercase mb-1 tracking-widest">Montante Total</span>
+                                        <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{format(valor)}</div>
                                     </div>
-                                ) : (
-                                    pixPayload ? <QRCode value={pixPayload} size={108} /> : <span className="text-gray-400 text-[9px] uppercase font-bold">Erro QR</span>
-                                )}
+                                    <div className="px-1 hidden sm:block">
+                                        <p className="text-[10px] text-gray-400 leading-snug font-medium italic">
+                                            Liberação rápida após o envio do comprovante.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Lado Direito: Valor e Título */}
-                            <div className="flex-1 space-y-2">
-                                <div className="flex flex-col justify-center">
-                                    <span className="text-[8px] font-black  text-blue-400 uppercase mb-0.5">Montante Total</span>
-                                    <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{format(valor)}</div>
+                            {/* Bloco Ações em Baixo */}
+                            <div className="space-y-3 pt-2">
+                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none">PIX Copia e Cola</p>
+                                <div className="w-full flex gap-2">
+                                    <Button
+                                        onClick={copyPix}
+                                        variant="outline"
+                                        disabled={!pixPayload || isLoadingPix}
+                                        className="flex-1 text-[11px] h-10 gap-2 rounded-xl border-zinc-200 text-zinc-700 font-bold hover:bg-zinc-50 transition-all font-mono"
+                                    >
+                                        {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                        {isCopied ? "Copiado!" : "Copiar"}
+                                    </Button>
+                                    <Button
+                                        onClick={shareWhatsApp}
+                                        variant="outline"
+                                        disabled={!pixPayload || isLoadingPix}
+                                        className="flex-1 text-[11px] h-10 gap-2 rounded-xl border-green-200 text-green-700 font-bold hover:bg-green-50 transition-all"
+                                    >
+                                        <MessageCircle size={14} /> WhatsApp
+                                    </Button>
                                 </div>
-                                <div className="px-1">
-                                    <p className="text-[10px] text-gray-400 leading-snug font-medium italic">
-                                        Liberação rápida após o envio do comprovante.
+                            </div>
+                        </StepContainer>
+                    ) : (
+                        <StepContainer step={step} className="space-y-4">
+                            <StepHeader
+                                title="Anexar Comprovante"
+                                description="Envie o recibo para agilizar sua liberação"
+                            />
+
+                            <label className={cn(
+                                "flex flex-col items-center justify-center w-full border-2 border-dashed rounded-3xl cursor-pointer transition-all group relative overflow-hidden py-10 px-6",
+                                file ? "border-green-300 bg-green-50/40 ring-4 ring-green-50" : "border-gray-200 hover:bg-blue-50/40 hover:border-blue-400",
+                                isUploading && "opacity-50 pointer-events-none"
+                            )}>
+                                <div className="flex flex-col items-center justify-center relative z-10 text-center">
+                                    {file ? (
+                                        <div className="flex flex-col items-center animate-in zoom-in-95">
+                                            <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mb-3 shadow-inner text-green-600 transition-transform group-hover:scale-110">
+                                                <CheckCircle2 size={28} />
+                                            </div>
+                                            <p className="text-sm text-gray-900 truncate max-w-[250px] font-black">{file.name}</p>
+                                            <p className="text-[10px] text-green-600 font-black uppercase tracking-widest mt-2 hover:underline">Trocar arquivo</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 group-hover:text-blue-600 transition-all shadow-inner text-gray-300">
+                                                <UploadCloud size={28} />
+                                            </div>
+                                            <p className="text-sm font-black text-gray-700">
+                                                <span className="text-blue-600 group-hover:underline">Fazer upload do recibo</span>
+                                            </p>
+                                            <p className="text-[10px] text-gray-400 font-medium mt-1 uppercase tracking-tighter">Somente Imagens PNG ou JPG</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    disabled={isUploading}
+                                />
+                            </label>
+
+                            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex gap-3 mt-4">
+                                <Info size={18} className="text-blue-600 shrink-0 mt-0.5" />
+                                <div className="space-y-1">
+                                    <p className="text-xs font-black text-blue-900">Processamento Manual</p>
+                                    <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
+                                        Seu comprovante será analisado pelo administrador para validação do acesso.
                                     </p>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Bloco Ações em Baixo */}
-                        <div className="space-y-3">
-                            {/* Campo Copia e Cola */}
-                            <input
-                                type="text"
-                                readOnly
-                                value={pixPayload || "Aguardando geração..."}
-                                className="w-full text-[10px] font-mono bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 truncate"
-                                onClick={(e) => (e.target as HTMLInputElement).select()}
-                            />
-
-                            <div className="w-full flex gap-2">
-                                <Button
-                                    onClick={copyPix}
-                                    variant="secondary"
-                                    disabled={!pixPayload || isLoadingPix}
-                                    className="flex-1 font-bold gap-2 text-primary bg-primary/10 hover:bg-primary/20 transition-all h-10 text-xs"
-                                >
-                                    <Copy size={13} /> Copiar Código
-                                </Button>
-                                <Button
-                                    onClick={shareWhatsApp}
-                                    variant="secondary"
-                                    disabled={!pixPayload || isLoadingPix}
-                                    className="flex-1 font-bold gap-2 text-green-700 bg-green-50 hover:bg-green-100 border-green-200 h-10 text-xs"
-                                >
-                                    <MessageCircle size={13} /> WhatsApp
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="text-center">
-                            <h3 className="font-black text-gray-900 text-base tracking-tight leading-tight">Anexar Comprovante</h3>
-                            <p className="text-[11px] text-gray-400 font-medium">Envie o recibo para agilizar sua liberação</p>
-                        </div>
-
-                        <label className={cn(
-                            "flex flex-col items-center justify-center w-full border-2 border-dashed rounded-xl cursor-pointer transition-all group relative overflow-hidden py-6",
-                            file ? "border-green-300 bg-green-50/40" : "border-gray-200 hover:bg-blue-50/40 hover:border-blue-400"
-                        )}>
-                            <div className="flex flex-col items-center justify-center px-4 relative z-10 text-center">
-                                {file ? (
-                                    <>
-                                        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2 shadow-sm transition-transform group-hover:scale-110">
-                                            <CheckCircle2 className="w-6 h-6 text-green-600" />
-                                        </div>
-                                        <p className="text-xs text-gray-800 truncate max-w-[250px] font-black">{file.name}</p>
-                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-widest mt-1 hover:underline">Trocar arquivo</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-2 group-hover:bg-white transition-all shadow-sm border border-transparent">
-                                            <UploadCloud className="w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                                        </div>
-                                        <p className="text-xs font-bold text-gray-700">
-                                            <span className="text-blue-600 group-hover:underline">Fazer upload do recibo</span>
-                                        </p>
-                                        <p className="text-[9px] text-gray-400 font-medium mt-0.5 italic">Somente Imagens PNG ou JPG</p>
-                                    </>
-                                )}
-                            </div>
-                            <input
-                                type="file"
-                                className="hidden"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                disabled={isUploading}
-                            />
-                        </label>
-
-                        <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100 flex gap-2.5">
-                            <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
-                            <div className="space-y-0.5">
-                                <p className="text-[11px] font-black text-blue-900">Processamento Manual</p>
-                                <p className="text-[10px] text-blue-700 leading-snug">
-                                    Seu comprovante será analisado pelo administrador para validação do acesso.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                        </StepContainer>
+                    )}
+                </div>
             </div>
         </Modal>
     );

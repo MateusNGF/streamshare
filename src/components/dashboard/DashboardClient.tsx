@@ -32,7 +32,8 @@ const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal"
 
 import { DashboardStats, RevenueHistory, ParticipantStats, ParticipantSubscription } from "@/types/dashboard.types";
 import { ParticipantDashboardClient } from "./ParticipantDashboardClient";
-import { Users2, UserRound, LayoutDashboard } from "lucide-react";
+import { Users2, UserRound, LayoutDashboard, AlertCircle, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface DashboardClientProps {
     stats: DashboardStats | null;
@@ -41,6 +42,7 @@ interface DashboardClientProps {
     revenueHistory: RevenueHistory[];
     participantStats: ParticipantStats | null;
     participantSubscriptions: ParticipantSubscription[];
+    pendingLotesCount?: number;
     initialView?: "provider" | "participant";
     hideSwitcher?: boolean;
     error?: string;
@@ -53,6 +55,7 @@ export function DashboardClient({
     revenueHistory,
     participantStats,
     participantSubscriptions,
+    pendingLotesCount = 0,
     initialView = "provider",
     hideSwitcher = false,
     error: initialError
@@ -145,6 +148,25 @@ export function DashboardClient({
                 />
             ) : (
                 <div className="space-y-10 animate-fade-in">
+                    {pendingLotesCount > 0 && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-amber-100 transition-colors shadow-sm" onClick={() => router.push('/cobrancas?status=aguardando_aprovacao')}>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                                    <AlertCircle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-amber-900 font-bold text-sm">Ação Necessária</h3>
+                                    <p className="text-amber-700 text-xs">
+                                        Você tem <strong>{pendingLotesCount}</strong> {pendingLotesCount === 1 ? 'lote de pagamento' : 'lotes de pagamento'} aguardando aprovação manual.
+                                    </p>
+                                </div>
+                            </div>
+                            <Button size="sm" variant="ghost" className="text-amber-700 hover:text-amber-900 hover:bg-amber-200" onClick={() => router.push('/cobrancas?status=aguardando_aprovacao')}>
+                                Avaliar Agora <ChevronRight size={16} className="ml-1" />
+                            </Button>
+                        </div>
+                    )}
+
                     {/* 1. Quick Access (Cognitive ease - put common tools first) */}
                     <QuickActionsSection
                         onOpenStreamingModal={() => setIsStreamingModalOpen(true)}

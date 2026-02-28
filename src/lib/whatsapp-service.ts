@@ -133,7 +133,35 @@ export const whatsappTemplates = {
             ]
         }
     }),
+
+    loteAprovado: (participante: string, quantidadeItens: string, valorTotal: string): EnvioWhatsAppObj => ({
+        texto: `✅ Olá ${participante}, seu lote de pagamento (${quantidadeItens} itens) no valor de ${valorTotal} acaba de ser APROVADO!\n\nTodos os seus acessos estão liberados. Bom entretenimento!`,
+        template: {
+            name: "lote_aprovado",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: quantidadeItens },
+                        { type: "text", text: valorTotal },
+                    ]
+                }
+            ]
+        }
+    }),
 };
+
+/**
+ * Retorna o ID da configuração se for válida e ativa, senão returna root.
+ */
+export async function whatsappConfigIsValid(contaId: number): Promise<number | null> {
+    const config = await prisma.whatsAppConfig.findUnique({
+        where: { contaId },
+    });
+    return config && config.isAtivo ? config.id : null;
+}
 
 // ---------------------------------------------------------------------------
 // Notification type enablement map

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import {
     confirmarPagamento,
@@ -15,10 +15,11 @@ import {
 export function useCobrancasActions(cobrancasIniciais: any[]) {
     const toast = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     // Filters State
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
     const [vencimentoRange, setVencimentoRange] = useState("");
     const [pagamentoRange, setPagamentoRange] = useState("");
     const [valorRange, setValorRange] = useState("");
