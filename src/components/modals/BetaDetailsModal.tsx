@@ -74,7 +74,7 @@ export function BetaDetailsModal({ isOpen, onClose }: BetaDetailsModalProps) {
                 </div>
 
                 <div className="text-xs text-gray-400 text-center mt-4">
-                    Versão Atual: <span className="font-mono text-gray-500">v{APP_VERSION}-beta</span>
+                    Versão Atual: <span className="font-mono text-gray-500">{APP_VERSION}</span>
                 </div>
             </div>
         </Modal>
