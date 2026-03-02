@@ -8,6 +8,7 @@ import {
     getParticipantStats,
     getParticipantSubscriptions
 } from "@/actions/dashboard";
+import { getPendingLotesCount } from "@/actions/cobrancas";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export default async function ProviderDashboardPage() {
@@ -18,6 +19,7 @@ export default async function ProviderDashboardPage() {
         getRevenueHistory(),
         getParticipantStats(),
         getParticipantSubscriptions(),
+        getPendingLotesCount(),
     ]);
 
     const [
@@ -26,7 +28,8 @@ export default async function ProviderDashboardPage() {
         streamingsRes,
         revenueRes,
         pStatsRes,
-        pSubRes
+        pSubRes,
+        pendingLotesRes
     ] = results;
 
     const hasError = results.some(r => !r.success);
@@ -46,6 +49,7 @@ export default async function ProviderDashboardPage() {
                 revenueHistory={revenueRes.data || []}
                 participantStats={pStatsRes.data || null}
                 participantSubscriptions={pSubRes.data || []}
+                pendingLotesCount={pendingLotesRes.data || 0}
                 initialView="provider"
                 hideSwitcher={true}
                 error={errorMsg}

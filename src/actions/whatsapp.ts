@@ -106,11 +106,21 @@ export async function testWhatsAppConnection(testNumber: string) {
             return { success: false, error: "Configure o WhatsApp primeiro", code: "NOT_FOUND" };
         }
 
-        // Simulate sending test message
-        // In production, this would use the actual WhatsApp service
+        // Envio real através da API
+        const { sendWhatsAppDirect } = await import("@/lib/whatsapp-meta");
+        const result = await sendWhatsAppDirect(testNumber, "Mensagem de teste do StreamShare");
+
+        if (!result.success) {
+            return {
+                success: false,
+                error: result.error || "Erro ao enviar mensagem de teste.",
+                code: "SEND_ERROR"
+            };
+        }
+
         return {
             success: true,
-            data: { message: "Teste enviado com sucesso (mock)" }
+            data: { message: "Teste enviado com sucesso!", messageId: result.messageId }
         };
     } catch (error: any) {
         console.error("[TEST_WHATSAPP_CONNECTION_ERROR]", error);

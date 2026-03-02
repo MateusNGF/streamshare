@@ -135,7 +135,7 @@ Implementamos um sistema de alerta global para notificar o usuário sobre proble
 
 ## 📚 Referências de Código
 
--   **Checkout**: `apps/web/src/actions/planos.ts` (Inclui `createCustomerPortalSession`)
--   **Webhooks**: `apps/web/src/app/api/webhooks/stripe/route.ts`
--   **Config**: `apps/web/src/config/plans.ts`
--   **UI**: `apps/web/src/components/dashboard/SubscriptionAlert.tsx`
+-   **Checkout**: [`src/actions/planos.ts`](../../src/actions/planos.ts) (Inclui `createCustomerPortalSession`)
+-   **Webhooks**: [`src/app/api/webhooks/stripe/route.ts`](../../src/app/api/webhooks/stripe/route.ts)
+-   **Config**: [`src/config/plans.ts`](../../src/config/plans.ts)
+-   **UI**: [`src/components/dashboard/SubscriptionAlert.tsx`](../../src/components/dashboard/SubscriptionAlert.tsx)

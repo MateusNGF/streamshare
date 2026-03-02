@@ -1,14 +1,21 @@
 "use client";
-import { Save, Mail, MessageSquare, Settings } from "lucide-react";
+import { Save, Settings, ShieldCheck } from "lucide-react";
 import { useActionError } from "@/hooks/useActionError";
-import { useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/Button";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
-import { SmtpTab } from "@/components/admin/parametros/SmtpTab";
-import { WhatsappTab } from "@/components/admin/parametros/WhatsappTab";
-import { GeneralTab } from "@/components/admin/parametros/GeneralTab";
 import { useParametrosActions, ConfigSection } from "@/hooks/useParametrosActions";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const GeneralTab = dynamic(() => import("@/components/admin/parametros/GeneralTab").then(mod => mod.GeneralTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const TestsTab = dynamic(() => import("@/components/admin/parametros/TestsTab").then(mod => mod.TestsTab), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
 
 interface ParametrosClientProps {
     initialData: any[];
@@ -22,47 +29,13 @@ export function ParametrosClient({ initialData, error }: ParametrosClientProps) 
         setActiveSection,
         loading,
         testing,
-        showPasswords,
-        smtpConfig,
-        setSmtpConfig,
-        whatsappConfig,
-        setWhatsappConfig,
         generalConfig,
         setGeneralConfig,
+        configParams,
         handlers
     } = useParametrosActions(initialData);
 
     const tabsData: TabItem[] = [
-        {
-            id: "smtp",
-            label: "SMTP",
-            icon: Mail,
-            content: (
-                <SmtpTab
-                    config={smtpConfig}
-                    onChange={setSmtpConfig}
-                    showPassword={!!showPasswords["smtp_password"]}
-                    onTogglePassword={() => handlers.togglePasswordVisibility("smtp_password")}
-                    onTest={handlers.handleTestSmtp}
-                    testing={testing}
-                />
-            )
-        },
-        {
-            id: "whatsapp",
-            label: "WhatsApp",
-            icon: MessageSquare,
-            content: (
-                <WhatsappTab
-                    config={whatsappConfig}
-                    onChange={setWhatsappConfig}
-                    showPassword={!!showPasswords["whatsapp_token"]}
-                    onTogglePassword={() => handlers.togglePasswordVisibility("whatsapp_token")}
-                    onTest={handlers.handleTestWhatsApp}
-                    testing={testing}
-                />
-            )
-        },
         {
             id: "general",
             label: "Geral",
@@ -73,31 +46,50 @@ export function ParametrosClient({ initialData, error }: ParametrosClientProps) 
                     onChange={setGeneralConfig}
                 />
             )
+        },
+        {
+            id: "tests",
+            label: "Diagnóstico",
+            icon: ShieldCheck,
+            content: (
+                <TestsTab
+                    onTestSmtp={handlers.handleTestSmtp}
+                    onTestWhatsApp={handlers.handleTestWhatsApp}
+                    testing={testing}
+                    config={configParams}
+                />
+            )
         }
     ];
 
     return (
         <PageContainer>
-            <PageHeader
-                title="Parâmetros do Sistema"
-                description="Configure as integrações e parâmetros de infraestrutura"
-                action={
-                    <button
-                        onClick={handlers.handleSave}
-                        disabled={loading}
-                        className="flex items-center gap-2 bg-primary hover:bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all touch-manipulation disabled:opacity-50"
-                    >
-                        <Save size={20} />
-                        {loading ? "Salvando..." : "Salvar Configurações"}
-                    </button>
-                }
-            />
+            <div className="max-w-[1200px] mx-auto">
+                <PageHeader
+                    title="Parâmetros do Sistema"
+                    description="Gestão de infraestrutura, integrações e diagnósticos de conectividade."
+                    action={
+                        activeSection === "general" && (
+                            <Button
+                                variant="default"
+                                onClick={handlers.handleSave}
+                                disabled={loading}
+                            >
+                                <Save size={20} className="group-hover:rotate-12 transition-transform" />
+                                {loading ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+                            </Button>
+                        )
+                    }
+                />
 
-            <Tabs
-                tabs={tabsData}
-                value={activeSection}
-                onValueChange={(val) => setActiveSection(val as ConfigSection)}
-            />
+                <div className="mt-4">
+                    <Tabs
+                        tabs={tabsData}
+                        value={activeSection}
+                        onValueChange={(val) => setActiveSection(val as ConfigSection)}
+                    />
+                </div>
+            </div>
         </PageContainer>
     );
 }

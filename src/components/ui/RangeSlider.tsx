@@ -56,11 +56,11 @@ export function RangeSlider({
                     <SliderPrimitive.Range className="absolute bg-primary rounded-full h-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" />
                 </SliderPrimitive.Track>
                 <SliderPrimitive.Thumb
-                    className="block w-5 h-5 bg-white border-2 border-primary rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all focus:outline-none focus:ring-4 focus:ring-primary/20 cursor-grab active:cursor-grabbing"
+                    className="block w-5 h-5 bg-white border-2 border-primary rounded-full shadow-lg hover:scale-110 active:scale-95 transition-smooth cursor-grab active:cursor-grabbing"
                     aria-label="Mínimo"
                 />
                 <SliderPrimitive.Thumb
-                    className="block w-5 h-5 bg-white border-2 border-primary rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all focus:outline-none focus:ring-4 focus:ring-primary/20 cursor-grab active:cursor-grabbing"
+                    className="block w-5 h-5 bg-white border-2 border-primary rounded-full shadow-lg hover:scale-110 active:scale-95 transition-smooth cursor-grab active:cursor-grabbing"
                     aria-label="Máximo"
                 />
             </SliderPrimitive.Root>

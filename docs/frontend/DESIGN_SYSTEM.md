@@ -79,7 +79,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 1. Sidebar
 
-**Arquivo**: `src/components/layout/Sidebar.tsx`
+**Arquivo**: [`src/components/layout/Sidebar.tsx`](../../src/components/layout/Sidebar.tsx)
 
 **Características**:
 - Largura fixa: `w-64` (256px)
@@ -106,7 +106,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 2. KPICard
 
-**Arquivo**: `src/components/dashboard/KPICard.tsx`
+**Arquivo**: [`src/components/dashboard/KPICard.tsx`](../../src/components/dashboard/KPICard.tsx)
 
 **Características**:
 - Background: `bg-white`
@@ -138,7 +138,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 3. StreamingCard
 
-**Arquivo**: `src/components/dashboard/StreamingCard.tsx`
+**Arquivo**: [`src/components/dashboard/StreamingCard.tsx`](../../src/components/dashboard/StreamingCard.tsx)
 
 **Características**:
 - Hover: `hover:bg-gray-50`
@@ -166,7 +166,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 4. RecentSubscription
 
-**Arquivo**: `src/components/dashboard/RecentSubscription.tsx`
+**Arquivo**: [`src/components/dashboard/RecentSubscription.tsx`](../../src/components/dashboard/RecentSubscription.tsx)
 
 **Características**:
 - Hover: `hover:bg-gray-50`
@@ -193,7 +193,7 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ### 5. FaturaCard
 
-**Arquivo**: `src/components/faturas/FaturaCard.tsx`
+**Arquivo**: [`src/components/faturas/FaturaCard.tsx`](../../src/components/faturas/FaturaCard.tsx)
 
 **Características**:
 - Border Radius: `rounded-2xl`
@@ -219,6 +219,34 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 - **Vencimento**: `BillingDueDateCell` com contador de dias
 - **Período**: `BillingPeriodCell` com formato `MMM/yy | MMM/yy`
 - **Valor**: `BillingValueCell` com valor total e mensal empilhados
+
+---
+
+### 7. Sessão de Filtros (Filter Session)
+
+**Características**:
+- **Wrapper**: `<div className="py-6">`
+- **Componente**: `GenericFilter`
+- **Posicionamento**: Entre os KPIs e o cabeçalho da listagem (`SectionHeader`).
+- **Espaçamento Inferior**: O `mt-2` ou `mt-4` na `div` da listagem garante o respiro adequado.
+
+**Exemplo de Estrutura**:
+```tsx
+<KPIGrid>...</KPIGrid>
+
+<div className="py-6">
+  <GenericFilter 
+    filters={...}
+    values={...}
+    onChange={...}
+  />
+</div>
+
+<div className="space-y-4 relative mt-2">
+  <SectionHeader ... />
+  ...
+</div>
+```
 
 ---
 
@@ -256,6 +284,167 @@ Este documento define o sistema de design do projeto StreamShare, incluindo pale
 
 ---
 
+## 🎬 Animações Customizadas
+
+> [!IMPORTANT]
+> Use **exclusivamente** as animações nomeadas abaixo para manter a consistência do projeto. Não crie animações ad-hoc em componentes individuais.
+
+### Animações de Entrada e Saída
+
+Usadas para montar/desmontar elementos na tela (modais, dropdowns, toasts).
+
+| Classe Tailwind | Duração | Easing | Uso |
+|---|---|---|---|
+| `animate-fade-in` | 0.3s | ease-out | Entrada padrão de qualquer elemento |
+| `animate-fade-out` | 0.2s | ease-in | Saída/desmontagem de elementos |
+| `animate-scale-in` | 0.2s | ease-out | Entrada de modais, popovers, dropdowns |
+| `animate-scale-out` | 0.2s | ease-in | Saída de modais, popovers, dropdowns |
+
+### Animações de Deslize (Slide)
+
+Usadas para menus laterais, notificações, sidebars e painéis.
+
+| Classe Tailwind | Direção | Duração | Uso |
+|---|---|---|---|
+| `animate-slide-in-from-top` | ↓ De cima | 0.3s | Notificações, banners |
+| `animate-slide-in-from-bottom` | ↑ De baixo | 0.3s | Sheets mobile, toasts |
+| `animate-slide-in-from-left` | → Da esquerda | 0.3s | Sidebar, menus laterais |
+| `animate-slide-in-from-right` | ← Da direita | 0.3s | Painéis de detalhes, drawers |
+| `animate-slide-out-to-right` | → Para direita | 0.2s | Fechar painéis/drawers |
+
+### Animações Contínuas (Atenção e Estado)
+
+Animações em loop infinito para destaque visual ou indicação de estado.
+
+| Classe Tailwind | Ciclo | Uso Recomendado |
+|---|---|---|
+| `animate-bounce-subtle` | 2s | **Elementos lúdicos ou de destaque** — CTAs, ícones de atenção, badges novos |
+| `animate-float` | 3s | **Elementos lúdicos de destaque** — ilustrações, ícones decorativos, empty states |
+| `animate-shimmer` | 2s | **Estados de carregamento** — skeletons de texto/imagem |
+| `animate-pulse-subtle` | 2s | Indicadores de status online, elementos pulsantes sutis |
+| `animate-gradient-shift` | 3s | Backgrounds gradiente animados, botões premium |
+
+> [!CAUTION]
+> **`animate-float`** e **`animate-bounce-subtle`** devem ser usados com parcimônia. Reserve-os para elementos que precisam **realmente** chamar atenção. Usar em excesso polui a interface.
+
+> [!TIP]
+> Para estados de carregamento (skeletons), prefira **`animate-shimmer`**. Para skeletons grandes que ocupam áreas extensas, use o efeito **Wave** (seção Efeitos Especiais).
+
+---
+
+## ⏱️ Transições e Timing Functions
+
+> [!IMPORTANT]
+> Use **exclusivamente** as curvas de aceleração customizadas definidas no projeto. Não utilize `ease`, `linear` ou curvas genéricas do Tailwind.
+
+### Funções de Tempo Customizadas
+
+Definidas em `tailwind.config.ts` → `transitionTimingFunction`:
+
+| Classe Tailwind | Curva (cubic-bezier) | Uso |
+|---|---|---|
+| `ease-smooth` | `cubic-bezier(0.4, 0, 0.2, 1)` | **Padrão do projeto** — hover em cards, abertura de menus, qualquer transição suave |
+| `ease-bounce-in` | `cubic-bezier(0.68, -0.55, 0.265, 1.55)` | **Efeito de rebote** — entrada de modais, tooltips, elementos que precisam de playfulness |
+
+### Classe Utilitária Global de Transição
+
+Definida em `globals.css`:
+
+```css
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+```
+
+**Regra**: Aplique `.transition-smooth` em **todos os elementos interativos** (botões, cards, links, inputs) como atalho. Isso garante transição suave e padronizada sem precisar compor manualmente `transition-all duration-300 ease-smooth`.
+
+**Exemplos de Uso**:
+```tsx
+// ✅ Correto — classe utilitária global
+<div className="transition-smooth hover:bg-gray-50">...</div>
+
+// ✅ Correto — composição Tailwind quando precisar de bounce
+<div className="transition-all duration-200 ease-bounce-in">...</div>
+
+// ❌ Errado — curvas genéricas
+<div className="transition-all duration-300 ease-in-out">...</div>
+```
+
+---
+
+## 🛡️ Utilitários de Interface e Acessibilidade
+
+> [!NOTE]
+> As regras abaixo são aplicadas **globalmente** pelo `globals.css`. Os desenvolvedores devem conhecê-las para evitar duplicação ou conflito.
+
+### Anel de Foco Padronizado (Focus Ring)
+
+O sistema define um anel de foco global para navegação por teclado:
+
+```css
+*:focus-visible {
+  outline: 2px solid #6d28d9; /* primary */
+  outline-offset: 2px;
+}
+```
+
+> [!CAUTION]
+> **Não crie `outline` ou `ring` customizados nos componentes.** O sistema já provê um anel de foco roxo vibrante (`#6d28d9`) com offset de 2px em todos os elementos focáveis via teclado. Isso garante consistência e conformidade com WCAG.
+
+### Ocultação de Scrollbar
+
+Classe: **`.scrollbar-hide`**
+
+```css
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+```
+
+**Uso**: Esconde barras de rolagem mantendo a funcionalidade de scroll. Ideal para:
+- Carrosséis horizontais
+- Sidebars com conteúdo longo
+- Listas horizontais de tags/chips
+
+### Interação Mobile (Touch Manipulation)
+
+Classe: **`.touch-manipulation`**
+
+```css
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+```
+
+**Uso**: Aplicar em **todos os elementos clicáveis no mobile** (botões, cards, links). Remove o fundo de destaque azul/cinza padrão dos navegadores mobile e melhora a responsividade ao toque.
+
+### Redução de Movimento (Prefers Reduced Motion)
+
+> [!IMPORTANT]
+> O sistema **já respeita automaticamente** as preferências do sistema operacional do usuário para redução de movimento. **A equipe NÃO precisa tratar isso componente por componente.**
+
+Quando o usuário ativa "reduzir movimento" no OS, o CSS global desabilita:
+- Todas as `animation-duration` → `0.01ms`
+- Todas as `transition-duration` → `0.01ms`
+- `scroll-behavior` → `auto`
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+---
+
 ## ✨ Efeitos Especiais
 
 ### Glass Effect
@@ -272,11 +461,52 @@ Classe: `.glass`
 
 **Uso**: Modais, overlays, elementos flutuantes.
 
+### Wave Effect (Carregamento Dinâmico)
+
+Classe: **`.animate-wave`**
+
+Efeito de onda deslizante criado via pseudo-elemento `::after` com gradiente linear translúcido.
+
+```css
+.animate-wave {
+  position: relative;
+  overflow: hidden;
+}
+.animate-wave::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: wave 1.5s infinite;
+}
+```
+
+**Uso**: Skeletons de carregamento **grandes** — hero sections, cards de preview, áreas extensas que precisam de um destaque visual maior do que o `animate-pulse-subtle` ou `animate-shimmer`.
+
+> [!TIP]
+> **Shimmer vs Wave**: Use `animate-shimmer` para skeletons de texto/linhas individuais. Use `animate-wave` para blocos e áreas grandes onde o efeito de onda completa é mais impactante.
+
 ### Shadow Patterns
 
 - **Sutil**: `shadow-sm` (cards)
 - **Com Cor**: `shadow-lg shadow-primary/25` (botões principais)
 - **Destaque**: `shadow-lg shadow-primary/20` (items ativos)
+
+### Cores Semânticas (CSS Custom Properties)
+
+> [!WARNING]
+> **Não use cores fixas** (`text-gray-900`, `bg-gray-50`) em áreas que representam o fundo geral da aplicação ou o texto principal do corpo. Use as variáveis semânticas do CSS.
+
+O sistema define variáveis de cor no `:root` que devem ser respeitadas:
+
+| Variável CSS | Valor Atual | Uso |
+|---|---|---|
+| `var(--background)` | `#f9fafb` | Fundo geral da aplicação (`body`) |
+| `var(--foreground)` | `#111827` | Cor de texto principal do corpo (`body`) |
+
+**Regra**: Para o background geral e texto principal, use `bg-[var(--background)]` e `text-[var(--foreground)]` ou aplique diretamente no `body`. Isso garante compatibilidade futura com dark mode e temas customizados.
+
+Cores fixas do Tailwind (`bg-white`, `text-gray-500`, etc.) são permitidas em **componentes internos** (cards, badges, ícones) onde a cor tem significado semântico independente do tema.
 
 ---
 
@@ -284,10 +514,11 @@ Classe: `.glass`
 
 ### Interatividade
 
-1. **Sempre use transições**: `transition-all` em elementos interativos
+1. **Sempre use `transition-smooth`** ou `ease-smooth` em elementos interativos (ver seção Transições)
 2. **Hover states claros**: Mudança de background ou borda
 3. **Estados ativos visuais**: Background colorido + shadow colorido
 4. **Feedback visual imediato**: Badges, badges de notificação
+5. **Mobile**: Aplique `.touch-manipulation` em todos os elementos clicáveis no mobile
 
 ### Hierarquia Visual
 
@@ -299,7 +530,8 @@ Classe: `.glass`
 
 - **Contraste**: Sempre use cores com contraste adequado (primary vs white, gray-900 vs white)
 - **Tamanhos de toque**: Botões e links com padding suficiente (`py-3 px-6`)
-- **Estados de foco**: Next.js adiciona automaticamente
+- **Estados de foco**: O sistema já provê um anel de foco global (`#6d28d9`). **Não crie outlines customizados** (ver seção Utilitários)
+- **Redução de movimento**: Tratada globalmente. **Não implemente `prefers-reduced-motion` por componente** (ver seção Utilitários)
 
 ---
 
@@ -327,3 +559,4 @@ Preparado para dark mode:
 - **Ícones**: [Lucide React](https://lucide.dev/)
 - **Tailwind CSS**: [Documentação](https://tailwindcss.com/docs)
 - **Fontes**: [Google Fonts - Inter](https://fonts.google.com/specimen/Inter)
+- **Padrão de Modais em Etapas**: [STEP_MODAL.md](./STEP_MODAL.md)

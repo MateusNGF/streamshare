@@ -1,8 +1,101 @@
-# Componentes Reutilizáveis - PageContainer e PageHeader
+# Componentes Reutilizáveis - Design System
 
 ## 📦 Visão Geral
 
 Componentes criados para eliminar duplicação de código e garantir consistência em todas as páginas da aplicação.
+
+---
+
+## 🔴 Regra Fundamental: Botões
+
+> **É terminantemente proibido criar `<button>` com classes Tailwind soltas na aplicação.** Use exclusivamente o componente `Button` de `@/components/ui/Button`.
+
+---
+
+## 🖱️ Componente Button
+
+**Localização**: `src/components/ui/Button.tsx`
+
+**Propósito**: Componente padrão para todas as ações interativas da aplicação. Consolida estilos, micro-interações e acessibilidade em um único lugar.
+
+### Interface
+
+```typescript
+import { Button } from "@/components/ui/Button";
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    variant?: "default" | "secondary" | "outline" | "ghost" | "destructive";
+    size?:    "default" | "sm" | "lg" | "icon";
+}
+```
+
+### Variantes (obrigatório usar uma delas)
+
+| Variante | Uso | Aparência |
+| :--- | :--- | :--- |
+| `default` | Ação principal da tela | Fundo primário roxo + sombra roxa, elevação no hover |
+| `secondary` | Ação secundária | Fundo cinza claro, elevação no hover |
+| `outline` | Ação alternativa ou filtros | Borda sutil, fundo transparente, elevação no hover |
+| `ghost` | Ação discreta (ex: fechar, ícone) | Sem borda/fundo, hover cinza suave |
+| `destructive` | Exclusão ou ação irreversível | Fundo vermelho + sombra vermelha, elevação no hover |
+
+```tsx
+// ✅ Correto — Usar variantes do Design System
+<Button variant="default">Salvar</Button>
+<Button variant="secondary">Cancelar</Button>
+<Button variant="outline">Filtrar</Button>
+<Button variant="ghost">Fechar</Button>
+<Button variant="destructive">Excluir Conta</Button>
+
+// ❌ Errado — NUNCA criar botão com classes Tailwind avulsas
+<button className="bg-primary text-white px-6 py-3 rounded-2xl">Salvar</button>
+```
+
+### Tamanhos
+
+| Tamanho | Prop | Padding / Uso |
+| :--- | :--- | :--- |
+| Padrão | `size="default"` | `px-6 py-3` — Uso geral |
+| Pequeno | `size="sm"` | `px-4 py-2 text-sm` — Tabelas, badges de ação |
+| Grande | `size="lg"` | `px-8 py-4 text-lg` — CTAs em destaque |
+| Ícone | `size="icon"` | `p-2` — Botões apenas com ícone (sem label) |
+
+```tsx
+<Button size="lg" variant="default">Criar Assinatura</Button>
+<Button size="sm" variant="outline">Ver Detalhes</Button>
+<Button size="icon" variant="ghost"><Trash2 size={16} /></Button>
+```
+
+### Micro-interações embutidas (não recriar)
+
+O componente já inclui os seguintes comportamentos — **nunca tente replicá-los com CSS manual:**
+
+- **Clique que "afunda"**: `active:scale-95` — O botão encolhe levemente ao ser pressionado.
+- **Elevação no hover**: `hover:-translate-y-0.5` — Sobe suavemente ao passar o mouse (exceto `ghost`).
+- **Desativação nativa**: `disabled:opacity-50 disabled:pointer-events-none` — Ao receber `disabled`, fica semi-transparente e bloqueia todos os eventos.
+- **Transição suave**: `transition-all duration-200 ease-smooth` — Todas as animações usam a curva de easing padrão do Design System.
+
+### Suporte a `ref` (forwardRef)
+
+O componente encaminha `ref` nativamente. Isso o torna seguro para uso com:
+- Bibliotecas de formulários (`react-hook-form`, `formik`)
+- Bibliotecas de animação (`framer-motion`)
+- Componentes de popover/tooltip que precisam de referência DOM
+
+```tsx
+const btnRef = useRef<HTMLButtonElement>(null);
+<Button ref={btnRef} variant="default">Ancorado</Button>
+```
+
+### Loading State
+
+```tsx
+// Padrão para botões com ação assíncrona
+<Button variant="default" disabled={isLoading}>
+    {isLoading && <Spinner size="sm" color="white" />}
+    {isLoading ? "Salvando..." : "Salvar"}
+</Button>
+```
 
 ---
 

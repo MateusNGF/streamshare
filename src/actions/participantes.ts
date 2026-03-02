@@ -62,12 +62,32 @@ export async function createParticipante(data: {
             return { success: false, error: "Email inválido" };
         }
 
+        // ──────────────────────────────────────────────────────────────
+        // Verification Inheritance:
+        // If participant's WhatsApp matches a verified Usuario,
+        // they inherit the verification (skip OTP step).
+        // ──────────────────────────────────────────────────────────────
+        let whatsappVerificado = false;
+        if (data.whatsappNumero && data.whatsappNumero.trim() !== "") {
+            const existingVerifiedUser = await prisma.usuario.findFirst({
+                where: {
+                    whatsappNumero: data.whatsappNumero,
+                    whatsappVerificado: true,
+                },
+            });
+            if (existingVerifiedUser) {
+                whatsappVerificado = true;
+            }
+        }
+
         const result = await prisma.$transaction(async (tx) => {
             const created = await tx.participante.create({
                 data: {
-                    ...data,
+                    nome: data.nome,
                     cpf: data.cpf || null,
                     whatsappNumero: data.whatsappNumero || null,
+                    whatsappVerificado,
+                    email: data.email || null,
                     contaId,
                 },
             });
@@ -79,10 +99,11 @@ export async function createParticipante(data: {
                     usuarioId: null, // Broadcast para Admins
                     tipo: "participante_criado",
                     titulo: `Participante adicionado`,
-                    descricao: `${created.nome} foi adicionado ao sistema por ${userId}.`,
+                    descricao: `${created.nome} foi adicionado${whatsappVerificado ? " com WhatsApp verificado por herança" : ""}.`,
                     entidadeId: created.id,
                     metadata: {
-                        whatsapp: created.whatsappNumero
+                        whatsapp: created.whatsappNumero,
+                        whatsappVerificado
                     },
                     lida: false
                 }
@@ -93,6 +114,7 @@ export async function createParticipante(data: {
 
         revalidatePath("/participantes");
         return { success: true, data: result };
+
     } catch (error: any) {
         console.error("[CREATE_PARTICIPANTE_ERROR]", error);
         return { success: false, error: error.message || "Erro ao criar participante" };

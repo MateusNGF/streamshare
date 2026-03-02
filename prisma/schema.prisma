@@ -62,6 +62,13 @@ enum StatusConvite {
   solicitado
 }
 
+enum StatusLote {
+  pendente
+  aguardando_aprovacao
+  pago
+  cancelado
+}
+
 enum TipoNotificacaoWhatsApp {
   nova_assinatura
   cobranca_gerada
@@ -123,6 +130,21 @@ enum StatusSuporte {
   finalizado
 }
 
+// Omnichannel OTP Verification Engine
+model VerificacaoCodigo {
+  id         Int      @id @default(autoincrement())
+  destino    String // E-mail or +55... phone (E.164)
+  canal      String   @default("EMAIL") // "EMAIL" or "WHATSAPP"
+  codigo     String // 6-digit numeric PIN
+  tentativas Int      @default(0)
+  verificado Boolean  @default(false)
+  expiracao  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([destino, codigo])
+  @@map("verificacao_codigo")
+}
+
 model Suporte {
   id        Int           @id @default(autoincrement())
   nome      String
@@ -172,25 +194,34 @@ model Conta {
 }
 
 model Usuario {
-  id                Int          @id @default(autoincrement())
-  email             String       @unique
-  nome              String
-  whatsapp          String?
-  senhaHash         String?
-  provider          ProviderAuth @default(local)
-  isAtivo           Boolean      @default(true)
-  ultimoLogin       DateTime?
-  sessionVersion    Int          @default(1)
-  lastIp            String?
-  lastUserAgent     String?
-  resetToken        String?
-  resetTokenExpiry  DateTime?
+  id        Int          @id @default(autoincrement())
+  email     String       @unique
+  nome      String
+  senhaHash String?
+  provider  ProviderAuth @default(local)
+  isAtivo   Boolean      @default(true)
+
+  // Contacts & Verification
+  emailVerificado    Boolean @default(false)
+  whatsappNumero     String? // E.164 format
+  whatsappVerificado Boolean @default(false)
+
+  // Security
+  ultimoLogin      DateTime?
+  sessionVersion   Int       @default(1)
+  lastIp           String?
+  lastUserAgent    String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  // Terms
   termsAcceptedAt   DateTime?
   termsVersion      String?
   privacyAcceptedAt DateTime?
   privacyVersion    String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   contas                ContaUsuario[]
   participantes         Participante[]
@@ -305,14 +336,18 @@ model GrupoStreaming {
 }
 
 model Participante {
-  id             Int                @id @default(autoincrement())
-  contaId        Int
-  nome           String
-  whatsappNumero String?
-  cpf            String?
-  email          String?
-  userId         Int?
-  status         StatusParticipante @default(ativo)
+  id      Int                @id @default(autoincrement())
+  contaId Int
+  nome    String
+  cpf     String?
+  userId  Int?
+  status  StatusParticipante @default(ativo)
+
+  // Contacts & Verification
+  email              String?
+  emailVerificado    Boolean @default(false)
+  whatsappNumero     String? // E.164 format
+  whatsappVerificado Boolean @default(false) // opt-in or inherited
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -322,6 +357,8 @@ model Participante {
   usuario      Usuario?      @relation(fields: [userId], references: [id])
   assinaturas  Assinatura[]
   whatsappLogs WhatsAppLog[]
+
+  lotesPagamento LotePagamento[]
 
   @@unique([contaId, cpf])
   @@unique([contaId, whatsappNumero])
@@ -376,8 +413,28 @@ model Cobranca {
 
   assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
 
+  lotePagamentoId Int?
+  lotePagamento   LotePagamento? @relation("CobrancaLote", fields: [lotePagamentoId], references: [id])
+
   @@unique([assinaturaId, periodoInicio])
   @@map("cobranca")
+}
+
+model LotePagamento {
+  id             Int        @id @default(autoincrement())
+  participanteId Int
+  valorTotal     Decimal
+  status         StatusLote @default(pendente)
+  comprovanteUrl String?
+  expiresAt      DateTime?
+  motivoRejeicao String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  participante Participante @relation(fields: [participanteId], references: [id])
+  cobrancas    Cobranca[]   @relation("CobrancaLote")
+
+  @@map("lote_pagamento")
 }
 
 model WhatsAppConfig {
@@ -416,11 +473,17 @@ model WhatsAppLog {
   erro       String? @db.Text
   providerId String?
 
+  // Rastreamento de Webhooks da Meta
+  statusEntrega String?   @default("sent") // sent, delivered, read, failed
+  deliveredAt   DateTime?
+  readAt        DateTime?
+
   createdAt DateTime @default(now())
 
   config       WhatsAppConfig @relation(fields: [configId], references: [id])
   participante Participante?  @relation(fields: [participanteId], references: [id])
 
+  @@index([providerId])
   @@index([configId, createdAt])
   @@map("whatsapp_log")
 }

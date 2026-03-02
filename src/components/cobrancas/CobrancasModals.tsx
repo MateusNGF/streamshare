@@ -4,6 +4,7 @@ import { CancelarCobrancaModal } from "@/components/modals/CancelarCobrancaModal
 import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoModal";
 import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
 import { ModalPagamentoCobranca } from "@/components/faturas/ModalPagamentoCobranca";
+import { ModalPagamentoLote } from "@/components/faturas/ModalPagamentoLote";
 
 interface CobrancasModalsProps {
     cancelModalOpen: boolean;
@@ -18,6 +19,10 @@ interface CobrancasModalsProps {
     onCloseQrModal: () => void;
     selectedCobranca: any;
     loading: boolean;
+    batchPixModalOpen?: boolean;
+    onCloseBatchPix?: () => void;
+    activeLote?: any;
+    isAdmin?: boolean;
 }
 
 export function CobrancasModals({
@@ -32,7 +37,11 @@ export function CobrancasModals({
     qrModalOpen,
     onCloseQrModal,
     selectedCobranca,
-    loading
+    loading,
+    batchPixModalOpen = false,
+    onCloseBatchPix = () => { },
+    activeLote,
+    isAdmin = true
 }: CobrancasModalsProps) {
     return (
         <>
@@ -62,6 +71,13 @@ export function CobrancasModals({
                 isOpen={qrModalOpen}
                 onClose={onCloseQrModal}
                 fatura={selectedCobranca}
+            />
+
+            <ModalPagamentoLote
+                isOpen={batchPixModalOpen}
+                onClose={onCloseBatchPix}
+                lote={activeLote}
+                isAdmin={isAdmin}
             />
         </>
     );

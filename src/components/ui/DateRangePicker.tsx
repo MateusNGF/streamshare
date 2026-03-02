@@ -70,7 +70,7 @@ export function DateRangePicker({
                         setOpen(false);
                     }}
                     className={cn(
-                        "text-xs font-bold transition-all whitespace-nowrap",
+                        "text-xs font-bold transition-smooth whitespace-nowrap",
                         layout === "horizontal"
                             ? "px-5 py-2.5 bg-gray-100 text-gray-600 rounded-full hover:bg-primary/10 hover:text-primary active:scale-95"
                             : "text-left px-4 py-2.5 text-gray-600 hover:bg-white hover:text-primary hover:shadow-sm rounded-xl"
@@ -111,7 +111,7 @@ export function DateRangePicker({
                     week: "flex w-full mt-1.5",
                     day: "h-10 w-10 sm:h-9 sm:w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
                     day_button: cn(
-                        "h-10 w-10 sm:h-9 sm:w-9 p-0 font-medium aria-selected:opacity-100 hover:bg-gray-100 rounded-xl transition-all duration-200 flex items-center justify-center outline-none cursor-pointer text-gray-700"
+                        "h-10 w-10 sm:h-9 sm:w-9 p-0 font-medium aria-selected:opacity-100 hover:bg-gray-100 rounded-xl transition-smooth flex items-center justify-center cursor-pointer text-gray-700"
                     ),
                     range_start: "day-range-start",
                     range_end: "day-range-end",
@@ -187,7 +187,7 @@ export function DateRangePicker({
         <button
             onClick={() => setOpen(true)}
             className={cn(
-                "flex items-center gap-3 px-4 py-3 bg-white border border-gray-100 rounded-xl text-left text-sm font-medium transition-all hover:bg-gray-50 hover:border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm w-full",
+                "flex items-center gap-3 px-4 py-3 bg-white border border-gray-100 rounded-xl text-left text-sm font-medium transition-smooth hover:bg-gray-50 hover:border-gray-200 shadow-sm w-full",
                 !value && "text-gray-400",
                 value && "border-primary/30 bg-primary/5 text-primary"
             )}
@@ -228,7 +228,7 @@ export function DateRangePicker({
                     className="sm:max-w-md"
                     footer={
                         <Button
-                            className="w-full h-14 rounded-2xl text-base font-black shadow-xl shadow-primary/30 transition-all active:scale-95"
+                            className="w-full h-14 rounded-2xl text-base font-black shadow-xl shadow-primary/30 transition-smooth active:scale-95"
                             onClick={() => setOpen(false)}
                         >
                             Confirmar Seleção

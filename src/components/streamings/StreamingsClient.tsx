@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { StreamingModal } from "@/components/modals/StreamingModal";
-import { DeleteModal } from "@/components/modals/DeleteModal";
 import { useStreamingStore } from "@/stores";
 import { useToast } from "@/hooks/useToast";
 import { useStreamingActions } from "@/hooks/useStreamingActions";
@@ -13,11 +11,25 @@ import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { useActionError } from "@/hooks/useActionError";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { PlanoConta } from "@prisma/client";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 
-// Refactored Sub-components
-import { StreamingFilters } from "./StreamingFilters";
-import { StreamingGrid } from "./StreamingGrid";
-import { StreamingTable } from "./StreamingTable";
+const StreamingFilters = dynamic(() => import("./StreamingFilters").then(mod => mod.StreamingFilters), {
+    loading: () => <Skeleton className="w-full h-16 rounded-2xl" />
+});
+
+const StreamingGrid = dynamic(() => import("./StreamingGrid").then(mod => mod.StreamingGrid), {
+    loading: () => <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{[1, 2, 3].map(i => <Skeleton key={i} className="h-[200px] rounded-2xl" />)}</div>
+});
+
+const StreamingTable = dynamic(() => import("./StreamingTable").then(mod => mod.StreamingTable), {
+    loading: () => <TableSkeleton />
+});
+
+const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
+const DeleteModal = dynamic(() => import("@/components/modals/DeleteModal").then(mod => mod.DeleteModal));
+
 import { SectionHeader } from "../layout/SectionHeader";
 
 interface StreamingsClientProps {

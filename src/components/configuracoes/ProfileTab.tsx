@@ -1,9 +1,11 @@
 "use client";
 
-import { User, LogOut, Shield } from "lucide-react";
+import React, { useState } from "react";
+import { User, LogOut, Shield, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { useToast } from "@/hooks/useToast";
 
 interface ProfileTabProps {
     profileData: {
@@ -19,6 +21,7 @@ interface ProfileTabProps {
     handleRemoteLogout: () => void;
     loadingRemoteLogout: boolean;
     setIsLogoutModalOpen: (open: boolean) => void;
+    emailVerificado: boolean;
 }
 
 export function ProfileTab({
@@ -30,8 +33,11 @@ export function ProfileTab({
     setIsChangePasswordModalOpen,
     handleRemoteLogout,
     loadingRemoteLogout,
-    setIsLogoutModalOpen
+    setIsLogoutModalOpen,
+    emailVerificado,
 }: ProfileTabProps) {
+    const toast = useToast();
+
     return (
         <div className="space-y-16">
             {/* Perfil do Usuário */}
@@ -52,14 +58,32 @@ export function ProfileTab({
                             disabled={loadingProfile}
                             placeholder="Seu nome completo"
                         />
-                        <Input
-                            label="Email de Login"
-                            type="email"
-                            value={profileData.email}
-                            onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                            disabled
-                            className="bg-gray-50/50 cursor-not-allowed border-gray-100"
-                        />
+                        <div className="relative">
+                            <Input
+                                label="Email de Login"
+                                type="email"
+                                value={profileData.email}
+                                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                disabled
+                                className="bg-gray-50/50 cursor-not-allowed border-gray-100"
+                            />
+                            {!emailVerificado && (
+                                <div className="absolute top-0 right-0 h-8 flex items-center pr-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100 flex items-center gap-1">
+                                        <AlertCircle size={10} />
+                                        Não verificado
+                                    </span>
+                                </div>
+                            )}
+                            {emailVerificado && (
+                                <div className="absolute top-0 right-0 h-8 flex items-center pr-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-green-600 flex items-center gap-1">
+                                        <CheckCircle2 size={10} />
+                                        Verificado
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

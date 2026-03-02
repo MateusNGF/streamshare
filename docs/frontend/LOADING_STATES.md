@@ -401,6 +401,58 @@ export function MinhaLista({ items, loading }) {
 
 ---
 
+## ⚡ Otimização e Code Splitting com `next/dynamic`
+
+O uso de `next/dynamic` (ou `React.lazy`) é fundamental para manter o bundle inicial leve, carregando componentes pesados apenas quando necessário.
+
+### 🔝 Regras de Ouro (Best Practices)
+
+Para que o Next.js consiga realizar o pré-carregamento (preloading) e a análise estática corretamente, siga estas regras:
+
+1.  **Caminhos Estáticos**: O caminho dentro do `import()` deve ser uma **string literal explícita**.
+    *   ❌ `dynamic(() => import(pathVariable))`
+    *   ❌ `dynamic(() => import(\`./components/\${name}\`))`
+    *   ✅ `dynamic(() => import("./FaturasTable"))`
+
+2.  **Definição no Nível Superior (Top-level)**: Nunca chame `dynamic()` dentro de um componente ou renderização. Ela deve ser definida no escopo global do módulo.
+    *   Isso permite que o Next.js associe os IDs de módulo e faça o preloading antes mesmo do componente ser montado.
+
+3.  **Carregamento com Skeletons**: Sempre utilize a propriedade `loading` para fornecer uma transição visual suave que corresponda ao layout final.
+
+### Exemplo de Implementação Padrão
+
+```tsx
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+// 1. Definido fora do componente (Top-level)
+// 2. Caminho estático explícito
+// 3. Loading state configurado com Skeleton apropriado
+const FaturasTable = dynamic(
+    () => import("@/components/faturas/FaturasTable").then(mod => mod.FaturasTable),
+    { 
+        loading: () => <TableSkeleton rows={10} />,
+        ssr: false // Opcional: desativa SSR se o componente for 100% client-side
+    }
+);
+
+export function FaturasClient() {
+    return (
+        <div>
+            <FaturasTable />
+        </div>
+    );
+}
+```
+
+### Por que seguir estas regras?
+*   **Static Analysis**: O Webpack/Next.js precisa saber exatamente quais arquivos separar em chunks durante o build.
+*   **Preloading**: Ao definir no nível superior, o Next.js consegue "marcar" esse recurso para ser pré-carregado assim que a página pai começa a carregar.
+*   **Layout Stability**: O uso de skeletons impede que a página "salte" (CLS - Cumulative Layout Shift) quando o componente termina de carregar.
+
+---
+
 ## ✅ Checklist de Implementação
 
 Ao adicionar loading states em uma nova feature:

@@ -7,8 +7,29 @@ import { AuthBackground } from "@/components/auth/AuthBackground";
 import { SecurityAlert } from "@/components/auth/SecurityAlert";
 import { AuthTabs } from "@/components/auth/AuthTabs";
 import { AuthHeader } from "@/components/auth/AuthHeader";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { SignupForm } from "@/components/auth/SignupForm";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const LoginForm = dynamic(() => import("@/components/auth/LoginForm").then(mod => mod.LoginForm), {
+    loading: () => (
+        <div className="space-y-4 py-4">
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+        </div>
+    )
+});
+
+const SignupForm = dynamic(() => import("@/components/auth/SignupForm").then(mod => mod.SignupForm), {
+    loading: () => (
+        <div className="space-y-4 py-4">
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+        </div>
+    )
+});
 
 export default function AuthPage() {
     const { activeTab, setActiveTab, alertMessage, content } = useAuthParams();
@@ -48,7 +69,7 @@ export default function AuthPage() {
                     {/* Forms */}
                     <div className="relative">
                         <div
-                            className={`transition-all duration-500 ease-in-out ${activeTab === "login"
+                            className={`transition-all duration-500 ease-smooth ${activeTab === "login"
                                 ? "opacity-100 translate-x-0 relative z-10"
                                 : "opacity-0 -translate-x-10 absolute inset-0 pointer-events-none"
                                 }`}
@@ -56,7 +77,7 @@ export default function AuthPage() {
                             <LoginForm />
                         </div>
                         <div
-                            className={`transition-all duration-500 ease-in-out ${activeTab === "signup"
+                            className={`transition-all duration-500 ease-smooth ${activeTab === "signup"
                                 ? "opacity-100 translate-x-0 relative z-10"
                                 : "opacity-0 translate-x-10 absolute inset-0 pointer-events-none"
                                 }`}

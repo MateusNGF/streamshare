@@ -5,6 +5,8 @@ import { addDays, differenceInDays, subHours } from "date-fns";
 import { formatCurrency } from "@/lib/formatCurrency";
 import type { CurrencyCode } from "@/types/currency.types";
 
+import { EnvioWhatsAppObj } from "@/lib/whatsapp-service";
+
 type NotificationType = TipoNotificacaoWhatsApp;
 
 /**
@@ -17,7 +19,7 @@ interface ProcessNotificationParams {
         notificarCobrancaAtrasada?: boolean;
     };
     getBillingFilter: (config: any) => any;
-    getMensagem: (cobranca: any, moeda: CurrencyCode) => string;
+    getMensagem: (cobranca: any, moeda: CurrencyCode) => EnvioWhatsAppObj;
     logPrefix: string;
 }
 
@@ -88,6 +90,7 @@ async function processBillingNotifications({
             }
 
             const mensagem = getMensagem(cobranca, moeda);
+            const mensagemTextoLogs = mensagem.texto;
 
             // Tentar enviar notificação
             const result = await sendWhatsAppNotification(
@@ -99,7 +102,7 @@ async function processBillingNotifications({
 
             if (result.success) {
                 console.log(`[${logPrefix}] ✅ Notificação enviada para cobrança ${cobranca.id}`);
-            } else if ('reason' in result && result.reason === 'not_configured') {
+            } else if (result.error === 'account_disabled') {
                 // Registrar log persistente caso o WhatsApp não esteja configurado no momento
                 try {
                     await prisma.whatsAppLog.create({
@@ -108,7 +111,7 @@ async function processBillingNotifications({
                             participanteId,
                             tipo,
                             numeroDestino: cobranca.assinatura.participante.whatsappNumero || '',
-                            mensagem,
+                            mensagem: mensagemTextoLogs,
                             enviado: false,
                             erro: `Sistema: Notificação pendente - WhatsApp não configurado (${logPrefix})`
                         }

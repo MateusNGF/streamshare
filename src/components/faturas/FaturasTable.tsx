@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, Check, MessageCircle, AlertCircle, Trash } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, Check, MessageCircle, AlertCircle, Trash, UploadCloud, RefreshCw, Lock } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -26,6 +26,8 @@ interface FaturasTableProps {
     onConfirmPayment?: (id: number) => void;
     onSendWhatsApp?: (id: number) => void;
     onCancelPayment?: (id: number) => void;
+    selectedIds?: number[];
+    onSelectChange?: (ids: number[]) => void;
 }
 
 export function FaturasTable({
@@ -34,10 +36,36 @@ export function FaturasTable({
     isAdmin = false,
     onConfirmPayment,
     onSendWhatsApp,
-    onCancelPayment
+    onCancelPayment,
+    selectedIds = [],
+    onSelectChange
 }: FaturasTableProps) {
     const { success, error: toastError } = useToast();
-    const [faturaToPay, setFaturaToPay] = useState<any>(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+    // The table manages its own payment modal for direct pay actions
+    const [faturaToPayOrResend, setFaturaToPayOrResend] = useState<any>(null);
+
+    const selectableFaturas = faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
+    const isAllSelected = selectableFaturas.length > 0 && selectedIds.length === selectableFaturas.length;
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!onSelectChange) return;
+        if (isAllSelected) {
+            onSelectChange([]);
+        } else {
+            onSelectChange(selectableFaturas.map(f => f.id));
+        }
+    };
+
+    const handleSelect = (id: number) => {
+        if (!onSelectChange) return;
+        if (selectedIds.includes(id)) {
+            onSelectChange(selectedIds.filter(selectedId => selectedId !== id));
+        } else {
+            onSelectChange([...selectedIds, id]);
+        }
+    };
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -71,6 +99,16 @@ export function FaturasTable({
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
+                            {!isAdmin && onSelectChange && (
+                                <TableHead className="w-[40px] px-4 text-center">
+                                    <input
+                                        type="checkbox"
+                                        onChange={handleSelectAll}
+                                        checked={isAllSelected}
+                                        className="rounded border border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                                    />
+                                </TableHead>
+                            )}
                             <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[140px]">
                                 <div className="flex items-center gap-2">
                                     <Hash size={12} className="text-gray-400" />
@@ -119,6 +157,7 @@ export function FaturasTable({
                             const isCancelled = fatura.status === 'cancelado';
                             const isAwaiting = fatura.status === 'aguardando_aprovacao';
                             const chavePix = fatura.assinatura?.participante?.conta?.chavePix;
+                            const isSelectable = !fatura.lotePagamentoId && (fatura.status === 'pendente' || fatura.status === 'atrasado');
 
                             const options = [
                                 {
@@ -131,7 +170,15 @@ export function FaturasTable({
                                     {
                                         label: "Pagar Fatura",
                                         icon: <DollarSign size={16} />,
-                                        onClick: () => setFaturaToPay(fatura)
+                                        onClick: () => setFaturaToPayOrResend(fatura)
+                                    }
+                                ] : []),
+                                ...(!isPaid && !isCancelled && isAwaiting && !isAdmin ? [
+                                    { type: "separator" as const },
+                                    {
+                                        label: "Ver Comprovante",
+                                        icon: <Eye size={16} className="text-amber-500" />,
+                                        onClick: () => onViewDetails(fatura.id)
                                     }
                                 ] : []),
                                 ...(!isPaid && !isCancelled && isAdmin ? [
@@ -166,11 +213,29 @@ export function FaturasTable({
                                     className={cn(
                                         isCancelled && "opacity-60",
                                         isAwaiting && !isAdmin && "bg-amber-50/30",
-                                        isAwaiting && isAdmin && "bg-blue-50/40 border-l-4 border-l-blue-500",
-                                        "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both"
+                                        "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both",
+                                        isSelectable && !isAdmin && onSelectChange && "cursor-pointer hover:bg-gray-50/50 transition-colors"
                                     )}
                                     style={{ animationDelay: `${index * 50}ms` }}
+                                    onClick={() => isSelectable && !isAdmin && onSelectChange ? handleSelect(fatura.id) : undefined}
                                 >
+                                    {!isAdmin && onSelectChange && (
+                                        <TableCell className="px-4 text-center" onClick={(e) => { e.stopPropagation(); if (isSelectable) handleSelect(fatura.id); }}>
+                                            {isSelectable ? (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.includes(fatura.id)}
+                                                    onChange={(e) => e.stopPropagation()} // Let the parent td handle the click to trigger select
+                                                    className="rounded border border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                                                />
+                                            ) : (
+                                                <div className="flex justify-center" title="Fatura bloqueada em um lote">
+                                                    <Lock size={14} className="text-gray-300" />
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                    )}
+
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <StreamingLogo
@@ -231,9 +296,10 @@ export function FaturasTable({
             </div>
 
             <ModalPagamentoCobranca
-                isOpen={!!faturaToPay}
-                onClose={() => setFaturaToPay(null)}
-                fatura={faturaToPay}
+                isOpen={!!faturaToPayOrResend}
+                onClose={() => setFaturaToPayOrResend(null)}
+                fatura={faturaToPayOrResend}
+                isAdmin={isAdmin}
             />
         </div>
     );

@@ -46,6 +46,33 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-02-26",
+        date: "26/02/2026",
+        changes: [
+            { category: "Segurança", description: "Criação do **Motor de Verificação por Código Temporário**, com geração, armazenamento e validação de tokens de uso único diretamente no banco de dados central." },
+            { category: "Segurança", description: "Bloqueio de acesso ao painel principal para contas com identidade ainda não verificada, garantindo que apenas usuários autenticados completem o cadastro." },
+            { category: "Interface", description: "Implementação do **Modal de Verificação de Identidade**, com campos de entrada individuais por dígito, navegação automática entre células e suporte a colar código da área de transferência." },
+            { category: "Experiência", description: "Introdução do **Temporizador Regressivo de Reenvio**, bloqueando novas solicitações de código durante a janela de validade e exibindo a contagem em tempo real ao usuário." },
+            { category: "Interface", description: "Adição do componente de **Acionador de Verificação** no painel, alertando usuários com identidade pendente e oferecendo acesso direto ao fluxo de validação." },
+            { category: "Integrações", description: "Migração do canal de mensagens instantâneas para a **API Oficial de Mensagens do Meta**, substituindo o provedor anterior e adequando os templates às novas diretrizes da plataforma." },
+            { category: "Integrações", description: "Integração do **Serviço de Mensagens** com o fluxo de verificação de identidade, disparando o código de acesso via canal de mensagens para participantes e parceiros." },
+            { category: "Automação", description: "Refatoração do **Transporter de E-mail** para leitura dinâmica de credenciais em tempo de execução, eliminando a necessidade de reinicialização ao alterar configurações de envio." },
+            { category: "Segurança", description: "Reforço do **Módulo de Autenticação** para marcar a identidade como verificada somente após validação bem-sucedida do código temporário, incluindo usuários de provedores externos." },
+            { category: "Interface", description: "Adição do campo de **Contato por Mensagem Instantânea** nas configurações de perfil, permitindo que o usuário registre e atualize seu número diretamente pelo painel." },
+            { category: "Interface", description: "Atualização do **Painel de Diagnóstico de Integrações**, incluindo testes manuais da nova API de mensagens e do serviço de e-mail dentro da área administrativa." },
+        ],
+    },
+    {
+        id: "2026-02-24",
+        date: "24/02/2026",
+        changes: [
+            { category: "Automação", description: "Lançamento do **Fluxo de Boas-Vindas Automatizado**, garantindo a entrega imediata de instruções e recursos essenciais para novos assinantes em todos os métodos de acesso." },
+            { category: "Segurança", description: "Implementação do protocolo de **Sanitização de Comunicações**, assegurando que toda interação dinâmica via e-mail seja devidamente neutralizada contra injeções, preservando a integridade da experiência do usuário." },
+            { category: "Performance", description: "Lançamento da **Arquitetura de Carregamento Adaptativo** em toda a plataforma, otimizando a entrega de recursos no Dashboard e Portal de Acesso para garantir interatividade instantânea e menor consumo de dados." },
+            { category: "Experiência", description: "Implementação do sistema de **Estabilidade Visual Preditiva**, introduzindo estados de espera harmonizados que eliminam saltos de layout e proporcionam uma transição fluida durante o carregamento de dados." },
+        ],
+    },
+    {
         id: "2026-02-23",
         date: "23/02/2026",
         changes: [

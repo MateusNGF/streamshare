@@ -191,18 +191,15 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                 <div className="-mx-6 px-6 overflow-x-auto pb-2 scrollbar-hide">
                     <div className="flex items-center gap-2">
                         {FILTERS.map((filter) => (
-                            <button
+                            <Button
                                 key={filter.id}
+                                size="sm"
+                                variant={activeFilter === filter.id ? "default" : "ghost"}
                                 onClick={() => setActiveFilter(filter.id)}
-                                className={cn(
-                                    "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200",
-                                    activeFilter === filter.id
-                                        ? "bg-primary text-white shadow-md shadow-primary/20"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                )}
+                                className="whitespace-nowrap rounded-full text-xs"
                             >
                                 {filter.label}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>

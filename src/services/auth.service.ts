@@ -15,23 +15,35 @@ export class AuthService {
      * Finds or creates a user and their associated account.
      */
     static async handleExternalAuth(payload: ExternalAuthPayload) {
+        let isNewUser = false;
         let user = await prisma.usuario.findUnique({
             where: { email: payload.email },
         });
 
         if (!user) {
             user = await this.createUserWithAccount(payload);
+            isNewUser = true;
         } else if (user.provider !== payload.provider) {
             // Optional: Handle case where email exists but was signed up with a different provider
             // For now, we'll allow it but we might want to "link" or warn.
             // Let's update provider to allow future logins via this provider.
             user = await prisma.usuario.update({
                 where: { id: user.id },
-                data: { provider: payload.provider }
+                data: {
+                    provider: payload.provider,
+                    // If logging in via Google, we treat the email as verified
+                    emailVerificado: payload.provider === "google" ? true : user.emailVerificado
+                }
+            });
+        } else if (payload.provider === "google" && !user.emailVerificado) {
+            // Already same provider, but ensure verified if it's google
+            user = await prisma.usuario.update({
+                where: { id: user.id },
+                data: { emailVerificado: true }
             });
         }
 
-        return user;
+        return { user, isNewUser };
     }
 
     /**
@@ -64,6 +76,7 @@ export class AuthService {
                     nome: payload.nome,
                     email: payload.email,
                     provider: payload.provider,
+                    emailVerificado: payload.provider === "google",
                     isAtivo: true
                 },
             });

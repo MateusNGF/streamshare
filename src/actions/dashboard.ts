@@ -478,6 +478,7 @@ export async function getParticipantSubscriptions() {
             valorIntegral: sub.streaming.valorIntegral.toNumber(),
             proximoVencimento: sub.cobrancas[0]?.dataVencimento || null,
             hasCredentials: sub.status === "ativa" && !!sub.streaming.credenciais,
+            pendingCobrancaId: sub.cobrancas[0]?.id || null,
         }));
 
         return { success: true, data };

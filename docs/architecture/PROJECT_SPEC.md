@@ -52,24 +52,15 @@ O **StreamShare** é um sistema completo para **organizar, controlar e manter as
 
 ```
 streamsharev2/
-├── apps/
-│   └── web/                    # Aplicação Next.js principal
-│       ├── src/
-│       │   ├── app/           # App Router (Next.js 14)
-│       │   ├── components/    # Componentes React
-│       │   ├── lib/          # Bibliotecas e utilitários
-│       │   └── styles/       # Estilos globais
-│       └── public/           # Arquivos estáticos
-│
-├── packages/
-│   └── database/              # Pacote Prisma compartilhado
-│       ├── prisma/
-│       │   ├── schema.prisma # Schema do banco
-│       │   ├── seed.ts       # Dados iniciais
-│       │   └── migrations/   # Histórico de migrations
-│       └── src/
-│           └── index.ts      # Cliente Prisma exportado
-│
+├── prisma/                    # Schema do banco, seeds e migrations
+├── public/                    # Arquivos estáticos
+├── src/                       # Código fonte da aplicação
+│   ├── app/                   # App Router (Next.js 14)
+│   ├── components/            # Componentes React
+│   ├── lib/                   # Bibliotecas e utilitários
+│   ├── actions/               # Server Actions
+│   ├── services/              # Lógica de negócio complexa
+│   └── styles/                # Estilos globais
 └── docs/                      # Documentação completa
 ```
 
@@ -77,65 +68,35 @@ streamsharev2/
 
 | Camada | Tecnologia | Versão |
 |--------|-----------|--------|
-| **Frontend** | Next.js | 14+ (App Router) |
+| **Framework** | Next.js | 14+ (App Router) |
 | **UI** | React | 18+ |
 | **Styling** | Tailwind CSS | 3+ |
 | **Linguagem** | TypeScript | 5+ |
 | **Database** | PostgreSQL | 14+ |
 | **ORM** | Prisma | 5+ |
 | **Autenticação** | JWT + Cookies | - |
-| **Email** | Resend / Nodemailer | - |
-| **Gerenciador** | PNPM | 8+ |
-| **Runtime** | Node.js | 18+ |
+| **Email** | Nodemailer | - |
 
 ### Padrões Arquiteturais
 
 #### App Router (Next.js 14)
 
-- **Server Components**: Padrão para páginas e layouts
-- **Client Components**: Apenas quando necessário interatividade
-- **Server Actions**: Para mutações de dados
-- **Route Handlers**: Para APIs REST
+- **Server Components**: Padrão para páginas e layouts.
+- **Client Components**: Apenas quando necessário interatividade (`"use client"`).
+- **Server Actions**: Para mutações de dados e busca otimizada.
 
 #### Organização de Código
 
 ```
 src/
 ├── app/                       # Rotas e páginas
-│   ├── (auth)/               # Grupo de rotas de autenticação
-│   │   ├── login/
-│   │   ├── esqueci-senha/
-│   │   └── redefinir-senha/
-│   ├── (dashboard)/          # Grupo de rotas protegidas
-│   │   ├── dashboard/
-│   │   ├── participantes/
-│   │   ├── streamings/
-│   │   ├── assinaturas/
-│   │   ├── cobrancas/
-│   │   └── configuracoes/
-│   ├── api/                  # API Routes
-│   │   └── auth/
-│   ├── layout.tsx            # Layout raiz
-│   └── loading.tsx           # Loading raiz
-│
-├── components/
-│   ├── auth/                 # Componentes de autenticação
-│   ├── dashboard/            # Componentes do dashboard
-│   ├── layout/               # Componentes de layout
-│   ├── modals/               # Modais reutilizáveis
-│   └── ui/                   # Componentes UI base
-│
-├── lib/
-│   ├── auth.ts               # Utilitários JWT
-│   ├── email.ts              # Sistema de emails
-│   ├── password-validation.ts
-│   └── prisma.ts             # Cliente Prisma
-│
-└── actions/                  # Server Actions
-    ├── participantes.ts
-    ├── streamings.ts
-    └── assinaturas.ts
+├── components/                # Componentes React (dashboard, ui, layout, auth)
+├── lib/                       # Utilitários (auth.ts, prisma.ts, email/)
+├── actions/                   # Server Actions (participantes, streamings, etc)
+├── services/                  # Lógica de Domínio (billing-service.ts)
+└── types/                     # Interfaces TypeScript
 ```
+
 
 ---
 

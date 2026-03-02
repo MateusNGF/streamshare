@@ -2,24 +2,38 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { DashboardStreamingList } from "./DashboardStreamingList";
 import { type StreamingFormData } from "@/components/modals/StreamingModal";
 import { createStreaming, upsertStreamingCredentials } from "@/actions/streamings";
 import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
 
-// Sections
-import { QuickActionsSection } from "./sections/QuickActionsSection";
-import { DashboardAnalytics } from "./sections/DashboardAnalytics";
-import { RecentSubscriptionsSection } from "./sections/RecentSubscriptionsSection";
+const QuickActionsSection = dynamic(() => import("./sections/QuickActionsSection").then(mod => mod.QuickActionsSection), {
+    loading: () => <Skeleton className="w-full h-32 rounded-[32px]" />
+});
+
+const DashboardAnalytics = dynamic(() => import("./sections/DashboardAnalytics").then(mod => mod.DashboardAnalytics), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const RecentSubscriptionsSection = dynamic(() => import("./sections/RecentSubscriptionsSection").then(mod => mod.RecentSubscriptionsSection), {
+    loading: () => <div className="space-y-4">{[1, 2, 3].map(i => <LoadingCard key={i} variant="compact" />)}</div>
+});
+
+const DashboardStreamingList = dynamic(() => import("./DashboardStreamingList").then(mod => mod.DashboardStreamingList), {
+    loading: () => <TableSkeleton />
+});
 
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));
 
 import { DashboardStats, RevenueHistory, ParticipantStats, ParticipantSubscription } from "@/types/dashboard.types";
 import { ParticipantDashboardClient } from "./ParticipantDashboardClient";
-import { Users2, UserRound, LayoutDashboard } from "lucide-react";
+import { Users2, UserRound, LayoutDashboard, AlertCircle, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface DashboardClientProps {
     stats: DashboardStats | null;
@@ -28,6 +42,7 @@ interface DashboardClientProps {
     revenueHistory: RevenueHistory[];
     participantStats: ParticipantStats | null;
     participantSubscriptions: ParticipantSubscription[];
+    pendingLotesCount?: number;
     initialView?: "provider" | "participant";
     hideSwitcher?: boolean;
     error?: string;
@@ -40,6 +55,7 @@ export function DashboardClient({
     revenueHistory,
     participantStats,
     participantSubscriptions,
+    pendingLotesCount = 0,
     initialView = "provider",
     hideSwitcher = false,
     error: initialError
@@ -132,6 +148,25 @@ export function DashboardClient({
                 />
             ) : (
                 <div className="space-y-10 animate-fade-in">
+                    {pendingLotesCount > 0 && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-amber-100 transition-colors shadow-sm" onClick={() => router.push('/cobrancas?status=aguardando_aprovacao')}>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                                    <AlertCircle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-amber-900 font-bold text-sm">Ação Necessária</h3>
+                                    <p className="text-amber-700 text-xs">
+                                        Você tem <strong>{pendingLotesCount}</strong> {pendingLotesCount === 1 ? 'lote de pagamento' : 'lotes de pagamento'} aguardando aprovação manual.
+                                    </p>
+                                </div>
+                            </div>
+                            <Button size="sm" variant="ghost" className="text-amber-700 hover:text-amber-900 hover:bg-amber-200" onClick={() => router.push('/cobrancas?status=aguardando_aprovacao')}>
+                                Avaliar Agora <ChevronRight size={16} className="ml-1" />
+                            </Button>
+                        </div>
+                    )}
+
                     {/* 1. Quick Access (Cognitive ease - put common tools first) */}
                     <QuickActionsSection
                         onOpenStreamingModal={() => setIsStreamingModalOpen(true)}

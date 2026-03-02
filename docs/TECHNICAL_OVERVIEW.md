@@ -66,19 +66,19 @@ Para organizar o código e separar responsabilidades, utilizamos o padrão **ACD
 
 ```bash
 src/
-├── actions/        # Server Actions (Busca e Mutação de dados)
-├── app/            # Rotas e Páginas (File-system routing)
+├── [`actions/`](../src/actions/)        # Server Actions (Busca e Mutação de dados)
+├── [`app/`](../src/app/)            # Rotas e Páginas (File-system routing)
 │   ├── (auth)/     # Rotas de autenticação (login, register)
 │   ├── (dashboard)/# Área logada da aplicação
 │   └── api/        # Endpoints REST (se necessário para Webhooks)
-├── components/     # Biblioteca de componentes React
+├── [`components/`](../src/components/)     # Biblioteca de componentes React
 │   ├── dashboard/  # Específicos do painel
 │   ├── ui/         # Design System (Botões, Inputs, Cards)
 │   └── ...
-├── lib/            # Configurações e Utilitários Globais (DB, Auth)
-├── services/       # Lógica de Negócio Complexa (Domain Logic)
-├── types/          # Definições de Tipos TypeScript (Interfaces)
-└── hooks/          # Custom React Hooks (Lógica de UI reutilizável)
+├── [`lib/`](../src/lib/)            # Configurações e Utilitários Globais (DB, Auth)
+├── [`services/`](../src/services/)       # Lógica de Negócio Complexa (Domain Logic)
+├── [`types/`](../src/types/)          # Definições de Tipos TypeScript (Interfaces)
+└── [`hooks/`](../src/hooks/)          # Custom React Hooks (Lógica de UI reutilizável)
 ```
 
 ---
@@ -96,7 +96,7 @@ src/
 -   **Autenticação**: Rotas protegidas via Middleware e verificação de sessão (`auth.ts`).
 -   **Gestão de Sessão**: Invalidação remota (`sessionVersion`), rastreamento de IP e proteção contra Session Hijacking.
 -   **Dados Sensíveis**: Senhas criptografadas (`bcryptjs`) e tokens seguros.
--   *Consulte [docs/features/SECURITY_AND_AUTH.md](../features/SECURITY_AND_AUTH.md) para detalhes completos.*
+- *Consulte [docs/features/SECURITY_AND_AUTH.md](./features/SECURITY_AND_AUTH.md) para detalhes completos.*
 
 ### 4.3. Performance
 -   **Dynamic Imports**: Componentes pesados (gráficos, modais complexos) carregados sob demanda (`next/dynamic`).

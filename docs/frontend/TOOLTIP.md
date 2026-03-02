@@ -3,7 +3,7 @@
 O componente `Tooltip` é utilizado para fornecer informações contextuais rápidas ao usuário quando um elemento está em um estado específico (como "copiado") ou sobre o qual o mouse está posicionado.
 
 ## Localização
-[src/components/ui/Tooltip.tsx](file:///w:/projetos/streamsharev2/src/components/ui/Tooltip.tsx)
+[`src/components/ui/Tooltip.tsx`](../../src/components/ui/Tooltip.tsx)
 
 ## Propriedades (Props)
 

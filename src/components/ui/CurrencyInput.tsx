@@ -73,9 +73,9 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
           disabled={disabled}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? errorId : undefined}
-          className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all placeholder:text-gray-500 ${error
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-              : 'border-gray-200 focus:border-primary'
+          className={`w-full px-4 py-3 border rounded-xl transition-smooth placeholder:text-gray-500 ${error
+            ? 'border-red-300 focus:border-red-500'
+            : 'border-gray-200 focus:border-primary'
             } ${disabled ? 'bg-gray-50 cursor-not-allowed' : ''} ${className}`}
           {...props}
         />

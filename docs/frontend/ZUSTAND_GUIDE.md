@@ -79,7 +79,18 @@ const {
 } = useCobrancaStore();
 ```
 
-#### 4. **useDashboardStore**
+#### 4. **useCatalogoStore** ⚠️ *Anteriormente omitido desta documentação*
+Gerencia o catálogo de serviços de streaming disponíveis na plataforma.
+
+**Uso**: É o store responsável pelo acervo de serviços (ex: Netflix, Disney+, etc.) que podem ser configurados como streamings. Deve ser usado sempre que for necessário acessar ou manipular a lista de serviços disponíveis globalmente.
+
+```typescript
+import { useCatalogoStore } from "@/stores";
+
+const { catalogos, fetchCatalogos } = useCatalogoStore();
+```
+
+#### 5. **useDashboardStore**
 Gerencia dados do dashboard (estatísticas e resumos).
 
 **Estado**:
@@ -210,6 +221,41 @@ await fetchStreamings(true); // → Chamada HTTP (ignora cache)
 - Streamings/Assinaturas: 5 minutos
 - Cobranças/KPIs: 2 minutos
 - Dashboard Stats: 1 minuto
+
+### 🔧 Utilitário `isStale` — Validador de Cache Centralizado
+
+O arquivo `src/stores/index.ts` exporta a função utilitária `isStale`, que implementa a regra padronizada de expiração de cache de todas as stores.
+
+**Assinatura**:
+```typescript
+import { isStale } from "@/stores";
+
+// lastFetched: timestamp da última busca (number | null)
+// maxAge: tempo máximo em ms (padrão: 5 minutos = 300.000ms)
+function isStale(lastFetched: number | null, maxAge?: number): boolean
+```
+
+**Regra**: Retorna `true` se `lastFetched` for `null` ou se o tempo decorrido desde o último fetch for maior que `maxAge`.
+
+```typescript
+import { isStale } from "@/stores";
+
+// ✅ Correto — usar o utilitário exportado
+if (isStale(lastFetched)) {
+    await fetchFromServer();
+}
+
+// Com maxAge customizado (ex: 2 minutos para cobranças)
+if (isStale(lastFetched, 2 * 60 * 1000)) {
+    await fetchCobrancas();
+}
+
+// ❌ Errado — nunca escreva lógica manual de tempo
+if (!lastFetched || Date.now() - lastFetched > 300000) { ... }
+if (new Date().getTime() - lastFetched > 120000) { ... }
+```
+
+> **Regra**: Toda verificação de validade de cache **deve** usar `isStale`. Isso garante que a regra de expiração seja consistente em toda a aplicação e possa ser alterada em um único lugar.
 
 ---
 

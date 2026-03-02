@@ -1,215 +1,173 @@
+/**
+ * WhatsApp Notification Service
+ * Bridges the PLANS feature-toggle and the Meta Cloud API provider.
+ *
+ * - Free/Pro  → wa.me link returned for manual sending
+ * - Business  → automated Meta Cloud API dispatch
+ */
+
 import { prisma } from "@/lib/db";
 import { TipoNotificacaoWhatsApp } from "@prisma/client";
 import { PLANS } from "@/config/plans";
-import crypto from "crypto";
-import { safeDecrypt } from "@/lib/encryption";
+import { sendWhatsApp } from "@/lib/whatsapp-meta";
+import type { WhatsAppSendResult, WhatsAppTemplateConfig } from "@/lib/whatsapp-meta";
 
-// Redundant local decrypt removed as we use the centralized one in @/lib/encryption
+export type { WhatsAppSendResult };
 
-// Função para normalizar número no formato E.164 (internacional)
-function normalizePhoneNumber(phone: string): string {
-    // Remove todos os caracteres não numéricos exceto o +
-    let normalized = phone.replace(/[^\d+]/g, '');
-
-    // Se já começa com +, retorna como está
-    if (normalized.startsWith('+')) {
-        return normalized;
-    }
-
-    // Se não tem +, adiciona (assume que o número já vem com código do país)
-    return `+${normalized}`;
+export interface EnvioWhatsAppObj {
+    texto: string;
+    template: WhatsAppTemplateConfig;
 }
 
-// Twilio Provider
-class TwilioProvider {
-    constructor(
-        private accountSid: string,
-        private authToken: string,
-        private fromNumber: string
-    ) { }
+// ---------------------------------------------------------------------------
+// Templates
+// ---------------------------------------------------------------------------
 
-    async sendMessage(to: string, message: string): Promise<{ success: boolean; providerId?: string; error?: string }> {
-        try {
-            // Normalize phone numbers to E.164 format
-            const normalizedTo = normalizePhoneNumber(to);
-
-            // Ensure proper WhatsApp format for both numbers
-            const fromWhatsApp = this.fromNumber.startsWith('whatsapp:')
-                ? this.fromNumber
-                : `whatsapp:${this.fromNumber}`;
-
-            const toWhatsApp = normalizedTo.startsWith('whatsapp:')
-                ? normalizedTo
-                : `whatsapp:${normalizedTo}`;
-
-            const response = await fetch(
-                `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Messages.json`,
+export const whatsappTemplates = {
+    novaAssinatura: (participante: string, streaming: string, valor: string, dataInicio: string): EnvioWhatsAppObj => ({
+        texto: `Olá ${participante}! ✨\n\nSua assinatura de *${streaming}* foi confirmada!\n\n💰 Valor: ${valor}\n📅 Início: ${dataInicio}\n\nEm breve você receberá as credenciais de acesso.`,
+        template: {
+            name: "nova_assinatura", // Placeholder para o nome exato aprovado na WABA
+            language: "pt_BR",
+            components: [
                 {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Basic ${Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64")}`,
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams({
-                        From: fromWhatsApp,
-                        To: toWhatsApp,
-                        Body: message,
-                    }),
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: valor },
+                        { type: "text", text: dataInicio },
+                    ]
                 }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                return {
-                    success: false,
-                    error: data.message || "Erro ao enviar mensagem"
-                };
-            }
-
-            return {
-                success: true,
-                providerId: data.sid
-            };
-        } catch (error) {
-            console.error("Twilio sendMessage Error:", error);
-            return {
-                success: false,
-                error: "Falha ao enviar mensagem pelo provedor."
-            };
+            ]
         }
-    }
-}
+    }),
 
-// Função principal para enviar notificação
-export async function sendWhatsAppNotification(
-    contaId: number,
-    tipo: TipoNotificacaoWhatsApp,
-    participanteId: number,
-    mensagem: string
-) {
-    // ------------------------------------------------------------------
-    // LINK ONLY MODE (TEMPORARY)
-    // ------------------------------------------------------------------
-    // Keep internal logic but do NOT call external provider.
-    // This allows the system to "think" it sent, so we can mock success.
-    const LINK_ONLY_MODE = true;
-
-    if (LINK_ONLY_MODE) {
-        console.log(`[WhatsApp Mock] Would send to participant ${participanteId}: ${mensagem}`);
-        // We can optionally log to database still if we want to track "attempts"
-        // For now, just return success so the flow continues.
-        return {
-            success: true,
-            providerId: "mock-link-only-mode"
-        };
-    }
-
-    // 1. Buscar parâmetros globais do sistema
-    const parametros = await prisma.parametro.findMany({
-        where: {
-            chave: {
-                in: [
-                    "whatsapp.enabled",
-                    "whatsapp.account_sid",
-                    "whatsapp.auth_token",
-                    "whatsapp.phone_number"
-                ]
-            }
+    cobrancaGerada: (participante: string, streaming: string, valor: string, vencimento: string): EnvioWhatsAppObj => ({
+        texto: `Olá ${participante}! 📝\n\nNova cobrança gerada para *${streaming}*:\n\n💰 Valor: ${valor}\n📅 Vencimento: ${vencimento}\n\nAguardamos seu pagamento!`,
+        template: {
+            name: "cobranca_gerada",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: valor },
+                        { type: "text", text: vencimento },
+                    ]
+                }
+            ]
         }
-    });
+    }),
 
-    const getParam = (key: string) => parametros.find(p => p.chave === key)?.valor;
+    cobrancaVencendo: (participante: string, streaming: string, valor: string, dias: number): EnvioWhatsAppObj => ({
+        texto: `Lembrete: Sua cobrança de *${streaming}* vence em ${dias} dia(s)! ⏰\n\n💰 Valor: ${valor}\n\nEvite suspensão do serviço realizando o pagamento.`,
+        template: {
+            name: "cobranca_vencendo",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: streaming },
+                        { type: "text", text: String(dias) },
+                        { type: "text", text: valor },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    const globalEnabled = getParam("whatsapp.enabled") === "true";
-    const accountSid = safeDecrypt(getParam("whatsapp.account_sid"));
-    const authToken = safeDecrypt(getParam("whatsapp.auth_token"));
-    const fromNumber = getParam("whatsapp.phone_number");
+    cobrancaAtrasada: (participante: string, streaming: string, valor: string, diasAtraso: number): EnvioWhatsAppObj => ({
+        texto: `⚠️ ${participante}, sua cobrança de *${streaming}* está ${diasAtraso} dia(s) em atraso.\n\n💰 Valor: ${valor}\n\nRealize o pagamento para manter seu acesso ativo.`,
+        template: {
+            name: "cobranca_atrasada",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: String(diasAtraso) },
+                        { type: "text", text: valor },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    // Se a integração global estiver desativada ou faltar credenciais, aborta
-    if (!globalEnabled || !accountSid || !authToken || !fromNumber) {
-        return { success: false, reason: "system_not_configured" };
-    }
+    assinaturaSuspensa: (participante: string, streaming: string): EnvioWhatsAppObj => ({
+        texto: `❌ ${participante}, sua assinatura de *${streaming}* foi suspensa por falta de pagamento.\n\nRegularize para reativar o acesso.`,
+        template: {
+            name: "assinatura_suspensa",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                    ]
+                }
+            ]
+        }
+    }),
 
-    // 2. Buscar configuração específica da conta (preferências)
-    // 2. Buscar configuração específica da conta (preferências)
+    pagamentoConfirmado: (participante: string, streaming: string, valor: string): EnvioWhatsAppObj => ({
+        texto: `✅ ${participante}, pagamento confirmado!\n\n*${streaming}*\n💰 ${valor}\n\nObrigado! Seu acesso continua ativo.`,
+        template: {
+            name: "pagamento_confirmado",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: streaming },
+                        { type: "text", text: valor },
+                    ]
+                }
+            ]
+        }
+    }),
+
+    loteAprovado: (participante: string, quantidadeItens: string, valorTotal: string): EnvioWhatsAppObj => ({
+        texto: `✅ Olá ${participante}, seu lote de pagamento (${quantidadeItens} itens) no valor de ${valorTotal} acaba de ser APROVADO!\n\nTodos os seus acessos estão liberados. Bom entretenimento!`,
+        template: {
+            name: "lote_aprovado",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: quantidadeItens },
+                        { type: "text", text: valorTotal },
+                    ]
+                }
+            ]
+        }
+    }),
+};
+
+/**
+ * Retorna o ID da configuração se for válida e ativa, senão returna root.
+ */
+export async function whatsappConfigIsValid(contaId: number): Promise<number | null> {
     const config = await prisma.whatsAppConfig.findUnique({
         where: { contaId },
-        include: { conta: { select: { plano: true } } }
     });
-
-    // Se a conta não tiver configuração ou estiver inativa, retorna silenciosamente
-    if (!config || !config.isAtivo) {
-        return { success: false, reason: "account_disabled" };
-    }
-
-    // Check Plan Automation
-    // Note: We use type assertion or ignore if type definition is outdated until prisma generate runs
-    // @ts-ignore
-    if (!PLANS[config.conta.plano]?.automationEnabled) {
-        return { success: false, reason: "plan_restricted" };
-    }
-
-    // 3. Verificar se notificação deste tipo está habilitada para ESTA conta
-    const tipoHabilitado = verificarTipoHabilitado(config, tipo);
-    if (!tipoHabilitado) {
-        return { success: false, reason: "notification_type_disabled" };
-    }
-
-    // 4. Buscar número do participante
-    const participante = await prisma.participante.findUnique({
-        where: { id: participanteId },
-        select: { whatsappNumero: true },
-    });
-
-    if (!participante || !participante.whatsappNumero) {
-        return { success: false, reason: "participant_invalid_number" };
-    }
-
-    // 5. Enviar mensagem usando as credenciais globais
-    try {
-        const provider = new TwilioProvider(
-            accountSid,
-            authToken,
-            fromNumber
-        );
-        const result = await provider.sendMessage(participante.whatsappNumero, mensagem);
-
-        // Logar tentativa
-        await prisma.whatsAppLog.create({
-            data: {
-                configId: config.id,
-                participanteId,
-                tipo,
-                numeroDestino: participante.whatsappNumero,
-                mensagem,
-                enviado: result.success,
-                erro: result.error,
-                providerId: result.providerId,
-            },
-        });
-
-        return result;
-    } catch (error) {
-        // Logar erro
-        await prisma.whatsAppLog.create({
-            data: {
-                configId: config.id,
-                participanteId,
-                tipo,
-                numeroDestino: participante.whatsappNumero,
-                mensagem,
-                enviado: false,
-                erro: (error as Error).message,
-            },
-        });
-
-        console.error("sendWhatsAppNotification generic catch error:", error);
-        return { success: false, error: "Erro interno ao enviar notificação WhatsApp" };
-    }
+    return config && config.isAtivo ? config.id : null;
 }
 
-function verificarTipoHabilitado(config: any, tipo: TipoNotificacaoWhatsApp): boolean {
+// ---------------------------------------------------------------------------
+// Notification type enablement map
+// ---------------------------------------------------------------------------
+
+function isTypeEnabled(config: any, tipo: TipoNotificacaoWhatsApp): boolean {
     const map: Record<TipoNotificacaoWhatsApp, string> = {
         nova_assinatura: "notificarNovaAssinatura",
         cobranca_gerada: "notificarCobrancaGerada",
@@ -218,27 +176,66 @@ function verificarTipoHabilitado(config: any, tipo: TipoNotificacaoWhatsApp): bo
         assinatura_suspensa: "notificarAssinaturaSuspensa",
         pagamento_confirmado: "notificarPagamentoConfirmado",
     };
-
     return config[map[tipo]] === true;
 }
 
-// Templates de mensagens
-export const whatsappTemplates = {
-    novaAssinatura: (participante: string, streaming: string, valor: string, dataInicio: string) =>
-        `Olá ${participante}! ✨\n\nSua assinatura de *${streaming}* foi confirmada!\n\n💰 Valor: ${valor}\n📅 Início: ${dataInicio}\n\nEm breve você receberá as credenciais de acesso.`,
+// ---------------------------------------------------------------------------
+// Main notification dispatcher
+// ---------------------------------------------------------------------------
 
-    cobrancaGerada: (participante: string, streaming: string, valor: string, vencimento: string) =>
-        `Olá ${participante}! 📝\n\nNova cobrança gerada para *${streaming}*:\n\n💰 Valor: ${valor}\n📅 Vencimento: ${vencimento}\n\nAguardamos seu pagamento!`,
+export async function sendWhatsAppNotification(
+    contaId: number,
+    tipo: TipoNotificacaoWhatsApp,
+    participanteId: number,
+    mensagemContexto: EnvioWhatsAppObj // Mudado de 'string' para objeto que contém Template
+): Promise<WhatsAppSendResult> {
+    // 1. Load account plan config
+    const config = await prisma.whatsAppConfig.findUnique({
+        where: { contaId },
+        include: { conta: { select: { plano: true } } },
+    });
 
-    cobrancaVencendo: (participante: string, streaming: string, valor: string, dias: number) =>
-        `Lembrete: Sua cobrança de *${streaming}* vence em ${dias} dia(s)! ⏰\n\n💰 Valor: ${valor}\n\nEvite suspensão do serviço realizando o pagamento.`,
+    if (!config || !config.isAtivo) {
+        return { success: false, error: "account_disabled" };
+    }
 
-    cobrancaAtrasada: (participante: string, streaming: string, valor: string, diasAtraso: number) =>
-        `⚠️ ${participante}, sua cobrança de *${streaming}* está ${diasAtraso} dia(s) em atraso.\n\n💰 Valor: ${valor}\n\nRealize o pagamento para manter seu acesso ativo.`,
+    // 2. Check notification type toggle
+    if (!isTypeEnabled(config, tipo)) {
+        return { success: false, error: "notification_type_disabled" };
+    }
 
-    assinaturaSuspensa: (participante: string, streaming: string) =>
-        `❌ ${participante}, sua assinatura de *${streaming}* foi suspensa por falta de pagamento.\n\nRegularize para reativar o acesso.`,
+    // 3. Fetch participant number
+    const participante = await prisma.participante.findUnique({
+        where: { id: participanteId },
+        select: { whatsappNumero: true, nome: true },
+    });
 
-    pagamentoConfirmado: (participante: string, streaming: string, valor: string) =>
-        `✅ ${participante}, pagamento confirmado!\n\n*${streaming}*\n💰 ${valor}\n\nObrigado! Seu acesso continua ativo.`,
-};
+    if (!participante?.whatsappNumero) {
+        return { success: false, error: "participant_invalid_number" };
+    }
+
+    // 4. Determine if plan allows automation
+    const automated = PLANS[config.conta.plano]?.automationEnabled === true;
+
+    const mensagemTextoLogs = mensagemContexto.texto;
+    const templateConfig = mensagemContexto.template;
+
+    // 5. Send (automated uses Meta template API, manual uses wa.me links with pure text)
+    const result = await sendWhatsApp(participante.whatsappNumero, mensagemTextoLogs, automated, templateConfig);
+
+    // 6. Log the attempt
+    await prisma.whatsAppLog.create({
+        data: {
+            configId: config.id,
+            participanteId,
+            tipo,
+            numeroDestino: participante.whatsappNumero,
+            mensagem: mensagemTextoLogs, // Prisma required string field
+            enviado: result.success,
+            erro: result.error,
+            providerId: result.messageId,
+        },
+    });
+
+    return result;
+}

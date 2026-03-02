@@ -37,59 +37,60 @@ export function ExploreClient({ streamings, catalogos, initialFilters, error }: 
 
     return (
         <div className={isPending ? "opacity-70 transition-opacity" : "transition-opacity"}>
-            <GenericFilter
-                className="mb-6"
-                filters={[
-                    {
-                        key: "search",
-                        type: "text",
-                        placeholder: "Pelo que você está procurando hoje?",
-                        className: "md:flex-[2]"
-                    },
-                    {
-                        key: "categoria",
-                        type: "select",
-                        label: "Categoria",
-                        placeholder: "Todas as categorias",
-                        className: "md:flex-1",
-                        options: CATALOGO_CATEGORIES.map(c => ({
-                            label: c.label,
-                            value: c.id
-                        }))
-                    },
-                    {
-                        key: "catalogoId",
-                        type: "select",
-                        label: "Serviço Específico",
-                        placeholder: "Todos os serviços",
-                        className: "md:flex-1",
-                        options: catalogos.map(c => ({
-                            label: c.nome,
-                            value: c.id.toString(),
-                            icon: c.iconeUrl,
-                            color: c.corPrimaria
-                        }))
-                    },
-                    {
-                        key: "onlyMyAccount",
-                        type: "switch",
-                        label: "Filtrar apenas por streaming da minha conta",
-                        className: "md:flex-1"
-                    }
-                ]}
-                values={{
-                    search: initialFilters.search || "",
-                    categoria: initialFilters.categoria || "all",
-                    catalogoId: initialFilters.catalogoId || "all",
-                    onlyMyAccount: initialFilters.onlyMyAccount || "false"
-                }}
-                onChange={handleFilterChange}
-                onClear={() => {
-                    startTransition(() => {
-                        router.push(pathname);
-                    });
-                }}
-            />
+            <div className="py-6">
+                <GenericFilter
+                    filters={[
+                        {
+                            key: "search",
+                            type: "text",
+                            placeholder: "Pelo que você está procurando hoje?",
+                            className: "md:flex-[2]"
+                        },
+                        {
+                            key: "categoria",
+                            type: "select",
+                            label: "Categoria",
+                            placeholder: "Todas as categorias",
+                            className: "md:flex-1",
+                            options: CATALOGO_CATEGORIES.map(c => ({
+                                label: c.label,
+                                value: c.id
+                            }))
+                        },
+                        {
+                            key: "catalogoId",
+                            type: "select",
+                            label: "Serviço Específico",
+                            placeholder: "Todos os serviços",
+                            className: "md:flex-1",
+                            options: catalogos.map(c => ({
+                                label: c.nome,
+                                value: c.id.toString(),
+                                icon: c.iconeUrl,
+                                color: c.corPrimaria
+                            }))
+                        },
+                        {
+                            key: "onlyMyAccount",
+                            type: "switch",
+                            label: "Filtrar apenas por streaming da minha conta",
+                            className: "md:flex-1"
+                        }
+                    ]}
+                    values={{
+                        search: initialFilters.search || "",
+                        categoria: initialFilters.categoria || "all",
+                        catalogoId: initialFilters.catalogoId || "all",
+                        onlyMyAccount: initialFilters.onlyMyAccount || "false"
+                    }}
+                    onChange={handleFilterChange}
+                    onClear={() => {
+                        startTransition(() => {
+                            router.push(pathname);
+                        });
+                    }}
+                />
+            </div>
 
             {streamings.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

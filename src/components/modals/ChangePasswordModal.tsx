@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { X, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { validatePassword } from "@/lib/password-validation";
 
@@ -93,94 +96,78 @@ export function ChangePasswordModal({ isOpen, user, onClose, onSuccess }: Change
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            <Lock className="text-primary" size={24} />
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {hasPassword ? "Alterar Senha" : "Definir Senha"}
-                        </h2>
-                    </div>
-                    <button
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={hasPassword ? "Alterar Senha" : "Definir Senha"}
+            footer={
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <Button
+                        variant="secondary"
+                        type="button"
                         onClick={handleClose}
                         disabled={loading}
-                        className="p-2 hover:bg-gray-100 rounded-xl transition-all disabled:opacity-50"
-                        aria-label="Fechar"
+                        className="w-full sm:w-auto sm:mr-auto"
                     >
-                        <X size={24} className="text-gray-500" />
-                    </button>
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="default"
+                        type="submit"
+                        form="change-password-form"
+                        disabled={loading}
+                        className="w-full sm:w-auto"
+                    >
+                        {loading && <Spinner size="sm" color="white" />}
+                        {loading
+                            ? (hasPassword ? "Alterando..." : "Definindo...")
+                            : (hasPassword ? "Alterar Senha" : "Definir Senha")}
+                    </Button>
                 </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    {error && (
-                        <div role="alert" className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
-                            {error}
-                        </div>
-                    )}
-
-                    {!hasPassword && (
-                        <div className="bg-blue-50 text-blue-700 p-4 rounded-xl text-xs border border-blue-100 flex gap-3">
-                            <Lock size={16} className="shrink-0" />
-                            <p>
-                                Como você entrou via Google, você ainda não tem uma senha.
-                                Defina uma agora para poder desvincular o Google ou logar tradicionalmente.
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Current Password */}
-                    {hasPassword && (
-                        <PasswordInput
-                            label="Senha Atual"
-                            value={currentPassword}
-                            onChange={setCurrentPassword}
-                            required
-                        />
-                    )}
-
-                    {/* New Password */}
-                    <PasswordInput
-                        label={hasPassword ? "Nova Senha" : "Senha"}
-                        value={newPassword}
-                        onChange={setNewPassword}
-                        required
-                        showRequirements
-                        showStrength
-                    />
-
-                    {/* Confirm Password */}
-                    <PasswordInput
-                        label="Confirmar Nova Senha"
-                        value={confirmPassword}
-                        onChange={setConfirmPassword}
-                        required
-                    />
-
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={handleClose}
-                            disabled={loading}
-                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 bg-primary hover:bg-accent text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
-                        >
-                            {loading ? (hasPassword ? "Alterando..." : "Definindo...") : (hasPassword ? "Alterar Senha" : "Definir Senha")}
-                        </button>
+            }
+        >
+            <form id="change-password-form" onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                    <div role="alert" className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
+                        {error}
                     </div>
-                </form>
-            </div>
-        </div>
+                )}
+
+                {!hasPassword && (
+                    <div className="bg-blue-50 text-blue-700 p-4 rounded-xl text-xs border border-blue-100 flex gap-3">
+                        <Lock size={16} className="shrink-0" />
+                        <p>
+                            Como você entrou via Google, você ainda não tem uma senha.
+                            Defina uma agora para poder desvincular o Google ou logar tradicionalmente.
+                        </p>
+                    </div>
+                )}
+
+                {hasPassword && (
+                    <PasswordInput
+                        label="Senha Atual"
+                        value={currentPassword}
+                        onChange={setCurrentPassword}
+                        required
+                    />
+                )}
+
+                <PasswordInput
+                    label={hasPassword ? "Nova Senha" : "Senha"}
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    required
+                    showRequirements
+                    showStrength
+                />
+
+                <PasswordInput
+                    label="Confirmar Nova Senha"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    required
+                />
+            </form>
+        </Modal>
     );
 }

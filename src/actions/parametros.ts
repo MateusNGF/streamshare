@@ -22,21 +22,6 @@ interface ParametroInput {
     descricao?: string;
 }
 
-interface SmtpConfig {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    fromEmail: string;
-    fromName: string;
-    useTls: boolean;
-}
-
-interface WhatsAppTestConfig {
-    accountSid: string;
-    authToken: string;
-    phoneNumber: string;
-}
 
 async function validateAdmin() {
     const session = await getCurrentUser();
@@ -203,65 +188,129 @@ export async function deleteParametro(chave: string) {
         return { success: false, error: "Erro ao deletar parâmetro" };
     }
 }
-
-export async function testSmtpConnection(config: SmtpConfig) {
+export async function testSmtpConnection() {
     try {
-        const nodemailer = await import("nodemailer");
+        const session = await getCurrentUser();
+        if (!session) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
 
-        const transporter = nodemailer.createTransport({
-            host: config.host,
-            port: config.port,
-            secure: config.useTls,
-            auth: {
-                user: safeDecrypt(config.user) || config.user,
-                pass: safeDecrypt(config.password) || config.password,
-            },
-        });
+        const isAdmin = await validateAdmin();
+        if (!isAdmin.success) return isAdmin;
 
+        const destinatario = session.email;
+
+        const { createTransporter } = await import("@/lib/email/transporter");
+        const { sendTestEmail } = await import("@/lib/email");
+
+        // 1. Primeiro verifica a conexão (handshake)
+        const transporter = await createTransporter();
         await transporter.verify();
 
-        return { success: true, data: { message: "Conexão SMTP estabelecida com sucesso!" } };
+        // 2. Tenta enviar um email real de teste para o próprio admin logado
+        const result = await sendTestEmail(destinatario);
+
+        if (result.success) {
+            return {
+                success: true,
+                data: {
+                    message: `Conexão SMTP OK e email de teste enviado para ${destinatario}!`,
+                    details: `Message ID: ${result.messageId} | Host: ${process.env.SMTP_HOST || "Ethereal"}`
+                }
+            };
+        } else {
+            return {
+                success: false,
+                error: "Conexão SMTP estabelecida, mas falhou ao enviar o e-mail de teste.",
+                code: "SEND_ERROR",
+                metadata: { details: result.error }
+            };
+        }
     } catch (error: any) {
         console.error("SMTP Test Error:", error);
         return {
             success: false,
-            error: "Falha na conexão SMTP. Verifique as configurações e tente novamente.",
+            error: "Falha na conexão SMTP (verifique as variáveis de ambiente).",
             code: "SMTP_ERROR",
             metadata: { details: error.message }
         };
     }
 }
 
-export async function testWhatsAppConnection(config: WhatsAppTestConfig) {
+export async function testWhatsAppConnection() {
     try {
-        const response = await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${config.accountSid}.json`,
-            {
-                headers: {
-                    Authorization: `Basic ${Buffer.from(
-                        `${config.accountSid}:${safeDecrypt(config.authToken) || config.authToken}`
-                    ).toString("base64")}`,
-                },
-            }
-        );
+        const isAdmin = await validateAdmin();
+        if (!isAdmin.success) return isAdmin;
+
+        const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+        const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const apiVersion = process.env.WHATSAPP_API_VERSION ?? "v21.0";
+
+        if (!accessToken || !phoneNumberId) {
+            return {
+                success: false,
+                error: "Configurações da Meta Cloud API incompletas no .env (WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID são obrigatórios).",
+                code: "CONFIG_MISSING"
+            };
+        }
+
+        // Validates token + phone number by fetching the phone number profile
+        const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}?fields=display_phone_number,verified_name`;
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        const data = await response.json();
 
         if (response.ok) {
-            return { success: true, data: { message: "Conexão WhatsApp/Twilio estabelecida com sucesso!" } };
+            return {
+                success: true,
+                data: {
+                    message: `Conexão Meta Cloud API OK! Número: ${data.display_phone_number ?? phoneNumberId} (${data.verified_name ?? "sem nome verificado"})`,
+                    details: `API Version: ${apiVersion}`
+                }
+            };
         } else {
             return {
                 success: false,
-                error: "Credenciais inválidas",
+                error: data?.error?.message ?? "Credenciais Meta Cloud API inválidas.",
                 code: "WHATSAPP_ERROR",
-                metadata: { status: response.status }
+                metadata: { status: response.status, meta: data?.error }
             };
         }
     } catch (error: any) {
-        console.error("WhatsApp Test Error:", error);
+        console.error("[WhatsApp Meta API Test Error]", error);
         return {
             success: false,
-            error: "Falha na conexão WhatsApp. Verifique as credenciais e tente novamente.",
+            error: "Falha na conexão com a Meta Cloud API.",
             code: "WHATSAPP_ERROR",
             metadata: { details: error.message }
         };
+    }
+}
+
+export async function getConfigParams() {
+    try {
+        const isAdmin = await validateAdmin();
+        if (!isAdmin.success) return isAdmin;
+
+        return {
+            success: true,
+            data: {
+                smtp: {
+                    host: process.env.SMTP_HOST || "Não configurado",
+                    port: process.env.SMTP_PORT || "587",
+                    user: process.env.SMTP_USER || "Não configurado",
+                    secure: process.env.SMTP_SECURE || "false",
+                    fromEmail: process.env.EMAIL_FROM || "Não configurado",
+                },
+                whatsapp: {
+                    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ? "****" + process.env.WHATSAPP_PHONE_NUMBER_ID.slice(-4) : "Não configurado",
+                    apiVersion: process.env.WHATSAPP_API_VERSION || "v21.0",
+                    enabled: process.env.WHATSAPP_ENABLED || "false",
+                }
+            }
+        };
+    } catch (error: any) {
+        console.error("[GET_CONFIG_PARAMS_ERROR]", error);
+        return { success: false, error: "Erro ao buscar parâmetros de ambiente" };
     }
 }

@@ -9,14 +9,14 @@ import { Shield } from "lucide-react";
 async function getLoggedUserStats(userId: number) {
     const fullUser = await prisma.usuario.findUnique({
         where: { id: userId },
-        select: { nome: true, email: true, whatsapp: true }
+        select: { nome: true, email: true, whatsappNumero: true }
     });
 
     const stats = {
         userId,
         nome: fullUser?.nome || "",
         email: fullUser?.email || "",
-        whatsappNumero: fullUser?.whatsapp || "",
+        whatsappNumero: fullUser?.whatsappNumero || "",
         cpf: ""
     };
 

@@ -1,10 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+export const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "7d";
 
 // Convert the secret string to a Uint8Array which jose requires
-const encodedSecret = new TextEncoder().encode(JWT_SECRET);
+export const encodedSecret = new TextEncoder().encode(JWT_SECRET);
 
 export interface JWTPayload {
     userId: number;

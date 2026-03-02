@@ -1,9 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+const ForgotPasswordForm = dynamic(() => import("@/components/auth/ForgotPasswordForm").then(mod => mod.ForgotPasswordForm), {
+    loading: () => (
+        <div className="space-y-4 py-4">
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+            <Skeleton variant="rectangular" className="w-full h-12 rounded-xl" />
+        </div>
+    )
+});
 
 export default function ForgotPasswordPage() {
     return (

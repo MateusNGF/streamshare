@@ -12,6 +12,7 @@ import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Tras
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "./shared/BillingTableCells";
@@ -28,6 +29,9 @@ interface CobrancasTableProps {
     variant?: "default" | "compact";
     fallbackValorMensal?: number | string;
     isAdmin?: boolean;
+    selectedIds?: Set<number>;
+    onToggleSelect?: (id: number) => void;
+    onSelectAll?: (ids: number[]) => void;
 }
 
 /**
@@ -106,12 +110,28 @@ export function CobrancasTable({
     statusFilter = "all",
     variant = "default",
     fallbackValorMensal,
-    isAdmin = true
+    isAdmin = true,
+    selectedIds,
+    onToggleSelect,
+    onSelectAll
 }: CobrancasTableProps) {
     const isCompact = variant === "compact";
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    const selectableCobrancas = cobrancas.filter(c => ['pendente', 'atrasado'].includes(c.status));
+    const allSelected = selectableCobrancas.length > 0 && selectedIds && selectableCobrancas.every(c => selectedIds.has(c.id));
+    const someSelected = selectableCobrancas.length > 0 && selectedIds && !allSelected && selectableCobrancas.some(c => selectedIds.has(c.id));
+
+    const handleSelectAll = (checked: boolean) => {
+        if (!onSelectAll) return;
+        if (checked) {
+            onSelectAll(selectableCobrancas.map(c => c.id));
+        } else {
+            onSelectAll([]);
+        }
     };
 
     if (cobrancas.length === 0) {
@@ -139,6 +159,11 @@ export function CobrancasTable({
                             {!isCompact && (
                                 <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[160px]">
                                     <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                                            onCheckedChange={handleSelectAll}
+                                            className="bg-white"
+                                        />
                                         <User size={12} className="text-gray-400" />
                                         Participante
                                     </div>
@@ -223,20 +248,30 @@ export function CobrancasTable({
                                     {!isCompact && (
                                         <TableCell>
                                             <div className="flex items-center gap-3">
-                                                <StreamingLogo
-                                                    name={cobranca.assinatura.streaming.catalogo.nome}
-                                                    iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
-                                                    color={cobranca.assinatura.streaming.catalogo.corPrimaria}
-                                                    size="sm"
-                                                    rounded="md"
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-900 leading-tight">
-                                                        {cobranca.assinatura.participante.nome}
-                                                    </span>
-                                                    <span className="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">
-                                                        {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                                                    </span>
+                                                {['pendente', 'atrasado'].includes(cobranca.status) ? (
+                                                    <Checkbox
+                                                        checked={selectedIds?.has(cobranca.id) || false}
+                                                        onCheckedChange={() => onToggleSelect?.(cobranca.id)}
+                                                    />
+                                                ) : (
+                                                    <div className="w-5 h-5" /> // Spacer
+                                                )}
+                                                <div className="flex items-center gap-3">
+                                                    <StreamingLogo
+                                                        name={cobranca.assinatura.streaming.catalogo.nome}
+                                                        iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
+                                                        color={cobranca.assinatura.streaming.catalogo.corPrimaria}
+                                                        size="sm"
+                                                        rounded="md"
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-900 leading-tight">
+                                                            {cobranca.assinatura.participante.nome}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">
+                                                            {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </TableCell>

@@ -31,7 +31,17 @@ Escreva para quem usa, não para quem programa.
 Mantenha a consistência. Use apenas estas categorias:
 - **Faturamento** | **Interface** | **Precisão** | **Performance** | **Segurança** | **Mobile** | **Experiência** | **Integrações** | **Automação**
 
-### Exemplo de Entrada Ideal
+### Exemplos de Entrada Ideal
+
+**Caso 1: Eficiência de Carregamento**
+```typescript
+{
+    category: "Performance",
+    description: "Implementação de carregamento seletivo de módulos na **Interface de Usuário**, reduzindo drasticamente o tempo de resposta inicial e otimizando a navegação em conexões instáveis."
+}
+```
+
+**Caso 2: Regras Financeiras**
 ```typescript
 {
     category: "Faturamento",

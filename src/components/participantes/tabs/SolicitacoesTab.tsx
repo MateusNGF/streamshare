@@ -3,6 +3,7 @@
 import { UserPlus, Check, X, Mail as MailIcon } from "lucide-react";
 import { PendingRequest, Streaming } from "@/types/participante";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -65,21 +66,23 @@ export function SolicitacoesTab({ requests, streamings, onApprove, onReject, loa
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button
+                        <Button
+                            variant="outline"
                             disabled={loading}
                             onClick={() => onReject(req.id)}
-                            className="flex-1 md:flex-none px-6 py-3 border border-gray-200 text-gray-600 rounded-2xl font-bold hover:bg-gray-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+                            className="flex-1 md:flex-none hover:text-red-500 hover:border-red-100"
                         >
                             <X size={18} /> Recusar
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
+                            variant="default"
                             disabled={loading}
                             onClick={() => onApprove(req.id)}
-                            className="flex-1 md:flex-none px-8 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-accent hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
+                            className="flex-1 md:flex-none"
                         >
                             <Check size={18} /> Aprovar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             ))}

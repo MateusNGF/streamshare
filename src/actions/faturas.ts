@@ -18,14 +18,51 @@ export async function getFaturasUsuario(filters?: { status?: StatusCobranca }) {
                 },
                 ...(filters?.status ? { status: filters.status } : {})
             },
-            include: {
+            select: {
+                id: true,
+                status: true,
+                valor: true,
+                dataVencimento: true,
+                periodoInicio: true,
+                periodoFim: true,
+                createdAt: true,
+                updatedAt: true,
+                deletedAt: true,
+                dataPagamento: true,
+                comprovanteUrl: true,
+                dataEnvioComprovante: true,
+                gatewayTransactionId: true,
+                gatewayProvider: true,
+                tentativas: true,
+                metadataJson: true,
+                lotePagamentoId: true,
+                assinaturaId: true,
                 assinatura: {
-                    include: {
+                    select: {
+                        id: true,
+                        status: true,
+                        participanteId: true,
+                        frequencia: true,
+                        valor: true,
                         streaming: {
-                            include: { catalogo: true }
+                            select: {
+                                id: true,
+                                apelido: true,
+                                catalogo: {
+                                    select: {
+                                        nome: true,
+                                        iconeUrl: true,
+                                        corPrimaria: true
+                                    }
+                                }
+                            }
                         },
                         participante: {
-                            include: {
+                            select: {
+                                id: true,
+                                nome: true,
+                                whatsappNumero: true,
+                                contaId: true,
                                 conta: {
                                     select: {
                                         id: true,
@@ -39,7 +76,7 @@ export async function getFaturasUsuario(filters?: { status?: StatusCobranca }) {
                 }
             },
             orderBy: [
-                { status: 'asc' }, // Status might need better sort (pendente -> atrasado -> pago -> cancelado)
+                { status: 'asc' },
                 { dataVencimento: 'asc' }
             ]
         });

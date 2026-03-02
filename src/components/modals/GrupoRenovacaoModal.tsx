@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import {
     Select,
@@ -114,11 +115,12 @@ export function GrupoRenovacaoModal({
             onClose={onClose}
             title={`Renovação - ${grupoNome}`}
             footer={
-                <div className="flex flex-col-reverse sm:flex-row w-full sm:justify-end gap-3">
-                    <button
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                    <Button
+                        variant="outline"
                         onClick={handleCopy}
                         disabled={loading || !mensagem}
-                        className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto sm:mr-auto"
                     >
                         {copied ? (
                             <>
@@ -131,15 +133,17 @@ export function GrupoRenovacaoModal({
                                 <span>Copiar</span>
                             </>
                         )}
-                    </button>
-                    <button
+                    </Button>
+                    {/* WhatsApp usa cor de marca, aplicada via className override */}
+                    <Button
+                        variant="default"
                         onClick={handleOpenWhatsApp}
                         disabled={loading || !mensagem}
-                        className="w-full sm:w-auto px-5 py-2.5 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto bg-[#25D366] hover:bg-[#128C7E] shadow-[#25D366]/25"
                     >
                         <ExternalLink size={18} />
                         Enviar no WhatsApp
-                    </button>
+                    </Button>
                 </div>
             }
         >

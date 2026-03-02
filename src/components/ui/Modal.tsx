@@ -12,9 +12,10 @@ interface ModalProps {
     children: React.ReactNode;
     footer?: React.ReactNode;
     className?: string;
+    showCloseButton?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children, footer, className }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer, className, showCloseButton = true }: ModalProps) {
     const titleId = useRef(`modal-title-${Math.random().toString(36).substr(2, 9)}`);
     const [mounted, setMounted] = useState(false);
 
@@ -69,13 +70,15 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: M
                         <h2 id={titleId.current} className="text-xl md:text-2xl font-bold text-gray-900">
                             {title}
                         </h2>
-                        <button
-                            onClick={onClose}
-                            aria-label="Fechar modal"
-                            className="p-2 hover:bg-gray-100 rounded-full transition-all touch-manipulation hover:rotate-90 duration-300"
-                        >
-                            <X size={20} className="text-gray-500" />
-                        </button>
+                        {showCloseButton && (
+                            <button
+                                onClick={onClose}
+                                aria-label="Fechar modal"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-all touch-manipulation hover:rotate-90 duration-300"
+                            >
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        )}
                     </div>
 
                     {/* Body */}

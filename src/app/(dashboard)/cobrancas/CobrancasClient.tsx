@@ -3,23 +3,39 @@
 import { DollarSign, CheckCircle, AlertCircle, FileStack, ChevronRight } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { GenericFilter } from "@/components/ui/GenericFilter";
-import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { useCobrancasActions } from "@/hooks/useCobrancasActions";
-import { CobrancasTable } from "@/components/cobrancas/CobrancasTable";
-import { CobrancaCard } from "@/components/cobrancas/CobrancaCard";
-import { CobrancasModals } from "@/components/cobrancas/CobrancasModals";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
-import { UpgradeFeatureOverlay } from "@/components/ui/UpgradeFeatureOverlay";
-import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { TableSkeleton } from "@/components/ui/TableSkeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { LoadingCard } from "@/components/ui/LoadingCard";
+
+const GenericFilter = dynamic(() => import("@/components/ui/GenericFilter").then(mod => mod.GenericFilter), {
+    loading: () => <Skeleton className="w-full h-16 rounded-2xl" />
+});
+
+const KPIFinanceiroCard = dynamic(() => import("@/components/dashboard/KPIFinanceiroCard").then(mod => mod.KPIFinanceiroCard), {
+    loading: () => <Skeleton className="w-full h-32 rounded-[32px]" />
+});
+
+const CobrancasTable = dynamic(() => import("@/components/cobrancas/CobrancasTable").then(mod => mod.CobrancasTable), {
+    loading: () => <TableSkeleton />
+});
+
+const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard").then(mod => mod.CobrancaCard), {
+    loading: () => <LoadingCard variant="compact" />
+});
+
+const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
+const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
 
 interface CobrancasClientProps {
     kpis: {
@@ -43,6 +59,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
         loading,
+        whatsappLoading,
         cancelModalOpen, setCancelModalOpen,
         confirmPaymentModalOpen, setConfirmPaymentModalOpen,
         detailsModalOpen, setDetailsModalOpen,
@@ -60,7 +77,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         handleClearFilters,
         handleViewQrCode,
         qrModalOpen, setQrModalOpen,
-        setSelectedCobrancaId
+        setSelectedCobrancaId,
+        selectedIds, toggleSelection, selectAll, clearSelection,
+        batchTotal, hasMixedParticipants, activeLote, batchPixModalOpen, setBatchPixModalOpen,
+        handleAbrirLote, handleConfirmarLoteAdmin, handleEnviarWhatsAppLote
     } = useCobrancasActions(cobrancasIniciais);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
@@ -258,9 +278,24 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                         searchTerm={searchTerm}
                         statusFilter={statusFilter}
                         onViewQrCode={handleViewQrCode}
+                        selectedIds={selectedIds}
+                        onToggleSelect={toggleSelection}
+                        onSelectAll={selectAll}
                     />
                 )}
             </div>
+
+            <BatchActionBar
+                count={selectedIds.size}
+                total={batchTotal}
+                isAdmin={true}
+                onPay={handleAbrirLote}
+                onWhatsApp={handleEnviarWhatsAppLote}
+                onClear={clearSelection}
+                loading={loading}
+                whatsappLoading={whatsappLoading}
+                hasMixedParticipants={hasMixedParticipants}
+            />
 
             <CobrancasModals
                 cancelModalOpen={cancelModalOpen}
@@ -278,6 +313,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 loading={loading}
                 qrModalOpen={qrModalOpen}
                 onCloseQrModal={() => setQrModalOpen(false)}
+                batchPixModalOpen={batchPixModalOpen}
+                onCloseBatchPix={() => setBatchPixModalOpen(false)}
+                activeLote={activeLote}
+                isAdmin={true}
             />
         </PageContainer>
     );

@@ -203,6 +203,42 @@ export const billingService = {
                 dataVencimento: calcularDataVencimentoPadrao(new Date())
             }
         });
+    },
+
+    /**
+     * Cancela os Lotes de Pagamento que expiraram sem pagamento/aprovação.
+     * Libera as faturas (cobrancas) de volta ao status livre.
+     */
+    cancelarLotesExpirados: async () => {
+        const agora = new Date();
+        return await prisma.$transaction(async (tx) => {
+            const lotesExpirados = await tx.lotePagamento.findMany({
+                where: {
+                    status: "pendente",
+                    expiresAt: { lt: agora }
+                }
+            });
+
+            if (lotesExpirados.length === 0) return { cancelados: 0 };
+
+            for (const lote of lotesExpirados) {
+                await tx.lotePagamento.update({
+                    where: { id: lote.id },
+                    data: { status: "cancelado" }
+                });
+
+                // Liberta as cobranças vinculadas
+                await tx.cobranca.updateMany({
+                    where: { lotePagamentoId: lote.id },
+                    data: {
+                        lotePagamentoId: null,
+                        status: "pendente"
+                    }
+                });
+            }
+
+            return { cancelados: lotesExpirados.length };
+        });
     }
 };
 

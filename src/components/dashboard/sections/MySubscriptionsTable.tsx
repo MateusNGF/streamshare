@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { Eye, Calendar, ShieldCheck, MoreHorizontal, KeyRound } from "lucide-react";
+import { Eye, Calendar, ShieldCheck, MoreHorizontal, KeyRound, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { ParticipantSubscription } from "@/types/dashboard.types";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -13,10 +14,34 @@ interface MySubscriptionsTableProps {
     currencyCode: string;
     onViewDetails: (id: number) => void;
     onViewCredentials: (sub: ParticipantSubscription) => void;
+    selectedIds?: Set<number>;
+    onToggleSelect?: (cobrancaId: number) => void;
+    onSelectAll?: (cobrancaIds: number[]) => void;
 }
 
-export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetails, onViewCredentials }: MySubscriptionsTableProps) {
+export function MySubscriptionsTable({
+    subscriptions,
+    currencyCode,
+    onViewDetails,
+    onViewCredentials,
+    selectedIds,
+    onToggleSelect,
+    onSelectAll
+}: MySubscriptionsTableProps) {
     const { format } = useCurrency();
+
+    const selectableSubs = subscriptions.filter(s => s.pendingCobrancaId);
+    const allSelected = selectableSubs.length > 0 && selectedIds && selectableSubs.every(s => selectedIds.has(s.pendingCobrancaId!));
+    const someSelected = selectableSubs.length > 0 && selectedIds && !allSelected && selectableSubs.some(s => selectedIds.has(s.pendingCobrancaId!));
+
+    const handleSelectAll = (checked: boolean) => {
+        if (!onSelectAll) return;
+        if (checked) {
+            onSelectAll(selectableSubs.map(s => s.pendingCobrancaId!));
+        } else {
+            onSelectAll([]);
+        }
+    };
     return (
         <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto overflow-y-hidden">
@@ -24,7 +49,14 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
                             <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider py-5 px-6 min-w-[200px]">
-                                Serviço
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                                        onCheckedChange={handleSelectAll}
+                                        className="bg-white"
+                                    />
+                                    Serviço
+                                </div>
                             </TableHead>
                             <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[160px]">
                                 Investimento
@@ -58,6 +90,16 @@ export function MySubscriptionsTable({ subscriptions, currencyCode, onViewDetail
                                 >
                                     <TableCell className="py-4 px-6">
                                         <div className="flex items-center gap-4">
+                                            {sub.pendingCobrancaId ? (
+                                                <Checkbox
+                                                    checked={selectedIds?.has(sub.pendingCobrancaId) || false}
+                                                    onCheckedChange={() => onToggleSelect?.(sub.pendingCobrancaId!)}
+                                                />
+                                            ) : (
+                                                <div className="w-5 h-5 flex items-center justify-center">
+                                                    <CheckCircle2 size={14} className="text-green-400" />
+                                                </div>
+                                            )}
                                             <StreamingLogo
                                                 name={sub.streamingName}
                                                 iconeUrl={sub.streamingLogo}
