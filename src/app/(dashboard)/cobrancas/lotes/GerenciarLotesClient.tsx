@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { useSearchParams } from "next/navigation";
 import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import { useFilterParams } from "@/hooks/useFilterParams";
 
 interface GerenciarLotesClientProps {
     initialLotes: any[];
@@ -16,10 +17,7 @@ interface GerenciarLotesClientProps {
 export function GerenciarLotesClient({ initialLotes }: GerenciarLotesClientProps) {
     const [lotes, setLotes] = useState(initialLotes);
     const [selectedLote, setSelectedLote] = useState<any>(null);
-    const [filterValues, setFilterValues] = useState<Record<string, string>>({
-        q: "",
-        status: "all"
-    });
+    const { filters, updateFilters } = useFilterParams();
 
     const searchParams = useSearchParams();
 
@@ -41,11 +39,11 @@ export function GerenciarLotesClient({ initialLotes }: GerenciarLotesClientProps
     };
 
     const handleFilterChange = (key: string, value: string) => {
-        setFilterValues(prev => ({ ...prev, [key]: value }));
+        updateFilters({ [key]: value });
     };
 
     const handleClearFilters = () => {
-        setFilterValues({
+        updateFilters({
             q: "",
             status: "all"
         });
@@ -74,22 +72,23 @@ export function GerenciarLotesClient({ initialLotes }: GerenciarLotesClientProps
     const filteredLotes = useMemo(() => {
         return lotes.filter(lote => {
             // Filter by search query
-            if (filterValues.q) {
-                const search = filterValues.q.toLowerCase();
-                const matchesId = String(lote.id).includes(search);
-                const matchesName = lote.participante?.nome?.toLowerCase().includes(search);
-                const matchesEmail = lote.participante?.email?.toLowerCase().includes(search);
+            const q = filters.q?.toLowerCase() || "";
+            if (q) {
+                const matchesId = String(lote.id).includes(q);
+                const matchesName = lote.participante?.nome?.toLowerCase().includes(q);
+                const matchesEmail = lote.participante?.email?.toLowerCase().includes(q);
                 if (!matchesId && !matchesName && !matchesEmail) return false;
             }
 
             // Filter by status
-            if (filterValues.status && filterValues.status !== "all") {
-                if (lote.status !== filterValues.status) return false;
+            const status = filters.status || "all";
+            if (status !== "all") {
+                if (lote.status !== status) return false;
             }
 
             return true;
         });
-    }, [lotes, filterValues]);
+    }, [lotes, filters]);
 
     return (
         <PageContainer>
@@ -98,22 +97,20 @@ export function GerenciarLotesClient({ initialLotes }: GerenciarLotesClientProps
                 description="Valide os pagamentos consolidados enviados pelos participantes."
             />
 
-            <div className="mt-8 space-y-4">
-                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                    <GenericFilter
-                        filters={filterConfigs}
-                        values={filterValues}
-                        onChange={handleFilterChange}
-                        onClear={handleClearFilters}
-                    />
-                </div>
-
-                <LotesTable
-                    lotes={filteredLotes}
-                    onViewDetails={handleViewLote}
-                    isAdmin={true}
+            <div className="py-6">
+                <GenericFilter
+                    filters={filterConfigs}
+                    values={filters}
+                    onChange={handleFilterChange}
+                    onClear={handleClearFilters}
                 />
             </div>
+
+            <LotesTable
+                lotes={filteredLotes}
+                onViewDetails={handleViewLote}
+                isAdmin={true}
+            />
 
             {selectedLote && (
                 <ModalPagamentoLote
