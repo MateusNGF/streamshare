@@ -56,13 +56,8 @@ export const billingService = {
             const agora = new Date();
 
             // 2. Mark pending charges with dataVencimento < agora as "atrasado"
-            await tx.cobranca.updateMany({
-                where: {
-                    status: "pendente",
-                    dataVencimento: { lt: agora }
-                },
-                data: { status: "atrasado" }
-            });
+            // Delegate to the new method for code reuse
+            await billingService.syncOverdueStatuses({ contaId }, tx);
 
             // 3. Evaluate each subscription
             for (const assinatura of assinaturasTyped) {
@@ -98,6 +93,39 @@ export const billingService = {
         }, {
             timeout: 30000 // Increase timeout for bulk processing
         });
+    },
+
+    /**
+     * Sincroniza o status das cobranças pendentes, marcando-as como "atrasado" se já passaram do vencimento.
+     * Sendo executado separadamente, garante que os dados do banco estejam consistentes para as dashboards.
+     */
+    syncOverdueStatuses: async (filters?: { contaId?: number, participanteUserId?: number }, txOrPrisma?: any) => {
+        const client = txOrPrisma || prisma;
+        const agora = new Date();
+
+        const whereClause: any = {
+            status: "pendente",
+            dataVencimento: { lt: agora }
+        };
+
+        if (filters?.contaId || filters?.participanteUserId) {
+            whereClause.assinatura = {
+                participante: {}
+            };
+            if (filters.contaId) whereClause.assinatura.participante.contaId = filters.contaId;
+            if (filters.participanteUserId) whereClause.assinatura.participante.userId = filters.participanteUserId;
+        }
+
+        const stats = await client.cobranca.updateMany({
+            where: whereClause,
+            data: { status: "atrasado" }
+        });
+
+        if (stats.count > 0) {
+            console.log(`[BILLING] Sincronização: ${stats.count} cobranças marcadas como atrasadas ${filters?.contaId ? `(Conta ${filters.contaId})` : '(Global)'}.`);
+        }
+
+        return stats.count;
     },
 
     /**

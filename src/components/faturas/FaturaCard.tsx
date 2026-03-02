@@ -35,10 +35,10 @@ export function FaturaCard({
     const isPaid = fatura.status === 'pago';
     const isCancelled = fatura.status === 'cancelado';
     const isAwaiting = fatura.status === 'aguardando_aprovacao';
+    const isOverdue = fatura.status === 'atrasado';
     const vencimentoDate = new Date(fatura.dataVencimento);
     const today = startOfDay(new Date());
     const daysUntil = differenceInDays(vencimentoDate, today);
-    const isOverdue = !isPaid && !isCancelled && daysUntil < 0;
 
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 

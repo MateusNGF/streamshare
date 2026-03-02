@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { StatusCobranca } from "@prisma/client";
+import { billingService } from "@/services/billing-service";
 
 export async function getFaturasUsuario(filters?: { status?: StatusCobranca }) {
     try {

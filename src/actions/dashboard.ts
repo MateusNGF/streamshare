@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { getContext } from "@/lib/action-context";
+import { billingService } from "@/services/billing-service";
 import { safeDecrypt } from "@/lib/encryption";
 import {
     DashboardStats,
@@ -128,8 +129,7 @@ async function getPaymentMetrics(contaId: number, agora: Date): Promise<PaymentM
         prisma.cobranca.count({
             where: {
                 assinatura: { streaming: { contaId }, status: "ativa" },
-                status: { in: ["pendente", "atrasado"] },
-                periodoFim: { lt: agora }
+                status: "atrasado"
             }
         }),
         prisma.cobranca.groupBy({
