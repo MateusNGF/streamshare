@@ -8,7 +8,7 @@ import { FocusTrap } from "focus-trap-react";
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    title: string;
+    title: React.ReactNode;
     children: React.ReactNode;
     footer?: React.ReactNode;
     className?: string;

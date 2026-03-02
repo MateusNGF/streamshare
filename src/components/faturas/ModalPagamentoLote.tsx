@@ -60,6 +60,7 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
     const [isRejecting, setIsRejecting] = useState(false);
     const [showRejectionInput, setShowRejectionInput] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const valor = Number(lote?.valorTotal || 0);
     const status = lote?.status || "pendente";
@@ -101,6 +102,11 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
     const copyPix = () => {
         if (!pixPayload) return;
         navigator.clipboard.writeText(pixPayload);
+
+        if (typeof navigator.vibrate === "function") {
+            navigator.vibrate(50);
+        }
+
         success("Código Pix do Lote copiado!");
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
@@ -207,9 +213,6 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
                         </div>
                         <h2 className="text-4xl font-black text-zinc-900 tracking-tighter">{format(valor)}</h2>
                     </div>
-                    <Badge variant={status === "pago" ? "success" : status === "aguardando_aprovacao" ? "warning" : "default"} className="font-black px-4 py-1.5 rounded-full shadow-sm">
-                        {status === "pago" ? "PAGO" : status === "aguardando_aprovacao" ? "EM ANÁLISE" : "PENDENTE"}
-                    </Badge>
                 </div>
             </div>
 
@@ -259,7 +262,7 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
                                 <StreamingLogo name={c.assinatura.streaming.catalogo.nome} iconeUrl={c.assinatura.streaming.catalogo.iconeUrl} color={c.assinatura.streaming.catalogo.corPrimaria} size="xs" />
                                 <div className="flex flex-col">
                                     <span className="font-bold text-zinc-800 text-xs tracking-tight">{c.assinatura.streaming.apelido || c.assinatura.streaming.catalogo.nome}</span>
-                                    <span className="text-[9px] text-zinc-400 font-medium">Fatura #{c.id}</span>
+                                    <span className="text-[9px] text-zinc-400 font-medium">Fatura #{c.id} • Vencimento: {new Date(c.dataVencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
                                 </div>
                             </div>
                             <span className="font-black text-zinc-900 text-xs">{format(Number(c.valor))}</span>
@@ -336,8 +339,8 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
             ) : (
                 <div className="space-y-4">
                     {lote.comprovanteUrl ? (
-                        <div className="space-y-4">
-                            <div className="bg-zinc-50 rounded-[32px] overflow-hidden border border-zinc-100 aspect-video relative group ring-1 ring-zinc-100">
+                        <div className="flex flex-col gap-6">
+                            <div className="bg-zinc-50 rounded-[32px] overflow-hidden border border-zinc-100 h-48 relative group ring-1 ring-zinc-100 flex-shrink-0">
                                 {lote.comprovanteUrl.endsWith('.pdf') ? (
                                     <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                                         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shadow-sm"><FileText size={32} /></div>
@@ -346,13 +349,28 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
                                     </div>
                                 ) : (
                                     <>
-                                        <img src={lote.comprovanteUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt="Recibo" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                                            <a href={lote.comprovanteUrl} target="_blank" className="bg-white text-zinc-900 px-6 py-2.5 rounded-full font-black text-xs shadow-2xl transition-transform hover:scale-110">Ver em tela cheia</a>
+                                        <img src={lote.comprovanteUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 cursor-zoom-in" alt="Recibo" onClick={() => setIsFullscreen(true)} />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px] pointer-events-none">
+                                            <span className="bg-white text-zinc-900 px-6 py-2.5 rounded-full font-black text-xs shadow-2xl transition-transform group-hover:scale-110 pointer-events-auto cursor-pointer" onClick={() => setIsFullscreen(true)}>Inspecionar</span>
                                         </div>
                                     </>
                                 )}
                             </div>
+
+                            {/* Lightbox / Inspecionar */}
+                            {isFullscreen && !lote.comprovanteUrl.endsWith('.pdf') && (
+                                <div className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in duration-300 backdrop-blur-sm" onClick={() => setIsFullscreen(false)}>
+                                    <div className="absolute top-6 right-6 flex gap-3">
+                                        <a href={lote.comprovanteUrl} target="_blank" className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full font-bold text-xs backdrop-blur-md transition-colors" onClick={(e) => e.stopPropagation()}>
+                                            Nova Guia
+                                        </a>
+                                        <button className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full font-bold text-xs backdrop-blur-md transition-colors" onClick={() => setIsFullscreen(false)}>
+                                            Fechar
+                                        </button>
+                                    </div>
+                                    <img src={lote.comprovanteUrl} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl pointer-events-none" alt="Comprovante em tela cheia" />
+                                </div>
+                            )}
 
                             {isAdmin && status === "aguardando_aprovacao" && (
                                 <div className="space-y-3">
@@ -441,7 +459,14 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
     return (
         <Modal
             isOpen={isOpen} onClose={onClose}
-            title={status === "pendente" ? "Pagamento Consolidado" : `Lote #${lote.id}`}
+            title={
+                <div className="flex items-center gap-3">
+                    <span>{status === "pendente" ? "Pagamento Consolidado" : `Lote #${lote.id}`}</span>
+                    <Badge variant={status === "pago" ? "success" : status === "aguardando_aprovacao" ? "warning" : "default"} className="font-black px-3 py-1 text-[10px] rounded-full shadow-sm">
+                        {status === "pago" ? "PAGO" : status === "aguardando_aprovacao" ? "EM ANÁLISE" : "PENDENTE"}
+                    </Badge>
+                </div>
+            }
             className="sm:max-w-[480px]"
             footer={
                 <StepNavigation

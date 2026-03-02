@@ -18,55 +18,71 @@ export class LotePagamentoService {
             throw new Error("Nenhuma cobrança selecionada.");
         }
 
-        const cobrancas = await prisma.cobranca.findMany({
-            where: {
-                id: { in: cobrancaIds },
-                status: { in: ["pendente", "atrasado"] },
-                lotePagamentoId: null,
-                assinatura: actor.isAdminView
-                    ? { participante: { contaId: actor.contaId } }
-                    : { participante: { userId: actor.userId } }
-            },
-            include: {
-                assinatura: { include: { participante: true, streaming: { include: { catalogo: true } } } }
-            }
-        });
-
-        if (cobrancas.length === 0) {
-            throw new Error("Nenhuma cobrança pendente e livre de lotes foi encontrada.");
-        }
-
-        if (cobrancas.length !== cobrancaIds.length) {
-            throw new Error("Algumas cobranças selecionadas já foram pagas ou pertencem a outro lote.");
-        }
-
-        const participanteId = (cobrancas[0] as any).assinatura.participanteId;
-        const differentParticipant = cobrancas.some(c => (c as any).assinatura.participanteId !== participanteId);
-        if (differentParticipant) {
-            throw new Error("Todas as cobranças devem ser do mesmo participante para pagamento em lote.");
-        }
-
-        const valorTotal = cobrancas.reduce((sum, c) => sum.plus(c.valor), new Prisma.Decimal(0));
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24);
-
-        const lote = await prisma.lotePagamento.create({
-            data: {
-                participanteId,
-                valorTotal,
-                status: "pendente",
-                expiresAt,
-                cobrancas: {
-                    connect: cobrancas.map(c => ({ id: c.id }))
+        return await prisma.$transaction(async (tx) => {
+            const cobrancas = await tx.cobranca.findMany({
+                where: {
+                    id: { in: cobrancaIds },
+                    status: { in: ["pendente", "atrasado"] },
+                    lotePagamentoId: null,
+                    assinatura: actor.isAdminView
+                        ? { participante: { contaId: actor.contaId } }
+                        : { participante: { userId: actor.userId } }
+                },
+                include: {
+                    assinatura: { include: { participante: true } }
                 }
-            },
-            include: {
-                participante: { include: { conta: true } },
-                cobrancas: { include: { assinatura: { include: { streaming: { include: { catalogo: true } } } } } }
-            }
-        });
+            });
 
-        return lote;
+            if (cobrancas.length === 0) {
+                throw new Error("Nenhuma cobrança pendente e livre de lotes foi encontrada.");
+            }
+
+            if (cobrancas.length !== cobrancaIds.length) {
+                throw new Error("Algumas cobranças selecionadas já foram pagas ou pertencem a outro lote.");
+            }
+
+            const participanteId = (cobrancas[0] as any).assinatura.participanteId;
+            const differentParticipant = cobrancas.some(c => (c as any).assinatura.participanteId !== participanteId);
+            if (differentParticipant) {
+                throw new Error("Todas as cobranças devem ser do mesmo participante para pagamento em lote.");
+            }
+
+            const valorTotal = cobrancas.reduce((sum, c) => sum.plus(c.valor), new Prisma.Decimal(0));
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 24);
+
+            const lote = await tx.lotePagamento.create({
+                data: {
+                    participanteId,
+                    valorTotal,
+                    status: "pendente",
+                    expiresAt,
+                }
+            });
+
+            const updateResult = await tx.cobranca.updateMany({
+                where: {
+                    id: { in: cobrancaIds },
+                    lotePagamentoId: null,
+                    status: { in: ["pendente", "atrasado"] }
+                },
+                data: {
+                    lotePagamentoId: lote.id
+                }
+            });
+
+            if (updateResult.count !== cobrancaIds.length) {
+                throw new Error("Concorrência detectada: algumas cobranças foram modificadas durante a criação do lote.");
+            }
+
+            return await tx.lotePagamento.findUniqueOrThrow({
+                where: { id: lote.id },
+                include: {
+                    participante: { include: { conta: true } },
+                    cobrancas: { include: { assinatura: { include: { streaming: { include: { catalogo: true } } } } } }
+                }
+            });
+        });
     }
 
     /**
@@ -132,12 +148,12 @@ export class LotePagamentoService {
      * Aprova e liquida um lote de pagamento e todas as suas faturas vinculadas.
      */
     static async aprovarLote(loteId: number, actor: LoteActor) {
-        if (!actor.isAdmin || !actor.contaId) throw new Error("Acesso negado - Não é administrador.");
+        this.ensureAdminAccess(actor);
 
         const lote = await prisma.lotePagamento.findUnique({
             where: { id: loteId },
             include: {
-                participante: { include: { usuario: true } },
+                participante: true,
                 cobrancas: {
                     include: {
                         assinatura: { include: { participante: true, streaming: { include: { catalogo: true } } } }
@@ -146,8 +162,13 @@ export class LotePagamentoService {
             }
         });
 
-        if (!lote || lote.participante.contaId !== actor.contaId) throw new Error("Lote não encontrado ou acesso negado.");
-        if (lote.status === "pago") throw new Error("O Lote já está pago.");
+        if (!lote || lote.participante.contaId !== actor.contaId) {
+            throw new Error("Lote não encontrado ou acesso negado.");
+        }
+
+        if (lote.status === "pago") {
+            throw new Error("O Lote já está pago.");
+        }
 
         const txResult = await prisma.$transaction(async (tx) => {
             const updatedLote = await tx.lotePagamento.update({
@@ -198,157 +219,94 @@ export class LotePagamentoService {
             return updatedLote;
         });
 
-        // Efeitos colaterais (WhatsApp / E-mail) fora da transação
-        const pEmail = lote.participante.usuario?.email || lote.participante.email;
-
-        // E-mail
-        if (pEmail) {
-            try {
-                const { sendLoteAprovadoEmail } = await import("@/lib/email");
-                const { formatCurrency } = await import("@/lib/formatCurrency");
-                const pConta = await prisma.conta.findUnique({ where: { id: actor.contaId }, select: { moedaPreferencia: true } });
-                const valorMoeda = formatCurrency(lote.valorTotal.toNumber(), (pConta?.moedaPreferencia as any) || 'BRL');
-
-                await sendLoteAprovadoEmail({
-                    to: pEmail,
-                    participanteNome: lote.participante.nome,
-                    loteId: lote.id,
-                    quantidadeItens: lote.cobrancas.length,
-                    valorTotal: valorMoeda
-                });
-            } catch (err) {
-                console.error("[EMAIL_LOTE_APROVADO_ERROR]", err);
-            }
-        }
-
-        // WhatsApp
-        if (lote.participante.whatsappNumero) {
-            try {
-                const { sendWhatsAppNotification, whatsappConfigIsValid, whatsappTemplates } = await import("@/lib/whatsapp-service");
-                const configId = await whatsappConfigIsValid(actor.contaId);
-
-                if (configId) {
-                    const { formatCurrency } = await import("@/lib/formatCurrency");
-                    const pConta = await prisma.conta.findUnique({ where: { id: actor.contaId }, select: { moedaPreferencia: true } });
-                    const valorMoeda = formatCurrency(lote.valorTotal.toNumber(), (pConta?.moedaPreferencia as any) || 'BRL');
-                    const templateMsg = whatsappTemplates.loteAprovado(lote.participante.nome, lote.cobrancas.length.toString(), valorMoeda);
-
-                    await sendWhatsAppNotification(actor.contaId, "pagamento_confirmado" as any, lote.participanteId, templateMsg);
-                }
-            } catch (err) {
-                console.error("[WHATSAPP_LOTE_ERROR]", err);
-            }
+        // Notificações externas (E-mail / WhatsApp) via Serviço Especializado (SRP)
+        if (actor.contaId) {
+            const { LoteNotificationService } = await import("./lote-notification.service");
+            LoteNotificationService.notifyAprovado(loteId, actor.contaId);
         }
 
         return txResult;
     }
 
+    private static ensureAdminAccess(actor: LoteActor) {
+        if (!actor.isAdmin || !actor.contaId) {
+            throw new Error("Acesso negado - Não é administrador.");
+        }
+    }
+
     /**
-     * Rejeita o comprovante de um lote, exigindo que o usuario anexe outro.
+     * Rejeita o lote (comprovante inválido) e notifica o usuário.
      */
     static async rejeitarLote(loteId: number, actor: LoteActor, motivo?: string) {
-        if (!actor.isAdmin || !actor.contaId) throw new Error("Acesso negado - Não é administrador.");
+        this.ensureAdminAccess(actor);
 
         const lote = await prisma.lotePagamento.findUnique({
             where: { id: loteId },
-            include: { participante: { include: { usuario: true } }, cobrancas: true }
+            include: { participante: true }
         });
 
-        if (!lote || lote.participante.contaId !== actor.contaId) throw new Error("Lote não encontrado ou acesso negado.");
+        if (!lote || lote.participante.contaId !== actor.contaId) {
+            throw new Error("Lote não encontrado ou acesso negado.");
+        }
 
-        const txResult = await prisma.$transaction(async (tx) => {
-            const upLote = await tx.lotePagamento.update({
+        const upLote = await prisma.$transaction(async (tx) => {
+            const updated = await tx.lotePagamento.update({
                 where: { id: loteId },
                 data: {
                     status: "pendente",
                     comprovanteUrl: null,
-                    motivoRejeicao: motivo || null
+                    motivoRejeicao: motivo
                 }
             });
 
-            await tx.cobranca.updateMany({
-                where: { lotePagamentoId: loteId },
-                data: {
-                    status: "pendente",
-                    comprovanteUrl: null,
-                    dataEnvioComprovante: null
-                }
-            });
+            if (lote.participante.userId && actor.contaId) {
+                await tx.notificacao.create({
+                    data: {
+                        contaId: actor.contaId,
+                        usuarioId: lote.participante.userId,
+                        tipo: "cobranca_cancelada",
+                        titulo: "Lote Rejeitado",
+                        descricao: `Seu comprovante do Lote #${lote.id} foi rejeitado. Motivo: ${motivo || 'Verifique o comprovante enviado.'}`,
+                        entidadeId: lote.id,
+                        lida: false
+                    }
+                });
+            }
 
-            await tx.notificacao.create({
-                data: {
-                    contaId: actor.contaId!,
-                    usuarioId: null, // Broadcast to admins
-                    tipo: "cobranca_cancelada",
-                    titulo: "Lote Rejeitado",
-                    descricao: `O comprovante do Lote #${loteId} foi rejeitado. Motivo: ${motivo || "Comprovante inválido."}`,
-                    entidadeId: loteId,
-                    lida: false
-                }
-            });
-
-            return upLote;
+            return updated;
         });
 
-        const pEmail = lote.participante.usuario?.email || lote.participante.email;
-        const motivoFinal = motivo || "Comprovante inválido ou ilegível.";
-
-        // E-mail
-        if (pEmail) {
-            try {
-                const { sendLoteRejeitadoEmail } = await import("@/lib/email");
-                await sendLoteRejeitadoEmail({
-                    to: pEmail,
-                    participanteNome: lote.participante.nome,
-                    loteId: lote.id,
-                    motivo: motivoFinal
-                });
-            } catch (err) {
-                console.error("[EMAIL_LOTE_REJEITADO_ERROR]", err);
-            }
+        // Notificações externas
+        if (actor.contaId) {
+            const { LoteNotificationService } = await import("./lote-notification.service");
+            LoteNotificationService.notifyRejeitado(loteId, actor.contaId, motivo);
         }
 
-        // WhatsApp
-        if (lote.participante.whatsappNumero) {
-            try {
-                const { sendWhatsAppNotification, whatsappConfigIsValid } = await import("@/lib/whatsapp-service");
-                const configId = await whatsappConfigIsValid(actor.contaId);
-                if (configId) {
-                    const msg = `⚠️ Olá ${lote.participante.nome}, seu lote #${lote.id} foi rejeitado.\n\nMotivo: ${motivoFinal}\n\nPor favor, envie um novo comprovante pelo painel.`;
-                    await sendWhatsAppNotification(actor.contaId, "cobranca_atrasada" as any, lote.participanteId, {
-                        texto: msg,
-                        template: { name: "cobranca_atrasada", language: "pt_BR", components: [] } as any
-                    });
-                }
-            } catch (err) {
-                console.error("[WHATSAPP_LOTE_REJEITADO_ERROR]", err);
-            }
-        }
-
-        return txResult;
+        return upLote;
     }
 
     /**
      * Cancela o lote, devolvendo as faturas ao status puramente pendente.
      */
     static async cancelarLote(loteId: number, actor: LoteActor, motivo?: string) {
-        const lote = await prisma.lotePagamento.findUnique({
+        const lote = await prisma.lotePagamento.findUniqueOrThrow({
             where: { id: loteId },
-            include: { participante: { include: { usuario: true } } }
+            include: {
+                participante: { include: { usuario: true } },
+                cobrancas: { include: { assinatura: { include: { streaming: { include: { catalogo: true } } } } } }
+            }
         });
 
-        if (!lote) throw new Error("Lote não encontrado.");
+        const { isOwner, isAdminOfAccount } = this.ensureAdminOrOwner(lote, actor);
 
-        const isOwner = lote.participante.userId === actor.userId;
-        const canCancel = isOwner || (actor.isAdmin && lote.participante.contaId === actor.contaId);
-
-        if (!canCancel) throw new Error("Sem permissão para cancelar este lote.");
         if (lote.status !== "pendente" && lote.status !== "aguardando_aprovacao") {
             throw new Error("Apenas lotes pendentes ou aguardando aprovação podem ser cancelados.");
         }
-        if (actor.isAdmin && !isOwner && !motivo) {
+        if (isAdminOfAccount && !isOwner && !motivo) {
             throw new Error("O cancelamento administrativo exige um motivo.");
         }
+
+        const servicos = lote.cobrancas.map(c => c.assinatura.streaming.apelido || (c.assinatura.streaming.catalogo as any).nome).join(", ");
 
         return await prisma.$transaction(async (tx) => {
             const upLote = await tx.lotePagamento.update({
@@ -373,7 +331,7 @@ export class LotePagamentoService {
                         usuarioId: lote.participante.userId,
                         tipo: "cobranca_cancelada",
                         titulo: "Lote Cancelado pelo Administrador",
-                        descricao: `O Lote #${loteId} foi cancelado. Motivo: ${motivo}`,
+                        descricao: `O Lote #${loteId} (${servicos}) foi cancelado. Motivo: ${motivo}`,
                         entidadeId: loteId,
                         lida: false
                     }
@@ -382,5 +340,15 @@ export class LotePagamentoService {
 
             return upLote;
         });
+    }
+
+    private static ensureAdminOrOwner(lote: any, actor: LoteActor) {
+        const isOwner = lote.participante.userId === actor.userId;
+        const isAdminOfAccount = actor.isAdmin && lote.participante.contaId === actor.contaId;
+
+        if (!isOwner && !isAdminOfAccount) {
+            throw new Error("Sem permissão para realizar esta ação neste lote.");
+        }
+        return { isOwner, isAdminOfAccount };
     }
 }
