@@ -78,13 +78,23 @@ export const billingService = {
             }
 
             // 4. Execute Updates (passing tx to reuse the transaction)
-            return executeBillingTransactionWithTx(
+            const txStartTime = performance.now();
+            const result = await executeBillingTransactionWithTx(
                 tx,
                 cobrancasParaCriar,
                 assinaturasParaCancelar,
                 assinaturasParaSuspender,
                 assinaturasTyped
             );
+
+            const txDuration = performance.now() - txStartTime;
+            if (txDuration > 2000) {
+                console.warn(`[PERF_CAUTION] Transação de renovação (billing) demorou ${txDuration.toFixed(2)}ms para ${assinaturasAtivas.length} assinaturas.`);
+            } else {
+                console.log(`[PERF_INFO] Transação de renovação (billing) concluída em ${txDuration.toFixed(2)}ms.`);
+            }
+
+            return result;
         }, {
             timeout: 30000 // Increase timeout for bulk processing
         });

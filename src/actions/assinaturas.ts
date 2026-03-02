@@ -230,35 +230,54 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
 }
 
 export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
+    const startTime = performance.now();
     try {
         const { contaId, userId } = await getContext();
         const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
         const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
 
+        console.log(`[BULK_ASSINATURA] Iniciando criação de ${data.assinaturas.length} tipos de assinatura para ${data.participanteIds.length} participantes. Total esperado: ${data.assinaturas.length * data.participanteIds.length} assinaturas.`);
+
         await prisma.$transaction(async (tx) => {
+            const txStartTime = performance.now();
             const validStreamings = new Map();
 
-            // 1. Validate Streamings & Slots
-            for (const ass of data.assinaturas) {
-                if (validStreamings.has(ass.streamingId)) continue;
-                const streaming = await tx.streaming.findUnique({
-                    where: { id: ass.streamingId },
-                    include: { catalogo: true, _count: { select: { assinaturas: { where: { status: { in: ['ativa', 'suspensa', 'pendente'] } } } } } }
-                });
+            // 1. Validate Streamings & Slots (Batched and cached for the transaction)
+            const streamingIds = Array.from(new Set(data.assinaturas.map(a => a.streamingId)));
 
-                if (!streaming) throw new Error(`Streaming ID ${ass.streamingId} não encontrado`);
-                if (streaming.contaId !== contaId) throw new Error(`Sem permissão para ${streaming.catalogo.nome}`);
-
-                // Check capacity for ALL participants
-                const currentCount = streaming._count.assinaturas;
-                const needed = data.participanteIds.length;
-                if (currentCount + needed > streaming.limiteParticipantes) {
-                    throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes.`);
+            const streamingsData = await tx.streaming.findMany({
+                where: {
+                    id: { in: streamingIds },
+                    contaId
+                },
+                include: {
+                    catalogo: true,
+                    _count: {
+                        select: {
+                            assinaturas: {
+                                where: { status: { in: ['ativa', 'suspensa', 'pendente'] } }
+                            }
+                        }
+                    }
                 }
-                validStreamings.set(ass.streamingId, streaming);
+            });
+
+            // Index streamings for fast lookup
+            for (const sId of streamingIds) {
+                const streaming = streamingsData.find(s => s.id === sId);
+                if (!streaming) throw new Error(`Streaming ID ${sId} não encontrado ou sem permissão.`);
+
+                const needed = data.participanteIds.length;
+                const currentCount = streaming._count.assinaturas;
+
+                if (currentCount + needed > streaming.limiteParticipantes) {
+                    throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes (${streaming.limiteParticipantes - currentCount} disponíveis, ${needed} necessárias).`);
+                }
+                validStreamings.set(sId, streaming);
             }
 
-            // 2. Create Subscriptions
+            // 2. Create Subscriptions and Charges sequentially to maintain order and simplify error tracking
+            // Use for...of to ensure async sequence within transaction as per Prisma requirements
             for (const participanteId of data.participanteIds) {
                 for (const ass of data.assinaturas) {
                     const assinatura = await tx.assinatura.create({
@@ -273,7 +292,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                         }
                     });
 
-                    // 3. Create Initial Charge (Delegated to Billing Service)
+                    // 3. Create Initial Charge
                     await billingService.gerarCobrancaInicial(tx, {
                         assinaturaId: assinatura.id,
                         valorMensal: ass.valor,
@@ -286,7 +305,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                 }
             }
 
-            // 4. Notification
+            // 4. Global Notification for the batch
             await tx.notificacao.create({
                 data: {
                     contaId,
@@ -301,12 +320,25 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                     }
                 }
             });
+
+            const txDuration = performance.now() - txStartTime;
+            if (txDuration > 2000) {
+                console.warn(`[PERF_CAUTION] Transação de criação em lote demorou ${txDuration.toFixed(2)}ms para ${results.length} operações.`);
+            } else {
+                console.log(`[PERF_INFO] Transação de criação em lote concluída em ${txDuration.toFixed(2)}ms.`);
+            }
+        }, {
+            timeout: 15000 // Extended timeout for large batches
         });
+
+        const totalDuration = performance.now() - startTime;
+        console.log(`[BULK_ASSINATURA_SUCCESS] Total de ${results.length} assinaturas criadas em ${totalDuration.toFixed(2)}ms.`);
 
         revalidateAllPaths();
         return { success: true, data: { created: results.length, assinaturas: results } };
     } catch (error: any) {
-        console.error("[CREATE_BULK_ASSINATURAS_ERROR]", error);
+        const totalDuration = performance.now() - startTime;
+        console.error(`[BULK_ASSINATURA_ERROR] Falha após ${totalDuration.toFixed(2)}ms:`, error);
         return { success: false, error: error.message || "Erro ao criar assinaturas em lote" };
     }
 }
