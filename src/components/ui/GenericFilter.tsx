@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Filter, Search, X } from "lucide-react";
+import { useState, useEffect, useMemo, useId } from "react";
+import { Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
@@ -84,7 +84,11 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
         setIsModalOpen(false);
     };
 
-    const renderInput = (filter: FilterConfig, localValues: Record<string, string>, setLocalValues: (k: string, v: string) => void, isDebounced = false) => {
+    const rootId = useId();
+
+    const renderInput = (filter: FilterConfig, localValues: Record<string, string>, setLocalValues: (k: string, v: string) => void, isDebounced = false, autoFocus = false, idSuffix = "") => {
+        const inputId = `${rootId}-${filter.key}${idSuffix}`;
+
         if (filter.type === "text") {
             return (
                 <DebouncedInput
@@ -93,6 +97,8 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                     localValues={localValues}
                     setLocalValues={setLocalValues}
                     isDebounced={isDebounced}
+                    autoFocus={autoFocus}
+                    id={inputId}
                 />
             );
         }
@@ -104,7 +110,7 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                         value={localValues[filter.key] || "all"}
                         onValueChange={(val) => setLocalValues(filter.key, val)}
                     >
-                        <SelectTrigger className="bg-gray-50/50 border-gray-100 rounded-xl hover:border-gray-200 transition-all h-auto py-2">
+                        <SelectTrigger id={inputId} aria-label={filter.label || filter.placeholder || "Selecione uma opção"} className="bg-gray-50/50 border-gray-100 rounded-xl hover:border-gray-200 transition-all h-auto py-2">
                             <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"} />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
@@ -126,12 +132,13 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
             return (
                 <div key={filter.key} className={cn("flex items-center space-x-3 bg-gray-50/50 px-3 py-2 rounded-xl border border-gray-100", filter.className)}>
                     <Switch
-                        id={filter.key}
+                        id={inputId}
                         checked={localValues[filter.key] === "true"}
                         onCheckedChange={(checked) => setLocalValues(filter.key, String(checked))}
+                        aria-label={filter.label}
                     />
                     <label
-                        htmlFor={filter.key}
+                        htmlFor={inputId}
                         className="text-sm font-semibold text-gray-600 cursor-pointer select-none"
                     >
                         {filter.label}
@@ -211,16 +218,18 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                 {filters.length > 1 && (
                     <Button
                         variant="outline"
+                        type="button"
+                        aria-label={`Filtros adicionais${activeFiltersCount > 0 ? `, ${activeFiltersCount} ativos` : ''}`}
                         className={cn(
                             "flex gap-2 items-center px-4",
                             activeFiltersCount > 0 && "border-primary text-primary bg-primary/5"
                         )}
                         onClick={() => setIsModalOpen(true)}
                     >
-                        <Filter size={18} />
+                        <Filter size={18} aria-hidden="true" />
                         Filtros
                         {activeFiltersCount > 0 && (
-                            <span className="bg-primary text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                            <span className="bg-primary text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full" aria-hidden="true">
                                 {activeFiltersCount}
                             </span>
                         )}
@@ -231,8 +240,10 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                     <Button
                         variant="ghost"
                         size="sm"
+                        type="button"
                         onClick={onClear}
-                        className="text-gray-500 hover:text-red-500"
+                        className="text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        aria-label="Limpar todos os filtros"
                     >
                         Limpar filtros
                     </Button>
@@ -250,15 +261,17 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
 
                 <Button
                     variant="outline"
+                    type="button"
+                    aria-label={`Filtros adicionais${activeFiltersCount > 0 ? `, ${activeFiltersCount} ativos` : ''}`}
                     className={cn(
                         "flex gap-2 items-center px-4",
                         activeFiltersCount > 0 && "border-primary text-primary bg-primary/5"
                     )}
                     onClick={() => setIsModalOpen(true)}
                 >
-                    <Filter size={18} />
+                    <Filter size={18} aria-hidden="true" />
                     {activeFiltersCount > 0 && (
-                        <span className="bg-primary text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
+                        <span className="bg-primary text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full" aria-hidden="true">
                             {activeFiltersCount}
                         </span>
                     )}
@@ -271,25 +284,26 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                 onClose={() => setIsModalOpen(false)}
                 title="Filtrar Resultados"
                 footer={
-                    <div className="flex flex-col sm:flex-row w-full gap-3">
-                        <Button
-                            variant="outline"
-                            className="w-full sm:w-auto"
-                            onClick={handleLocalClear}
-                        >
-                            Limpar
-                        </Button>
+                    <div className="flex flex-col sm:flex-row-reverse w-full gap-3">
                         <Button
                             className="w-full sm:w-auto"
                             onClick={handleApply}
                         >
                             Aplicar
                         </Button>
+                        <Button
+                            variant="outline"
+                            type="button"
+                            className="w-full sm:w-auto"
+                            onClick={handleLocalClear}
+                        >
+                            Limpar
+                        </Button>
                     </div>
                 }
             >
                 <div className="space-y-6 pt-2">
-                    {filters.map((filter) => {
+                    {filters.map((filter, index) => {
                         // Skip primary search if it is showing outside?
                         // User wants "Modal for filters". Usually primary search stays outside.
                         // Let's filter out 'search'/'q' from modal if they are already visible outside?
@@ -311,16 +325,20 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                         // So the rule "Hide main search in modal" stands for both.
                         if (isMainSearch) return null;
 
+                        const inputId = `${rootId}-${filter.key}-modal`;
+
                         return (
                             <div key={filter.key} className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">
+                                <label htmlFor={inputId} className="text-sm font-medium text-gray-700 cursor-pointer">
                                     {filter.label || filter.placeholder}
                                 </label>
                                 {renderInput(
                                     { ...filter, className: "w-full" },
                                     tempValues,
                                     (k, v) => setTempValues(prev => ({ ...prev, [k]: v })),
-                                    false // No debounce in modal since we use Apply manually
+                                    false, // No debounce in modal since we use Apply manually
+                                    index === 0, // AutoFocus no primeiro elemento viável
+                                    "-modal"
                                 )}
                             </div>
                         );
@@ -336,12 +354,16 @@ function DebouncedInput({
     filter,
     localValues,
     setLocalValues,
-    isDebounced
+    isDebounced,
+    autoFocus,
+    id
 }: {
     filter: FilterConfig;
     localValues: Record<string, string>;
     setLocalValues: (k: string, v: string) => void;
     isDebounced: boolean;
+    autoFocus?: boolean;
+    id?: string;
 }) {
     const [innerValue, setInnerValue] = useState(localValues[filter.key] || "");
     const debouncedValue = useDebounce(innerValue, 400);
@@ -368,12 +390,15 @@ function DebouncedInput({
     return (
         <div className={cn("relative w-full group", filter.className)}>
             {filter.key.includes("search") || filter.key === "q" || filter.key === "searchTerm" ? (
-                <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+                <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" aria-hidden="true" />
             ) : null}
             <Input
+                id={id}
+                autoFocus={autoFocus}
                 placeholder={filter.placeholder || filter.label}
                 value={innerValue}
                 onChange={handleChange}
+                aria-label={filter.placeholder || filter.label || "Campo de busca"}
                 className={cn(
                     "bg-gray-50/50 border-gray-100 hover:border-gray-200 focus:bg-white transition-all rounded-xl",
                     (filter.key.includes("search") || filter.key === "q" || filter.key === "searchTerm") ? "pl-9" : ""
