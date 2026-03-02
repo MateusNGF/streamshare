@@ -6,6 +6,7 @@ export interface LoteActor {
     userId: number;
     contaId?: number;
     isAdmin: boolean;
+    isAdminView?: boolean; // Se a ação vem da visão de admin/organizador
 }
 
 export class LotePagamentoService {
@@ -22,11 +23,9 @@ export class LotePagamentoService {
                 id: { in: cobrancaIds },
                 status: { in: ["pendente", "atrasado"] },
                 lotePagamentoId: null,
-                assinatura: {
-                    participante: actor.contaId
-                        ? { contaId: actor.contaId }
-                        : { userId: actor.userId }
-                }
+                assinatura: actor.isAdminView
+                    ? { participante: { contaId: actor.contaId } }
+                    : { participante: { userId: actor.userId } }
             },
             include: {
                 assinatura: { include: { participante: true, streaming: { include: { catalogo: true } } } }

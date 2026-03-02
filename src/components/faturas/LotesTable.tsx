@@ -16,16 +16,29 @@ import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell } from "@/components/cobrancas/shared/BillingTableCells";
 import { formatCurrency } from "@/lib/formatCurrency";
 
+function getLoteActorDisplay(lote: any, isAdmin: boolean) {
+    const name = isAdmin
+        ? (lote.participante?.nome || 'N/A')
+        : (lote.participante?.conta?.nome || lote.participante?.nome || 'N/A');
+
+    return {
+        name,
+        initial: name.charAt(0).toUpperCase()
+    };
+}
+
 interface LotesTableProps {
     lotes: any[];
     onViewDetails: (id: number) => void;
     onCancelLote?: (id: number) => void;
+    isAdmin?: boolean;
 }
 
 export function LotesTable({
     lotes,
     onViewDetails,
     onCancelLote,
+    isAdmin = false,
 }: LotesTableProps) {
     if (lotes.length === 0) {
         return (
@@ -63,7 +76,7 @@ export function LotesTable({
                             <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
                                 <div className="flex items-center gap-2">
                                     <User size={12} className="text-gray-400" />
-                                    Participante
+                                    {isAdmin ? 'Participante' : 'Organizador'}
                                 </div>
                             </TableHead>
 
@@ -107,14 +120,19 @@ export function LotesTable({
                                     </TableCell>
 
                                     <TableCell className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
-                                                {lote.participante?.nome?.charAt(0) || '?'}
-                                            </div>
-                                            <span className="text-sm font-medium text-gray-700 truncate max-w-[150px]">
-                                                {lote.participante?.nome || 'N/A'}
-                                            </span>
-                                        </div>
+                                        {(() => {
+                                            const { name, initial } = getLoteActorDisplay(lote, isAdmin);
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                                                        {initial}
+                                                    </div>
+                                                    <span className="text-sm font-medium text-gray-700 truncate max-w-[150px]">
+                                                        {name}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                     </TableCell>
 
                                     <TableCell className="text-center">
