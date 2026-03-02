@@ -84,17 +84,10 @@ export function LotesTable({
                                 Status
                             </TableHead>
 
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                <div className="flex items-center justify-center gap-2">
-                                    <Hash size={12} className="text-gray-400" />
-                                    Qtd. Itens
-                                </div>
-                            </TableHead>
-
                             <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider px-4">
                                 <div className="flex items-center justify-end gap-2">
                                     <DollarSign size={12} className="text-gray-400" />
-                                    Valor Total
+                                    Valor do Lote
                                 </div>
                             </TableHead>
 
@@ -139,14 +132,15 @@ export function LotesTable({
                                         <StatusBadge status={lote.status} className="scale-75" />
                                     </TableCell>
 
-                                    <TableCell className="text-center text-sm font-medium text-gray-700">
-                                        {lote.cobrancas.length} faturas
-                                    </TableCell>
-
                                     <TableCell className="px-4 py-3 text-right">
-                                        <span className="font-black text-gray-900">
-                                            {formatCurrency(Number(lote.valorTotal), lote.moeda || 'BRL')}
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className="font-black text-gray-900 leading-none">
+                                                {formatCurrency(Number(lote.valorTotal), lote.moeda || 'BRL')}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">
+                                                {lote.cobrancas.length} {lote.cobrancas.length === 1 ? 'fatura' : 'faturas'}
+                                            </span>
+                                        </div>
                                     </TableCell>
 
                                     <TableCell className="text-center">
