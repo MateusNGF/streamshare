@@ -51,6 +51,7 @@ export function LotesTab({ lotes }: LotesTabProps) {
                 lotes={lotes}
                 onViewDetails={handleViewLote}
                 onCancelLote={handleCancelLote}
+                isAdmin={false}
             />
 
             {selectedLote && (

@@ -691,7 +691,7 @@ export async function enviarNotificacaoCobranca(
 /**
  * Cria um lote de pagamento para múltiplas cobranças do mesmo participante.
  */
-export async function criarLotePagamento(cobrancaIds: number[]) {
+export async function criarLotePagamento(cobrancaIds: number[], isAdminView = false) {
     try {
         const user = await getCurrentUser();
         if (!user) return { success: false, error: "Não autenticado" };
@@ -704,7 +704,8 @@ export async function criarLotePagamento(cobrancaIds: number[]) {
         const lote = await LotePagamentoService.criarLote(cobrancaIds, {
             userId: user.userId,
             contaId: userAccount?.contaId,
-            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
+            isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false,
+            isAdminView
         });
 
         revalidatePath("/faturas");

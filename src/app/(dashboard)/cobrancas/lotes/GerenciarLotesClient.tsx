@@ -45,6 +45,7 @@ export function GerenciarLotesClient({ initialLotes }: GerenciarLotesClientProps
                 <LotesTable
                     lotes={lotes}
                     onViewDetails={handleViewLote}
+                    isAdmin={true}
                 />
             </div>
 

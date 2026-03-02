@@ -127,7 +127,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         if (selectedIds.size === 0) return;
         setLoading(true);
         try {
-            const result = await criarLotePagamento(Array.from(selectedIds));
+            const result = await criarLotePagamento(Array.from(selectedIds), true);
             if (result.success && result.data) {
                 router.push(`/cobrancas/lotes?loteId=${result.data.id}`);
             } else if (result.error) {
