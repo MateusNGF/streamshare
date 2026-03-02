@@ -53,6 +53,7 @@ export async function getAssinaturas(filters?: {
     streamingId?: string;
     searchTerm?: string;
     dataInicioRange?: string; // JSON string with from/to
+    dataVencimentoRange?: string; // JSON string with from/to
     valorMin?: number;
     valorMax?: number;
     hasWhatsapp?: boolean;
@@ -107,6 +108,23 @@ export async function getAssinaturas(filters?: {
                 }
             } catch (e) {
                 console.error("Error parsing dataInicioRange", e);
+            }
+        }
+
+        if (filters?.dataVencimentoRange) {
+            try {
+                const range = JSON.parse(filters.dataVencimentoRange);
+                if (range.from || range.to) {
+                    whereClause.cobrancas = {
+                        some: {
+                            dataVencimento: {}
+                        }
+                    };
+                    if (range.from) whereClause.cobrancas.some.dataVencimento.gte = new Date(range.from);
+                    if (range.to) whereClause.cobrancas.some.dataVencimento.lte = new Date(range.to);
+                }
+            } catch (e) {
+                console.error("Error parsing dataVencimentoRange", e);
             }
         }
 
