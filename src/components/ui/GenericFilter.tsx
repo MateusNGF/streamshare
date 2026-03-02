@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Filter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -8,14 +8,13 @@ import { Modal } from "@/components/ui/Modal";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import { DateRange } from "react-day-picker";
 import { RangeSlider } from "@/components/ui/RangeSlider";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export interface FilterOption {
     label: string;
     value: string;
-    icon?: string | null;
-    color?: string;
+    iconNode?: React.ReactNode;
 }
 
 export interface FilterConfig {
@@ -24,6 +23,7 @@ export interface FilterConfig {
     label?: string; // Placeholder for inputs, Label for selects
     placeholder?: string;
     options?: FilterOption[]; // For select
+    emptyLabel?: string; // Label for "All", empty by default
     className?: string; // Optional width class
 }
 
@@ -37,63 +37,30 @@ interface GenericFilterProps {
 
 export function GenericFilter({ filters, values, onChange, onClear, className }: GenericFilterProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [tempValues, setTempValues] = useState<Record<string, string>>(values);
+
+    // Stable reference for values
+    const memoizedValues = useMemo(() => values, [JSON.stringify(values)]);
+    const [tempValues, setTempValues] = useState<Record<string, string>>(memoizedValues);
 
     // Sync temp values when modal opens or values change externally
     useEffect(() => {
         if (isModalOpen) {
-            setTempValues({ ...values });
+            setTempValues({ ...memoizedValues });
         }
-    }, [isModalOpen, values]);
+    }, [isModalOpen, memoizedValues]);
 
     // Count active filters
-    const activeFiltersCount = Object.values(values).filter(v => v && v !== "all" && v !== "false").length;
+    const activeFiltersCount = Object.values(memoizedValues).filter(v => v !== undefined && v !== null && v !== "" && v !== "all" && v !== "false").length;
 
     const handleApply = () => {
         // Apply all temp values
         Object.entries(tempValues).forEach(([key, value]) => {
-            if (values[key] !== value) {
+            if (memoizedValues[key] !== value) {
                 onChange(key, value);
             }
         });
         setIsModalOpen(false);
     };
-
-    const handleClearOps = () => {
-        const cleared: Record<string, string> = {};
-        filters.forEach(f => {
-            cleared[f.key] = "";
-        });
-        setTempValues(cleared);
-        if (onClear) onClear(); // Assuming onClear updates parent state directly
-        // If onClear doesn't exist, we might need to manually reset standard keys?
-        // But the parent usually handles onClear by resetting state.
-        // We should also close if we clear? Or let user clear and then apply?
-        // "Limpar e Aplicar" buttons usually imply independent actions.
-        // If I click Clear, it should probably clear the FORM. User then clicks Apply to confirm?
-        // OR Clear triggers instant reset?
-        // Given buttons are side by side: "Limpar" usually clears current selection. "Aplicar" commits it.
-        // So:
-        // handleClear -> setTempValues(empty).
-        // User must click Apply to commit the empty state to parent.
-    };
-
-    // Actually, usually "Clear" in a modal filter resets the search immediately or just resets the inputs?
-    // Let's implement "Clear" as "Reset Inputs to default". Commit happens on Apply.
-    // BUT the user said "dois botoes... limpar e aplicar".
-    // If "Limpar" calls `onClear` (which resets parent state), it acts immediately.
-    // If I want to defer, I should just clean tempValues.
-    // However, the prop `onClear` exists.
-    // Let's make "Limpar" reset tempValues. And if the user wants to apply, they hit Apply.
-    // But `onClear` prop usually resets parent immediately.
-    // Let's stick to: Limpar -> Reset Temp Values. Apply -> Commit Temp Values.
-    // If the user meant "Limpar" (Reset everything and close), that's different.
-    // Standard pattern: "Reset" wipes form. "Apply" saves.
-
-    // REVISION: The onClear prop is used in Desktop view for instant clear.
-    // In Modal:
-    // "Limpar": Resets tempValues to empty strings/"all".
-    // "Aplicar": Commits tempValues.
 
     const handleLocalClear = () => {
         const resetVals: Record<string, string> = {};
@@ -106,26 +73,27 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                 resetVals[f.key] = "";
             }
         });
-        setTempValues(resetVals);
+
+        // Immediately apply
+        Object.entries(resetVals).forEach(([key, value]) => {
+            if (memoizedValues[key] !== value) {
+                onChange(key, value);
+            }
+        });
+
+        setIsModalOpen(false);
     };
 
-    const renderInput = (filter: FilterConfig, localValues: Record<string, string>, setLocalValues: (k: string, v: string) => void) => {
+    const renderInput = (filter: FilterConfig, localValues: Record<string, string>, setLocalValues: (k: string, v: string) => void, isDebounced = false) => {
         if (filter.type === "text") {
             return (
-                <div key={filter.key} className={cn("relative w-full group", filter.className)}>
-                    {filter.key.includes("search") || filter.key === "q" ? (
-                        <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
-                    ) : null}
-                    <Input
-                        placeholder={filter.placeholder || filter.label}
-                        value={localValues[filter.key] || ""}
-                        onChange={(e) => setLocalValues(filter.key, e.target.value)}
-                        className={cn(
-                            "bg-gray-50/50 border-gray-100 hover:border-gray-200 focus:bg-white transition-all rounded-xl",
-                            (filter.key.includes("search") || filter.key === "q") ? "pl-9" : ""
-                        )}
-                    />
-                </div>
+                <DebouncedInput
+                    key={filter.key}
+                    filter={filter}
+                    localValues={localValues}
+                    setLocalValues={setLocalValues}
+                    isDebounced={isDebounced}
+                />
             );
         }
 
@@ -140,19 +108,11 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                             <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"} />
                         </SelectTrigger>
                         <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
-                            <SelectItem value="all">Todos</SelectItem>
+                            <SelectItem value="all">{filter.emptyLabel || "Todos"}</SelectItem>
                             {filter.options?.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
                                     <div className="flex items-center gap-3">
-                                        {(opt.icon || opt.color) && (
-                                            <StreamingLogo
-                                                name={opt.label}
-                                                iconeUrl={opt.icon}
-                                                color={opt.color || "#ccc"}
-                                                size="xs"
-                                                rounded="md"
-                                            />
-                                        )}
+                                        {opt.iconNode}
                                         <span className="font-medium">{opt.label}</span>
                                     </div>
                                 </SelectItem>
@@ -244,8 +204,8 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
         <div className={cn("w-full", className)}>
             {/* Desktop View: Inline Grid/Flex - Modified to limit components */}
             <div className="hidden md:flex flex-wrap gap-4 items-center w-full">
-                {/* Always render first filter inline */}
-                {filters.length > 0 && renderInput(filters[0], values, onChange)}
+                {/* Always render first filter inline - text input debounced */}
+                {filters.length > 0 && renderInput(filters[0], values, onChange, true)}
 
                 {/* If more than 1 filter, show button to open modal */}
                 {filters.length > 1 && (
@@ -284,7 +244,7 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                 {/* Always show primary search if exists */}
                 {filters.find(f => f.type === 'text') && (
                     <div className="flex-1">
-                        {renderInput(filters.find(f => f.type === 'text')!, values, onChange)}
+                        {renderInput(filters.find(f => f.type === 'text')!, values, onChange, true)}
                     </div>
                 )}
 
@@ -359,13 +319,66 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                                 {renderInput(
                                     { ...filter, className: "w-full" },
                                     tempValues,
-                                    (k, v) => setTempValues(prev => ({ ...prev, [k]: v }))
+                                    (k, v) => setTempValues(prev => ({ ...prev, [k]: v })),
+                                    false // No debounce in modal since we use Apply manually
                                 )}
                             </div>
                         );
                     })}
                 </div>
             </Modal>
+        </div>
+    );
+}
+
+// Helper para debouncer na interface
+function DebouncedInput({
+    filter,
+    localValues,
+    setLocalValues,
+    isDebounced
+}: {
+    filter: FilterConfig;
+    localValues: Record<string, string>;
+    setLocalValues: (k: string, v: string) => void;
+    isDebounced: boolean;
+}) {
+    const [innerValue, setInnerValue] = useState(localValues[filter.key] || "");
+    const debouncedValue = useDebounce(innerValue, 400);
+
+    // Sync from props
+    useEffect(() => {
+        setInnerValue(localValues[filter.key] || "");
+    }, [localValues[filter.key]]);
+
+    // Sync to parent if debounced
+    useEffect(() => {
+        if (isDebounced && debouncedValue !== localValues[filter.key]) {
+            setLocalValues(filter.key, debouncedValue);
+        }
+    }, [debouncedValue, isDebounced]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInnerValue(e.target.value);
+        if (!isDebounced) {
+            setLocalValues(filter.key, e.target.value);
+        }
+    };
+
+    return (
+        <div className={cn("relative w-full group", filter.className)}>
+            {filter.key.includes("search") || filter.key === "q" || filter.key === "searchTerm" ? (
+                <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+            ) : null}
+            <Input
+                placeholder={filter.placeholder || filter.label}
+                value={innerValue}
+                onChange={handleChange}
+                className={cn(
+                    "bg-gray-50/50 border-gray-100 hover:border-gray-200 focus:bg-white transition-all rounded-xl",
+                    (filter.key.includes("search") || filter.key === "q" || filter.key === "searchTerm") ? "pl-9" : ""
+                )}
+            />
         </div>
     );
 }

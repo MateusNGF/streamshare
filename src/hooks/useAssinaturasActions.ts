@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { createBulkAssinaturas, cancelarAssinatura } from "@/actions/assinaturas";
+import { useFilterParams } from "@/hooks/useFilterParams";
 
 export function useAssinaturasActions(streamings: any[]) {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const toast = useToast();
 
     // States
@@ -19,21 +19,20 @@ export function useAssinaturasActions(streamings: any[]) {
     const [cancelling, setCancelling] = useState(false);
 
     // Filters
-    const searchTerm = searchParams.get("search") || "";
-    const statusFilter = searchParams.get("status") || "all";
-    const streamingFilter = searchParams.get("streaming") || "all";
-    const criacaoRange = searchParams.get("criacao") || "";
-    const valorRange = searchParams.get("valor") || "";
-    const hasWhatsappFilter = searchParams.get("hasWhatsapp") || "false";
+    const { filters, updateFilters } = useFilterParams();
+
+    const filterValues = {
+        searchTerm: filters.search || "",
+        statusFilter: filters.status || "all",
+        streamingFilter: filters.streaming || "all",
+        criacaoRange: filters.criacao || "",
+        vencimentoRange: filters.vencimento || "",
+        valorRange: filters.valor || "",
+        hasWhatsappFilter: filters.hasWhatsapp || "false"
+    };
 
     const handleFilterChange = (key: string, value: string) => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (value === "" || value === "all") {
-            params.delete(key);
-        } else {
-            params.set(key, value);
-        }
-        router.push(`/assinaturas?${params.toString()}`);
+        updateFilters({ [key]: value });
     };
 
     const handleClearFilters = () => {
@@ -103,7 +102,7 @@ export function useAssinaturasActions(streamings: any[]) {
         loading, cancelling,
 
         // Filters
-        filters: { searchTerm, statusFilter, streamingFilter, criacaoRange, valorRange, hasWhatsappFilter },
+        filters: filterValues,
         handleFilterChange,
         handleClearFilters,
 
