@@ -2,7 +2,10 @@
     "crons": [
         {
             "path": "/api/cron/billing",
-            "schedule": "0 8 * * *"
+            "schedule": "*/30 * * * *"
         }
+    ],
+    "regions": [
+        "gru1"
     ]
 }

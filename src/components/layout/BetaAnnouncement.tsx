@@ -42,7 +42,7 @@ export function BetaAnnouncement() {
                     </div>
 
                     <div className="flex flex-col items-start mr-2">
-                        <span className="text-xs font-bold text-white">Versão v{APP_VERSION}</span>
+                        <span className="text-xs font-bold text-white">Versão {APP_VERSION}</span>
                         <span className="text-[10px] text-gray-400 group-hover:text-violet-300 transition-colors">Saiba mais &rarr;</span>
                     </div>
 

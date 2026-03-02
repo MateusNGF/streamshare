@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useFilterParams } from "@/hooks/useFilterParams";
 import { useToast } from "@/hooks/useToast";
 import {
     confirmarPagamento,
@@ -15,15 +16,19 @@ import {
 export function useCobrancasActions(cobrancasIniciais: any[]) {
     const toast = useToast();
     const router = useRouter();
-    const searchParams = useSearchParams();
-
     // Filters State
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
-    const [vencimentoRange, setVencimentoRange] = useState("");
-    const [pagamentoRange, setPagamentoRange] = useState("");
-    const [valorRange, setValorRange] = useState("");
-    const [hasWhatsappFilter, setHasWhatsappFilter] = useState("false");
+    const { filters, updateFilters } = useFilterParams();
+
+    const filterValues = {
+        searchTerm: filters.search || "",
+        statusFilter: filters.status || "all",
+        streamingFilter: filters.streaming || "all",
+        mesReferencia: filters.mesReferencia || "all",
+        vencimentoRange: filters.vencimento || "",
+        pagamentoRange: filters.pagamento || "",
+        valorRange: filters.valor || "",
+        hasWhatsappFilter: filters.hasWhatsapp || "false"
+    };
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -42,13 +47,22 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const [batchPixModalOpen, setBatchPixModalOpen] = useState(false);
 
     const filteredCobrancas = cobrancasIniciais.filter(c => {
-        const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+        const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(filterValues.searchTerm.toLowerCase());
+        const matchesStatus = filterValues.statusFilter === "all" || c.status === filterValues.statusFilter;
+        const matchesStreaming = filterValues.streamingFilter === "all" || c.assinatura.streamingId.toString() === filterValues.streamingFilter;
+
+        let matchesMes = true;
+        if (filterValues.mesReferencia !== "all") {
+            const date = new Date(c.dataVencimento);
+            // mesReferencia should be "YYYY-MM"
+            const cobrancaMes = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            matchesMes = cobrancaMes === filterValues.mesReferencia;
+        }
 
         let matchesVencimento = true;
-        if (vencimentoRange) {
+        if (filterValues.vencimentoRange) {
             try {
-                const range = JSON.parse(vencimentoRange);
+                const range = JSON.parse(filterValues.vencimentoRange);
                 const date = new Date(c.dataVencimento);
                 if (range.from && date < new Date(range.from)) matchesVencimento = false;
                 if (range.to && date > new Date(range.to)) matchesVencimento = false;
@@ -56,21 +70,21 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         }
 
         let matchesPagamento = true;
-        if (pagamentoRange && c.dataPagamento) {
+        if (filterValues.pagamentoRange && c.dataPagamento) {
             try {
-                const range = JSON.parse(pagamentoRange);
+                const range = JSON.parse(filterValues.pagamentoRange);
                 const date = new Date(c.dataPagamento);
                 if (range.from && date < new Date(range.from)) matchesPagamento = false;
                 if (range.to && date > new Date(range.to)) matchesPagamento = false;
             } catch (e) { }
-        } else if (pagamentoRange && !c.dataPagamento) {
+        } else if (filterValues.pagamentoRange && !c.dataPagamento) {
             matchesPagamento = false;
         }
 
         let matchesValor = true;
-        if (valorRange) {
+        if (filterValues.valorRange) {
             try {
-                const range = JSON.parse(valorRange);
+                const range = JSON.parse(filterValues.valorRange);
                 const valor = Number(c.valor);
                 if (range.min && valor < Number(range.min)) matchesValor = false;
                 if (range.max && valor > Number(range.max)) matchesValor = false;
@@ -78,11 +92,11 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         }
 
         let matchesWhatsapp = true;
-        if (hasWhatsappFilter === "true") {
+        if (filterValues.hasWhatsappFilter === "true") {
             matchesWhatsapp = !!c.assinatura.participante.whatsappNumero;
         }
 
-        return matchesSearch && matchesStatus && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
+        return matchesSearch && matchesStatus && matchesStreaming && matchesMes && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
     });
 
     // Batch Calculations
@@ -255,13 +269,12 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         }
     };
 
+    const handleFilterChange = (key: string, value: string) => {
+        updateFilters({ [key]: value });
+    };
+
     const handleClearFilters = () => {
-        setSearchTerm("");
-        setStatusFilter("all");
-        setVencimentoRange("");
-        setPagamentoRange("");
-        setValorRange("");
-        setHasWhatsappFilter("false");
+        router.push('/cobrancas');
     };
 
     const handleViewQrCode = (id: number) => {
@@ -271,12 +284,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
 
     return {
         // States
-        searchTerm, setSearchTerm,
-        statusFilter, setStatusFilter,
-        vencimentoRange, setVencimentoRange,
-        pagamentoRange, setPagamentoRange,
-        valorRange, setValorRange,
-        hasWhatsappFilter, setHasWhatsappFilter,
+        filters: filterValues,
         loading,
         whatsappLoading,
 
@@ -302,6 +310,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         handleCancelarCobranca,
         confirmCancellation,
         handleEnviarWhatsApp,
+        handleFilterChange,
         handleClearFilters,
         handleViewQrCode,
         handleAbrirLote,

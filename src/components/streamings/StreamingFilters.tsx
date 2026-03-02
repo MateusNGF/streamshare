@@ -1,15 +1,14 @@
 "use client";
 
 import { GenericFilter } from "@/components/ui/GenericFilter";
+import { useFilterParams } from "@/hooks/useFilterParams";
 
 interface StreamingFiltersProps {
     streamings: any[];
-    filters: any;
-    onFilterChange: (key: string, value: any) => void;
-    onClear: () => void;
 }
 
-export function StreamingFilters({ streamings, filters, onFilterChange, onClear }: StreamingFiltersProps) {
+export function StreamingFilters({ streamings }: StreamingFiltersProps) {
+    const { filters, updateFilters } = useFilterParams();
     // Unique catalog options for the filter
     const catalogOptions = Array.from(
         new Set(streamings.map(s => JSON.stringify({ id: s.catalogo.id, nome: s.catalogo.nome })))
@@ -42,23 +41,43 @@ export function StreamingFilters({ streamings, filters, onFilterChange, onClear 
                         type: "switch",
                         label: "Apenas grupos lotados",
                         className: "w-auto"
+                    },
+                    {
+                        key: "visibilidade",
+                        type: "select",
+                        label: "Visibilidade",
+                        className: "w-full md:w-[150px]",
+                        options: [
+                            { label: "Público", value: "publico" },
+                            { label: "Privado", value: "privado" }
+                        ]
+                    },
+                    {
+                        key: "valor",
+                        type: "numberRange",
+                        label: "Faixa de Preço",
+                        placeholder: "Preço entre..."
                     }
                 ]}
                 values={{
-                    searchTerm: filters.searchTerm,
-                    catalogoId: filters.catalogoId ? String(filters.filtersId || filters.catalogoId) : "all",
-                    onlyFull: String(filters.onlyFull || false)
+                    searchTerm: filters.searchTerm || "",
+                    catalogoId: filters.catalogoId || "all",
+                    onlyFull: filters.onlyFull || "false",
+                    visibilidade: filters.visibilidade || "all",
+                    valor: filters.valor || ""
                 }}
                 onChange={(key, value) => {
-                    if (key === 'catalogoId') {
-                        onFilterChange(key, value === 'all' ? undefined : Number(value));
-                    } else if (key === 'onlyFull') {
-                        onFilterChange(key, value === 'true');
-                    } else {
-                        onFilterChange(key, value);
-                    }
+                    updateFilters({ [key]: value });
                 }}
-                onClear={onClear}
+                onClear={() => {
+                    updateFilters({
+                        searchTerm: "",
+                        catalogoId: "",
+                        onlyFull: "",
+                        visibilidade: "",
+                        valor: ""
+                    });
+                }}
             />
         </div>
     );
