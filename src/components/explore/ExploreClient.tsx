@@ -7,9 +7,10 @@ import { ExploreEmptyState } from "@/components/explore/ExploreEmptyState";
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { CATALOGO_CATEGORIES } from "@/constants/catalogo";
 import { useActionError } from "@/hooks/useActionError";
-import { Compass, Clock, TrendingDown, Users } from "lucide-react";
+import { Compass, Clock, TrendingDown, Users, MonitorPlay, Music, Tv, Gamepad2, PenTool, Sparkles, LayoutGrid } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface ExploreClientProps {
     initialStreamings: any[];
@@ -129,10 +130,15 @@ export function ExploreClient({ initialStreamings, initialNextCursor, catalogos,
                             label: "Categoria",
                             placeholder: "Todas as categorias",
                             className: "md:flex-1",
-                            options: CATALOGO_CATEGORIES.map(c => ({
-                                label: c.label,
-                                value: c.id
-                            }))
+                            options: [
+                                { label: "Streaming de Vídeo", value: "video", iconNode: <MonitorPlay size={16} className="text-gray-400" /> },
+                                { label: "Música & Áudio", value: "musica", iconNode: <Music size={16} className="text-gray-400" /> },
+                                { label: "Canais & TV Online", value: "tv", iconNode: <Tv size={16} className="text-gray-400" /> },
+                                { label: "Jogos & Games", value: "games", iconNode: <Gamepad2 size={16} className="text-gray-400" /> },
+                                { label: "Design & Criatividade", value: "design", iconNode: <PenTool size={16} className="text-gray-400" /> },
+                                { label: "Produtividade & IA", value: "ia", iconNode: <Sparkles size={16} className="text-gray-400" /> },
+                                { label: "Serviços & Outros", value: "outros", iconNode: <LayoutGrid size={16} className="text-gray-400" /> },
+                            ]
                         },
                         {
                             key: "catalogoId",
@@ -143,8 +149,15 @@ export function ExploreClient({ initialStreamings, initialNextCursor, catalogos,
                             options: catalogos.map(c => ({
                                 label: c.nome,
                                 value: c.id.toString(),
-                                icon: c.iconeUrl,
-                                color: c.corPrimaria
+                                iconNode: (
+                                    <StreamingLogo
+                                        name={c.nome}
+                                        color={c.corPrimaria}
+                                        iconeUrl={c.iconeUrl}
+                                        size="sm"
+                                        className="w-5 h-5 rounded-md text-[8px]"
+                                    />
+                                )
                             }))
                         },
                         {

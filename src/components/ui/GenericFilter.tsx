@@ -113,13 +113,17 @@ export function GenericFilter({ filters, values, onChange, onClear, className }:
                         <SelectTrigger id={inputId} aria-label={filter.label || filter.placeholder || "Selecione uma opção"} className="bg-gray-50/50 border-gray-100 rounded-xl hover:border-gray-200 transition-all h-auto py-2">
                             <SelectValue placeholder={filter.label || filter.placeholder || "Selecione"} />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
+                        <SelectContent className="rounded-2xl border-gray-100 shadow-xl max-h-80">
                             <SelectItem value="all">{filter.emptyLabel || "Todos"}</SelectItem>
                             {filter.options?.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
-                                    <div className="flex items-center gap-3">
-                                        {opt.iconNode}
-                                        <span className="font-medium">{opt.label}</span>
+                                    <div className="flex items-center gap-3 w-full">
+                                        {opt.iconNode ? (
+                                            <div className="flex items-center justify-center shrink-0 w-5 h-5">
+                                                {opt.iconNode}
+                                            </div>
+                                        ) : null}
+                                        <span className="font-medium truncate">{opt.label}</span>
                                     </div>
                                 </SelectItem>
                             ))}
