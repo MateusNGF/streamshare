@@ -249,6 +249,9 @@ export async function getPublicStreamings(filters?: {
     catalogoId?: number;
     categoria?: string;
     onlyMyAccount?: boolean;
+    cursor?: number;
+    limit?: number;
+    orderBy?: 'price_asc' | 'recent' | 'slots_asc';
 }) {
     try {
         const { contaId, userId } = await getContext();
@@ -285,8 +288,20 @@ export async function getPublicStreamings(filters?: {
             where.contaId = { not: contaId };
         }
 
+        const limit = filters?.limit || 12;
+
+        let orderBy: any = { createdAt: 'desc' };
+        if (filters?.orderBy === 'price_asc') {
+            orderBy = { valorIntegral: 'asc' };
+        } else if (filters?.orderBy === 'slots_asc') {
+            orderBy = { limiteParticipantes: 'asc' }; // Approximation
+        }
+
         const streamings = await prisma.streaming.findMany({
             where,
+            take: limit + 1,
+            cursor: filters?.cursor ? { id: filters.cursor } : undefined,
+            skip: filters?.cursor ? 1 : undefined,
             include: {
                 catalogo: true,
                 conta: {
@@ -324,8 +339,14 @@ export async function getPublicStreamings(filters?: {
                     }
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy
         });
+
+        let nextCursor: number | undefined = undefined;
+        if (streamings.length > limit) {
+            const nextItem = streamings.pop();
+            nextCursor = nextItem?.id;
+        }
 
         const data = streamings.map(s => {
             const userStatus = determineUserStreamingStatus(s.assinaturas, s.convites);
@@ -339,7 +360,7 @@ export async function getPublicStreamings(filters?: {
             };
         });
 
-        return { success: true, data };
+        return { success: true, data, nextCursor };
     } catch (error: any) {
         console.error("[GET_PUBLIC_STREAMINGS_ERROR]", error);
         return { success: false, error: "Erro ao buscar streamings públicos" };

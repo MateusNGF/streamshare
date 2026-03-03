@@ -14,6 +14,7 @@ interface PageProps {
         catalogoId?: string;
         categoria?: string;
         onlyMyAccount?: string;
+        orderBy?: string;
     };
 }
 
@@ -22,7 +23,8 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         search: searchParams.search,
         catalogoId: searchParams.catalogoId,
         categoria: searchParams.categoria,
-        onlyMyAccount: searchParams.onlyMyAccount
+        onlyMyAccount: searchParams.onlyMyAccount,
+        orderBy: searchParams.orderBy
     };
 
     // Fetch data in parallel
@@ -31,7 +33,8 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             search: filters.search,
             catalogoId: filters.catalogoId ? parseInt(filters.catalogoId) : undefined,
             categoria: filters.categoria,
-            onlyMyAccount: filters.onlyMyAccount === 'true'
+            onlyMyAccount: filters.onlyMyAccount === 'true',
+            orderBy: filters.orderBy as any
         }),
         getCatalogos()
     ]);
@@ -57,7 +60,8 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             </div>
 
             <ExploreClient
-                streamings={streamingsRes.data || []}
+                initialStreamings={streamingsRes.data || []}
+                initialNextCursor={streamingsRes.nextCursor as number | undefined}
                 catalogos={catalogosRes.data || []}
                 initialFilters={filters}
                 error={error}

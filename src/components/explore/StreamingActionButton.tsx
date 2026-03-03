@@ -2,7 +2,7 @@
 
 import { Spinner } from "@/components/ui/Spinner";
 import { ArrowRight } from "lucide-react";
-import { useTransition } from "react";
+import { useTransition, useOptimistic } from "react";
 import { requestParticipation } from "@/actions/requests";
 import { useToast } from "@/hooks/useToast";
 
@@ -22,10 +22,15 @@ export function StreamingActionButton({
     userStatus
 }: StreamingActionButtonProps) {
     const [isPending, startTransition] = useTransition();
+    const [optimisticStatus, addOptimisticStatus] = useOptimistic<UserStreamingStatus, UserStreamingStatus>(
+        userStatus || null,
+        (state: UserStreamingStatus, newStatus: UserStreamingStatus) => newStatus
+    );
     const toast = useToast();
 
     const handleRequest = () => {
         startTransition(async () => {
+            addOptimisticStatus('solicitado');
             try {
                 await requestParticipation(streamingId);
                 toast.success("Solicitação enviada com sucesso! Aguarde aprovação.");
@@ -35,22 +40,13 @@ export function StreamingActionButton({
         });
     };
 
-    const isDisabled = isPending || vagasDisponiveis === 0 || !!userStatus || isOwner;
+    const isDisabled = isPending || vagasDisponiveis === 0 || !!optimisticStatus || isOwner;
 
     // Helper to determine button content
     const getButtonContent = () => {
-        if (isPending) {
-            return (
-                <>
-                    <Spinner size="sm" color="white" />
-                    Processando...
-                </>
-            );
-        }
-
         if (isOwner) return "Seu Streaming";
 
-        switch (userStatus) {
+        switch (optimisticStatus) {
             case 'participando': return "Participando";
             case 'solicitado': return "Solicitação Pendente";
             case 'recusado': return "Solicitação Rejeitada";
@@ -72,7 +68,7 @@ export function StreamingActionButton({
     const getButtonClasses = () => {
         const baseClasses = "w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold transition-all disabled:opacity-70";
 
-        if (!userStatus && !isOwner && vagasDisponiveis > 0) {
+        if (!optimisticStatus && !isOwner && vagasDisponiveis > 0) {
             return `${baseClasses} bg-primary text-white shadow-lg shadow-primary/25 hover:bg-accent hover:-translate-y-0.5 active:translate-y-0`;
         }
 
