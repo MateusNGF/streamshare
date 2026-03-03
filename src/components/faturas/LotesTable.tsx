@@ -42,12 +42,11 @@ export function LotesTable({
 }: LotesTableProps) {
     if (lotes.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-8">
+            <div className="py-8">
                 <EmptyState
                     icon={FileText}
-                    title="Nenhum lote encontrado"
-                    description="Histórico de pagamentos consolidados aparecerá aqui."
-                    className="bg-transparent border-none py-12"
+                    title="Nenhum lote"
+                    description="Pagamentos consolidados aparecerão aqui."
                 />
             </div>
         );

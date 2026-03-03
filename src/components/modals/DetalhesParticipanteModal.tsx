@@ -25,6 +25,7 @@ import { Participante } from "@/types/participante";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import Link from "next/link";
 import { useToast } from "@/hooks/useToast";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface DetalhesParticipanteModalProps {
     isOpen: boolean;
@@ -394,14 +395,13 @@ function ActiveSubscriptionsSection({ participant, loading }: { participant: any
                     )}
                 </div>
             ) : (
-                <div className="bg-gray-50 border border-dashed border-gray-200 p-8 md:p-12 rounded-[32px] text-center flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-gray-100">
-                        <AlertCircle size={24} className="text-gray-300" aria-hidden="true" />
-                    </div>
-                    <p className="text-gray-500 font-bold mb-0.5">Nenhuma assinatura ativa</p>
-                    <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
-                        Este participante não possui streamings vinculados ou faturas pendentes de processamento.
-                    </p>
+                <div className="py-8">
+                    <EmptyState
+                        icon={AlertCircle}
+                        title="Nenhuma assinatura"
+                        description="Este participante não possui streamings vinculados."
+                        variant="default"
+                    />
                 </div>
             )}
         </div>

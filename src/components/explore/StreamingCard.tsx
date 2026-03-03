@@ -66,7 +66,7 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
                             </Tooltip>
                         </div>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                            HOST: {streaming.conta.nome}
+                            ORGANIZADOR: {streaming.conta.nome}
                         </p>
                     </div>
                 </div>

@@ -5,6 +5,7 @@ import { StreamingCard } from "./StreamingCard";
 import { AddMemberModal } from "@/components/modals/AddMemberModal";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface DashboardStreamingListProps {
     streamings: any[];
@@ -45,7 +46,14 @@ export function DashboardStreamingList({ streamings }: DashboardStreamingListPro
                         />
                     ))
                 ) : (
-                    <p className="text-gray-400 text-center py-4 text-sm">Nenhum streaming cadastrado.</p>
+                    <div className="py-4">
+                        <EmptyState
+                            icon={ChevronRight}
+                            title="Nenhum streaming"
+                            description="Nenhum streaming cadastrado."
+                            variant="compact"
+                        />
+                    </div>
                 )}
             </div>
 

@@ -144,12 +144,8 @@ export function CatalogoClient({ initialData, error }: CatalogoClientProps) {
                 {filteredData.length === 0 && (
                     <EmptyState
                         icon={Search}
-                        title="Nenhum serviço encontrado"
-                        description={
-                            searchTerm
-                                ? `Não encontramos resultados para "${searchTerm}". Tente outro termo.`
-                                : "Tente ajustar os termos da sua busca ou adicione um novo serviço ao catálogo."
-                        }
+                        title="Nenhum serviço"
+                        description={searchTerm ? `Sem resultados para "${searchTerm}".` : "Ajuste a busca ou adicione um serviço."}
                     />
                 )}
             </div>

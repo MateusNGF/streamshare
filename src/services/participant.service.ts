@@ -39,7 +39,7 @@ export class ParticipantService {
                     whatsappNumero: data.whatsappNumero,
                     cpf: data.cpf || participant.cpf,
                     userId: data.userId || participant.userId,
-                    status: "ativo" // Ensure participant is active if they are subscribing
+                    status: "ativo"
                 }
             });
         } else {
@@ -53,6 +53,18 @@ export class ParticipantService {
                     cpf: data.cpf || "",
                     userId: data.userId,
                     status: "ativo"
+                }
+            });
+        }
+
+        // ACID UX Bonus: If we have a userId, update the main user profile
+        if (data.userId) {
+            await tx.usuario.update({
+                where: { id: data.userId },
+                data: {
+                    nome: data.nome,
+                    whatsappNumero: data.whatsappNumero,
+                    // If CPF is provided and user doesn't have one, we could update it too, but userId is safer for shared profiles
                 }
             });
         }

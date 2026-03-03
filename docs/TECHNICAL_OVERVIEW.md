@@ -39,8 +39,12 @@ Para organizar o código e separar responsabilidades, utilizamos o padrão **ACD
     -   Organizados por contexto (`dashboard`, `modals`, `ui`, `layout`).
 3.  **D - Data/Domain (`src/lib`, `src/services`)**:
     -   Regras de negócio puras e acesso ao banco de dados.
-    -   **Services**: Encapsulam lógica complexa (ex: `billing-service.ts` para cálculos de faturas).
-    -   **Lib**: Utilitários agnósticos e configurações (ex: `db.ts`, `auth.ts`).
+    -   **Services**: Encapsulam lógica complexa validando regras de negócio antes de persistir dados. Responsáveis por centralizar lógicas reutilizáveis como controle de lotação e cálculos. Exemplos:
+        -   `BillingService`: Cálculos de faturas e pagamentos.
+        -   `StreamingService`: Validação atômica de vagas disponíveis (`ensureCapacity`) e tokens.
+        -   `InviteService`: Regras do ciclo de vida de solicitações e convites (como rejeição em lote por lotação).
+        -   `ParticipantService`: Sincronização e criação segura de dados de usuários e participantes atrelados a um grupo.
+    -   **Lib**: Utilitários agnósticos e configurações globais (ex: `db.ts`, `auth.ts`).
 4.  **I - Interfaces (`src/types`)**:
     -   Contratos de dados compartilhados entre Frontend e Backend.
     -   Garante que o componente receba exatamente o que a Action retorna.

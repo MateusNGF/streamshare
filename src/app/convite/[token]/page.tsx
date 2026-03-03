@@ -1,4 +1,5 @@
 import { validateInviteToken } from "@/actions/invites";
+import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { CheckCircle, ShieldCheck } from "lucide-react";
@@ -24,10 +25,17 @@ export default async function ConvitePage({
     }
 
     const invite = response.data;
-    const user = await getCurrentUser();
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+        redirect(`/login?callbackUrl=/convite/${params.token}`);
+    }
+
+    const user = await prisma.usuario.findUnique({
+        where: { id: authUser.userId }
+    });
 
     if (!user) {
-        redirect(`/login?callbackUrl=/convite/${params.token}`);
+        redirect("/login");
     }
 
     return (
@@ -70,16 +78,16 @@ export default async function ConvitePage({
                                 </div>
                                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-4">
                                     <JoinStreamingForm
-                                        token={invite.streaming.publicToken} // Important: We pass the publicToken to reuse the form logic that expects a public token for now, or adapt it.
+                                        token={invite.streaming.isPublico ? invite.streaming.publicToken : ""}
                                         streamingName={invite.streaming.apelido || invite.streaming.catalogo.nome}
                                         valorPorVaga={Number(invite.streaming.valorIntegral) / invite.streaming.limiteParticipantes}
                                         enabledFrequencies={invite.streaming.frequenciasHabilitadas}
                                         loggedUser={{
-                                            userId: user.userId,
+                                            userId: user.id,
                                             nome: user.nome,
                                             email: user.email,
-                                            whatsappNumero: "", // fetched separately if needed
-                                            cpf: "" // Can't fetch from user directly, JoinStreamingForm will ask or get from Participante Table internally if adapted
+                                            whatsappNumero: user.whatsappNumero || "",
+                                            cpf: user.whatsappNumero ? "" : "" // Logic depends on what form needs, usually we ask for CPF in form if it's for billing
                                         }}
                                         vagasRestantes={1} // Assuming 1 slot is guaranteed by the invite
                                         isPrivateInvite={true}
@@ -89,10 +97,13 @@ export default async function ConvitePage({
                             </div>
                         ) : (
                             <div className="space-y-4 text-center mt-8">
-                                <AcceptInviteButton token={params.token} />
+                                <AcceptInviteButton
+                                    token={params.token}
+                                    hasWhatsApp={!!user.whatsappNumero}
+                                />
 
                                 <p className="text-xs text-gray-400 font-medium px-4">
-                                    Ao aceitar, você concorda com os <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e que seus dados de perfil sejam compartilhados com o host.
+                                    Ao aceitar, você concorda com os <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e que seus dados de perfil sejam compartilhados com o Organizador.
                                 </p>
                             </div>
                         )}

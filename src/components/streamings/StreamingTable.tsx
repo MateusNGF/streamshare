@@ -40,10 +40,8 @@ export function StreamingTable({ streamings, isLoading, searchTerm, onEdit, onDe
         return (
             <EmptyState
                 icon={Search}
-                title="Nenhum serviço encontrado"
-                description={searchTerm
-                    ? "Não encontramos nenhum serviço com o termo pesquisado."
-                    : "Você ainda não cadastrou nenhum serviço de streaming."}
+                title="Nenhum serviço"
+                description={searchTerm ? "Tente outro termo." : "Nenhum serviço cadastrado."}
             />
         );
     }

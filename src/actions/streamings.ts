@@ -396,6 +396,7 @@ export async function createStreaming(data: {
     valorIntegral: number;
     limiteParticipantes: number;
     isPublico?: boolean;
+    autoAprovarSolicitacoes?: boolean;
 }) {
     try {
         const { contaId } = await getContext();
@@ -448,6 +449,7 @@ export async function createStreaming(data: {
                 valorIntegral: data.valorIntegral,
                 limiteParticipantes: data.limiteParticipantes,
                 isPublico: data.isPublico || false,
+                autoAprovarSolicitacoes: data.autoAprovarSolicitacoes || false,
             },
             include: {
                 catalogo: true,
@@ -494,6 +496,7 @@ export async function updateStreaming(
         valorIntegral: number;
         limiteParticipantes: number;
         isPublico?: boolean;
+        autoAprovarSolicitacoes?: boolean;
         updateExistingSubscriptions?: boolean;
     }
 ) {
@@ -536,6 +539,7 @@ export async function updateStreaming(
                     valorIntegral: data.valorIntegral,
                     limiteParticipantes: data.limiteParticipantes,
                     isPublico: data.isPublico,
+                    autoAprovarSolicitacoes: data.autoAprovarSolicitacoes,
                 },
                 include: {
                     catalogo: true,
@@ -579,6 +583,7 @@ export async function updateStreaming(
                     valorIntegral: data.valorIntegral,
                     limiteParticipantes: data.limiteParticipantes,
                     isPublico: data.isPublico,
+                    autoAprovarSolicitacoes: data.autoAprovarSolicitacoes,
                 },
                 include: {
                     catalogo: true,

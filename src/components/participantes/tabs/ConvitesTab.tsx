@@ -3,7 +3,7 @@
 import { Mail, Clock, Trash2 } from "lucide-react";
 import { PendingInvite } from "@/types/participante";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
-import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface Props {
     invites: PendingInvite[];
@@ -14,8 +14,13 @@ interface Props {
 export function ConvitesTab({ invites, onCancel, loading }: Props) {
     if (invites.length === 0) {
         return (
-            <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                <p className="text-gray-400">Nenhum convite pendente encaminhado.</p>
+            <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-4 sm:p-8">
+                <EmptyState
+                    icon={Mail}
+                    title="Nenhum convite"
+                    description="Nenhum convite pendente encaminhado."
+                    variant="default"
+                />
             </div>
         );
     }

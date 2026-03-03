@@ -7,6 +7,7 @@ import { AlertCircle, Check, Clock, MessageSquare, XCircle, SearchX } from "luci
 import { getUserReports } from "@/actions/suporte";
 import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { useToast } from "@/hooks/useToast";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export function TicketHistoryTable() {
     const [tickets, setTickets] = useState<any[]>([]);
@@ -38,14 +39,13 @@ export function TicketHistoryTable() {
 
     if (tickets.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200 min-h-[300px]">
-                <div className="bg-gray-100 p-4 rounded-full mb-3 text-gray-400">
-                    <MessageSquare size={32} />
-                </div>
-                <h3 className="text-gray-900 font-semibold mb-1">Nenhum chamado encontrado</h3>
-                <p className="text-gray-500 text-sm text-center max-w-[250px]">
-                    Você ainda não abriu nenhum chamado de suporte.
-                </p>
+            <div className="py-8 min-h-[300px] flex items-center justify-center">
+                <EmptyState
+                    icon={MessageSquare}
+                    title="Nenhum chamado"
+                    description="Você ainda não abriu nenhum chamado de suporte."
+                    variant="default"
+                />
             </div>
         );
     }

@@ -40,6 +40,7 @@ export interface StreamingFormData {
     valorIntegral: number | string;
     limiteParticipantes: string;
     isPublico?: boolean;
+    autoAprovarSolicitacoes?: boolean;
     activeSubscriptions?: number;
     credLogin?: string;
     credSenha?: string;
@@ -60,7 +61,8 @@ export function StreamingModal({
             apelido: "",
             valorIntegral: "",
             limiteParticipantes: "1",
-            isPublico: false, // Default to private
+            isPublico: false,
+            autoAprovarSolicitacoes: false,
         }
     );
     const [loadingCatalog, setLoadingCatalog] = useState(false);
@@ -127,6 +129,7 @@ export function StreamingModal({
                 valorIntegral: "", // Empty string by default
                 limiteParticipantes: "1",
                 isPublico: false,
+                autoAprovarSolicitacoes: false,
             }));
         }
     }, [streaming, isOpen]);
@@ -338,7 +341,6 @@ export function StreamingModal({
                             </div>
                         )}
 
-
                         <div className="mt-4 pt-4 border-t border-gray-100">
                             <div className={cn(
                                 "p-2 rounded-xl border transition-all duration-300",
@@ -375,6 +377,21 @@ export function StreamingModal({
                                         <p className="text-xs text-gray-500 leading-relaxed max-w-[90%]">
                                             Permitir que este streaming apareça no <strong>Explorer</strong> para outros usuários da comunidade solicitarem entrada.
                                         </p>
+
+                                        {formData.isPublico && (
+                                            <div className="mt-4 pt-4 border-t border-primary/10 space-y-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex flex-col">
+                                                        <label className="text-xs font-bold text-gray-800">Aprovação Automática</label>
+                                                        <p className="text-[10px] text-gray-400 font-medium">Novas solicitações viram assinaturas sem aprovação manual do Organizador</p>
+                                                    </div>
+                                                    <Switch
+                                                        checked={formData.autoAprovarSolicitacoes}
+                                                        onCheckedChange={(checked) => handleChange("autoAprovarSolicitacoes", checked)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -504,6 +521,6 @@ export function StreamingModal({
                     </StepContainer>
                 )}
             </form>
-        </Modal>
+        </Modal >
     );
 }

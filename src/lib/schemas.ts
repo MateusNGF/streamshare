@@ -32,6 +32,7 @@ export const StreamingSchema = z.object({
     ),
 
     isPublico: z.boolean().optional(),
+    autoAprovarSolicitacoes: z.boolean().optional(),
 });
 
 export type StreamingSchemaType = z.infer<typeof StreamingSchema>;
