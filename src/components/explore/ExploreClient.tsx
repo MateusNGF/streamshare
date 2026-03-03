@@ -3,11 +3,11 @@
 import { getPublicStreamings } from "@/actions/streamings";
 import { StreamingCard } from "@/components/explore/StreamingCard";
 import { SkeletonGrid } from "@/components/explore/StreamingCardSkeleton";
-import { Button } from "@/components/ui/Button";
+import { ExploreEmptyState } from "@/components/explore/ExploreEmptyState";
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { CATALOGO_CATEGORIES } from "@/constants/catalogo";
 import { useActionError } from "@/hooks/useActionError";
-import { Compass, Plus, Search } from "lucide-react";
+import { Compass, Clock, TrendingDown, Users } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -17,9 +17,10 @@ interface ExploreClientProps {
     catalogos: any[];
     initialFilters: { search?: string; catalogoId?: string; categoria?: string; onlyMyAccount?: string; orderBy?: string };
     error?: string;
+    userPlan?: string;
 }
 
-export function ExploreClient({ initialStreamings, initialNextCursor, catalogos, initialFilters, error }: ExploreClientProps) {
+export function ExploreClient({ initialStreamings, initialNextCursor, catalogos, initialFilters, error, userPlan = "free" }: ExploreClientProps) {
     useActionError(error);
     const router = useRouter();
     const pathname = usePathname();
@@ -83,7 +84,7 @@ export function ExploreClient({ initialStreamings, initialNextCursor, catalogos,
 
     return (
         <div className="w-full">
-            <div className="py-6 space-y-4">
+            <div className="py-2 md:py-6 space-y-4 md:space-y-6">
                 {/* Quick Filters / Chips */}
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     <button
@@ -159,9 +160,9 @@ export function ExploreClient({ initialStreamings, initialNextCursor, catalogos,
                             placeholder: "Mais recentes",
                             className: "md:flex-[1]",
                             options: [
-                                { label: "Mais recentes", value: "recent" },
-                                { label: "Menor preço", value: "price_asc" },
-                                { label: "Vagas acabando", value: "slots_asc" }
+                                { label: "Mais recentes", value: "recent", iconNode: <Clock size={16} className="text-gray-400" /> },
+                                { label: "Menor preço", value: "price_asc", iconNode: <TrendingDown size={16} className="text-green-500" /> },
+                                { label: "Vagas acabando", value: "slots_asc", iconNode: <Users size={16} className="text-orange-400" /> }
                             ]
                         }
                     ]}
@@ -194,23 +195,10 @@ export function ExploreClient({ initialStreamings, initialNextCursor, catalogos,
                     </div>
                 </div>
             ) : (
-                <div className="text-center py-24 bg-white/50 backdrop-blur-sm rounded-[3rem] border border-dashed border-gray-200 shadow-inner">
-                    <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-300 shadow-sm">
-                        <Search size={40} />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Nenhum streaming disponível</h3>
-                    <p className="text-gray-500 max-w-md mx-auto mb-8">
-                        Não encontramos vagas para os filtros selecionados.
-                        Tente buscar por termos mais genéricos ou mudar o serviço.
-                    </p>
-                    <Button
-                        onClick={() => router.push('/streamings?action=new')}
-                        className="mx-auto flex items-center gap-2 px-8 py-3 rounded-xl shadow-md hover:shadow-lg transition-all"
-                    >
-                        <Plus size={20} />
-                        {initialFilters.search ? `Criar grupo de ${initialFilters.search}` : "Criar meu próprio grupo"}
-                    </Button>
-                </div>
+                <ExploreEmptyState
+                    searchTerm={initialFilters.search}
+                    userPlan={userPlan}
+                />
             )}
         </div>
     );

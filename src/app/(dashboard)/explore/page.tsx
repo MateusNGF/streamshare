@@ -2,6 +2,8 @@ import { getPublicStreamings, getCatalogos } from "@/actions/streamings";
 import { ExploreClient } from "@/components/explore/ExploreClient";
 import { Compass } from "lucide-react";
 import { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
     title: "Explorer | StreamShare",
@@ -27,6 +29,16 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         orderBy: searchParams.orderBy
     };
 
+    const session = await getCurrentUser();
+    let userPlan = "free";
+    if (session) {
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: session.userId, isAtivo: true, nivelAcesso: "owner" },
+            include: { conta: true },
+        });
+        userPlan = userAccount?.conta?.plano || "free";
+    }
+
     // Fetch data in parallel
     const [streamingsRes, catalogosRes] = await Promise.all([
         getPublicStreamings({
@@ -42,8 +54,8 @@ export default async function ExplorePage({ searchParams }: PageProps) {
     const error = streamingsRes.error || catalogosRes.error;
 
     return (
-        <div className="py-6 md:py-12">
-            <div className="mb-12">
+        <div className="py-4 md:py-12">
+            <div className="mb-6 md:mb-12">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                         <Compass size={24} />
@@ -65,6 +77,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
                 catalogos={catalogosRes.data || []}
                 initialFilters={filters}
                 error={error}
+                userPlan={userPlan}
             />
         </div>
     );

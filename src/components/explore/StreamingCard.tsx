@@ -34,7 +34,7 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
 
     return (
         <div className={cn(
-            "bg-white/70 backdrop-blur-md p-6 rounded-[32px] border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden flex flex-col h-full",
+            "bg-white/70 backdrop-blur-md p-5 sm:p-6 rounded-[32px] border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden flex flex-col h-full",
             streaming.vagasDisponiveis === 1
                 ? "border-orange-500/50 ring-1 ring-orange-500/20 shadow-orange-500/10 hover:shadow-orange-500/20"
                 : "border-white/20 hover:shadow-primary/10"
@@ -104,7 +104,7 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
                     </div>
 
                     <div className="flex items-center justify-between py-2 px-3 bg-primary/5 rounded-2xl border border-primary/10">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-1">
+                        <div className="flex flex-row justify-between items-center w-full gap-1">
                             <div className="flex flex-col">
                                 <span className="text-[9px] text-primary/60 font-black uppercase tracking-tighter">Valor mensal p/ pessoa</span>
                                 <div className="flex gap-1.5 items-center">
