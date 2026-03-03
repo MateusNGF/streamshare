@@ -35,9 +35,16 @@ export function StreamingActionButton({
             try {
                 const result = await requestParticipation(streamingId);
                 if (result.success) {
-                    toast.success("Solicitação enviada com sucesso! Aguarde aprovação.");
+                    if ('isAutoApproved' in result && result.isAutoApproved) {
+                        addOptimisticStatus('participando');
+                        toast.success("Entrada confirmada! Você já faz parte do streaming.");
+                    } else {
+                        toast.success("Solicitação enviada com sucesso! Aguarde aprovação.");
+                    }
                 } else {
-                    toast.error(result.error || "Erro ao solicitar participação");
+                    // Type guard for error property
+                    const errorMsg = 'error' in result ? result.error : "Erro ao solicitar participação";
+                    toast.error(errorMsg);
                 }
             } catch (error: any) {
                 toast.error(error.message || "Erro ao solicitar participação");
@@ -69,7 +76,7 @@ export function StreamingActionButton({
 
             {optimisticStatus === 'solicitado' && (
                 <p className="text-[10px] text-gray-400 text-center font-medium animate-pulse">
-                    O Host tem até 48h para responder, caso contrário a solicitação será cancelada.
+                    O Organizador tem até 48h para responder, caso contrário a solicitação será cancelada.
                 </p>
             )}
         </div>

@@ -96,13 +96,17 @@ export async function publicSubscribe(data: {
                 }
             });
 
-            return { success: true };
+            return {
+                participanteId: participante.id,
+                streamingId: streaming.id,
+                quantidade
+            };
         });
 
         revalidatePath("/assinaturas");
         revalidatePath("/participantes");
 
-        return result;
+        return { success: true, data: result };
     } catch (error: any) {
         console.error("[PUBLIC_SUBSCRIBE_ERROR]", error);
         return { success: false, error: error.message || "Erro ao processar sua inscrição." };

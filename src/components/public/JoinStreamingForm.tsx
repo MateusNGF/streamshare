@@ -88,7 +88,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
             });
 
             if (result?.success) {
-                success("Inscrição realizada com sucesso! O administrador entrará em contato.");
+                success("Inscrição realizada com sucesso! O Organizador entrará em contato.");
                 router.push("/faturas");
                 router.refresh();
             } else {
