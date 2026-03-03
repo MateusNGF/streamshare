@@ -3,8 +3,9 @@
 import { prisma } from "@/lib/db";
 import { getContext } from "@/lib/action-context";
 import { revalidatePath } from "next/cache";
-import { TipoNotificacao } from "@prisma/client";
+import { StatusConvite, TipoNotificacao } from "@prisma/client";
 import { ParticipantService } from "@/services/participant.service";
+import { InviteService } from "@/services/invite.service";
 
 /**
  * Convidar usuário via email
@@ -17,12 +18,9 @@ export async function inviteUser(data: {
         const { contaId, userId: convidadoPorId } = await getContext();
         const emailFormatted = data.email.toLowerCase().trim();
 
-        // 1. Validar email
-        if (!data.email) {
-            return { success: false, error: "Email é obrigatório" };
-        }
+        if (!data.email) return { success: false, error: "Email é obrigatório" };
 
-        // 1.5. Validar se o usuário não está convidando a si mesmo
+        // 1. Validar se o usuário não está convidando a si mesmo
         const currentUser = await prisma.usuario.findUnique({
             where: { id: convidadoPorId },
             select: { email: true }
@@ -34,11 +32,7 @@ export async function inviteUser(data: {
 
         // 2. Verificar se já existe como participante ativo na conta
         const participanteExistente = await prisma.participante.findFirst({
-            where: {
-                contaId,
-                email: emailFormatted,
-                status: "ativo"
-            }
+            where: { contaId, email: emailFormatted, status: "ativo" }
         });
 
         if (participanteExistente) {
@@ -50,7 +44,7 @@ export async function inviteUser(data: {
             where: {
                 contaId,
                 email: emailFormatted,
-                status: "pendente",
+                status: StatusConvite.pendente,
                 expiresAt: { gt: new Date() }
             }
         });
@@ -64,63 +58,45 @@ export async function inviteUser(data: {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // 5. Executar em Transação (Atomicity)
+        // 5. Executar em Transação
         const result = await prisma.$transaction(async (tx) => {
-            // Criar convite
             const convite = await tx.convite.create({
                 data: {
                     email: emailFormatted,
                     contaId,
                     streamingId: data.streamingId,
-                    status: "pendente",
+                    status: StatusConvite.pendente,
                     token,
                     expiresAt,
                     convidadoPorId,
                 },
-                include: {
-                    streaming: {
-                        include: { catalogo: true }
-                    }
-                }
+                include: { streaming: { include: { catalogo: true } } }
             });
 
-            // Check if invited email belongs to a user
-            const usuarioConvidado = await tx.usuario.findUnique({
-                where: { email: emailFormatted }
-            });
+            const usuarioConvidado = await tx.usuario.findUnique({ where: { email: emailFormatted } });
 
             if (usuarioConvidado) {
                 await tx.notificacao.create({
                     data: {
                         contaId,
                         usuarioId: usuarioConvidado.id,
-                        tipo: "convite_recebido",
+                        tipo: TipoNotificacao.convite_recebido,
                         titulo: "Novo Convite",
                         descricao: `Você foi convidado para participar da conta de um administrador.${convite.streaming ? " Inclui acesso a streaming." : ""}`,
-                        metadata: {
-                            conviteId: convite.id,
-                            email: emailFormatted,
-                            link: `/convite/${token}`
-                        },
-                        lida: false
+                        metadata: { conviteId: convite.id, email: emailFormatted, link: `/convite/${token}` }
                     }
                 });
             }
 
-            // Notify all Admins that an invite was sent (Account Broadcast)
+            // Notify all Admins
             await tx.notificacao.create({
                 data: {
                     contaId,
                     usuarioId: null,
-                    tipo: "assinatura_editada",
+                    tipo: TipoNotificacao.assinatura_editada,
                     titulo: "Convite Enviado",
                     descricao: `Um convite foi enviado para ${emailFormatted}.${convite.streaming ? " (Vinculado a streaming)" : ""}`,
-                    metadata: {
-                        conviteId: convite.id,
-                        email: emailFormatted,
-                        enviadoPor: convidadoPorId
-                    },
-                    lida: false
+                    metadata: { conviteId: convite.id, email: emailFormatted, enviadoPor: convidadoPorId }
                 }
             });
 
@@ -142,17 +118,9 @@ export async function cancelInvite(id: string) {
     try {
         const { contaId } = await getContext();
 
-        const convite = await prisma.convite.findFirst({
-            where: { id, contaId }
-        });
-
-        if (!convite) {
-            return { success: false, error: "Convite não encontrado" };
-        }
-
         await prisma.convite.update({
-            where: { id },
-            data: { status: "recusado" }
+            where: { id, contaId, status: StatusConvite.pendente },
+            data: { status: StatusConvite.recusado }
         });
 
         revalidatePath("/participantes");
@@ -173,16 +141,12 @@ export async function getPendingInvites() {
         const data = await prisma.convite.findMany({
             where: {
                 contaId,
-                status: "pendente",
+                status: StatusConvite.pendente,
                 expiresAt: { gt: new Date() }
             },
             include: {
-                streaming: {
-                    include: { catalogo: true }
-                },
-                convidadoPor: {
-                    select: { nome: true, email: true }
-                }
+                streaming: { include: { catalogo: true } },
+                convidadoPor: { select: { nome: true, email: true } }
             },
             orderBy: { createdAt: "desc" }
         });
@@ -199,97 +163,67 @@ export async function getPendingInvites() {
  */
 export async function validateInviteToken(token: string) {
     try {
-        const convite = await prisma.convite.findUnique({
-            where: { token },
-            include: {
-                conta: {
-                    select: { nome: true }
-                },
-                streaming: {
-                    include: { catalogo: true }
-                }
-            }
-        });
-
-        if (!convite) {
-            return { success: false, error: "Token de convite inválido.", code: "INVALID_TOKEN" };
-        }
-
-        if (convite.status !== "pendente") {
-            return { success: false, error: "Este convite já foi utilizado ou cancelado.", code: "ALREADY_USED" };
-        }
-
-        if (new Date() > convite.expiresAt) {
-            return { success: false, error: "Este convite expirou.", code: "EXPIRED" };
-        }
-
-        return { success: true, data: convite };
+        const invite = await InviteService.validateInviteForAcceptance(token);
+        return { success: true, data: invite };
     } catch (error: any) {
-        console.error("[VALIDATE_INVITE_TOKEN_ERROR]", error);
-        return { success: false, error: "Erro ao validar token de convite" };
+        return { success: false, error: error.message, code: "INVALID_TOKEN" };
     }
 }
 
 /**
  * Aceita um convite vinculando o usuário logado
  */
-export async function acceptInvite(token: string) {
+export async function acceptInvite(token: string, whatsappNumero?: string) {
     try {
-        const { userId } = await getContext(); // Usuário que está aceitando
+        const { userId } = await getContext();
 
-        const validateResult = await validateInviteToken(token);
-        if (!validateResult.success) return validateResult;
-
-        const convite = validateResult.data!;
+        // 1. Validar convite e spots via InviteService
+        const convite = await InviteService.validateInviteForAcceptance(token);
 
         const convidado = await prisma.usuario.findUnique({ where: { id: userId } });
         if (!convidado) return { success: false, error: "Usuário não encontrado." };
 
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Marcar convite como aceito
+            // 2. Marcar convite como aceito
             await tx.convite.update({
                 where: { id: convite.id },
-                data: { status: "aceito", usuarioId: userId }
+                data: { status: StatusConvite.aceito, usuarioId: userId }
             });
 
-            // 2. Garantir Participante
+            // 3. Garantir Participante
             const participante = await ParticipantService.findOrCreateParticipant(tx, {
                 contaId: convite.contaId,
                 nome: convidado.nome,
                 email: convidado.email,
                 userId: userId,
-                whatsappNumero: "" // We might not have it from the user object here, findOrCreateParticipant handles this
+                whatsappNumero: whatsappNumero || convidado.whatsappNumero || ""
             });
 
-            // 3. Se houver streaming vinculado, criar assinatura
-            if (convite.streamingId && participante) {
+            // 4. Criar Assinatura se houver streaming
+            if (convite.streamingId) {
                 const streamingId = convite.streamingId;
-
-                // Verificar se já tem assinatura
                 const existingSub = await tx.assinatura.findFirst({
                     where: { participanteId: participante.id, streamingId, status: { not: "cancelada" } }
                 });
 
                 if (!existingSub) {
-                    // Delegate to Service
                     const { SubscriptionService } = await import("@/services/subscription.service");
                     await SubscriptionService.createFromStreaming(tx, participante.id, streamingId);
                 }
+
+                // 5. Side effect: handle full streaming
+                await InviteService.handleStreamingFull(streamingId, tx);
             }
 
-            // 5. Notificar Admins (Account Broadcast)
+            // 6. Notificar Admins
             await tx.notificacao.create({
                 data: {
                     contaId: convite.contaId,
-                    usuarioId: null, // Broadcast to all admins
-                    tipo: "convite_aceito",
+                    usuarioId: null,
+                    tipo: TipoNotificacao.convite_aceito,
                     titulo: "Convite aceito",
                     descricao: `${convidado.nome} aceitou o convite para entrar na conta.`,
-                    metadata: {
-                        participanteId: participante?.id,
-                        usuarioId: userId,
-                        convidadoPorId: convite.convidadoPorId
-                    }
+                    metadata: { participanteId: participante?.id, usuarioId: userId, convidadoPorId: convite.convidadoPorId }
                 }
             });
 

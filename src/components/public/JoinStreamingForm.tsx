@@ -16,7 +16,7 @@ import { User, LogOut, CheckCircle, Shield, Info } from "lucide-react";
 import Link from "next/link";
 
 interface JoinStreamingFormProps {
-    token: string;
+    token?: string;
     streamingName: string;
     valorPorVaga: number;
     enabledFrequencies?: string; // comma separated string e.g. "mensal,anual"
@@ -66,6 +66,9 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
         quantidade: 1
     });
 
+    const needsWhatsApp = !loggedUser?.whatsappNumero;
+    const needsCpf = valorPorVaga > 0 && !loggedUser?.cpf;
+
     const handleConfirmSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setShowConfirmModal(true);
@@ -77,7 +80,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
 
         try {
             const result = await publicSubscribe({
-                token, // Public token of the streaming (used for general validation if needed)
+                token,
                 userId: loggedUser?.userId,
                 isPrivateInvite,
                 privateInviteToken,
@@ -99,53 +102,90 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
     };
 
     return (
-        <>
-            <form onSubmit={handleConfirmSubmit} className="space-y-4">
-                <div className="bg-gray-50/50 rounded-2xl p-5 text-left border border-gray-100 space-y-4 mb-6 transition-all hover:border-primary/30 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-primary/10 transition-colors" />
+        <div className="space-y-6">
+            <div className="bg-gray-50/50 rounded-2xl p-5 text-left border border-gray-100 space-y-4 transition-all hover:border-primary/30 group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-primary/10 transition-colors" />
 
-                    <div className="flex justify-between items-center relative z-10">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-white rounded-lg shadow-sm border border-gray-100">
-                                <User size={14} className="text-primary" />
-                            </div>
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Identificado como</span>
+                <div className="flex justify-between items-center relative z-10">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-white rounded-lg shadow-sm border border-gray-100">
+                            <User size={14} className="text-primary" />
                         </div>
-                        <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-100/50">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Logado</span>
-                        </div>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Identificado como</span>
                     </div>
-
-                    <div className="relative z-10">
-                        <p className="text-base font-black text-gray-900 group-hover:text-primary transition-colors">{loggedUser?.nome}</p>
-                        <p className="text-sm text-gray-500 font-medium">{loggedUser?.email}</p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 relative z-10">
-                        {loggedUser?.cpf ? (
-                            <div className="flex items-center gap-1.5">
-                                <Shield size={12} className="text-gray-400" />
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">CPF: {loggedUser.cpf}</span>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-1.5">
-                                <Info size={12} className="text-amber-400" />
-                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter">CPF Não informado</span>
-                            </div>
-                        )}
-                        <Link
-                            href="/logout"
-                            className="flex items-center gap-1 text-[10px] font-black text-primary hover:text-primary/70 transition-colors uppercase tracking-widest bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm"
-                        >
-                            <LogOut size={10} />
-                            Sair
-                        </Link>
+                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-100/50">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Logado</span>
                     </div>
                 </div>
 
+                <div className="relative z-10">
+                    <p className="text-base font-black text-gray-900 group-hover:text-primary transition-colors">{loggedUser?.nome}</p>
+                    <p className="text-sm text-gray-500 font-medium">{loggedUser?.email}</p>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 relative z-10">
+                    <div className="flex items-center gap-1.5">
+                        <Shield size={12} className="text-gray-400" />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                            {loggedUser?.cpf ? `CPF: ${loggedUser.cpf}` : "CPF não informado"}
+                        </span>
+                    </div>
+                    <Link
+                        href="/logout"
+                        className="flex items-center gap-1 text-[10px] font-black text-primary hover:text-primary/70 transition-colors uppercase tracking-widest bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm"
+                    >
+                        <LogOut size={10} />
+                        Sair
+                    </Link>
+                </div>
+            </div>
+
+            {(needsWhatsApp || needsCpf) && (
+                <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="p-1 bg-primary/10 rounded-lg">
+                            <Shield size={14} className="text-primary" />
+                        </div>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Informações Necessárias</span>
+                    </div>
+
+                    {needsWhatsApp && (
+                        <div className="space-y-2 text-left">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">WhatsApp (Obrigatório)</label>
+                            <input
+                                type="tel"
+                                value={formData.whatsappNumero}
+                                onChange={(e) => setFormData({ ...formData, whatsappNumero: e.target.value })}
+                                placeholder="(00) 00000-0000"
+                                required
+                                className="w-full h-14 rounded-2xl border-gray-100 bg-gray-50/30 hover:border-primary/20 transition-all px-4 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+                    )}
+
+                    {needsCpf && (
+                        <div className="space-y-2 text-left">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF (Obrigatório para cobrança)</label>
+                            <input
+                                type="text"
+                                value={formData.cpf}
+                                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                                placeholder="000.000.000-00"
+                                required
+                                className="w-full h-14 rounded-2xl border-gray-100 bg-gray-50/30 hover:border-primary/20 transition-all px-4 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+                    )}
+                    <p className="text-[10px] text-gray-400 text-left ml-1 italic leading-tight">
+                        Seus dados estão seguros e serão atualizados no seu perfil.
+                    </p>
+                </div>
+            )}
+
+            <form onSubmit={handleConfirmSubmit} className="space-y-4">
                 <div className="space-y-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Frequência de Pagamento</label>
                         <Select
                             value={formData.frequencia}
@@ -167,7 +207,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     </div>
                 </div>
 
-                <div className="space-y-2 w-full">
+                <div className="space-y-2 w-full text-left">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantidade de Vagas</label>
                     <QuantityInput
                         value={formData.quantidade}
@@ -178,7 +218,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     />
                 </div>
 
-                <div className="flex flex-col w-full bg-primary/[0.03] rounded-2xl px-4 py-2 border border-primary/10 flex items-center justify-center transition-all">
+                <div className="flex flex-col w-full bg-primary/[0.03] rounded-2xl px-4 py-2 border border-primary/10 items-center justify-center transition-all">
                     <div className="flex flex-col items-center">
                         <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em]">{formData.quantidade > 1 ? "Total do Ciclo" : "Valor do Ciclo"}</span>
                         <p className="text-2xl font-black text-primary tracking-tighter">
@@ -238,7 +278,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                         </div>
                         <div className="space-y-1">
                             <p className="font-bold text-amber-900">Atenção às consequências</p>
-                            <p className="text-sm text-amber-800 leading-relaxed">
+                            <p className="text-sm text-amber-800 leading-relaxed text-left">
                                 Você está prestes a entrar em um grupo de compartilhamento. Por favor, leia atentamente:
                             </p>
                         </div>
@@ -247,7 +287,7 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     <ul className="space-y-4">
                         <li className="flex gap-3">
                             <div className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px] mt-0.5 shrink-0">✓</div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 text-left">
                                 {formData.quantidade > 1 ? (
                                     <>Uma cobrança de <span className="font-black text-gray-900">{format(valorPorVaga * (INTERVALOS_MESES[formData.frequencia] || 1) * formData.quantidade)}</span> será gerada referente às <span className="font-bold">{formData.quantidade} vagas</span>.</>
                                 ) : (
@@ -257,13 +297,13 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                         </li>
                         <li className="flex gap-3">
                             <div className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px] mt-0.5 shrink-0">✓</div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 text-left">
                                 Esta é uma assinatura recorrente com renovação <span className="font-bold text-gray-900 capitalize">{frequencyLabels[formData.frequencia]}</span>.
                             </p>
                         </li>
                         <li className="flex gap-3">
                             <div className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px] mt-0.5 shrink-0">✓</div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 text-left">
                                 Os dados de acesso (Login/Senha) serão liberados no seu painel assim que o administrador confirmar seu primeiro pagamento.
                             </p>
                         </li>
@@ -276,6 +316,6 @@ export function JoinStreamingForm({ token, streamingName, valorPorVaga, enabledF
                     </div>
                 </div>
             </Modal>
-        </>
+        </div>
     );
 }

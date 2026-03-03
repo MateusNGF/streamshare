@@ -4,44 +4,41 @@ import { prisma } from "@/lib/db";
 import { getContext } from "@/lib/action-context";
 import { revalidatePath } from "next/cache";
 import { SubscriptionService } from "@/services/subscription.service";
+import { StreamingService } from "@/services/streaming.service";
+import { InviteService } from "@/services/invite.service";
+import { StatusConvite, TipoNotificacao } from "@prisma/client";
 
 /**
- * Usuário solicita entrada em um streaming público via Explorer
- * Agora cria um registro na tabela de CONVITE com status 'solicitado'
+ * Usuário solicita entrada em um streaming público via Explorer.
  */
 export async function requestParticipation(streamingId: number) {
     try {
         const { userId } = await getContext();
 
-        // 1. Validar streaming
+        // 1. Validar streaming e capacidade
         const streaming = await prisma.streaming.findUnique({
             where: { id: streamingId, isAtivo: true },
             include: {
                 conta: true,
                 catalogo: true,
-                _count: { select: { assinaturas: { where: { status: { in: ["ativa", "suspensa"] } } } } }
             }
         });
 
-        if (!streaming) {
-            return { success: false, error: "Streaming não encontrado." };
-        }
+        if (!streaming) return { success: false, error: "Streaming não encontrado." };
 
-        // 2. Verificar se há vagas
-        if (streaming._count.assinaturas >= streaming.limiteParticipantes) {
-            return { success: false, error: "Não há vagas disponíveis para este streaming no momento." };
-        }
+        // Centralized spot validation
+        await StreamingService.ensureCapacity(streamingId);
 
         const usuario = await prisma.usuario.findUnique({ where: { id: userId } });
         if (!usuario) return { success: false, error: "Usuário não encontrado." };
 
-        // 3. Verificar se já existe uma solicitação pendente para este serviço exato
+        // 2. Verificar duplicidade (solicitação pendente)
         const solicitacaoExistente = await prisma.convite.findFirst({
             where: {
                 contaId: streaming.contaId,
                 usuarioId: userId,
                 streamingId,
-                status: "solicitado"
+                status: StatusConvite.solicitado
             }
         });
 
@@ -49,13 +46,11 @@ export async function requestParticipation(streamingId: number) {
             return { success: false, error: "Você já tem uma solicitação pendente para este serviço." };
         }
 
-        // 4. Verificar se já é participante ativo deste streaming
+        // 3. Verificar se já é participante ativo
         const assinaturaAtiva = await prisma.assinatura.findFirst({
             where: {
                 streamingId,
-                participante: {
-                    userId
-                },
+                participante: { userId },
                 status: { in: ["ativa", "suspensa"] }
             }
         });
@@ -64,25 +59,22 @@ export async function requestParticipation(streamingId: number) {
             return { success: false, error: "Você já possui uma assinatura ativa para este serviço." };
         }
 
-        // 5. Criar o registro de "Solicitação" (Convite do tipo solicitado)
-        const token = crypto.randomUUID();
+        // 4. Criar a Solicitação com validade de 48h (conforme UX)
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // 7 dias para o admin aprovar
+        expiresAt.setHours(expiresAt.getHours() + 48);
 
         const solicitacao = await prisma.convite.create({
             data: {
                 email: usuario.email,
                 contaId: streaming.contaId,
                 streamingId,
-                status: "solicitado",
-                token,
-                expiresAt,
+                status: StatusConvite.solicitado,
                 usuarioId: userId,
-                // convidadoPorId é null pois é uma solicitação
+                expiresAt,
             }
         });
 
-        // 6. Notificar Admins da Conta
+        // 5. Notificar Admins
         const admins = await prisma.contaUsuario.findMany({
             where: { contaId: streaming.contaId, nivelAcesso: { in: ["owner", "admin"] } },
             select: { usuarioId: true }
@@ -92,8 +84,8 @@ export async function requestParticipation(streamingId: number) {
             await prisma.notificacao.create({
                 data: {
                     contaId: streaming.contaId,
-                    usuarioId: null, // Broadcast para todos os Admins (conforme NOTIFICATIONS.md)
-                    tipo: "solicitacao_participacao_criada",
+                    usuarioId: null, // Broadcast
+                    tipo: TipoNotificacao.solicitacao_participacao_criada,
                     titulo: "Nova solicitação de entrada",
                     descricao: `${usuario.nome} solicitou entrada no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
                     metadata: {
@@ -114,48 +106,45 @@ export async function requestParticipation(streamingId: number) {
 }
 
 /**
- * Aprova uma solicitação de participação vinda do Explorer
- * Converte o Convite 'solicitado' em Participante Ativo + Assinatura
+ * Aprova uma solicitação de participação vinda do Explorer.
  */
 export async function approveRequest(conviteId: string) {
     try {
         const { contaId } = await getContext();
 
         const solicitacao = await prisma.convite.findFirst({
-            where: { id: conviteId, contaId, status: "solicitado" },
+            where: {
+                id: conviteId,
+                contaId,
+                status: StatusConvite.solicitado,
+                OR: [
+                    { expiresAt: null },
+                    { expiresAt: { gt: new Date() } }
+                ]
+            },
             include: { usuario: true, streaming: { include: { catalogo: true } } }
         });
 
         if (!solicitacao || !solicitacao.usuario || !solicitacao.streamingId) {
-            return { success: false, error: "Solicitação não encontrada ou inválida." };
+            return { success: false, error: "Solicitação não encontrada, inválida ou expirada." };
         }
 
         const streamingId = solicitacao.streamingId;
 
-        // Validar vaga novamente
-        const streaming = await prisma.streaming.findUnique({
-            where: { id: streamingId },
-            include: { _count: { select: { assinaturas: { where: { status: { in: ["ativa", "suspensa"] } } } } } }
-        });
-
-        if (!streaming || streaming._count.assinaturas >= streaming.limiteParticipantes) {
-            return { success: false, error: "Não há vagas disponíveis neste streaming atualmente." };
-        }
+        // Validar capacidade via Service
+        await StreamingService.ensureCapacity(streamingId);
 
         const result = await prisma.$transaction(async (tx) => {
             // 1. Marcar convite como aceito
             await tx.convite.update({
                 where: { id: conviteId },
-                data: { status: "aceito" }
+                data: { status: StatusConvite.aceito }
             });
 
-            // 2. Criar/Vincular Participante (garantindo que não esteja deletado)
+            // 2. Vincular Participante
             const participante = await tx.participante.upsert({
                 where: {
-                    contaId_userId: {
-                        contaId,
-                        userId: solicitacao.usuarioId!
-                    }
+                    contaId_userId: { contaId, userId: solicitacao.usuarioId! }
                 },
                 create: {
                     contaId,
@@ -173,31 +162,32 @@ export async function approveRequest(conviteId: string) {
             // 3. Criar assinatura
             const assinatura = await SubscriptionService.createFromStreaming(tx, participante.id, streamingId);
 
-            // 4. Notificar Usuário (Direct Target)
-            await tx.notificacao.create({
-                data: {
-                    contaId,
-                    usuarioId: solicitacao.usuarioId!,
-                    tipo: "solicitacao_participacao_aceita",
-                    titulo: "Sua solicitação foi aprovada!",
-                    descricao: `Você agora faz parte do streaming ${solicitacao.streaming?.apelido || solicitacao.streaming?.catalogo.nome}.`,
-                    metadata: {
-                        assinaturaId: assinatura.id
+            // 4. Notificações
+            await Promise.all([
+                tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: solicitacao.usuarioId!,
+                        tipo: TipoNotificacao.solicitacao_participacao_aceita,
+                        titulo: "Sua solicitação foi aprovada!",
+                        descricao: `Você agora faz parte do streaming ${solicitacao.streaming?.apelido || solicitacao.streaming?.catalogo.nome}.`,
+                        metadata: { assinaturaId: assinatura.id }
                     }
-                }
-            });
+                }),
+                tx.notificacao.create({
+                    data: {
+                        contaId,
+                        usuarioId: null,
+                        tipo: TipoNotificacao.participante_criado,
+                        titulo: "Solicitação Aprovada",
+                        descricao: `${solicitacao.usuario!.nome} foi aprovado e agora é um participante ativo.`,
+                        metadata: { participanteId: participante.id }
+                    }
+                })
+            ]);
 
-            // 5. Notificar Admins (Account Broadcast)
-            await tx.notificacao.create({
-                data: {
-                    contaId,
-                    usuarioId: null,
-                    tipo: "participante_criado",
-                    titulo: "Solicitação Aprovada",
-                    descricao: `${solicitacao.usuario!.nome} foi aprovado e agora é um participante ativo.`,
-                    metadata: { participanteId: participante.id }
-                }
-            });
+            // 5. Gerenciar lotação (Side effect delegating complex logic)
+            await InviteService.handleStreamingFull(streamingId, tx);
 
             return { success: true, data: assinatura };
         });
@@ -212,29 +202,23 @@ export async function approveRequest(conviteId: string) {
 }
 
 /**
- * Rejeita uma solicitação de participação
+ * Rejeita uma solicitação de participação.
  */
 export async function rejectRequest(conviteId: string) {
     try {
         const { contaId } = await getContext();
 
-        await prisma.convite.update({
-            where: { id: conviteId, contaId, status: "solicitado" },
-            data: { status: "recusado" }
+        const solicitacao = await prisma.convite.update({
+            where: { id: conviteId, contaId, status: StatusConvite.solicitado },
+            data: { status: StatusConvite.recusado }
         });
 
-        // Buscar dados para notificação
-        const solicitacao = await prisma.convite.findUnique({
-            where: { id: conviteId },
-            select: { usuarioId: true }
-        });
-
-        if (solicitacao?.usuarioId) {
+        if (solicitacao.usuarioId) {
             await prisma.notificacao.create({
                 data: {
                     contaId,
                     usuarioId: solicitacao.usuarioId,
-                    tipo: "solicitacao_participacao_recusada",
+                    tipo: TipoNotificacao.solicitacao_participacao_recusada,
                     titulo: "Solicitação recusada",
                     descricao: `Infelizmente sua solicitação para entrar no streaming foi recusada pelo administrador.`,
                 }
@@ -250,7 +234,7 @@ export async function rejectRequest(conviteId: string) {
 }
 
 /**
- * Lista solicitações pendentes para a conta (obtidas da tabela de Convite)
+ * Lista solicitações pendentes para a conta.
  */
 export async function getPendingRequests() {
     try {
@@ -259,17 +243,15 @@ export async function getPendingRequests() {
         const data = await prisma.convite.findMany({
             where: {
                 contaId,
-                status: "solicitado"
+                status: StatusConvite.solicitado,
+                OR: [
+                    { expiresAt: null },
+                    { expiresAt: { gt: new Date() } }
+                ]
             },
             include: {
-                usuario: {
-                    select: { nome: true, email: true }
-                },
-                streaming: {
-                    include: {
-                        catalogo: true
-                    }
-                }
+                usuario: { select: { nome: true, email: true } },
+                streaming: { include: { catalogo: true } }
             },
             orderBy: { createdAt: "desc" }
         });

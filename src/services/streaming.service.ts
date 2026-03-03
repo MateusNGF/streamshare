@@ -33,6 +33,21 @@ export class StreamingService {
     }
 
     /**
+     * ACID: Ensures the streaming has enough spots for the requested quantity.
+     * Throws an error with a user-friendly message if not.
+     */
+    static async ensureCapacity(streamingId: number, quantity: number = 1, tx = prisma) {
+        const remaining = await this.getRemainingSpots(streamingId, tx);
+
+        if (remaining < quantity) {
+            if (remaining > 0) {
+                throw new Error(`Poxa, restam apenas ${remaining} vaga(s) para este grupo.`);
+            }
+            throw new Error("Poxa, as vagas para este grupo já foram preenchidas por outros usuários.");
+        }
+    }
+
+    /**
      * Generate a new share token for a streaming service and save it as a public invite.
      * ACID: Uses a transaction to ensure spots are checked and invite is created atomically.
      */
