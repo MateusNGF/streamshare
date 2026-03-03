@@ -16,6 +16,13 @@ interface AssinaturasPageProps {
     };
 }
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Minhas Assinaturas | StreamShare",
+    description: "Gerencie suas assinaturas ativas, participantes e valores mensais.",
+};
+
 export default async function AssinaturasPage({ searchParams }: AssinaturasPageProps) {
     let valorParam = null;
     try {

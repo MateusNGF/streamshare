@@ -1,3 +1,14 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Acessar Conta | StreamShare",
+    description: "Entre ou crie sua conta no StreamShare para começar a economizar nas suas assinaturas.",
+    robots: {
+        index: true,
+        follow: true,
+    }
+};
+
 export default function AuthLayout({
     children,
 }: {

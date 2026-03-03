@@ -2,6 +2,13 @@ import { getStreamings } from "@/actions/streamings";
 import { getCurrentPlan } from "@/actions/planos";
 import { StreamingsClient } from "@/components/streamings/StreamingsClient";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Serviços | StreamShare",
+    description: "Gerencie os serviços de streaming compartilhados na sua conta.",
+};
+
 export default async function StreamingsPage() {
     const [res, planoRes] = await Promise.all([
         getStreamings(),

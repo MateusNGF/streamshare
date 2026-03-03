@@ -6,6 +6,13 @@ import {
 } from "@/actions/dashboard";
 import { ParticipantDashboardClient } from "@/components/dashboard/ParticipantDashboardClient";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Meu Painel | StreamShare",
+    description: "Acompanhe suas assinaturas e economias mensais no StreamShare.",
+};
+
 export default async function ParticipantDashboardPage() {
     const [
         participantStats,

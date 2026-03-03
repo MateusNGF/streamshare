@@ -19,6 +19,18 @@ import { LandingNavbar } from "@/components/layout/LandingNavbar";
 import { FeaturesCarousel } from "@/components/landing/FeaturesCarousel";
 import { Footer } from "@/components/layout/Footer";
 import { InteractiveMesh } from "@/components/backgrounds/InteractiveMesh";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "StreamShare | Economize até 80% em Streaming",
+  description: "Pare de pagar o valor integral. Divida e gerencie Streaming de forma segura e automática. Junte-se milhares de pessoas economizando todo mês com o StreamShare.",
+  openGraph: {
+    title: "Economize até 80% em Streaming | StreamShare",
+    description: "Pare de pagar o valor integral. Divida e gerencie Streaming de forma segura e automática. Junte-se milhares de pessoas economizando todo mês.",
+    url: "https://streamshare.com.br",
+    type: "website",
+  },
+};
 
 export default async function LandingPage() {
   const session = await getCurrentUser();

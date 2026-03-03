@@ -7,7 +7,17 @@ import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
     title: "Explorer | StreamShare",
-    description: "Encontre e solicite vagas nos melhores serviços de streaming com preços reduzidos.",
+    description: "Encontre e solicite vagas nos melhores serviços de streaming com preços reduzidos como Netflix, Spotify e Prime Video.",
+    openGraph: {
+        title: "Explorer | StreamShare",
+        description: "Encontre e solicite vagas nos melhores serviços de streaming com preços reduzidos.",
+        url: "/explore",
+        type: "website",
+    },
+    robots: {
+        index: true,
+        follow: true,
+    }
 };
 
 interface PageProps {
