@@ -4,6 +4,7 @@ import { UserPlus, Check, X, Mail as MailIcon } from "lucide-react";
 import { PendingRequest, Streaming } from "@/types/participante";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -17,8 +18,13 @@ interface Props {
 export function SolicitacoesTab({ requests, streamings, onApprove, onReject, loading }: Props) {
     if (requests.length === 0) {
         return (
-            <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                <p className="text-gray-400">Nenhuma solicitação pendente.</p>
+            <div className="py-8">
+                <EmptyState
+                    icon={UserPlus}
+                    title="Nenhuma solicitação"
+                    description="Nenhuma solicitação pendente."
+                    variant="default"
+                />
             </div>
         );
     }

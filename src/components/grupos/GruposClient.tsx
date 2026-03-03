@@ -115,8 +115,8 @@ export function GruposClient({ initialGrupos, error }: GruposClientProps) {
             {grupos.length === 0 ? (
                 <EmptyState
                     icon={Tv}
-                    title="Nenhum grupo cadastrado"
-                    description="Crie grupos para agrupar seus streamings e facilitar o envio de mensagens de renovação via WhatsApp."
+                    title="Nenhum grupo"
+                    description="Agrupe streamings para facilitar a renovação."
                 />
             ) : (
                 <div className="space-y-6">

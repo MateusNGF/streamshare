@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { CATALOGO_CATEGORIES } from "@/constants/catalogo";
 import { Search } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 import type { CatalogoItem } from "@/stores/useCatalogoStore";
 
@@ -114,8 +115,13 @@ export function CatalogoPicker({ items, value, onChange, disabled }: CatalogoPic
                         );
                     })
                 ) : (
-                    <div className="col-span-full py-12 text-center bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
-                        <p className="text-sm text-gray-400 font-medium">Nenhum serviço encontrado</p>
+                    <div className="col-span-full py-8">
+                        <EmptyState
+                            icon={Search}
+                            title="Nenhum serviço"
+                            description="Nenhum serviço para exibir."
+                            variant="compact"
+                        />
                     </div>
                 )}
             </div>

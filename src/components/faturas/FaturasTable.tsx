@@ -82,12 +82,11 @@ export function FaturasTable({
 
     if (faturas.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-8">
+            <div className="py-8">
                 <EmptyState
                     icon={DollarSign}
-                    title="Nenhuma fatura encontrada"
-                    description="Quando você participar de uma assinatura, as faturas aparecerão aqui."
-                    className="bg-transparent border-none py-12"
+                    title="Nenhuma fatura"
+                    description="Faturas de assinaturas aparecerão aqui."
                 />
             </div>
         );

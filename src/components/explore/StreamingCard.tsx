@@ -33,7 +33,12 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
     const name = streaming.apelido || streaming.catalogo.nome;
 
     return (
-        <div className="bg-white/70 backdrop-blur-md p-6 rounded-[32px] border border-white/20 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all group relative overflow-hidden flex flex-col h-full hover:-translate-y-1 duration-300">
+        <div className={cn(
+            "bg-white/70 backdrop-blur-md p-5 sm:p-6 rounded-[32px] border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden flex flex-col h-full",
+            streaming.vagasDisponiveis === 1
+                ? "border-orange-500/50 ring-1 ring-orange-500/20 shadow-orange-500/10 hover:shadow-orange-500/20"
+                : "border-white/20 hover:shadow-primary/10"
+        )}>
             {/* Top Row: Logo & Host Info */}
             <div className="flex items-start justify-between mb-6">
                 <div className="flex w-full justify-between gap items-center gap-4">
@@ -61,7 +66,7 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
                             </Tooltip>
                         </div>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                            HOST: {streaming.conta.nome}
+                            ORGANIZADOR: {streaming.conta.nome}
                         </p>
                     </div>
                 </div>
@@ -76,10 +81,14 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
                             <span>{occupiedSlots}/{streaming.limiteParticipantes} <span className="text-gray-400 font-medium text-xs">vagas</span></span>
                         </div>
                         <span className={cn(
-                            "text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider",
-                            streaming.vagasDisponiveis === 0 ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600"
+                            "text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider transition-colors",
+                            streaming.vagasDisponiveis === 0 ? "bg-amber-100 text-amber-600" :
+                                streaming.vagasDisponiveis === 1 ? "bg-orange-100 text-orange-600 border border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.3)] animate-pulse" :
+                                    "bg-green-100 text-green-600"
                         )}>
-                            {streaming.vagasDisponiveis > 0 ? `${streaming.vagasDisponiveis} LIVRES` : "LOTADO"}
+                            {streaming.vagasDisponiveis === 0 ? "LOTADO" :
+                                streaming.vagasDisponiveis === 1 ? "🔥 ÚLTIMA VAGA" :
+                                    `${streaming.vagasDisponiveis} LIVRES`}
                         </span>
                     </div>
 
@@ -95,9 +104,19 @@ export function StreamingCard({ streaming }: StreamingCardProps) {
                     </div>
 
                     <div className="flex items-center justify-between py-2 px-3 bg-primary/5 rounded-2xl border border-primary/10">
-                        <div className="flex flex-row justify-between items-center w-full ">
-                            <span className="text-[9px] text-primary/60 font-black uppercase tracking-tighter">Valor mensal p/ pessoa</span>
-                            <span className="text-lg font-black text-primary tracking-tight">
+                        <div className="flex flex-row justify-between items-center w-full gap-1">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] text-primary/60 font-black uppercase tracking-tighter">Valor mensal p/ pessoa</span>
+                                <div className="flex gap-1.5 items-center">
+                                    <span className="text-xs text-primary/40 font-bold line-through decoration-primary/30">
+                                        {format(streaming.valorIntegral)}
+                                    </span>
+                                    <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1.5 rounded-md">
+                                        -{(100 - (valorPorVaga / streaming.valorIntegral) * 100).toFixed(0)}%
+                                    </span>
+                                </div>
+                            </div>
+                            <span className="text-2xl font-black text-primary tracking-tight">
                                 {format(valorPorVaga)}
                             </span>
                         </div>

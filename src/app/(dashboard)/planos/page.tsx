@@ -5,6 +5,13 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Planos | StreamShare",
+    description: "Escolha o melhor plano do StreamShare para as suas necessidades de compartilhamento.",
+};
+
 export default async function PlanosPage() {
     const session = await getCurrentUser();
 

@@ -1,6 +1,6 @@
 
 import { prisma } from "@/lib/db";
-import { StatusAssinatura } from "@prisma/client";
+import { Prisma, StatusAssinatura } from "@prisma/client";
 import { generateShareToken, verifyShareToken } from "@/lib/share-token";
 
 export class StreamingService {
@@ -8,7 +8,7 @@ export class StreamingService {
      * Get the count of occupied spots for a streaming service.
      * Includes active, suspended, and pending subscriptions.
      */
-    static async getOccupiedSpots(streamingId: number, tx = prisma): Promise<number> {
+    static async getOccupiedSpots(streamingId: number, tx: Prisma.TransactionClient = prisma): Promise<number> {
         return tx.assinatura.count({
             where: {
                 streamingId,
@@ -20,7 +20,7 @@ export class StreamingService {
     /**
      * Get the number of remaining spots for a streaming service.
      */
-    static async getRemainingSpots(streamingId: number, tx = prisma): Promise<number> {
+    static async getRemainingSpots(streamingId: number, tx: Prisma.TransactionClient = prisma): Promise<number> {
         const streaming = await tx.streaming.findUnique({
             where: { id: streamingId },
             select: { limiteParticipantes: true }
@@ -30,6 +30,21 @@ export class StreamingService {
 
         const occupied = await this.getOccupiedSpots(streamingId, tx);
         return Math.max(0, streaming.limiteParticipantes - occupied);
+    }
+
+    /**
+     * ACID: Ensures the streaming has enough spots for the requested quantity.
+     * Throws an error with a user-friendly message if not.
+     */
+    static async ensureCapacity(streamingId: number, quantity: number = 1, tx: Prisma.TransactionClient = prisma) {
+        const remaining = await this.getRemainingSpots(streamingId, tx);
+
+        if (remaining < quantity) {
+            if (remaining > 0) {
+                throw new Error(`Poxa, restam apenas ${remaining} vaga(s) para este grupo.`);
+            }
+            throw new Error("Poxa, as vagas para este grupo já foram preenchidas por outros usuários.");
+        }
     }
 
     /**
@@ -46,7 +61,7 @@ export class StreamingService {
                 throw new Error("Streaming não encontrado");
             }
 
-            const remaining = await this.getRemainingSpots(streamingId, tx as any);
+            const remaining = await this.getRemainingSpots(streamingId, tx);
             if (remaining <= 0) {
                 throw new Error("Não é possível gerar link de convite: todas as vagas estão preenchidas.");
             }

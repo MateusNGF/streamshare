@@ -5,6 +5,13 @@ import { ParticipantesClient } from "@/components/participantes/ParticipantesCli
 import { getStreamings } from "@/actions/streamings";
 import { getCurrentPlan } from "@/actions/planos";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Participantes | StreamShare",
+    description: "Gerencie os participantes dos seus grupos de assinatura do StreamShare.",
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function ParticipantesPage() {

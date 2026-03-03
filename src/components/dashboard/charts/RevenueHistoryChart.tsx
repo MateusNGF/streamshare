@@ -81,9 +81,9 @@ export function RevenueHistoryChart({ data, currencyCode, onAddStreaming }: Reve
             {!hasData ? (
                 <EmptyChartState
                     icon={TrendingUp}
-                    title="Nenhuma receita registrada"
-                    description="Seus dados de faturamento aparecerão aqui assim que você começar a receber pagamentos."
-                    actionLabel="Criar meu primeiro streaming"
+                    title="Nenhuma receita"
+                    description="Aguarde os pagamentos para ver evolução."
+                    actionLabel="Criar streaming"
                     onAction={onAddStreaming}
                 />
             ) : (

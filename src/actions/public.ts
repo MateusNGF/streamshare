@@ -3,12 +3,13 @@
 import { prisma } from "@/lib/db";
 import { SubscriptionService } from "@/services/subscription.service";
 import { revalidatePath } from "next/cache";
-import { FrequenciaPagamento } from "@prisma/client";
+import { FrequenciaPagamento, StatusConvite, TipoNotificacao } from "@prisma/client";
 import { StreamingService } from "@/services/streaming.service";
 import { ParticipantService } from "@/services/participant.service";
+import { InviteService } from "@/services/invite.service";
 
 export async function publicSubscribe(data: {
-    token: string;
+    token?: string;
     userId?: number;
     nome: string;
     email: string;
@@ -20,26 +21,29 @@ export async function publicSubscribe(data: {
     privateInviteToken?: string;
 }) {
     try {
-        // 1. Validar Streaming e Token
-        const streaming = await StreamingService.validatePublicToken(data.token.trim());
-
-        if (!streaming) {
-            return { success: false, error: "Streaming não disponível ou link inválido." };
-        }
-
-        // 2. Verificar Vagas
+        let streaming;
         const quantidade = data.quantidade || 1;
-        if (streaming.vagasRestantes < quantidade) {
-            return {
-                success: false,
-                error: streaming.vagasRestantes > 0
-                    ? `Não há vagas suficientes. Restam apenas ${streaming.vagasRestantes} vaga(s).`
-                    : "Não há vagas disponíveis para este streaming."
-            };
+
+        if (data.isPrivateInvite && data.privateInviteToken) {
+            // 1a. Validar via InviteService para convites privados
+            const convite = await InviteService.validateInviteForAcceptance(data.privateInviteToken);
+            if (!convite.streaming) throw new Error("Este convite não está vinculado a um streaming.");
+
+            // Note: validateInviteForAcceptance already checks spots
+            streaming = convite.streaming;
+        } else if (data.token) {
+            // 1b. Validar via StreamingService para links públicos
+            streaming = await StreamingService.validatePublicToken(data.token.trim());
+            if (!streaming) throw new Error("Streaming não disponível ou link inválido.");
+
+            // Validar capacidade via Centralized Service
+            await StreamingService.ensureCapacity(streaming.id, quantidade);
         }
+
+        if (!streaming) throw new Error("Informações de streaming insuficientes.");
 
         const result = await prisma.$transaction(async (tx) => {
-            // 3. Garantir Participante
+            // 2. Garantir Participante
             const participante = await ParticipantService.findOrCreateParticipant(tx, {
                 contaId: streaming.contaId,
                 nome: data.nome,
@@ -49,7 +53,7 @@ export async function publicSubscribe(data: {
                 cpf: data.cpf
             });
 
-            // 4. Verificar duplicidade
+            // 3. Verificar duplicidade
             const existingSub = await tx.assinatura.findFirst({
                 where: {
                     participanteId: participante.id,
@@ -58,68 +62,53 @@ export async function publicSubscribe(data: {
                 }
             });
 
-            if (existingSub && data.quantidade === 1) {
+            if (existingSub && quantidade === 1) {
                 if (existingSub.status === "pendente") {
-                    return {
-                        success: false,
-                        error: "Você já possui uma inscrição pendente para este streaming. Verifique suas faturas para realizar o pagamento.",
-                        code: "PENDING_SUBSCRIPTION"
-                    };
+                    throw new Error("Você já possui uma inscrição pendente para este streaming.");
                 }
-                return {
-                    success: false,
-                    error: "Você já possui uma assinatura ativa para este streaming.",
-                    code: "ACTIVE_SUBSCRIPTION"
-                };
+                throw new Error("Você já possui uma assinatura ativa para este streaming.");
             }
 
-            // 5. Criar Assinatura(s)
-            for (let i = 0; i < (data.quantidade || 1); i++) {
+            // 4. Criar Assinatura(s)
+            for (let i = 0; i < quantidade; i++) {
                 await SubscriptionService.createFromStreaming(tx, participante.id, streaming.id, data.frequencia);
             }
 
-            // 6. Notificar Admin
+            // 5. Side effect: marcar convite privado como aceito
+            if (data.isPrivateInvite && data.privateInviteToken && data.userId) {
+                await tx.convite.updateMany({
+                    where: { token: data.privateInviteToken, status: StatusConvite.pendente },
+                    data: { status: StatusConvite.aceito, usuarioId: data.userId }
+                });
+            }
+
+            // 6. Gerenciar lotação
+            await InviteService.handleStreamingFull(streaming.id, tx);
+
+            // 7. Notificar Admin
             await tx.notificacao.create({
                 data: {
                     contaId: streaming.contaId,
-                    tipo: "assinatura_criada",
+                    tipo: TipoNotificacao.assinatura_criada,
                     titulo: data.isPrivateInvite ? "Nova Assinatura Privada" : "Nova Assinatura Pública",
-                    descricao: `${data.nome} se inscreveu ${data.isPrivateInvite ? "por convite" : "via link público"} no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
-                    metadata: {
-                        participanteId: participante.id,
-                        streamingId: streaming.id,
-                        quantidade: data.quantidade || 1
-                    }
+                    descricao: `${data.nome} se inscreveu ${data.isPrivateInvite ? "por convite" : "via link público"} no streaming ${streaming.apelido || (streaming as any).catalogo?.nome}.`,
+                    metadata: { participanteId: participante.id, streamingId: streaming.id, quantidade }
                 }
             });
 
-            // 8. Se for um convite privado, marca como aceito
-            if (data.isPrivateInvite && data.privateInviteToken && data.userId) {
-                const convite = await tx.convite.findUnique({
-                    where: { token: data.privateInviteToken }
-                });
-                if (convite) {
-                    await tx.convite.update({
-                        where: { id: convite.id },
-                        data: { status: "aceito", usuarioId: data.userId }
-                    });
-                }
-            }
-
-            return { success: true };
+            return {
+                participanteId: participante.id,
+                streamingId: streaming.id,
+                quantidade
+            };
         });
 
-        if (result.success) {
-            revalidatePath("/assinaturas");
-            revalidatePath("/participantes");
-        }
+        revalidatePath("/assinaturas");
+        revalidatePath("/participantes");
 
-        return result;
+        return { success: true, data: result };
     } catch (error: any) {
         console.error("[PUBLIC_SUBSCRIBE_ERROR]", error);
-        return {
-            success: false,
-            error: error.message || "Ocorreu um erro inesperado ao processar sua inscrição."
-        };
+        return { success: false, error: error.message || "Erro ao processar sua inscrição." };
     }
 }
