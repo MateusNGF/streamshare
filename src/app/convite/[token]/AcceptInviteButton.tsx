@@ -48,7 +48,7 @@ export function AcceptInviteButton({ token, hasWhatsApp }: { token: string; hasW
                         placeholder="(00) 00000-0000"
                         className="w-full h-16 rounded-2xl border-gray-100 bg-white shadow-sm hover:border-primary/20 transition-all px-4 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
-                    <p className="text-[10px] text-gray-400 ml-1 italic">Necessário para comunicação direta com o host.</p>
+                    <p className="text-[10px] text-gray-400 ml-1 italic">Necessário para comunicação direta com o Organizador.</p>
                 </div>
             )}
 

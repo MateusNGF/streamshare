@@ -82,7 +82,7 @@ export async function inviteUser(data: {
                         usuarioId: usuarioConvidado.id,
                         tipo: TipoNotificacao.convite_recebido,
                         titulo: "Novo Convite",
-                        descricao: `Você foi convidado para participar da conta de um administrador.${convite.streaming ? " Inclui acesso a streaming." : ""}`,
+                        descricao: `Você foi convidado para participar da conta de um Organizador.${convite.streaming ? " Inclui acesso a streaming." : ""}`,
                         metadata: { conviteId: convite.id, email: emailFormatted, link: `/convite/${token}` }
                     }
                 });

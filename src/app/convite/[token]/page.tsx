@@ -103,7 +103,7 @@ export default async function ConvitePage({
                                 />
 
                                 <p className="text-xs text-gray-400 font-medium px-4">
-                                    Ao aceitar, você concorda com os <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e que seus dados de perfil sejam compartilhados com o host.
+                                    Ao aceitar, você concorda com os <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e que seus dados de perfil sejam compartilhados com o Organizador.
                                 </p>
                             </div>
                         )}
