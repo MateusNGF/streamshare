@@ -3,6 +3,7 @@
 import { GenericFilter } from "@/components/ui/GenericFilter";
 import { ParticipantCard } from "@/components/participantes/ParticipantCard";
 import { useState, useMemo } from "react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Participante } from "@/types/participante";
 
 interface Props {
@@ -63,8 +64,12 @@ export function ParticipantesTab({ participants, onEdit, onDelete, onView }: Pro
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-12 md:py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                        <p className="text-gray-400 text-base md:text-lg">Nenhum participante encontrado.</p>
+                    <div className="py-8">
+                        <EmptyState
+                            title="Nenhum participante"
+                            description="Nenhum participante para os filtros aplicados."
+                            variant="default"
+                        />
                     </div>
                 )}
             </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ShieldCheck } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
 import { getParticipantSubscriptionDetail } from "@/actions/dashboard";
 import { useToast } from "@/hooks/useToast";
@@ -116,21 +117,19 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
             />
 
             {subscriptions.length === 0 ? (
-                <div className="p-12 text-center border-dashed border-2 bg-gray-50/50 rounded-[32px] border-gray-200">
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                            <ShieldCheck className="w-8 h-8 text-gray-300" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900">Nenhuma assinatura</h3>
-                            <p className="text-gray-500 max-w-xs mx-auto">Você ainda não possui assinaturas ativas ou pendentes.</p>
-                        </div>
-                        <Link href="/explore">
-                            <Button variant="outline" className="rounded-full px-8">
-                                Explorar Vagas
-                            </Button>
-                        </Link>
-                    </div>
+                <div className="py-8">
+                    <EmptyState
+                        icon={ShieldCheck}
+                        title="Nenhuma assinatura"
+                        description="Você ainda não possui assinaturas ativas ou pendentes."
+                        action={
+                            <Link href="/explore">
+                                <Button variant="outline" className="rounded-full px-8">
+                                    Explorar Vagas
+                                </Button>
+                            </Link>
+                        }
+                    />
                 </div>
             ) : (
                 viewMode === "table" ? (

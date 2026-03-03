@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { CreditCard, Loader2, FileText, History } from "lucide-react";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const FaturasTable = dynamic(() => import("@/components/faturas/FaturasTable").then(mod => mod.FaturasTable), {
     loading: () => <TableSkeleton />
@@ -146,14 +147,12 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                     />
 
                                     {faturas.length === 0 ? (
-                                        <div className="bg-white rounded-[32px] p-20 text-center border border-dashed border-gray-200 shadow-sm">
-                                            <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                                <Wallet className="text-gray-300" size={32} />
-                                            </div>
-                                            <h3 className="text-lg font-bold text-gray-900">Nenhuma fatura encontrada</h3>
-                                            <p className="text-gray-500 max-w-xs mx-auto mt-2">
-                                                Quando você participar de uma assinatura, as cobranças aparecerão aqui.
-                                            </p>
+                                        <div className="py-8">
+                                            <EmptyState
+                                                icon={Wallet}
+                                                title="Nenhuma fatura"
+                                                description="Quando você participar de uma assinatura, as cobranças aparecerão aqui."
+                                            />
                                         </div>
                                     ) : (
                                         viewMode === "grid" ? (

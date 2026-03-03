@@ -34,12 +34,11 @@ export function AssinaturasTable({ subscriptions, onViewDetails, onCancel }: Ass
 
     if (subscriptions.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-8">
+            <div className="py-8">
                 <EmptyState
-                    title="Nenhuma assinatura encontrada"
-                    description="Tente ajustar os filtros ou crie uma nova assinatura."
+                    title="Nenhuma assinatura"
+                    description="Ajuste os filtros ou crie uma nova."
                     icon={Search}
-                    className="bg-transparent border-none"
                 />
             </div>
         );

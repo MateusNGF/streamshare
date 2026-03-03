@@ -39,8 +39,8 @@ export function ExploreEmptyState({ searchTerm, userPlan = "free" }: ExploreEmpt
         <div className="space-y-8">
             <EmptyState
                 icon={Search}
-                title="Ops, o cofre está vazio!"
-                description={EmptyDescription}
+                title="Nenhum resultado"
+                description={`Sem resultados para "${searchTerm || "filtros selecionados"}".`}
                 action={ActionButton}
                 variant="glass"
             />

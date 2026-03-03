@@ -40,7 +40,7 @@ export function EmptyChartState({
             description={description}
             action={ActionNode}
             variant="compact"
-            className={`h-full min-h-[300px] bg-gray-50/30 border-dashed border-2 border-gray-100 rounded-[32px] justify-center ${className}`}
+            className={`h-full min-h-[300px] bg-transparent justify-center ${className}`}
             iconWrapperClassName="bg-white p-4 rounded-full shadow-sm w-16 h-16"
             iconClassName="w-8 h-8 text-gray-300"
         />

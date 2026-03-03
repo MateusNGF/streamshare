@@ -30,19 +30,19 @@ export function EmptyState({
     animate = true,
 }: EmptyStateProps) {
     const variants = {
-        default: "bg-white rounded-[2rem]",
-        card: "bg-white border border-gray-100 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
-        compact: "bg-gray-50/50 rounded-2xl border border-gray-100",
-        glass: "bg-white/50 backdrop-blur-sm rounded-[3rem] border border-gray-200/50 shadow-inner",
-        dashed: "bg-white border border-dashed border-gray-200 rounded-2xl",
+        default: "bg-transparent",
+        card: "bg-transparent",
+        compact: "bg-transparent",
+        glass: "bg-transparent",
+        dashed: "bg-transparent",
     };
 
     const paddings = {
-        default: "py-16 px-6 sm:py-24 sm:px-12",
-        card: "py-12 px-6 sm:py-16 sm:px-12",
-        compact: "py-8 px-4 sm:px-6",
-        glass: "py-16 px-6 sm:py-24 sm:px-12",
-        dashed: "py-12 px-4 sm:py-16 sm:px-8",
+        default: "py-8 px-4 sm:py-12 sm:px-8",
+        card: "py-6 px-4 sm:py-10 sm:px-8",
+        compact: "py-4 px-3 sm:py-6 sm:px-4",
+        glass: "py-10 px-6 sm:py-16 sm:px-12",
+        dashed: "py-8 px-4 sm:py-12 sm:px-8",
     };
 
     return (
@@ -75,7 +75,7 @@ export function EmptyState({
 
             <h3 className={cn(
                 "font-semibold text-gray-900 mb-1 tracking-tight",
-                variant === 'compact' ? "text-base" : variant === 'glass' ? "text-2xl font-bold mb-3" : "text-lg"
+                variant === 'compact' ? "text-base" : variant === 'glass' ? "text-xl sm:text-2xl font-bold mb-3" : "text-lg sm:text-xl"
             )}>
                 {title}
             </h3>
@@ -83,7 +83,7 @@ export function EmptyState({
             {description && (
                 <div className={cn(
                     "text-gray-500",
-                    variant === 'compact' ? "text-sm max-w-[280px] mb-4" : variant === 'glass' ? "text-base max-w-md mx-auto mb-8 leading-relaxed" : "text-sm max-w-sm mb-6"
+                    variant === 'compact' ? "text-xs sm:text-sm max-w-[280px] mx-auto mb-4" : variant === 'glass' ? "text-sm sm:text-base max-w-md mx-auto mb-8 leading-relaxed" : "text-sm sm:text-base max-w-sm mx-auto mb-6"
                 )}>
                     {typeof description === 'string' ? <p>{description}</p> : description}
                 </div>
