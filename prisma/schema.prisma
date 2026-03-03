@@ -285,19 +285,20 @@ model StreamingCatalogo {
 }
 
 model Streaming {
-  id                     Int       @id @default(autoincrement())
-  contaId                Int
-  streamingCatalogoId    Int
-  apelido                String?   @default("")
-  valorIntegral          Decimal
-  limiteParticipantes    Int
-  frequenciasHabilitadas String    @default("mensal,trimestral,semestral,anual")
-  publicToken            String    @unique @default(uuid())
-  isAtivo                Boolean   @default(true)
-  isPublico              Boolean   @default(false)
-  deletedAt              DateTime?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                      Int       @id @default(autoincrement())
+  contaId                 Int
+  streamingCatalogoId     Int
+  apelido                 String?   @default("")
+  valorIntegral           Decimal
+  limiteParticipantes     Int
+  frequenciasHabilitadas  String    @default("mensal,trimestral,semestral,anual")
+  publicToken             String    @unique @default(uuid())
+  isAtivo                 Boolean   @default(true)
+  isPublico               Boolean   @default(false)
+  autoAprovarSolicitacoes Boolean   @default(false)
+  deletedAt               DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   conta       Conta                 @relation(fields: [contaId], references: [id])
   catalogo    StreamingCatalogo     @relation(fields: [streamingCatalogoId], references: [id])

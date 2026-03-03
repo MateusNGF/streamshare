@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { StatusAssinatura, StatusConvite, TipoNotificacao } from "@prisma/client";
+import { Prisma, StatusAssinatura, StatusConvite, TipoNotificacao } from "@prisma/client";
 import { StreamingService } from "./streaming.service";
 
 export class InviteService {
@@ -7,7 +7,7 @@ export class InviteService {
      * Cancels all pending participation requests once a streaming reaches its capacity.
      * Notify users about the closure.
      */
-    static async handleStreamingFull(streamingId: number, tx = prisma) {
+    static async handleStreamingFull(streamingId: number, tx: Prisma.TransactionClient = prisma) {
         const remaining = await StreamingService.getRemainingSpots(streamingId, tx);
 
         if (remaining > 0) return;
@@ -50,7 +50,7 @@ export class InviteService {
     /**
      * Validates if a private invite is still valid (token, status, expiration, and spots).
      */
-    static async validateInviteForAcceptance(token: string, tx = prisma) {
+    static async validateInviteForAcceptance(token: string, tx: Prisma.TransactionClient = prisma) {
         const invite = await tx.convite.findUnique({
             where: { token },
             include: {

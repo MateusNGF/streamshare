@@ -59,7 +59,54 @@ export async function requestParticipation(streamingId: number) {
             return { success: false, error: "Você já possui uma assinatura ativa para este serviço." };
         }
 
-        // 4. Criar a Solicitação com validade de 48h (conforme UX)
+        // 4. Se o streaming estiver configurado para auto-aprovação
+        if (streaming.autoAprovarSolicitacoes) {
+            const result = await prisma.$transaction(async (tx) => {
+                // Vincular Participante
+                const participante = await tx.participante.upsert({
+                    where: {
+                        contaId_userId: { contaId: streaming.contaId, userId }
+                    },
+                    create: {
+                        contaId: streaming.contaId,
+                        userId,
+                        nome: usuario.nome,
+                        email: usuario.email,
+                        status: "ativo"
+                    },
+                    update: {
+                        status: "ativo",
+                        deletedAt: null
+                    }
+                });
+
+                // Criar assinatura
+                const assinatura = await SubscriptionService.createFromStreaming(tx, participante.id, streamingId);
+
+                // Notificações
+                await tx.notificacao.create({
+                    data: {
+                        contaId: streaming.contaId,
+                        usuarioId: null,
+                        tipo: TipoNotificacao.participante_criado,
+                        titulo: "Entrada Automática",
+                        descricao: `${usuario.nome} entrou no streaming ${streaming.apelido || streaming.catalogo.nome} via aprovação automática (Configurado pelo Organizador).`,
+                        metadata: { participanteId: participante.id, assinaturaId: assinatura.id }
+                    }
+                });
+
+                // Gerenciar lotação
+                await InviteService.handleStreamingFull(streamingId, tx);
+
+                return { success: true, isAutoApproved: true, data: assinatura };
+            });
+
+            revalidatePath("/explore");
+            revalidatePath("/assinaturas");
+            return result;
+        }
+
+        // 5. Caso contrário, criar a Solicitação com validade de 48h (conforme UX)
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 48);
 
@@ -74,7 +121,7 @@ export async function requestParticipation(streamingId: number) {
             }
         });
 
-        // 5. Notificar Admins
+        // 6. Notificar Admins (Fluxo manual)
         const admins = await prisma.contaUsuario.findMany({
             where: { contaId: streaming.contaId, nivelAcesso: { in: ["owner", "admin"] } },
             select: { usuarioId: true }
@@ -87,7 +134,7 @@ export async function requestParticipation(streamingId: number) {
                     usuarioId: null, // Broadcast
                     tipo: TipoNotificacao.solicitacao_participacao_criada,
                     titulo: "Nova solicitação de entrada",
-                    descricao: `${usuario.nome} solicitou entrada no streaming ${streaming.apelido || streaming.catalogo.nome}.`,
+                    descricao: `${usuario.nome} solicitou entrada no streaming ${streaming.apelido || streaming.catalogo.nome}. Aprovação manual pendente.`,
                     metadata: {
                         conviteId: solicitacao.id,
                         streamingId,
@@ -180,7 +227,7 @@ export async function approveRequest(conviteId: string) {
                         usuarioId: null,
                         tipo: TipoNotificacao.participante_criado,
                         titulo: "Solicitação Aprovada",
-                        descricao: `${solicitacao.usuario!.nome} foi aprovado e agora é um participante ativo.`,
+                        descricao: `${solicitacao.usuario!.nome} foi aprovado pelo Organizador e agora é um participante ativo.`,
                         metadata: { participanteId: participante.id }
                     }
                 })
@@ -220,7 +267,7 @@ export async function rejectRequest(conviteId: string) {
                     usuarioId: solicitacao.usuarioId,
                     tipo: TipoNotificacao.solicitacao_participacao_recusada,
                     titulo: "Solicitação recusada",
-                    descricao: `Infelizmente sua solicitação para entrar no streaming foi recusada pelo administrador.`,
+                    descricao: `Infelizmente sua solicitação para entrar no streaming foi recusada pelo Organizador.`,
                 }
             });
         }
