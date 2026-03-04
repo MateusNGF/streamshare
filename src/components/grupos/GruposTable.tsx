@@ -3,6 +3,7 @@
 import { MessageCircle, Pencil, Trash2, Tv, Activity } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface Grupo {
     id: number;
@@ -31,17 +32,12 @@ interface GruposTableProps {
 export function GruposTable({ grupos, onRenovacao, onEdit, onDelete }: GruposTableProps) {
     if (grupos.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-8">
-                <div className="flex flex-col items-center justify-center text-center">
-                    <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
-                        <Tv className="text-gray-300" size={32} />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">Nenhum grupo encontrado</h3>
-                    <p className="text-gray-500 max-w-xs mx-auto mt-2">
-                        Crie um grupo para começar a gerenciar suas assinaturas.
-                    </p>
-                </div>
-            </div>
+            <EmptyState
+                icon={Tv}
+                title="Nenhum grupo encontrado"
+                description="Crie um grupo para começar a gerenciar suas assinaturas."
+                variant="glass"
+            />
         );
     }
 
@@ -49,32 +45,22 @@ export function GruposTable({ grupos, onRenovacao, onEdit, onDelete }: GruposTab
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in">
             <div className="overflow-x-auto">
                 <Table>
-                    <TableHeader className="bg-gray-50/50">
-                        <TableRow className="hover:bg-transparent border-b border-gray-100">
-                            <TableHead className="text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[250px] py-4 pl-6">
-                                <div className="flex items-center gap-2">
-                                    <MessageCircle size={14} className="text-gray-400" />
-                                    Grupo e Descrição
-                                </div>
+                    <TableHeader className="bg-gray-50/30">
+                        <TableRow className="hover:bg-transparent border-b border-gray-100/50">
+                            <TableHead className="text-[10px] font-bold text-gray-400 uppercase tracking-widest py-4 pl-6">
+                                Grupo e Descrição
                             </TableHead>
-                            <TableHead className="text-center  text-xs font-bold text-gray-500 uppercase tracking-wider w-[140px]">
-                                <div className="flex items-center justify-center w-[200px] gap-2">
-                                    <Tv size={14} className="text-gray-400" />
-                                    Vagas Ocupadas
-                                </div>
+                            <TableHead className="hidden sm:table-cell text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest w-[100px]">
+                                Vagas
                             </TableHead>
-                            <TableHead className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                <div className="flex items-center gap-2">
-                                    <Activity size={14} className="text-gray-400" />
-                                    Serviços
-                                </div>
+                            <TableHead className="hidden md:table-cell text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                Serviços
                             </TableHead>
-                            <TableHead className="w-[80px] text-center text-xs font-bold text-gray-500 uppercase tracking-wider pr-6">#</TableHead>
+                            <TableHead className="w-[60px] text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest pr-6">#</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {grupos.map((grupo, idx) => {
-                            // Aggregation logic
                             const aggregated = grupo.streamings.reduce((acc, item) => {
                                 const name = item.streaming.apelido || item.streaming.catalogo.nome;
                                 acc.set(name, (acc.get(name) || 0) + 1);
@@ -112,30 +98,39 @@ export function GruposTable({ grupos, onRenovacao, onEdit, onDelete }: GruposTab
                                     className="group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0"
                                     style={{ animationDelay: `${idx * 50}ms` }}
                                 >
-                                    <TableCell className="py-5 pl-6">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-900 group-hover:text-primary transition-colors">{grupo.nome}</span>
-                                            {grupo.descricao ? (
-                                                <span className="text-[11px] text-gray-500 mt-0.5 line-clamp-1 max-w-[250px]">{grupo.descricao}</span>
-                                            ) : (
-                                                <span className="text-[11px] text-gray-400 italic mt-0.5">Sem descrição</span>
-                                            )}
+                                    <TableCell className="py-4 pl-6">
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="font-bold text-sm text-gray-900 group-hover:text-primary transition-colors truncate">
+                                                {grupo.nome}
+                                            </span>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                {grupo.descricao ? (
+                                                    <span className="text-[11px] text-gray-500 line-clamp-1 max-w-[200px] sm:max-w-[300px]">
+                                                        {grupo.descricao}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] text-gray-400 italic">Sem descrição</span>
+                                                )}
+                                                {/* Badge de vagas visível apenas no mobile dentro da info do grupo */}
+                                                <span className="sm:hidden inline-flex items-center px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[9px] font-bold text-gray-500">
+                                                    {grupo._count.streamings} vagas
+                                                </span>
+                                            </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-50 border border-gray-100 rounded-full group-hover:bg-white transition-colors">
-                                            <Tv size={12} className="text-gray-400" />
-                                            <span className="text-xs font-bold text-gray-700">{grupo._count.streamings}</span>
+                                    <TableCell className="hidden sm:table-cell text-center">
+                                        <div className="inline-flex items-center px-2 py-0.5 bg-gray-50/50 border border-gray-100/50 rounded-full">
+                                            <span className="text-[11px] font-bold text-gray-600">{grupo._count.streamings}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-wrap gap-2">
+                                    <TableCell className="hidden md:table-cell">
+                                        <div className="flex flex-wrap gap-1.5 max-w-[400px]">
                                             {displayItems.length > 0 ? (
                                                 <>
-                                                    {displayItems.slice(0, 4).map(([name, count], i) => (
+                                                    {displayItems.slice(0, 3).map(([name, count], i) => (
                                                         <span
                                                             key={i}
-                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[11px] font-medium text-gray-600 whitespace-nowrap shadow-sm"
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50/30 border border-gray-100/50 rounded-lg text-[10px] font-medium text-gray-500 whitespace-nowrap"
                                                         >
                                                             {name}
                                                             {count > 1 && (
@@ -145,14 +140,14 @@ export function GruposTable({ grupos, onRenovacao, onEdit, onDelete }: GruposTab
                                                             )}
                                                         </span>
                                                     ))}
-                                                    {remainingCount > 0 && (
-                                                        <span className="inline-flex items-center justify-center px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-400">
-                                                            +{remainingCount}
+                                                    {displayItems.length > 3 && (
+                                                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 bg-gray-50/50 border border-gray-100 rounded-lg text-[9px] font-bold text-gray-400">
+                                                            +{displayItems.length - 3}
                                                         </span>
                                                     )}
                                                 </>
                                             ) : (
-                                                <span className="text-[11px] text-gray-400 italic">Nenhum serviço vinculado</span>
+                                                <span className="text-[10px] text-gray-400 italic">Nenhum serviço</span>
                                             )}
                                         </div>
                                     </TableCell>

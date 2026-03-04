@@ -166,9 +166,10 @@ export function GrupoFormModal({
             footer={
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         onClick={onClose}
                         className="w-full sm:w-auto sm:mr-auto"
+                        disabled={isPending || loading}
                     >
                         Cancelar
                     </Button>
@@ -176,9 +177,9 @@ export function GrupoFormModal({
                         variant="default"
                         onClick={handleSubmit}
                         disabled={isPending || loading}
+                        loading={isPending}
                         className="w-full sm:w-auto"
                     >
-                        {isPending && <Spinner size="sm" color="white" />}
                         {isPending ? "Salvando..." : grupo ? "Salvar" : "Criar"}
                     </Button>
                 </div>
