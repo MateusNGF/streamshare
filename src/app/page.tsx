@@ -17,6 +17,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { PlansClient } from "@/components/planos/PlansClient";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
 import { FeaturesCarousel } from "@/components/landing/FeaturesCarousel";
+import { SystemShowcase } from "@/components/landing/SystemShowcase";
 import { Footer } from "@/components/layout/Footer";
 import { InteractiveMesh } from "@/components/backgrounds/InteractiveMesh";
 import { Metadata } from "next";
@@ -186,6 +187,35 @@ export default async function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Showcase do Sistema (Novo) */}
+      <section className="py-16 md:py-24 bg-white overflow-hidden relative">
+        <div className="container mx-auto px-6">
+          <SystemShowcase
+            badge="✨ Por dentro do StreamShare"
+            items={[
+              {
+                id: 1,
+                src: "/assets/banner.jpg",
+                title: "Dashboard Intuitivo",
+                desc: "Acompanhe suas economias e pendências em tempo real."
+              },
+              {
+                id: 2,
+                src: "/assets/banner-dois.jpg",
+                title: "Gestão de Participantes",
+                desc: "Controle quem pagou e quem está devendo com um clique."
+              },
+              {
+                id: 3,
+                src: "/assets/banner-tres.jpg",
+                title: "Notificações Automáticas",
+                desc: "O sistema cobra por você diretamente no WhatsApp."
+              }
+            ]}
+          />
         </div>
       </section>
 
