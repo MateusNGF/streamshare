@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Spinner } from "@/components/ui/Spinner";
 import {
     Select,
     SelectContent,
@@ -119,7 +118,8 @@ export function GrupoRenovacaoModal({
                     <Button
                         variant="outline"
                         onClick={handleCopy}
-                        disabled={loading || !mensagem}
+                        loading={loading}
+                        disabled={!mensagem}
                         className="w-full sm:w-auto sm:mr-auto"
                     >
                         {copied ? (
@@ -138,7 +138,8 @@ export function GrupoRenovacaoModal({
                     <Button
                         variant="default"
                         onClick={handleOpenWhatsApp}
-                        disabled={loading || !mensagem}
+                        loading={loading}
+                        disabled={!mensagem}
                         className="w-full sm:w-auto bg-[#25D366] hover:bg-[#128C7E] shadow-[#25D366]/25"
                     >
                         <ExternalLink size={18} />
@@ -210,7 +211,7 @@ export function GrupoRenovacaoModal({
                     >
                         {loading ? (
                             <div className="bg-white/90 backdrop-blur-sm p-4 rounded-full shadow-lg">
-                                <Spinner size="lg" />
+                                <div className="w-8 h-8 rounded-full border-3 border-primary border-t-transparent animate-spin" />
                             </div>
                         ) : mensagem ? (
                             <div className="w-full max-w-sm ml-auto mr-auto md:mr-0 self-end">

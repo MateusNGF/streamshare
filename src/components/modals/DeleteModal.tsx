@@ -2,6 +2,7 @@
 
 import { Modal } from "@/components/ui/Modal";
 import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface DeleteModalProps {
     isOpen: boolean;
@@ -33,19 +34,23 @@ export function DeleteModal({
             title={title}
             footer={
                 <div className="flex w-full gap-3 sm:w-auto">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all justify-center"
+                        className="flex-1 sm:flex-none justify-center"
+                        disabled={loading}
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="destructive"
                         onClick={handleConfirm}
                         disabled={loading || confirmDisabled}
-                        className="flex-1 sm:flex-none px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-600/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed justify-center"
+                        loading={loading}
+                        className="flex-1 sm:flex-none justify-center"
                     >
                         {loading ? "Excluindo..." : "Excluir"}
-                    </button>
+                    </Button>
                 </div>
             }
         >
