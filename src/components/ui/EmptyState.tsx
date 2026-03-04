@@ -47,50 +47,54 @@ export function EmptyState({
 
     return (
         <div className={cn(
-            "flex flex-col items-center justify-center text-center overflow-hidden relative",
+            "flex flex-col items-start text-left overflow-hidden relative",
             variants[variant],
             paddings[variant],
             animate && "animate-in fade-in zoom-in-95 duration-500",
             className
         )}>
-            {Icon && (
-                <div className={cn(
-                    "flex items-center justify-center relative group",
-                    variant === 'compact' ? "w-12 h-12 bg-white rounded-xl shadow-sm mb-4"
-                        : variant === 'glass' ? "w-20 h-20 bg-gray-50/80 rounded-3xl shadow-sm mb-6"
-                            : "w-12 h-12 bg-gray-50 rounded-full mb-4",
-                    iconWrapperClassName
-                )}>
-                    {variant === 'glass' && (
-                        <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors rounded-3xl" />
-                    )}
-                    <Icon className={cn(
-                        "text-gray-400 relative z-10 transition-transform duration-300",
-                        variant === 'glass' && "group-hover:scale-110 group-hover:-rotate-3",
-                        variant === 'compact' ? "w-6 h-6" : variant === 'glass' ? "w-10 h-10" : "w-6 h-6",
-                        iconClassName
-                    )} />
-                </div>
-            )}
-
-            <h3 className={cn(
-                "font-semibold text-gray-900 mb-1 tracking-tight",
-                variant === 'compact' ? "text-base" : variant === 'glass' ? "text-xl sm:text-2xl font-bold mb-3" : "text-lg sm:text-xl"
+            <div className={cn(
+                "flex items-center gap-3 w-full",
+                variant === 'glass' ? "mb-6" : "mb-4"
             )}>
-                {title}
-            </h3>
+                {Icon && (
+                    <div className={cn(
+                        "flex items-center justify-center relative group shrink-0",
+                        variant === 'compact' ? "w-10 h-10 bg-white rounded-xl shadow-sm"
+                            : variant === 'glass' ? "w-16 h-16 bg-gray-50/80 rounded-2xl shadow-sm"
+                                : "w-12 h-12 bg-gray-50 rounded-full",
+                        iconWrapperClassName
+                    )}>
+                        {variant === 'glass' && (
+                            <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors rounded-2xl" />
+                        )}
+                        <Icon className={cn(
+                            "text-gray-400 relative z-10 transition-transform duration-300",
+                            variant === 'glass' && "group-hover:scale-110 group-hover:-rotate-3",
+                            variant === 'compact' ? "w-5 h-5" : variant === 'glass' ? "w-8 h-8" : "w-6 h-6",
+                            iconClassName
+                        )} />
+                    </div>
+                )}
+                <h3 className={cn(
+                    "font-semibold text-gray-900 tracking-tight",
+                    variant === 'compact' ? "text-base" : variant === 'glass' ? "text-xl sm:text-2xl font-bold" : "text-lg sm:text-xl"
+                )}>
+                    {title}
+                </h3>
+            </div>
 
             {description && (
                 <div className={cn(
-                    "text-gray-500",
-                    variant === 'compact' ? "text-xs sm:text-sm max-w-[280px] mx-auto mb-4" : variant === 'glass' ? "text-sm sm:text-base max-w-md mx-auto mb-8 leading-relaxed" : "text-sm sm:text-base max-w-sm mx-auto mb-6"
+                    "text-gray-500 whitespace-pre-wrap",
+                    variant === 'compact' ? "text-xs sm:text-sm max-w-[280px] mb-4" : variant === 'glass' ? "text-sm sm:text-base max-w-md mb-8 leading-relaxed" : "text-sm sm:text-base max-w-sm mb-6"
                 )}>
                     {typeof description === 'string' ? <p>{description}</p> : description}
                 </div>
             )}
 
             {(action || children) && (
-                <div className="flex flex-col w-full sm:w-auto items-center justify-center gap-4 relative z-10">
+                <div className="flex flex-col sm:flex-row w-full sm:w-auto items-start justify-start gap-4 relative z-10">
                     {action}
                     {children}
                 </div>
