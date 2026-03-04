@@ -78,6 +78,10 @@ const config: Config = {
                     "0%, 100%": { backgroundPosition: "0% 50%" },
                     "50%": { backgroundPosition: "100% 50%" },
                 },
+                "marquee-scroll": {
+                    "0%": { transform: "translateX(0%)" },
+                    "100%": { transform: "translateX(-50%)" },
+                },
             },
             animation: {
                 "fade-in": "fade-in 0.3s ease-out",
@@ -94,6 +98,7 @@ const config: Config = {
                 "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
                 "float": "float 3s ease-in-out infinite",
                 "gradient-shift": "gradient-shift 3s ease infinite",
+                "marquee": "marquee-scroll linear infinite",
             },
             transitionTimingFunction: {
                 "smooth": "cubic-bezier(0.4, 0, 0.2, 1)",

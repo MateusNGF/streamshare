@@ -53,14 +53,6 @@ body {
   html {
     scroll-behavior: auto !important;
   }
-  
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
 }
 
 /* Improved focus visibility */
@@ -136,6 +128,24 @@ body {
 
 .stagger-5 {
   animation-delay: 500ms;
+}
+
+/* Custom Animations */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.pause-on-hover:hover .animate-marquee {
+  animation-play-state: paused;
 }
 
 /* Smooth transitions for all interactive elements */

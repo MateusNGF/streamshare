@@ -8,6 +8,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { FilterConfig } from "@/components/ui/GenericFilter";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useAssinaturasActions } from "@/hooks/useAssinaturasActions";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
@@ -102,8 +103,15 @@ export default function AssinaturasClient({
             options: streamings.map(s => ({
                 label: s.apelido || s.catalogo.nome,
                 value: s.id.toString(),
-                icon: s.catalogo.iconeUrl,
-                color: s.catalogo.corPrimaria
+                iconNode: (
+                    <StreamingLogo
+                        name={s.apelido || s.catalogo.nome}
+                        iconeUrl={s.catalogo.iconeUrl}
+                        color={s.catalogo.corPrimaria || "#ccc"}
+                        size="xs"
+                        rounded="md"
+                    />
+                )
             }))
         },
         {
@@ -111,6 +119,12 @@ export default function AssinaturasClient({
             type: "dateRange",
             label: "Data de Início",
             placeholder: "Filtrar por data"
+        },
+        {
+            key: "vencimento",
+            type: "dateRange",
+            label: "Data de Vencimento",
+            placeholder: "Filtrar por vencimento"
         },
         {
             key: "valor",
@@ -193,6 +207,7 @@ export default function AssinaturasClient({
                         status: filterValues.statusFilter,
                         streaming: filterValues.streamingFilter,
                         criacao: filterValues.criacaoRange || "",
+                        vencimento: filterValues.vencimentoRange || "",
                         valor: filterValues.valorRange || "",
                         hasWhatsapp: filterValues.hasWhatsappFilter || "false"
                     }}

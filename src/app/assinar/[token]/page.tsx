@@ -4,7 +4,35 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { PublicStreamingHeader, PublicStreamingDetails, PublicStreamingFooter } from "@/components/public/StreamingInfoCards";
+import { Metadata } from "next";
 import { Shield } from "lucide-react";
+
+export async function generateMetadata({ params }: { params: { token: string } }): Promise<Metadata> {
+    const response = await getStreamingByPublicToken(params.token);
+
+    if (!response.success || !response.data) {
+        return {
+            title: "Assinatura não encontrada | StreamShare",
+            description: "O convite para esta assinatura não existe ou expirou.",
+        };
+    }
+
+    const streaming = response.data as any;
+    const nome = streaming.apelido || streaming.catalogo?.nome || "Streaming";
+    const valorTotal = Number(streaming.valorIntegral || 0);
+    const limite = streaming.limiteParticipantes || 1;
+    const valorPorPessoa = (valorTotal / limite).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    return {
+        title: `Vaga para ${nome} por ${valorPorPessoa} | StreamShare`,
+        description: `Participe do grupo de ${nome} e pague apenas ${valorPorPessoa}/mês. Vagas limitadas!`,
+        openGraph: {
+            title: `Vaga para ${nome} | StreamShare`,
+            description: `Participe do grupo de ${nome} e pague apenas ${valorPorPessoa}/mês.`,
+            type: "website",
+        }
+    };
+}
 
 async function getLoggedUserStats(userId: number) {
     const fullUser = await prisma.usuario.findUnique({

@@ -39,11 +39,10 @@ export function OccupancyDistributionChart({ data, onAddStreaming }: OccupancyDi
             {!hasData ? (
                 <EmptyChartState
                     icon={LayoutPanelLeft}
-                    title="Nenhuma vaga para monitorar"
-                    description="Crie seu primeiro streaming para começar a acompanhar a ocupação das vagas."
+                    title="Nenhuma vaga"
+                    description="Crie seu primeiro streaming."
                     actionLabel="Criar streaming"
                     onAction={onAddStreaming}
-                    className="border-none bg-transparent min-h-[200px]"
                 />
             ) : (
                 <div className="flex-1 min-h-[250px]">

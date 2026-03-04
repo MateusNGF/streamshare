@@ -10,6 +10,7 @@ import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { FeatureGuards } from "@/lib/feature-guards";
 import { PlanoConta } from "@prisma/client";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
 import { useState } from "react";
@@ -56,25 +57,21 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
-        searchTerm, setSearchTerm,
-        statusFilter, setStatusFilter,
+        filters,
+        handleFilterChange,
+        handleClearFilters,
         loading,
         whatsappLoading,
         cancelModalOpen, setCancelModalOpen,
         confirmPaymentModalOpen, setConfirmPaymentModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedCobranca,
-        vencimentoRange, setVencimentoRange,
-        pagamentoRange, setPagamentoRange,
-        valorRange, setValorRange,
-        hasWhatsappFilter, setHasWhatsappFilter,
         filteredCobrancas,
         handleConfirmarPagamento,
         executePaymentConfirmation,
         handleCancelarCobranca,
         confirmCancellation,
         handleEnviarWhatsApp,
-        handleClearFilters,
         handleViewQrCode,
         qrModalOpen, setQrModalOpen,
         setSelectedCobrancaId,
@@ -88,6 +85,15 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
 
     const pendingApprovalsCount = cobrancasIniciais.filter(c => c.status === 'aguardando_aprovacao').length;
 
+    const monthOptions = Array.from({ length: 6 }).map((_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        return {
+            label: d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+            value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        };
+    });
+
     return (
         <PageContainer>
             <PageHeader
@@ -99,7 +105,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 <div
                     className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between shadow-sm cursor-pointer hover:bg-blue-100 transition-colors animate-in fade-in slide-in-from-top-4"
                     onClick={() => {
-                        setStatusFilter("aguardando_aprovacao");
+                        handleFilterChange("status", "aguardando_aprovacao");
                         setTimeout(() => window.scrollTo({ top: 400, behavior: 'smooth' }), 100);
                     }}
                 >
@@ -172,6 +178,13 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                             ]
                         },
                         {
+                            key: "mesReferencia",
+                            type: "select",
+                            label: "Mês de Referência",
+                            className: "w-full md:w-[200px]",
+                            options: monthOptions
+                        },
+                        {
                             key: "streaming",
                             type: "select",
                             label: "Streaming",
@@ -179,8 +192,15 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                             options: streamings.map(s => ({
                                 label: s.apelido || s.catalogo.nome,
                                 value: s.id.toString(),
-                                icon: s.catalogo.iconeUrl,
-                                color: s.catalogo.corPrimaria
+                                iconNode: (
+                                    <StreamingLogo
+                                        name={s.apelido || s.catalogo.nome}
+                                        iconeUrl={s.catalogo.iconeUrl}
+                                        color={s.catalogo.corPrimaria || "#ccc"}
+                                        size="xs"
+                                        rounded="md"
+                                    />
+                                )
                             }))
                         },
                         {
@@ -209,21 +229,16 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                         }
                     ]}
                     values={{
-                        search: searchTerm,
-                        status: statusFilter,
-                        vencimento: vencimentoRange,
-                        pagamento: pagamentoRange,
-                        valor: valorRange,
-                        hasWhatsapp: hasWhatsappFilter
+                        search: filters.searchTerm,
+                        status: filters.statusFilter,
+                        streaming: filters.streamingFilter,
+                        mesReferencia: filters.mesReferencia,
+                        vencimento: filters.vencimentoRange || "",
+                        pagamento: filters.pagamentoRange || "",
+                        valor: filters.valorRange || "",
+                        hasWhatsapp: filters.hasWhatsappFilter || "false"
                     }}
-                    onChange={(key: string, value: string) => {
-                        if (key === "search") setSearchTerm(value);
-                        if (key === "status") setStatusFilter(value);
-                        if (key === "vencimento") setVencimentoRange(value);
-                        if (key === "pagamento") setPagamentoRange(value);
-                        if (key === "valor") setValorRange(value);
-                        if (key === "hasWhatsapp") setHasWhatsappFilter(value);
-                    }}
+                    onChange={handleFilterChange}
                     onClear={handleClearFilters}
                 />
             </div>
@@ -275,8 +290,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                         onConfirmPayment={handleConfirmarPagamento}
                         onSendWhatsApp={handleEnviarWhatsApp}
                         onCancelPayment={handleCancelarCobranca}
-                        searchTerm={searchTerm}
-                        statusFilter={statusFilter}
+                        searchTerm={filters.searchTerm}
+                        statusFilter={filters.statusFilter}
                         onViewQrCode={handleViewQrCode}
                         selectedIds={selectedIds}
                         onToggleSelect={toggleSelection}

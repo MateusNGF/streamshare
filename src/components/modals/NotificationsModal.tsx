@@ -236,11 +236,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                     <EmptyState
                         icon={activeFilter === 'unread' ? CheckCheck : Bell}
                         title="Nenhuma notificação"
-                        description={
-                            activeFilter === 'unread'
-                                ? "Você leu todas as notificações!"
-                                : "Não há notificações para este filtro."
-                        }
+                        description={activeFilter === 'unread' ? "Tudo lido." : "Não há notificações."}
                     />
                 </div>
             ) : (

@@ -100,12 +100,8 @@ export function UsersClient({ users, metadata }: UsersClientProps) {
             {users.length === 0 ? (
                 <EmptyState
                     icon={Search}
-                    title="Nenhum usuário encontrado"
-                    description={
-                        searchParams.get("q")
-                            ? `Não encontramos resultados para "${searchParams.get("q")}". Tente outro termo.`
-                            : "Não há usuários cadastrados no sistema."
-                    }
+                    title="Nenhum usuário"
+                    description={searchParams.get("q") ? `Sem resultados para "${searchParams.get("q")}".` : "Nenhum usuário cadastrado."}
                 />
             ) : (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">

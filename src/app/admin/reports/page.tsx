@@ -39,8 +39,8 @@ export default async function ReportsPage() {
             {reports.length === 0 ? (
                 <EmptyState
                     icon={MessageSquare}
-                    title="Nenhum report encontrado"
-                    description="Não há chamados de suporte pendentes no momento."
+                    title="Nenhum report"
+                    description="Não há chamados pendentes."
                 />
             ) : (
                 <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm mb-8">

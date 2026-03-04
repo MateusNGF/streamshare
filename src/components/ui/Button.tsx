@@ -1,12 +1,14 @@
 import * as React from "react";
+import { Spinner } from "./Spinner";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "default" | "secondary" | "outline" | "ghost" | "destructive";
     size?: "default" | "sm" | "lg" | "icon";
+    loading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className = "", variant = "default", size = "default", ...props }, ref) => {
+    ({ className = "", variant = "default", size = "default", loading = false, children, ...props }, ref) => {
         const baseStyles = "inline-flex items-center justify-center gap-2 font-bold transition-all ease-smooth touch-manipulation disabled:opacity-50 disabled:pointer-events-none active:scale-95 duration-200";
 
         const variantStyles = {
@@ -24,9 +26,24 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             icon: "p-2 rounded-xl",
         };
 
-        const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`.trim();
+        const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${loading ? "cursor-not-allowed cursor-wait" : ""} ${className}`.trim();
 
-        return <button className={combinedClassName} ref={ref} {...props} />;
+        return (
+            <button
+                className={combinedClassName}
+                ref={ref}
+                disabled={loading || props.disabled}
+                {...props}
+            >
+                {loading && (
+                    <Spinner
+                        size="sm"
+                        color={variant === "default" || variant === "destructive" ? "white" : "primary"}
+                    />
+                )}
+                {children}
+            </button>
+        );
     }
 );
 

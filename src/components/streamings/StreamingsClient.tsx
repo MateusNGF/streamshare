@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/useToast";
 import { useStreamingActions } from "@/hooks/useStreamingActions";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { useActionError } from "@/hooks/useActionError";
+import { useFilterParams } from "@/hooks/useFilterParams";
 import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { PlanoConta } from "@prisma/client";
 import dynamic from "next/dynamic";
@@ -43,15 +44,13 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
     useActionError(serverError);
     const [mounted, setMounted] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
+    const { filters } = useFilterParams();
 
     const {
         streamings,
         loading,
         error,
-        filters,
         fetchStreamings,
-        setFilters,
-        getFiltered,
         clearError,
     } = useStreamingStore();
 
@@ -69,7 +68,46 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
         }
     }, [error, toast, clearError]);
 
-    const displayStreamings = mounted ? getFiltered() : (initialData || []);
+    const displayStreamings = mounted ? streamings.filter((streaming) => {
+        // Search term
+        if (filters.searchTerm) {
+            const searchLower = filters.searchTerm.toLowerCase();
+            const matchesApelido = streaming.apelido?.toLowerCase().includes(searchLower);
+            const matchesCatalogo = streaming.catalogo?.nome?.toLowerCase().includes(searchLower);
+            if (!matchesApelido && !matchesCatalogo) return false;
+        }
+
+        // Catalogo filter
+        if (filters.catalogoId && filters.catalogoId !== "all") {
+            if (streaming.streamingCatalogoId !== Number(filters.catalogoId)) return false;
+        }
+
+        // Only Full
+        if (filters.onlyFull === "true") {
+            const occupied = streaming._count?.assinaturas || 0;
+            if (occupied < streaming.limiteParticipantes) return false;
+        }
+
+        // Visibilidade
+        if (filters.visibilidade && filters.visibilidade !== "all") {
+            const isPublico = streaming.isPublico;
+            if (filters.visibilidade === "publico" && !isPublico) return false;
+            if (filters.visibilidade === "privado" && isPublico) return false;
+        }
+
+        // Valor
+        if (filters.valor) {
+            try {
+                const range = JSON.parse(filters.valor);
+                const val = Number(streaming.valorIntegral);
+                if (range.min && val < range.min) return false;
+                if (range.max && val > range.max) return false;
+            } catch (e) { }
+        }
+
+        return true;
+    }) : (initialData || []);
+
     const isLoading = mounted ? loading : false;
 
     return (
@@ -92,12 +130,7 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
 
             {/* Filters & View Toggle */}
             <div className="py-2">
-                <StreamingFilters
-                    streamings={streamings}
-                    filters={filters}
-                    onFilterChange={(key, value) => setFilters({ ...filters, [key]: value })}
-                    onClear={() => setFilters({ searchTerm: "", catalogoId: undefined, onlyFull: false })}
-                />
+                <StreamingFilters streamings={streamings} />
             </div>
 
             {plano !== PlanoConta.business && (
@@ -122,7 +155,7 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
                 <StreamingGrid
                     streamings={displayStreamings}
                     isLoading={isLoading}
-                    searchTerm={filters.searchTerm}
+                    searchTerm={filters.searchTerm || ""}
                     onEdit={actions.openEdit}
                     onDelete={actions.openDelete}
                 />
@@ -130,7 +163,7 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
                 <StreamingTable
                     streamings={displayStreamings}
                     isLoading={isLoading}
-                    searchTerm={filters.searchTerm}
+                    searchTerm={filters.searchTerm || ""}
                     onEdit={actions.openEdit}
                     onDelete={actions.openDelete}
                 />

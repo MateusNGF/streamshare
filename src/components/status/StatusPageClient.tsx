@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { InsectInteractive } from "../backgrounds/InsectInteractive";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { APP_VERSION } from "@/constants/app";
 
 interface StatusPageClientProps {
     session: any;
@@ -45,6 +46,34 @@ const statusItems = [
 ];
 
 const changelogData = [
+    {
+        id: "2026-03-02",
+        date: "02/03/2026",
+        changes: [
+            { category: "Faturamento", description: "Lançamento da interface cliente para **Gestão de Lotes de Pagamento**, incluindo funcionalidades avançadas de filtro, busca rápida e visualização detalhada de faturas." },
+            { category: "Interface", description: "Criação de componentes reativos de **Filtro Genérico**, aprimorando a navegação, acessibilidade e flexibilidade das listagens na gestão financeira." },
+            { category: "Performance", description: "Otimização e inclusão das **Ações de Servidor** e métricas de desempenho (KPIs), centralizando a administração de dados e integrações com o novo serviço de cobrança." },
+            { category: "Experiência", description: "Estruturação completa das páginas de **Cobranças e Lotes**, incorporando novos modais padronizados, hooks otimizados e suporte consolidado na plataforma." },
+        ],
+    },
+    {
+        id: "2026-02-28",
+        date: "28/02/2026",
+        changes: [
+            { category: "Mobile", description: "Lançamento do sistema orgânico de **Navegação Móvel e Administrativa**, introduzindo bottom navigation, botões flutuantes (FAB) e painéis em gaveta (Bottom Sheet)." },
+            { category: "Faturamento", description: "Aprimoramento do fluxo consolidado de **Pagamentos em Lote e Individuais**, suportando PIX dinâmico, upload seguro de comprovantes e renovações automatizadas." },
+            { category: "Integrações", description: "Inserção de sementes sistêmicas (seeding) de testes, além da parametrização de **WhatsApp Business**, centralizando o serviço de disparo de lembretes e alertas para cobranças em atraso." },
+        ],
+    },
+    {
+        id: "2026-02-27",
+        date: "27/02/2026",
+        changes: [
+            { category: "Interface", description: "Refinamento nas diretrizes do template de e-mails para **Comunicações Transacionais**, consolidando cores, hierarquia visual e layouts com as diretrizes do design system." },
+            { category: "Automação", description: "Integração do motor de cron jobs e templates para **Mensageria Otimizada** (via WhatsApp), disparando alertas automatizados de transações e unificando contatos para garantir escalabilidade global." },
+            { category: "Segurança", description: "Correções pontuais na camada de **Build e Compilação**, visando mitigar inconformidades críticas no processo que poderiam apresentar falhas futuras e evitar inatividade prolongada do portal." },
+        ],
+    },
     {
         id: "2026-02-26",
         date: "26/02/2026",
@@ -278,9 +307,15 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
                 <BackButton />
                 <div className="container mx-auto h-full px-3 md:px-6 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
-                        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/10">
-                            <RefreshCw className="text-green-400 animate-spin-slow" size={16} />
-                            <span className="text-sm font-medium">Monitoramento em tempo real</span>
+                        <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+                            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 uppercase tracking-wide">
+                                <RefreshCw className="text-green-400 animate-spin-slow" size={16} />
+                                <span className="text-[10px] md:text-sm font-semibold">Status dos Sistemas</span>
+                            </div>
+                            <div className="inline-flex items-center gap-2 bg-purple-500/10 backdrop-blur-md px-4 py-2 rounded-full border border-purple-400/20 uppercase tracking-wide">
+                                <Shield className="text-purple-400" size={16} />
+                                <span className="text-[10px] md:text-sm font-semibold text-purple-200">{APP_VERSION}</span>
+                            </div>
                         </div>
                         <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 tracking-tight">
                             Status do Sistema <br />

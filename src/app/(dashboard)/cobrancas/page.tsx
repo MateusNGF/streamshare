@@ -5,6 +5,13 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { PlanoConta } from "@prisma/client";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Cobranças | StreamShare",
+    description: "Acompanhe e gerencie as cobranças dos participantes do seu grupo.",
+};
+
 export default async function CobrancasPage() {
     const results = await Promise.all([
         getKPIsFinanceiros(),

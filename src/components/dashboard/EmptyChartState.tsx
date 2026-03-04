@@ -2,6 +2,7 @@
 
 import { LucideIcon, PieChart, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface EmptyChartStateProps {
     icon?: LucideIcon;
@@ -13,32 +14,35 @@ interface EmptyChartStateProps {
 }
 
 export function EmptyChartState({
-    icon: Icon = PieChart,
+    icon = PieChart,
     title,
     description,
     actionLabel,
     onAction,
     className = ""
 }: EmptyChartStateProps) {
-    return (
-        <div className={`flex flex-col items-center justify-center p-8 text-center h-full min-h-[300px] border-2 border-dashed border-gray-100 rounded-[32px] bg-gray-50/30 animate-fade-in ${className}`}>
-            <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                <Icon size={32} className="text-gray-300" />
-            </div>
-            <h4 className="text-sm font-bold text-gray-900 mb-1">{title}</h4>
-            <p className="text-xs text-gray-500 max-w-[200px] mb-6">{description}</p>
+    const ActionNode = actionLabel ? (
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={onAction}
+            className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 px-4"
+        >
+            <Plus size={14} />
+            {actionLabel}
+        </Button>
+    ) : undefined;
 
-            {actionLabel && (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onAction}
-                    className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 px-4"
-                >
-                    <Plus size={14} />
-                    {actionLabel}
-                </Button>
-            )}
-        </div>
+    return (
+        <EmptyState
+            icon={icon}
+            title={title}
+            description={description}
+            action={ActionNode}
+            variant="compact"
+            className={`h-full min-h-[300px] bg-transparent justify-center ${className}`}
+            iconWrapperClassName="bg-white p-4 rounded-full shadow-sm w-16 h-16"
+            iconClassName="w-8 h-8 text-gray-300"
+        />
     );
 }

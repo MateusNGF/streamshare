@@ -16,6 +16,7 @@ import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { GruposGrid } from "./GruposGrid";
 import { GruposTable } from "./GruposTable";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { GenericFilter } from "@/components/ui/GenericFilter";
 
 type Grupo = {
     id: number;
@@ -96,17 +97,23 @@ export function GruposClient({ initialGrupos, error }: GruposClientProps) {
         window.location.reload();
     };
 
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Filter logic
+    const filteredGrupos = grupos.filter((g) => {
+        if (!searchTerm) return true;
+        return g.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            g.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+
     return (
         <PageContainer>
             <PageHeader
                 title="Grupos"
                 description="Agrupe seus streamings para facilitar a geração de mensagens de renovação"
                 action={
-                    <Button
-                        onClick={handleOpenCreate}
-                        className="gap-2 shadow-lg shadow-primary/25 h-10 px-5 text-sm"
-                    >
-                        <Plus size={18} />
+                    <Button onClick={handleOpenCreate}>
+                        <Plus size={18} className="mr-2" />
                         Novo Grupo
                     </Button>
                 }
@@ -115,32 +122,60 @@ export function GruposClient({ initialGrupos, error }: GruposClientProps) {
             {grupos.length === 0 ? (
                 <EmptyState
                     icon={Tv}
-                    title="Nenhum grupo cadastrado"
-                    description="Crie grupos para agrupar seus streamings e facilitar o envio de mensagens de renovação via WhatsApp."
+                    title="Nenhum grupo"
+                    description="Agrupe streamings para facilitar a renovação."
+                    action={
+                        <Button onClick={handleOpenCreate}>Criar Novo Grupo</Button>
+                    }
                 />
             ) : (
-                <div className="space-y-6">
-                    <SectionHeader
-                        title="Seus Grupos"
-                        className="mb-0"
-                        rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
-                    />
-                    {viewMode === "grid" ? (
-                        <GruposGrid
-                            grupos={grupos}
-                            onRenovacao={handleOpenRenovacao}
-                            onEdit={handleOpenEdit}
-                            onDelete={handleOpenDelete}
+                <>
+                    <div className="py-6">
+                        <GenericFilter
+                            filters={[
+                                {
+                                    key: "searchTerm",
+                                    type: "text",
+                                    placeholder: "Buscar grupos por nome ou descrição..."
+                                }
+                            ]}
+                            values={{ searchTerm }}
+                            onChange={(key, value) => {
+                                if (key === "searchTerm") setSearchTerm(value);
+                            }}
+                            onClear={() => setSearchTerm("")}
                         />
-                    ) : (
-                        <GruposTable
-                            grupos={grupos}
-                            onRenovacao={handleOpenRenovacao}
-                            onEdit={handleOpenEdit}
-                            onDelete={handleOpenDelete}
+                    </div>
+
+                    <div className="space-y-4">
+                        <SectionHeader
+                            title="Seus Grupos"
+                            rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
                         />
-                    )}
-                </div>
+                        {filteredGrupos.length === 0 ? (
+                            <EmptyState
+                                icon={Tv}
+                                title="Nenhum grupo encontrado"
+                                description="Tente ajustar sua busca."
+                                variant="glass"
+                            />
+                        ) : viewMode === "grid" ? (
+                            <GruposGrid
+                                grupos={filteredGrupos}
+                                onRenovacao={handleOpenRenovacao}
+                                onEdit={handleOpenEdit}
+                                onDelete={handleOpenDelete}
+                            />
+                        ) : (
+                            <GruposTable
+                                grupos={filteredGrupos}
+                                onRenovacao={handleOpenRenovacao}
+                                onEdit={handleOpenEdit}
+                                onDelete={handleOpenDelete}
+                            />
+                        )}
+                    </div>
+                </>
             )}
 
             {/* Form Modal */}

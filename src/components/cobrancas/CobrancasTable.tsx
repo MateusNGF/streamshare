@@ -136,12 +136,11 @@ export function CobrancasTable({
 
     if (cobrancas.length === 0) {
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-8">
+            <div className="py-8">
                 <EmptyState
                     icon={searchTerm || statusFilter !== 'all' ? Search : DollarSign}
-                    title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança encontrada" : "Tudo limpo!"}
+                    title={searchTerm || statusFilter !== 'all' ? "Nenhuma cobrança" : "Tudo limpo!"}
                     description="Nenhuma cobrança corresponde aos critérios atuais."
-                    className="bg-transparent border-none py-12"
                 />
             </div>
         );

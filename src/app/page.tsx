@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -16,9 +17,22 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { PlansClient } from "@/components/planos/PlansClient";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
-import { FeaturesCarousel } from "@/components/landing/FeaturesCarousel";
+import { SystemShowcase } from "@/components/landing/SystemShowcase";
+import { StreamingMarquee } from "@/components/landing/StreamingMarquee";
 import { Footer } from "@/components/layout/Footer";
 import { InteractiveMesh } from "@/components/backgrounds/InteractiveMesh";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "StreamShare | Economize até 80% em Streaming",
+  description: "Pare de pagar o valor integral. Divida e gerencie Streaming de forma segura e automática. Junte-se milhares de pessoas economizando todo mês com o StreamShare.",
+  openGraph: {
+    title: "Economize até 80% em Streaming | StreamShare",
+    description: "Pare de pagar o valor integral. Divida e gerencie Streaming de forma segura e automática. Junte-se milhares de pessoas economizando todo mês.",
+    url: "https://streamshare.com.br",
+    type: "website",
+  },
+};
 
 export default async function LandingPage() {
   const session = await getCurrentUser();
@@ -37,13 +51,28 @@ export default async function LandingPage() {
     });
   }
 
+  // Fetch active services from the catalog for the marquee (Cached)
+  const getCatalogServices = cache(async () => {
+    return prisma.streamingCatalogo.findMany({
+      where: { isAtivo: true },
+      select: {
+        nome: true,
+        corPrimaria: true,
+        iconeUrl: true,
+      },
+      orderBy: { nome: "asc" }
+    });
+  });
+
+  const catalogServices = await getCatalogServices();
+
   return (
     <div className="min-h-screen w-full bg-white">
       {/* Navbar */}
       <LandingNavbar session={session} />
 
       {/* Hero Section */}
-      <section className="relative pt-32 md:pt-32 pb-12 md:pb-20 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white overflow-hidden">
+      <section className="relative pt-32 md:pt-32 pb-8 md:pb-12 bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white overflow-hidden">
         {/* Interactive Mesh */}
         <InteractiveMesh />
 
@@ -115,12 +144,20 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Trust / Integrations Marquee (Agnóstico e Dinâmico) */}
+      <div className="space-y-0">
+        <StreamingMarquee
+          items={[...catalogServices].reverse()}
+          variant="compact"
+          speed="fast"
+          pauseOnHover={true}
+        />
+      </div>
 
-      {/* Stats - Social Proof */}
 
 
       {/* Pain Points & Solutions */}
-      <section className="py-12 md:py-20 bg-gray-50">
+      <section className="py-12 md:py-24 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -137,37 +174,42 @@ export default async function LandingPage() {
                 problem: "O 'Amigo' Esquecido",
                 solution: "Cobrança Automática sem Chateação",
                 icon: DollarSign,
+                color: "red"
               },
               {
                 problem: "A Planilha do Caos",
                 solution: "Painel Visual em Tempo Real",
                 icon: BarChart3,
+                color: "orange"
               },
               {
                 problem: "Prejuízo Invisível (Pagar 4 Telas e Usar 1)",
                 solution: "Economia Real de até 80%",
                 icon: TrendingUp,
+                color: "amber"
               },
               {
                 problem: "Perda de Tempo com PIX Manual",
                 solution: "Gestão Financeira Descomplicada",
                 icon: Zap,
+                color: "blue"
               },
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className="bg-gray-50 p-8 rounded-3xl border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="flex items-start gap-4">
-                  <div className="bg-red-50 p-3 rounded-xl transition-transform hover:scale-110 duration-300">
-                    <item.icon className="text-red-500" size={24} />
+                  <div className="bg-white p-3 rounded-2xl shadow-sm">
+                    <item.icon className="text-primary" size={24} />
                   </div>
                   <div className="flex-1">
-                    <div className="text-red-600 font-semibold mb-2 line-through">
-                      ❌ {item.problem}
+                    <div className="text-gray-400 font-medium mb-2 line-through text-sm">
+                      {item.problem}
                     </div>
-                    <div className="text-green-600 font-bold flex items-center gap-2">
-                      ✅ {item.solution}
+                    <div className="text-gray-900 font-bold text-lg flex items-center gap-2">
+                      <CheckCircle2 size={18} className="text-green-500" />
+                      {item.solution}
                     </div>
                   </div>
                 </div>
@@ -177,132 +219,93 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section id="recursos" className="py-12 md:py-20 bg-white">
+      {/* Showcase do Sistema (Novo) */}
+      <section className="py-16 md:py-24 bg-white overflow-hidden relative">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-              Por que escolher o StreamShare?
-            </h2>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-              Todas as ferramentas que você precisa para gerenciar suas assinaturas compartilhadas
-            </p>
-          </div>
-
-          <FeaturesCarousel />
-
-          {/* Additional Features Grid */}
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[
-
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-4 p-6 bg-gray-50 rounded-xl hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-gray-100 group"
-              >
-                <div className="bg-primary/10 p-3 rounded-lg group-hover:scale-110 transition-transform duration-300">
-                  <feature.icon className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-1">{feature.title}</h4>
-                  <p className="text-sm text-gray-600">{feature.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div> */}
+          <SystemShowcase
+            badge="✨ Por dentro do StreamShare"
+            items={[
+              {
+                id: 1,
+                src: "/assets/banners/painel_organizador.jpg",
+                title: "Dashboard Intuitivo",
+                desc: "Acompanhe suas economias e pendências em tempo real."
+              },
+              {
+                id: 2,
+                src: "/assets/banners/participante_view.jpg",
+                title: "Visão do Participante",
+                desc: "Seus membros têm um painel exclusivo para gerenciar faturas e acessos."
+              },
+              {
+                id: 3,
+                src: "/assets/banners/cobranças_organizador.jpg",
+                title: "Gestão Financeira",
+                desc: "Controle quem pagou e quem está devendo com um clique."
+              },
+              {
+                id: 4,
+                src: "/assets/banners/assinatuas_organizador.jpg",
+                title: "Suas Assinaturas",
+                desc: "Centralize Netflix, Spotify e outros em um só lugar."
+              }
+            ]}
+          />
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="como-funciona" className="py-12 md:py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
+      <section id="como-funciona" className="py-16 md:py-24 bg-gray-50 border-y border-gray-200/50">
+        <div className="container mx-auto px-6 text-center">
+          <div className="mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Como Funciona</h2>
-            <p className="text-lg md:text-xl text-gray-600">Não é trabalho, é mágica. Comece em segundos.</p>
+            <p className="text-lg md:text-xl text-gray-600">Pague menos e viva melhor em 3 passos simples.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
             {[
-              { num: "1", title: "Cadastro Relâmpago", desc: "Crie sua conta em menos de 30 segundos." },
-              {
-                num: "2",
-                title: "Setup Inteligente",
-                desc: "Defina o valor e deixe o sistema organizar os grupos para você.",
-              },
-              {
-                num: "3",
-                title: "Pix Automático",
-                desc: "O sistema cobra e o dinheiro cai na sua conta. Simples assim.",
-              },
+              { num: "1", title: "Cadastro Relâmpago", desc: "Crie sua conta em segundos e conecte seus serviços favoritos." },
+              { num: "2", title: "Setup Inteligente", desc: "Defina o valor e deixe o sistema organizar os grupos para você." },
+              { num: "3", title: "Tudo Automático", desc: "O sistema cobra, o dinheiro cai na sua conta e todos ficam felizes." },
             ].map((step, idx) => (
-              <div key={idx} className="text-center group">
-                <div className="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300">
+              <div key={idx} className="relative group">
+                <div className="bg-white text-primary w-20 h-20 rounded-3xl flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                   {step.num}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.desc}</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Detail */}
-      <section className="py-12 md:py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-              Simples de Usar
-            </h2>
-            <p className="text-lg md:text-xl text-gray-600">
-              Configure uma vez e deixe o sistema trabalhar por você
-            </p>
-          </div>
+      {/* Bento Grid Simples - Benefícios Extras */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-6 max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl h-fit">
-                  <Users className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Cadastre Streamings</h3>
-                  <p className="text-gray-600">Adicione Netflix, Spotify, Disney+ ou qualquer outro serviço que você compartilha</p>
-                </div>
+            {/* Card Grande (2 colunas) */}
+            <div className="md:col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-8 md:p-12 rounded-3xl border border-gray-200 hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                <Shield size={28} />
               </div>
-              <div className="flex gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl h-fit">
-                  <Bell className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Adicione Participantes</h3>
-                  <p className="text-gray-600">Convide amigos e familiares, defina valores e datas de cobrança</p>
-                </div>
-              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">Segurança Nível Bancário</h3>
+              <p className="text-lg text-gray-600 leading-relaxed">Não tocamos no seu dinheiro. O StreamShare organiza, notifica e facilita, mas o PIX cai direto na sua conta, com criptografia de ponta em todos os dados.</p>
             </div>
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl h-fit">
-                  <Zap className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Deixe o Sistema Trabalhar</h3>
-                  <p className="text-gray-600">Lembretes automáticos via WhatsApp, controle de pagamentos e relatórios em tempo real</p>
-                </div>
+
+            {/* Card Pequeno */}
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-3xl border border-indigo-100/50 hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                <Bell size={28} />
               </div>
-              <div className="flex gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl h-fit">
-                  <BarChart3 className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Acompanhe Tudo</h3>
-                  <p className="text-gray-600">Dashboard completo mostra quem pagou, quem está devendo e suas economias totais</p>
-                </div>
-              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Cobrança via WhatsApp</h3>
+              <p className="text-gray-600 leading-relaxed">Lembretes amigáveis direto no Zap. Chega de climão cobrando amigos ou familiares no almoço de domingo.</p>
             </div>
+
           </div>
         </div>
-      </section >
+      </section>
 
       {/* Pricing */}
       <section id="planos" className="py-12 md:py-20 bg-gray-50">
@@ -408,10 +411,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </div>
-      </section >
+      </section>
 
       {/* Footer */}
       <Footer />
-    </div >
+    </div>
   );
 }

@@ -170,7 +170,7 @@ export function AddMemberModal({
                                         {currentStreaming?.vagasRestantes !== undefined ? (
                                             currentStreaming.vagasRestantes > 0
                                                 ? `${currentStreaming.vagasRestantes} vagas disponíveis`
-                                                : "Nenhuma vaga disponível"
+                                                : "Sem vagas"
                                         ) : ""}
                                     </p>
                                 </div>

@@ -451,7 +451,6 @@ export async function cancelarCobranca(cobrancaId: number) {
 export async function getKPIsFinanceiros() {
     try {
         const { contaId } = await getContext();
-        const agora = new Date();
 
         // 1. Group by status to get counts and sums
         const statsByStatus = await prisma.cobranca.groupBy({
@@ -469,20 +468,6 @@ export async function getKPIsFinanceiros() {
             }
         });
 
-        // 2. Specialized aggregate for "em atraso" (pendente/atrasado and expired)
-        const overdueStats = await prisma.cobranca.aggregate({
-            where: {
-                assinatura: {
-                    participante: { contaId }
-                },
-                status: { in: [StatusCobranca.pendente, StatusCobranca.atrasado] },
-                dataVencimento: { lt: agora }
-            },
-            _sum: {
-                valor: true
-            }
-        });
-
         // Map results
         const statusMap = statsByStatus.reduce((acc, curr) => {
             acc[curr.status] = {
@@ -494,7 +479,7 @@ export async function getKPIsFinanceiros() {
 
         const receitaConfirmada = statusMap[StatusCobranca.pago]?.sum || 0;
         const totalPendente = statusMap[StatusCobranca.pendente]?.sum || 0;
-        const emAtraso = overdueStats._sum.valor?.toNumber() || 0;
+        const emAtraso = statusMap[StatusCobranca.atrasado]?.sum || 0;
         const totalCobrancas = statsByStatus.reduce((sum, curr) => sum + curr._count._all, 0);
 
         return {

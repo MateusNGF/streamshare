@@ -11,6 +11,13 @@ import {
 import { getPendingLotesCount } from "@/actions/cobrancas";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Painel do Provedor | StreamShare",
+    description: "Gerencie seus streamings e grupos de assinaturas e acompanhe seus ganhos.",
+};
+
 export default async function ProviderDashboardPage() {
     const results = await Promise.all([
         getDashboardStats(),
