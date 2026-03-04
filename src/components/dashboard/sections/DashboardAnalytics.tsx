@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
+import { ViewModeToggle, ViewMode, viewModePresets } from "@/components/ui/ViewModeToggle";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { KPIFinanceiroCard } from "@/components/dashboard/KPIFinanceiroCard";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
@@ -79,7 +79,7 @@ export function DashboardAnalytics({ stats, revenueHistory, distributionData }: 
         <section>
             <SectionHeader
                 title="Analytics & Performance"
-                rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
+                rightElement={<ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} options={viewModePresets.chartGrid} />}
             />
 
             {isDashboardEmpty ? (
