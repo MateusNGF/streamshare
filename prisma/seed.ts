@@ -56,13 +56,6 @@ const catalogos = [
         corPrimaria: "#F47521",
     },
     {
-        nome: "Globoplay",
-        categoria: "video",
-        siteOficial: "https://globoplay.globo.com",
-        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/globoplay.svg",
-        corPrimaria: "#F03E48",
-    },
-    {
         nome: "Plex",
         categoria: "video",
         siteOficial: "https://www.plex.tv",
@@ -205,7 +198,7 @@ const catalogos = [
         nome: "Google One (Gemini)",
         categoria: "ia",
         siteOficial: "https://one.google.com/about/ai-premium",
-        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googleone.svg",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/google.svg",
         corPrimaria: "#4285F4",
     },
     {
@@ -214,6 +207,20 @@ const catalogos = [
         siteOficial: "https://www.perplexity.ai",
         iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/perplexity.svg",
         corPrimaria: "#22B8CD",
+    },
+    {
+        nome: "Vivo Play",
+        categoria: "video",
+        siteOficial: "https://www.vivoplay.com.br",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/vivo.svg",
+        corPrimaria: "#630094",
+    },
+    {
+        nome: "Google One (Gemini)",
+        categoria: "ia",
+        siteOficial: "https://one.google.com",
+        iconeUrl: "https://cdn.simpleicons.org/googlegemini/black",
+        corPrimaria: "#4285F4",
     },
 ];
 
