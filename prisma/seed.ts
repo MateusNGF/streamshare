@@ -35,13 +35,6 @@ const catalogos = [
         corPrimaria: "#0047FF",
     },
     {
-        nome: "Globoplay",
-        categoria: "video",
-        siteOficial: "https://globoplay.globo.com",
-        iconeUrl: "https://upload.wikimedia.org/wikipedia/commons/5/58/Globoplay_2018.svg",
-        corPrimaria: "#FE1908",
-    },
-    {
         nome: "Paramount+",
         categoria: "video",
         siteOficial: "https://www.paramountplus.com",
@@ -63,18 +56,11 @@ const catalogos = [
         corPrimaria: "#F47521",
     },
     {
-        nome: "ViX",
+        nome: "Plex",
         categoria: "video",
-        siteOficial: "https://vix.com",
-        iconeUrl: "https://simpleicons.org/icons/vix.svg",
-        corPrimaria: "#FF5000",
-    },
-    {
-        nome: "MUBI",
-        categoria: "video",
-        siteOficial: "https://mubi.com",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/mubi.svg",
-        corPrimaria: "#000000",
+        siteOficial: "https://www.plex.tv",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/plex.svg",
+        corPrimaria: "#E5A00D",
     },
 
     // --- MÚSICA & ÁUDIO ---
@@ -100,11 +86,25 @@ const catalogos = [
         corPrimaria: "#A238FF",
     },
     {
-        nome: "Tidal",
+        nome: "Apple Music",
         categoria: "musica",
-        siteOficial: "https://tidal.com",
-        iconeUrl: "https://simpleicons.org/icons/tidal.svg",
-        corPrimaria: "#000000",
+        siteOficial: "https://music.apple.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/applemusic.svg",
+        corPrimaria: "#FA243C",
+    },
+    {
+        nome: "Amazon Music",
+        categoria: "musica",
+        siteOficial: "https://music.amazon.com",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonmusic.svg",
+        corPrimaria: "#00A8E1",
+    },
+    {
+        nome: "Pandora",
+        categoria: "musica",
+        siteOficial: "https://www.pandora.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/pandora.svg",
+        corPrimaria: "#224099",
     },
 
     // --- GAMES ---
@@ -125,12 +125,33 @@ const catalogos = [
     {
         nome: "Nintendo Switch Online",
         categoria: "games",
-        siteOficial: "https://www.nintendo.com/switch/online-service",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/nintendo.svg",
+        siteOficial: "https://www.nintendo.com/switch/online",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/nintendoswitch.svg",
         corPrimaria: "#E60012",
     },
+    {
+        nome: "Steam",
+        categoria: "games",
+        siteOficial: "https://store.steampowered.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/steam.svg",
+        corPrimaria: "#000000",
+    },
+    {
+        nome: "Apple Arcade",
+        categoria: "games",
+        siteOficial: "https://www.apple.com/apple-arcade/",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/applearcade.svg",
+        corPrimaria: "#000000",
+    },
+    {
+        nome: "Google Play Pass",
+        categoria: "games",
+        siteOficial: "https://play.google.com/about/play-pass/",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googleplay.svg",
+        corPrimaria: "#414141",
+    },
 
-    // --- PRODUTIVIDADE & IA ---
+    // --- IA, PRODUTIVIDADE & EDUCAÇÃO ---
     {
         nome: "Microsoft 365 Família",
         categoria: "ia",
@@ -145,7 +166,20 @@ const catalogos = [
         iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/canva.svg",
         corPrimaria: "#00C4CC",
     },
-
+    {
+        nome: "Dropbox",
+        categoria: "produtividade",
+        siteOficial: "https://www.dropbox.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/dropbox.svg",
+        corPrimaria: "#0061FF",
+    },
+    {
+        nome: "Duolingo",
+        categoria: "educacao",
+        siteOficial: "https://www.duolingo.com",
+        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/duolingo.svg",
+        corPrimaria: "#58CC02",
+    },
     {
         nome: "ChatGPT Plus (Team)",
         categoria: "ia",
@@ -154,68 +188,39 @@ const catalogos = [
         corPrimaria: "#74AA9C",
     },
     {
-        nome: "Claude Pro (Team)",
+        nome: "Claude Pro",
         categoria: "ia",
         siteOficial: "https://claude.ai",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/anthropic.svg",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/anthropic.svg",
         corPrimaria: "#D97757",
     },
     {
-        nome: "Midjourney (Pro Plan)",
-        categoria: "design",
-        siteOficial: "https://www.midjourney.com",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/midjourney.svg",
-        corPrimaria: "#000000",
-    },
-
-    // --- CONTEÚDO ADULTO (Com Perfis/Compartilháveis) ---
-    {
-        nome: "SexHot",
-        categoria: "adulto",
-        siteOficial: "https://www.sexhot.com.br",
-        corPrimaria: "#FF0000",
-        isConteudoAdulto: true,
+        nome: "Google One (Gemini)",
+        categoria: "ia",
+        siteOficial: "https://one.google.com/about/ai-premium",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/google.svg",
+        corPrimaria: "#4285F4",
     },
     {
-        nome: "Playboy TV",
-        categoria: "adulto",
-        siteOficial: "https://www.playboytv.com",
-        iconeUrl: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@v9/icons/playboy.svg",
-        corPrimaria: "#000000",
-        isConteudoAdulto: true,
+        nome: "Perplexity Pro",
+        categoria: "ia",
+        siteOficial: "https://www.perplexity.ai",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/perplexity.svg",
+        corPrimaria: "#22B8CD",
     },
     {
-        nome: "Brasileirinhas",
-        categoria: "adulto",
-        siteOficial: "https://www.brasileirinhas.com.br",
-        corPrimaria: "#FFD700",
-        isConteudoAdulto: true,
-    },
-    // --- CANAIS, COMBOS & TV ---
-    {
-        nome: "Premiere",
-        categoria: "tv",
-        siteOficial: "https://ge.globo.com/premiere",
-        corPrimaria: "#000000",
+        nome: "Vivo Play",
+        categoria: "video",
+        siteOficial: "https://www.vivoplay.com.br",
+        iconeUrl: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/vivo.svg",
+        corPrimaria: "#630094",
     },
     {
-        nome: "Combate",
-        categoria: "tv",
-        siteOficial: "https://ge.globo.com/combate",
-        corPrimaria: "#FF0000",
-    },
-    {
-        nome: "Meli+ (Mercado Livre)",
-        categoria: "combo",
-        siteOficial: "https://www.mercadolivre.com.br/meli-plus",
-        iconeUrl: "https://http2.mlstatic.com/frontend-assets/ml-guest-assets/favicon.svg",
-        corPrimaria: "#FFE600",
-    },
-    {
-        nome: "Claro tv+",
-        categoria: "tv",
-        siteOficial: "https://www.clarotvmais.com.br",
-        corPrimaria: "#EE2E24",
+        nome: "Google One (Gemini)",
+        categoria: "ia",
+        siteOficial: "https://one.google.com",
+        iconeUrl: "https://cdn.simpleicons.org/googlegemini/black",
+        corPrimaria: "#4285F4",
     },
 ];
 
