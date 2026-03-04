@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { InsectInteractive } from "../backgrounds/InsectInteractive";
 import { SectionHeader } from "@/components/layout/SectionHeader";
+import { APP_VERSION } from "@/constants/app";
 
 interface StatusPageClientProps {
     session: any;
@@ -306,9 +307,15 @@ export function StatusPageClient({ session }: StatusPageClientProps) {
                 <BackButton />
                 <div className="container mx-auto h-full px-3 md:px-6 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
-                        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/10">
-                            <RefreshCw className="text-green-400 animate-spin-slow" size={16} />
-                            <span className="text-sm font-medium">Monitoramento em tempo real</span>
+                        <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+                            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 uppercase tracking-wide">
+                                <RefreshCw className="text-green-400 animate-spin-slow" size={16} />
+                                <span className="text-[10px] md:text-sm font-semibold">Status dos Sistemas</span>
+                            </div>
+                            <div className="inline-flex items-center gap-2 bg-purple-500/10 backdrop-blur-md px-4 py-2 rounded-full border border-purple-400/20 uppercase tracking-wide">
+                                <Shield className="text-purple-400" size={16} />
+                                <span className="text-[10px] md:text-sm font-semibold text-purple-200">{APP_VERSION}</span>
+                            </div>
                         </div>
                         <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 tracking-tight">
                             Status do Sistema <br />
