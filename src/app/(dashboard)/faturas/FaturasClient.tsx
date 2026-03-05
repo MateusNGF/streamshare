@@ -43,8 +43,11 @@ interface FaturasClientProps {
 }
 
 export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientProps) {
+    const faturasPendentesForTab = faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
+    const lotesPendentes = lotes.filter(l => l.status === 'pendente' || l.status === 'atrasado' || l.status === 'aguardando_aprovacao');
+
     const [viewMode, setViewMode] = useState<ViewMode>("table");
-    const [activeTabId, setActiveTabId] = useState("faturas");
+    const [activeTabId, setActiveTabId] = useState(() => (faturasPendentesForTab.length === 0 && lotesPendentes.length > 0) ? "lotes" : "faturas");
     const [selectedFatura, setSelectedFatura] = useState<any>(null);
     const [selectedFaturaIds, setSelectedFaturaIds] = useState<number[]>([]);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -132,16 +135,18 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                         title="Minhas Cobranças"
                                         className="mb-0"
                                         rightElement={
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                                                 {faturasPendentes.length === 0 && faturasAguardando.length > 0 && (
-                                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full">
+                                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full text-center">
                                                         {faturasAguardando.length} em análise
                                                     </span>
                                                 )}
-                                                <ViewModeToggle
-                                                    viewMode={viewMode}
-                                                    setViewMode={setViewMode}
-                                                />
+                                                <div className="flex-1 w-full sm:w-auto flex justify-center">
+                                                    <ViewModeToggle
+                                                        viewMode={viewMode}
+                                                        setViewMode={setViewMode}
+                                                    />
+                                                </div>
                                             </div>
                                         }
                                     />
@@ -179,8 +184,17 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                             icon: History,
                             content: (
                                 <div className="space-y-6">
-                                    <SectionHeader title="Meus Pagamentos Consolidados" />
-                                    <LotesTab lotes={lotes} />
+                                    <SectionHeader
+                                        title="Meus Pagamentos Consolidados"
+                                        className="mb-0"
+                                        rightElement={
+                                            <ViewModeToggle
+                                                viewMode={viewMode}
+                                                setViewMode={setViewMode}
+                                            />
+                                        }
+                                    />
+                                    <LotesTab lotes={lotes} viewMode={viewMode} />
                                 </div>
                             )
                         }

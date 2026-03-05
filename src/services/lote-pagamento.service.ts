@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { billingService } from "./billing-service";
+import { startOfMonth, endOfMonth, parse, format, addDays, addHours } from "date-fns";
 
 export interface LoteActor {
     userId: number;
@@ -10,6 +11,189 @@ export interface LoteActor {
 }
 
 export class LotePagamentoService {
+    /**
+     * Auxiliar reusável: processa criação de um lote com transaction isolation
+     */
+    private static async _processarParticipanteIsolado(pId: number, pContaId: number, refMes: string, cbdsIds: number[], valorTotalObj: Prisma.Decimal) {
+        return await prisma.$transaction(async (tx) => {
+            // Check if there is already a lote for this month
+            const alreadyExists = await tx.lotePagamento.findUnique({
+                where: {
+                    participanteId_referenciaMes_contaId: {
+                        participanteId: pId,
+                        referenciaMes: refMes,
+                        contaId: pContaId
+                    }
+                }
+            });
+
+            if (alreadyExists) return null;
+
+            // Verify if charges are still available (Concurrency Check)
+            const chargesStillAvailableCount = await tx.cobranca.count({
+                where: {
+                    id: { in: cbdsIds },
+                    lotePagamentoId: null,
+                    status: { in: ["pendente", "atrasado"] }
+                }
+            });
+
+            if (chargesStillAvailableCount !== cbdsIds.length) {
+                return null; // Some charges were paid or batched concurrently, abort
+            }
+
+            // Create the batch
+            const expiresAt = addDays(new Date(), 10);
+
+            const novoLote = await tx.lotePagamento.create({
+                data: {
+                    participanteId: pId,
+                    contaId: pContaId,
+                    referenciaMes: refMes,
+                    valorTotal: valorTotalObj,
+                    status: "pendente",
+                    expiresAt
+                }
+            });
+
+            await tx.cobranca.updateMany({
+                where: { id: { in: cbdsIds } },
+                data: { lotePagamentoId: novoLote.id }
+            });
+
+            return novoLote.id;
+        });
+    }
+
+    /**
+     * Analisa as cobranças pendentes para gerar o resumo da consolidação.
+     */
+    static async analisarFaturasMensais(contaId: number, referenciaMes?: string) {
+        let startDate: Date | undefined;
+        let endDate: Date | undefined;
+
+        if (referenciaMes !== 'all') {
+            const agora = new Date();
+            const refMes = referenciaMes || format(agora, 'yyyy-MM');
+            const referenceDate = parse(refMes, 'yyyy-MM', new Date());
+
+            startDate = startOfMonth(referenceDate);
+            endDate = endOfMonth(referenceDate);
+        }
+
+        const whereClause: any = {
+            status: {
+                in: ["pendente", "atrasado"]
+            },
+            lotePagamentoId: null,
+            assinatura: {
+                participante: {
+                    contaId,
+                }
+            }
+        };
+
+        if (startDate && endDate) {
+            whereClause.periodoFim = {
+                gte: startDate,
+                lte: endDate,
+            };
+        }
+
+        const cobrancasElegiveis = await prisma.cobranca.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                valor: true,
+                assinatura: {
+                    select: {
+                        participanteId: true
+                    }
+                }
+            }
+        });
+
+        const totalPrevisto = cobrancasElegiveis.reduce((acc, c) => acc + Number(c.valor), 0);
+        const participantesUnicos = new Set(cobrancasElegiveis.map(c => c.assinatura.participanteId));
+
+        return {
+            countCobrancas: cobrancasElegiveis.length,
+            countParticipantes: participantesUnicos.size,
+            totalPrevisto
+        };
+    }
+
+    /**
+     * Automatiza a criação de lotes mensais agrupando faturas do mesmo participante.
+     */
+    static async consolidarFaturasMensais(contaId?: number, referenciaMes?: string) {
+        let startDate: Date | undefined;
+        let endDate: Date | undefined;
+        let refMesForBatch = referenciaMes || format(new Date(), 'yyyy-MM');
+
+        if (referenciaMes !== 'all') {
+            const referenceDate = parse(refMesForBatch, 'yyyy-MM', new Date());
+            startDate = startOfMonth(referenceDate);
+            endDate = endOfMonth(referenceDate);
+        } else {
+            // If "all", we label the batch with the current month generically to mark when it was grouped
+            refMesForBatch = format(new Date(), 'yyyy-MM');
+        }
+
+        const lotesCriados: number[] = [];
+
+        // Find all eligible charges for this month (Read operation outside transaction)
+        const whereClause: any = {
+            status: { in: ["pendente", "atrasado"] },
+            lotePagamentoId: null,
+        };
+
+        if (startDate && endDate) {
+            whereClause.periodoFim = { gte: startDate, lte: endDate };
+        }
+
+        if (contaId) {
+            whereClause.assinatura = {
+                participante: { contaId }
+            };
+        }
+
+        const cobrancas = await prisma.cobranca.findMany({
+            where: whereClause,
+            include: {
+                assinatura: { include: { participante: true } }
+            }
+        });
+
+        if (cobrancas.length === 0) return { consolidados: 0, lotes: [] };
+
+        // Group by participanteId
+        const porParticipante = cobrancas.reduce((acc, c) => {
+            const pId = c.assinatura.participanteId;
+            if (!acc[pId]) acc[pId] = [];
+            acc[pId].push(c);
+            return acc;
+        }, {} as Record<number, typeof cobrancas>);
+
+        // Process each participant in an isolated ACID transaction
+        for (const [pIdStr, items] of Object.entries(porParticipante)) {
+            const pId = Number(pIdStr);
+            const pContaId = items[0].assinatura.participante.contaId;
+            const cobrancaIds = items.map(i => i.id);
+            const valorTotal = items.reduce((sum, c) => sum.plus(c.valor), new Prisma.Decimal(0));
+
+            try {
+                const newLoteId = await this._processarParticipanteIsolado(pId, pContaId, refMesForBatch, cobrancaIds, valorTotal);
+                if (newLoteId) lotesCriados.push(newLoteId);
+            } catch (error) {
+                console.error(`[LOTE_SERVICE] Erro ao consolidar fatura do participante ${pId}:`, error);
+                // Continue with the next participant despite failure (Isolation)
+            }
+        }
+
+        return { consolidados: lotesCriados.length, lotes: lotesCriados };
+    }
+
     /**
      * Cria um lote de pagamento contendo múltiplas cobranças pendentes do mesmo participante.
      */
@@ -41,19 +225,21 @@ export class LotePagamentoService {
                 throw new Error("Algumas cobranças selecionadas já foram pagas ou pertencem a outro lote.");
             }
 
-            const participanteId = (cobrancas[0] as any).assinatura.participanteId;
+            const participante = (cobrancas[0] as any).assinatura.participante;
+            const participanteId = participante.id;
+            const contaId = participante.contaId;
             const differentParticipant = cobrancas.some(c => (c as any).assinatura.participanteId !== participanteId);
             if (differentParticipant) {
                 throw new Error("Todas as cobranças devem ser do mesmo participante para pagamento em lote.");
             }
 
             const valorTotal = cobrancas.reduce((sum, c) => sum.plus(c.valor), new Prisma.Decimal(0));
-            const expiresAt = new Date();
-            expiresAt.setHours(expiresAt.getHours() + 24);
+            const expiresAt = addHours(new Date(), 24);
 
             const lote = await tx.lotePagamento.create({
                 data: {
                     participanteId,
+                    contaId,
                     valorTotal,
                     status: "pendente",
                     expiresAt,

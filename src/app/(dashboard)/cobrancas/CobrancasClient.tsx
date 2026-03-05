@@ -14,6 +14,8 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
 import { useState } from "react";
+import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
+import { Button } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -56,6 +58,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
     const router = useRouter();
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
+    const [consolidateModalOpen, setConsolidateModalOpen] = useState(false);
     const {
         filters,
         handleFilterChange,
@@ -248,7 +251,21 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                     title="Listagem de Cobranças"
                     className="mb-0"
                     rightElement={
-                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 flex-1 justify-center sm:flex-none"
+                                onClick={() => setConsolidateModalOpen(true)}
+                            >
+                                <FileStack size={16} className="mr-2 hidden sm:block" />
+                                <span className="sm:hidden text-center w-full">Agrupar Pendências Únicas</span>
+                                <span className="hidden sm:inline">Gerar Faturas do Mês</span>
+                            </Button>
+                            <div className="flex-1 w-full sm:w-auto flex justify-center">
+                                <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                            </div>
+                        </div>
                     }
                 />
 
@@ -332,6 +349,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 onCloseBatchPix={() => setBatchPixModalOpen(false)}
                 activeLote={activeLote}
                 isAdmin={true}
+            />
+            <ConsolidarFaturasModal
+                isOpen={consolidateModalOpen}
+                onClose={() => setConsolidateModalOpen(false)}
+                mesReferencia={filters.mesReferencia}
             />
         </PageContainer>
     );

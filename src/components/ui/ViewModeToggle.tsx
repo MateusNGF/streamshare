@@ -37,7 +37,7 @@ export const viewModePresets = {
 
 export function ViewModeToggle({ viewMode, setViewMode, options = viewModePresets.tableGrid }: ViewModeToggleProps) {
     return (
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
             {options.map((option) => {
                 const Icon = option.icon;
                 const isActive = viewMode === option.id;
@@ -49,13 +49,13 @@ export function ViewModeToggle({ viewMode, setViewMode, options = viewModePreset
                         size="sm"
                         type="button"
                         className={cn(
-                            "h-8 px-3 gap-2 rounded-md transition-all",
+                            "flex-1 sm:flex-none h-9 px-3 gap-2 rounded-md transition-all justify-center",
                             isActive ? "bg-white shadow-sm text-primary" : "text-gray-500 hover:text-gray-900"
                         )}
                         onClick={() => setViewMode(option.id)}
                     >
-                        <Icon size={14} />
-                        <span className="text-xs font-bold hidden md:block">{option.label}</span>
+                        <Icon size={16} />
+                        <span className="text-xs font-bold sm:block">{option.label}</span>
                     </Button>
                 );
             })}

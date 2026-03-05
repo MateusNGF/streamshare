@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { billingService } from "@/services/billing-service";
-import { checkAndNotifyOverdueBillings, checkAndNotifyPendingBillings } from "@/cron/check-billing-notifications";
+import { checkAndNotifyOverdueBillings, checkAndNotifyPendingBillings, checkAndNotifyConsolidatedBillings } from "@/cron/check-billing-notifications";
 
 /**
  * Billing Cron Endpoint
@@ -35,8 +35,12 @@ export async function GET(req: NextRequest) {
         const renewalResult = await billingService.processarRenovacoes();
         console.info(`[CRON_BILLING] Renewals completed: ${JSON.stringify(renewalResult)}`);
 
-        // 1.5. Cancel expired payment batches
-        console.info('[CRON_BILLING] Step 1.5: Canceling expired payment batches...');
+        // 1.5. Consolidate and cancel batches
+        console.info('[CRON_BILLING] Step 1.5: Consolidation and batch maintenance...');
+        const { LotePagamentoService } = await import("@/services/lote-pagamento.service");
+        const consolidados = await LotePagamentoService.consolidarFaturasMensais();
+        console.info(`[CRON_BILLING] Consolidations created: ${consolidados.consolidados} groups`);
+
         const expiredBatchesResult = await billingService.cancelarLotesExpirados();
         console.info(`[CRON_BILLING] Expired batches canceled: ${expiredBatchesResult.cancelados}`);
 
@@ -47,6 +51,10 @@ export async function GET(req: NextRequest) {
         // 3. Notify about overdue billings
         console.info('[CRON_BILLING] Step 3: Checking for overdue billing notifications...');
         await checkAndNotifyOverdueBillings();
+
+        // 4. Notify about consolidated billings
+        console.info('[CRON_BILLING] Step 4: Checking for consolidated billing notifications...');
+        await checkAndNotifyConsolidatedBillings();
 
         console.info('[CRON_BILLING] Cycle completed successfully');
         return Response.json({

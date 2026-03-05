@@ -185,6 +185,7 @@ model Conta {
   whatsappConfig WhatsAppConfig?
   notificacoes   Notificacao[]
   convites       Convite[]
+  lotesPagamento LotePagamento[]
 
   stripeCustomerId         String? @unique
   stripeSubscriptionId     String? @unique
@@ -425,6 +426,8 @@ model Cobranca {
 model LotePagamento {
   id             Int        @id @default(autoincrement())
   participanteId Int
+  contaId        Int?
+  referenciaMes  String?
   valorTotal     Decimal
   status         StatusLote @default(pendente)
   comprovanteUrl String?
@@ -433,9 +436,11 @@ model LotePagamento {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
+  conta        Conta?       @relation(fields: [contaId], references: [id])
   participante Participante @relation(fields: [participanteId], references: [id])
   cobrancas    Cobranca[]   @relation("CobrancaLote")
 
+  @@unique([participanteId, referenciaMes, contaId])
   @@map("lote_pagamento")
 }
 
