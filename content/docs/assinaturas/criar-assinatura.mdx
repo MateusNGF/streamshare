@@ -1,0 +1,65 @@
+---
+titulo: 'Criar e Gerir uma Assinatura'
+descricao: 'Fluxo completo de criação, validações do sistema e estados possíveis.'
+ordem: 1
+seccao: 'assinaturas'
+---
+
+# Criar e Gerir uma Assinatura
+
+Este guia é para o **Administrador da Conta** — quem cria o grupo de streaming e é responsável por ele.
+
+## Antes de Começar: Pré-requisitos
+
+Para criar uma assinatura, a sua conta precisa:
+- Estar com um **plano ativo** na plataforma StreamShare
+- Ter os dados de cobrança preenchidos nas **Configurações**
+
+## Fluxo de Criação
+
+<Steps>
+1. **Aceda ao Dashboard e clique em "Nova Assinatura"** na secção "Minhas Assinaturas".
+2. **Escolha o serviço** no catálogo de streamings suportados (Netflix, Spotify, Amazon Prime, etc.)
+3. **Defina as vagas**: O número de participantes que irão partilhar o custo. O sistema divide automaticamente o valor total da conta.
+4. **Defina o dia de vencimento**: O dia do mês em que as cobranças serão geradas para os participantes.
+5. **Confirme e aguarde participantes**: O grupo é criado e um link de convite é gerado.
+</Steps>
+
+## Validações do Sistema ao Criar
+
+O sistema verifica automaticamente, em **transação ACID** para evitar corridas de dados:
+
+- `limiteParticipantes` — Se o número de vagas está dentro do permitido pelo plano do streamings
+- `status` das assinaturas existentes — Conta apenas assinaturas `ativa`, `suspensa` ou `pendente` para calcular o espaço ocupado
+- Ao aceitar o último convite disponível, todos os pedidos pendentes de outros utilizadores são **automaticamente recusados** e eles são notificados
+
+## Estados de uma Assinatura
+
+```
+pendente  →  ativa
+ativa     →  suspensa
+suspensa  →  ativa (após pagamento) | cancelada
+```
+
+| Estado | Significado |
+|---|---|
+| `pendente` | 1ª cobrança gerada, aguardando pagamento para activar |
+| `ativa` | Participante pagou; acesso confirmado |
+| `suspensa` | Participante entrou em atraso; acesso suspenso pelo sistema |
+| `cancelada` | Saiu do grupo definitivamente |
+
+<Callout tipo="dica">
+Pode suspender manualmente um participante antes do vencimento caso seja necessário. O cron job diário trata automaticamente dos atrasos.
+</Callout>
+
+## Como Remover um Participante
+
+Dentro do painel de detalhes da assinatura, clique nos três pontos ao lado do participante e escolha **"Remover Participante"**. O sistema:
+
+1. Cancela a assinatura do participante
+2. Cancela quaisquer cobranças **pendentes** não pagas vinculadas a ele
+3. Gera uma notificação para o participante removido
+
+<Callout tipo="aviso">
+Cobranças já **pagas** não são estornadas. Se o participante pagou o mês corrente e foi removido no meio do período, o valor não é devolvido automaticamente — o processo é manual.
+</Callout>

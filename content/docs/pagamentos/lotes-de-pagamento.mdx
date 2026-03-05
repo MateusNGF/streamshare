@@ -1,0 +1,87 @@
+---
+titulo: 'Lotes de Pagamento'
+descricao: 'O que são lotes, como criá-los, o fluxo de aprovação e as regras de negócio.'
+ordem: 2
+seccao: 'pagamentos'
+---
+
+# Lotes de Pagamento
+
+Um **Lote de Pagamento** é um agrupamento de múltiplas cobranças (`Cobrança`) num único documento de pagamento. Em vez de enviar um comprovante para cada serviço em que é participante, pode enviar **um só comprovante** para liquidar tudo de uma vez.
+
+## Quem pode criar um Lote?
+
+| Ator | Pode criar? | Restrição |
+|---|---|---|
+| **Participante** | ✅ Sim | Apenas as suas próprias cobranças pendentes |
+| **Administrador** (em nome de outro) | ✅ Sim | Apenas cobranças de participantes da sua conta |
+
+## Regras de Validação ao Criar um Lote
+
+O sistema aplica estas validações **dentro de uma transação ACID** antes de criar qualquer lote:
+
+1. A lista de cobranças não pode estar vazia
+2. Todas as cobranças têm de ter status `pendente` ou `atrasado`
+3. Nenhuma cobrança pode já pertencer a outro lote (`lotePagamentoId = null`)
+4. **Todas as cobranças têm de pertencer ao mesmo participante** — não é possível misturar faturas de pessoas diferentes num único lote
+5. Se detectada concorrência (outra transação modificou as cobranças entretanto), o sistema aborta com erro: *"Concorrência detectada: algumas cobranças foram modificadas durante a criação do lote."*
+
+<Callout tipo="aviso">
+Se criar um lote manualmente, ele expira em **24 horas**. Lotes criados automaticamente pelo sistema têm **10 dias** de validade. Após a expiração, o lote é cancelado e as cobranças voltam ao estado `pendente`.
+</Callout>
+
+## Fluxo Completo de um Lote
+
+```
+Lote criado (pendente)
+    ↓ Participante envia comprovante
+aguardando_aprovacao
+    ↓ Administrador analisa
+    ├─ Aprovado → pago
+    └─ Rejeitado → pendente (comprovante limpo, pode reenviar)
+```
+
+### Passo 1 — Envio do Comprovante
+
+O participante faz upload do comprovante (imagem ou PDF). O sistema:
+- Faz o upload do ficheiro para o armazenamento seguro (Supabase Storage)
+- Muda o status do lote para `aguardando_aprovacao`
+- Muda o status de **todas as cobranças vinculadas** ao lote para `aguardando_aprovacao` também
+- Notifica o administrador da conta com: *"O participante X enviou um comprovante para o Lote #Y"*
+
+### Passo 2 — Aprovação pelo Administrador
+
+O administrador revê o comprovante no painel **Faturas > Lotes Pendentes**:
+
+**Se Aprovar:**
+- O lote muda para `pago`
+- Todas as cobranças do lote mudam para `pago` com a data actual como `dataPagamento`
+- O sistema avalia automaticamente se a assinatura deve ser **reactivada** (caso estivesse suspensa por atraso)
+- O participante recebe uma notificação: *"Lote de Pagamento Aprovado. As faturas foram dadas como pagas."*
+- São enviadas notificações externas (e-mail e WhatsApp) de forma assíncrona
+
+**Se Rejeitar:**
+- O lote volta para `pendente`
+- O comprovante é removido (`comprovanteUrl = null`)
+- O administrador deve indicar um motivo que é enviado ao participante
+- O participante pode enviar um novo comprovante
+
+### Passo 3 — Cancelamento (por qualquer actor)
+
+Um lote pode ser cancelado se estiver nos estados `pendente` ou `aguardando_aprovacao`.
+
+| Quem cancela | Regras adicionais |
+|---|---|
+| Participante (dono do lote) | Pode cancelar sem motivo |
+| Administrador | **Obrigatório informar um motivo** para o cancelamento |
+
+Ao cancelar, as cobranças são desvinculadas do lote (`lotePagamentoId = null`) e voltam ao status `pendente`, ficando disponíveis para um novo lote.
+
+## Consolidação Automática Mensal
+
+O administrador pode correr a consolidação manualmente pelo botão **"Consolidar Faturas"** no painel, ou aguardar o cron job diário que o faz automaticamente. A lógica:
+
+- Pega todas as cobranças `pendente`/`atrasado` sem lote vinculado
+- Agrupa por **participante**
+- Cria um lote por participante para o mês de referência
+- Garante idempotência: se já existir um lote para `participanteId + mês + contaId`, não cria duplicado

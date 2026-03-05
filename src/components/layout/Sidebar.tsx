@@ -18,7 +18,8 @@ import {
     Wallet,
     Menu,
     X,
-    Home
+    Home,
+    LifeBuoy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutModal } from "@/components/modals/LogoutModal";
@@ -84,6 +85,7 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
             label: "Sistema",
             items: [
                 { icon: Settings, label: "Configurações", href: "/configuracoes" },
+                { icon: LifeBuoy, label: "Chamados", href: "/chamados" },
                 ...(isSystemAdmin ? [{ icon: ShieldCheck, label: "Painel Admin", href: "/admin/parametros" }] : []),
             ]
         }

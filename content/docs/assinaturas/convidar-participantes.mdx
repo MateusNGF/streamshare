@@ -1,0 +1,51 @@
+---
+titulo: 'Convites e Entrada em Grupos'
+descricao: 'Como convidar participantes, validações do token e o fluxo de aceitação.'
+ordem: 2
+seccao: 'assinaturas'
+---
+
+# Convites e Entrada em Grupos
+
+Qualquer novo membro do StreamShare entra num grupo de streaming por **convite**. Existem dois tipos.
+
+## Tipos de Convite
+
+| Tipo | Quem envia | Como funciona |
+|---|---|---|
+| **Link directo** | Administrador, a partir do painel da assinatura | URL com token único. Qualquer pessoa com o link pode solicitar entrada. |
+| **Convite por e-mail / WhatsApp** | Administrador, via botões de partilha | Pré-formata uma mensagem com o link e informações do grupo. |
+
+## O Fluxo de Aceitação de um Convite
+
+Quando um utilizador clica no link de convite, o sistema executa estas validações, **nesta ordem exacta**, antes de mostrar a opção de aceitar:
+
+<Steps>
+1. **Valida o token**: O token é pesquisado na base de dados. Se não existir, o utilizador vê um erro *"Token de convite inválido"*.
+2. **Verifica o estado do convite**: O convite tem de ter estado `pendente`. Se já foi `utilizado` ou `cancelado`, o sistema informa o utilizador.
+3. **Verifica a data de expiração**: Convites têm uma data de expiração. Se `expiresAt < agora`, o utilizador vê *"Este convite expirou"*.
+4. **Verifica vagas disponíveis**: O sistema conta as assinaturas com status `ativa`, `suspensa` e `pendente`. Se `assinaturas >= limiteParticipantes`, exibe *"As vagas já foram preenchidas"*.
+5. **Utilizador aceita (autenticado)**: Ao clicar em "Aceitar", o sistema cria a assinatura e a primeira cobrança, tudo numa única transação ACID com **bloqueio de linha** (`SELECT FOR UPDATE`) para evitar que dois utilizadores entrem na última vaga em simultâneo.
+</Steps>
+
+## O que acontece depois do aceite?
+
+Imediatamente após a aceitação:
+- Uma nova `Assinatura` com status `pendente` é criada para o participante
+- A primeira `Cobrança` é gerada com a data de vencimento calculada (normalmente 5 dias a partir da entrada)
+- O Administrador recebe uma notificação no painel
+- O Participante é redirecionado para a página de pagamento
+
+### Cálculo Pro-Rata
+
+Se o participante entrou no meio do ciclo de faturação, o sistema calcula automaticamente o **valor proporcional** aos dias restantes do período. Exemplo prático:
+
+> Ciclo de um serviço que cobra dia 1. O participante entrou dia 15. O sistema cobra exactamente 50% do valor mensal para cobrir os dias 15–31.
+
+<Callout tipo="info">
+O cálculo de pro-rata é feito com precisão de casas decimais. O valor exacto é mostrado no ecrã de confirmação antes do participante aceitar o convite.
+</Callout>
+
+## Quando as vagas esgotam
+
+Quando o último convite é aceite com sucesso, todos os convites com status `solicitado` que estavam na fila de espera são automaticamente **recusados em massa** e os respectivos utilizadores são notificados com a mensagem: *"Infelizmente, as vagas para este grupo acabaram antes da sua aprovação."*

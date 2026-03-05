@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircleQuestion, Send, Clock } from "lucide-react";
+import { MessageCircleQuestion, Send, Clock, BookOpen, ExternalLink, ArrowRight } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
@@ -9,8 +9,9 @@ import { TicketHistoryTable } from "./TicketHistoryTable";
 import { useSupportForm } from "@/hooks/useSupportForm";
 import { SupportHeader } from "./SupportHeader";
 import { SupportFormFields } from "./SupportFormFields";
+import { CentralAjudaTab } from "./CentralAjudaTab";
 
-type SupportTab = 'new' | 'history';
+type SupportTab = 'docs' | 'ticket' | 'history';
 
 interface SupportModalProps {
     isOpen: boolean;
@@ -18,7 +19,7 @@ interface SupportModalProps {
 }
 
 export function SupportModal({ isOpen, onClose }: SupportModalProps) {
-    const [activeTab, setActiveTab] = useState<SupportTab>('new');
+    const [activeTab, setActiveTab] = useState<SupportTab>('docs');
 
     const {
         formData,
@@ -28,7 +29,10 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
         handleSubmit
     } = useSupportForm({
         isOpen,
-        onSuccess: () => onClose()
+        onSuccess: () => {
+            setActiveTab('docs');
+            onClose();
+        }
     });
 
     const renderFormContent = () => (
@@ -45,8 +49,14 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
 
     const tabs = [
         {
-            id: 'new',
-            label: 'Nova Mensagem',
+            id: 'docs',
+            label: 'Central de Ajuda',
+            icon: BookOpen,
+            content: <CentralAjudaTab onOpenTicket={() => setActiveTab('ticket')} />
+        },
+        {
+            id: 'ticket',
+            label: 'Novo Chamado',
             icon: MessageCircleQuestion,
             content: renderFormContent()
         },
@@ -62,23 +72,29 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
         }
     ];
 
+    // Se o user não estiver logado, não vê as tabs, apenas o form ou o docs.
+    // Vamos adaptar para ele ver pelo menos o Central de Ajuda.
+    const notLoggedInContent = activeTab === 'docs'
+        ? <CentralAjudaTab onOpenTicket={() => setActiveTab('ticket')} />
+        : renderFormContent();
+
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Central de Ajuda"
+            title="Suporte Técnico"
             className="sm:max-w-2xl"
             footer={
-                activeTab === 'new' ? (
+                activeTab === 'ticket' ? (
                     <div className="flex gap-3 w-full">
                         <Button
                             type="button"
                             variant="ghost"
                             className="flex-1"
-                            onClick={onClose}
+                            onClick={() => setActiveTab('docs')}
                             disabled={isPending}
                         >
-                            Cancelar
+                            Voltar
                         </Button>
                         <Button
                             type="submit"
@@ -99,12 +115,18 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                             )}
                         </Button>
                     </div>
+                ) : activeTab === 'docs' ? (
+                    <div className="w-full text-center">
+                        <p className="text-sm text-gray-500">
+                            Ao clicar em "Acessar Documentação", abrirá numa nova janela.
+                        </p>
+                    </div>
                 ) : (
                     <Button
                         type="button"
                         variant="secondary"
                         className="w-full"
-                        onClick={() => setActiveTab('new')}
+                        onClick={() => setActiveTab('ticket')}
                     >
                         <MessageCircleQuestion size={18} className="mr-2" />
                         Abrir Novo Chamado
@@ -120,7 +142,7 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
                         tabs={tabs}
                     />
                 ) : (
-                    renderFormContent()
+                    notLoggedInContent
                 )}
             </div>
         </Modal>

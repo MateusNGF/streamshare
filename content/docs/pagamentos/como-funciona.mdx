@@ -1,0 +1,64 @@
+---
+titulo: 'Ciclo de Faturação e Cron Job'
+descricao: 'Como o motor financeiro funciona: renovações, atrasos e o processo automático diário.'
+ordem: 1
+seccao: 'pagamentos'
+---
+
+# Ciclo de Faturação e Cron Job
+
+O coração do StreamShare é o seu **motor de faturação automático**. Compreender como ele funciona ajuda a evitar sustos e a gerir as suas finanças dentro da plataforma.
+
+## O Cron Job Diário
+
+Todos os dias às **08h00 UTC**, um processo automático é executado nos servidores. Este processo é protegido por um token secreto e segue esta sequência de 4 etapas:
+
+### Etapa 1 — Processamento de Renovações e Atrasos
+
+O sistema procura todas as assinaturas ativas com cobranças cujo `dataVencimento` já passou. Para cada uma:
+- Muda o status da cobrança de `pendente` para `atrasado`
+- Pode suspender a assinatura do participante dependendo da configuração do administrador
+
+### Etapa 2 — Consolidação Automática de Lotes
+
+O sistema encontra **todas as cobranças pendentes ou em atraso** que ainda não foram agrupadas num Lote de Pagamento. Agrupa-as **por participante** e cria Lotes automaticamente. Isso significa que, mesmo que o participante não tenha acedido à plataforma, as suas faturas são consolidadas automaticamente num único lote mensal.
+
+- Cada lote recebe uma data de expiração de **+10 dias** a partir da criação automática
+- Um lote automático nunca é criado se já existir um lote para aquele mês e participante (`participanteId + referenciaMes + contaId` é único)
+- Lotes já expirados são automaticamente **cancelados** nesta etapa, devolvendo as cobranças ao estado `pendente` e libertando-as para nova consolidação
+
+### Etapa 3 — Notificações de Cobranças Próximas do Vencimento
+
+O sistema envia lembretes (e-mail e notificação no app) a todos os participantes com cobranças que vencem nos próximos dias.
+
+### Etapa 4 — Notificações de Cobranças em Atraso
+
+O sistema envia alertas de atraso a participantes e ao administrador sobre cobranças já vencidas que ainda não foram pagas.
+
+<Callout tipo="info">
+O processo completo leva geralmente menos de 30 segundos para a maioria das contas. Se tiver um grande número de participantes, pode levar até 2–3 minutos.
+</Callout>
+
+## Linha de Tempo de uma Cobrança
+
+```
+Cobrança gerada (pendente)
+    ↓ 5 dias para pagar
+Data de Vencimento
+    ↓ venceu sem pagamento?
+Atrasado  →  Notificação enviada
+    ↓ prazo adicional
+Assinatura suspensa (automático pelo cron)
+    ↓ participante paga?
+Reativação da assinatura
+```
+
+## Estados de uma Cobrança
+
+| Status | Significado |
+|---|---|
+| `pendente` | Gerada, aguarda pagamento |
+| `aguardando_aprovacao` | Comprovante enviado, aguarda revisão do admin |
+| `pago` | Aprovado e liquidado |
+| `atrasado` | Passou da data de vencimento sem pagamento |
+| `cancelado` | Anulada (ex: participante removido antes de pagar) |
