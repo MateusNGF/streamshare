@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Toast, ToastVariant } from "@/components/ui/Toast";
-import { updateProfile, updateAccount, updateCurrency } from "@/actions/settings";
+import { updateProfile, updateAccount, updateCurrency, updateDiasVencimento } from "@/actions/settings";
 import { CurrencyCode } from "@/types/currency.types";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -77,6 +77,7 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
     const [loadingLogout, setLoadingLogout] = useState(false);
     const [loadingRemoteLogout, setLoadingRemoteLogout] = useState(false);
     const [loadingCurrency, setLoadingCurrency] = useState(false);
+    const [loadingDias, setLoadingDias] = useState(false);
 
     // Toast state
     const [toast, setToast] = useState<ToastState | null>(null);
@@ -96,6 +97,10 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
 
     const [currency, setCurrency] = useState<CurrencyCode>(
         (initialData.conta?.moedaPreferencia as CurrencyCode) || 'BRL'
+    );
+
+    const [diasVencimento, setDiasVencimento] = useState<number[]>(
+        initialData.conta?.diasVencimento || []
     );
 
     // Detectar alterações pendentes
@@ -218,6 +223,23 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
         }
     };
 
+    const onUpdateDiasVencimento = async () => {
+        setLoadingDias(true);
+        try {
+            const result = await updateDiasVencimento(diasVencimento);
+            if (result.success) {
+                showToast("Dias de vencimento atualizados!", "success");
+            } else if (result.error) {
+                showToast(result.error, "error");
+            }
+        } catch (error: any) {
+            const message = error?.message || "Erro ao atualizar dias de vencimento";
+            showToast(message, "error");
+        } finally {
+            setLoadingDias(false);
+        }
+    };
+
     const tabsData: TabItem[] = [
         {
             id: "perfil",
@@ -254,6 +276,10 @@ export function SettingsClient({ initialData }: SettingsClientProps) {
                     loadingCurrency={loadingCurrency}
                     conta={initialData.conta}
                     showToast={showToast}
+                    diasVencimento={diasVencimento}
+                    setDiasVencimento={setDiasVencimento}
+                    onUpdateDiasVencimento={onUpdateDiasVencimento}
+                    loadingDias={loadingDias}
                 />
             )
         },

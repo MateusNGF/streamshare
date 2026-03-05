@@ -143,7 +143,7 @@ export function BatchActionBar({
                                         <>
                                             <Sparkles size={16} className={cn("hidden sm:block text-white/50 group-hover/btn:text-white", hasMixedParticipants && "hidden")} />
                                             <span className="font-black text-xs sm:text-sm uppercase tracking-tight">
-                                                {hasMixedParticipants ? "Participantes Mistos" : "Pagar Lote"}
+                                                {hasMixedParticipants ? "Participantes Mistos" : "Pagar Lote 2"}
                                             </span>
                                             {!hasMixedParticipants && <Check size={18} className="sm:size-5 stroke-[4px]" />}
                                         </>

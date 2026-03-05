@@ -13,10 +13,11 @@ import { createAssinatura } from "@/actions/assinaturas";
 import { AlertCircle, Calculator } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo } from "@/lib/financeiro-utils";
+import { INTERVALOS_MESES, calcularCustoBase, calcularLucroMensal, calcularTotalCiclo, escolherProximoDiaVencimento, calcularDataVencimentoPadrao } from "@/lib/financeiro-utils";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { useBillingCalculations } from "@/hooks/useBillingCalculations";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { getAccountDiasVencimento } from "@/actions/settings";
 
 interface AssinaturaModalProps {
     isOpen: boolean;
@@ -31,6 +32,7 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
     const [error, setError] = useState("");
     const [participantes, setParticipantes] = useState<any[]>([]);
     const [streamings, setStreamings] = useState<any[]>([]);
+    const [diasVencimento, setDiasVencimento] = useState<number[]>([]);
 
     const [formData, setFormData] = useState({
         participanteId: preSelectedParticipanteId ? preSelectedParticipanteId.toString() : "",
@@ -77,9 +79,14 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
 
     const loadData = async () => {
         try {
-            const [pResult, sResult] = await Promise.all([getParticipantes(), getStreamings()]);
+            const [pResult, sResult, dResult] = await Promise.all([
+                getParticipantes(),
+                getStreamings(),
+                getAccountDiasVencimento()
+            ]);
             if (pResult.success && pResult.data) setParticipantes(pResult.data);
             if (sResult.success && sResult.data) setStreamings(sResult.data);
+            if (dResult.success && dResult.data) setDiasVencimento(dResult.data);
         } catch (error) {
             setError("Erro ao carregar dados.");
         }
@@ -239,7 +246,6 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                         </div>
                     </div>
 
-
                     <div className="grid gap-2">
                         <Label>Data Início</Label>
                         <Input
@@ -247,6 +253,12 @@ export function AssinaturaModal({ isOpen, onClose, preSelectedParticipanteId }: 
                             value={formData.dataInicio}
                             disabled
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Próximo vencimento: <strong className="text-primary">{diasVencimento.length > 0
+                                ? escolherProximoDiaVencimento(diasVencimento, new Date(formData.dataInicio)).toLocaleDateString('pt-BR')
+                                : calcularDataVencimentoPadrao(new Date(formData.dataInicio)).toLocaleDateString('pt-BR')}</strong>
+                            &nbsp;{(diasVencimento.length > 0) ? "(proporcional)" : ""}
+                        </p>
                     </div>
 
                     <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">

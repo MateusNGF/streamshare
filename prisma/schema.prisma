@@ -173,6 +173,7 @@ model Conta {
 
   isAtivo          Boolean  @default(true)
   moedaPreferencia String   @default("BRL")
+  diasVencimento   Int[]    @default([5])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   chavePix         String?

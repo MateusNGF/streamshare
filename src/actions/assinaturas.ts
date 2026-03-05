@@ -174,6 +174,12 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
             subscriptionValidator.validateSlotAvailability(streaming);
             await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId);
 
+            const contaInfo = await tx.conta.findUnique({
+                where: { id: contaId },
+                select: { diasVencimento: true }
+            });
+            const diasVencimento = contaInfo?.diasVencimento || [];
+
             // Create Subscription
             const assinatura = await tx.assinatura.create({
                 data: {
@@ -193,7 +199,8 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 valorMensal: data.valor,
                 frequencia: data.frequencia,
                 dataInicio,
-                pago: !!data.cobrancaAutomaticaPaga
+                pago: !!data.cobrancaAutomaticaPaga,
+                diasVencimento
             });
 
             const participante = await tx.participante.findUnique({
@@ -276,6 +283,12 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                 validStreamings.set(sId, streaming);
             }
 
+            const contaInfo = await tx.conta.findUnique({
+                where: { id: contaId },
+                select: { diasVencimento: true }
+            });
+            const diasVencimento = contaInfo?.diasVencimento || [];
+
             // 2. Create Subscriptions and Charges sequentially to maintain order and simplify error tracking
             // Use for...of to ensure async sequence within transaction as per Prisma requirements
             for (const participanteId of data.participanteIds) {
@@ -298,7 +311,8 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                         valorMensal: ass.valor,
                         frequencia: ass.frequencia,
                         dataInicio,
-                        pago: !!data.cobrancaAutomaticaPaga
+                        pago: !!data.cobrancaAutomaticaPaga,
+                        diasVencimento
                     });
 
                     results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });

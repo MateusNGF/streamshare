@@ -23,6 +23,10 @@ interface AccountTabProps {
     loadingCurrency: boolean;
     conta: any;
     showToast: (message: string, variant?: ToastVariant) => void;
+    diasVencimento: number[];
+    setDiasVencimento: (dias: number[]) => void;
+    onUpdateDiasVencimento: () => void;
+    loadingDias: boolean;
 }
 
 export function AccountTab({
@@ -35,8 +39,21 @@ export function AccountTab({
     onUpdateCurrency,
     loadingCurrency,
     conta,
-    showToast
+    showToast,
+    diasVencimento,
+    setDiasVencimento,
+    onUpdateDiasVencimento,
+    loadingDias
 }: AccountTabProps) {
+    const DIAS_OPCOES = [1, 5, 10, 15, 20, 25];
+
+    const toggleDia = (dia: number) => {
+        setDiasVencimento(
+            diasVencimento.includes(dia)
+                ? diasVencimento.filter(d => d !== dia)
+                : [...diasVencimento, dia]
+        );
+    };
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             {/* Coluna Principal */}
@@ -154,6 +171,65 @@ export function AccountTab({
                             <p className="text-xs text-primary/80 font-medium leading-relaxed">
                                 Esta moeda será aplicada como base para todos os cálculos financeiros, conversões e exibições em tempo real no seu dashboard.
                             </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Vencimento de Cobranças */}
+                <section>
+                    <SectionHeader
+                        title="Vencimento de Cobranças"
+                        description="Configure os dias padrão para o vencimento de novas assinaturas"
+                    />
+                    <div className="space-y-6 mt-8">
+                        <div className="max-w-2xl">
+                            <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                                Dias Disponíveis
+                            </label>
+                            <div className="flex flex-wrap gap-3">
+                                {DIAS_OPCOES.map((dia) => (
+                                    <button
+                                        key={dia}
+                                        type="button"
+                                        onClick={() => toggleDia(dia)}
+                                        disabled={loadingDias}
+                                        className={`w-14 h-14 rounded-2xl font-bold transition-all shadow-sm
+                                            ${diasVencimento.includes(dia)
+                                                ? "bg-primary text-white scale-[1.02] shadow-primary/20"
+                                                : "bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 border border-gray-100"
+                                            }
+                                        `}
+                                    >
+                                        {dia}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10 max-w-2xl">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <DollarSign size={16} className="text-primary" />
+                            </div>
+                            <p className="text-xs text-primary/80 font-medium leading-relaxed">
+                                As cobranças geradas seguirão o dia configurado mais próximo. A primeira cobrança será proporcional (pro-rata) até atingir o próximo vencimento.
+                            </p>
+                        </div>
+
+                        <div className="pt-2 flex justify-start">
+                            <button
+                                type="button"
+                                onClick={onUpdateDiasVencimento}
+                                disabled={loadingDias}
+                                className={`
+                                    min-w-[200px] h-14 rounded-2xl font-bold transition-all
+                                    shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/20
+                                    ${true // Always allow save if there are changes or we can just always allow
+                                        ? "bg-primary text-white hover:scale-[1.02] active:scale-95"
+                                        : "bg-gray-100 text-gray-400 cursor-not-allowed"}
+                                `}
+                            >
+                                {loadingDias ? "Salvando..." : "Salvar Alterações ✓"}
+                            </button>
                         </div>
                     </div>
                 </section>
