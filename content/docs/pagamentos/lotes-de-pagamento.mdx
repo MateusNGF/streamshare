@@ -1,87 +1,54 @@
 ---
 titulo: 'Lotes de Pagamento'
-descricao: 'O que são lotes, como criá-los, o fluxo de aprovação e as regras de negócio.'
+descricao: 'O que são lotes, como agrupá-los e o fluxo de validação e aprovação financeira.'
 ordem: 2
 seccao: 'pagamentos'
 ---
 
 # Lotes de Pagamento
 
-Um **Lote de Pagamento** é um agrupamento de múltiplas cobranças (`Cobrança`) num único documento de pagamento. Em vez de enviar um comprovante para cada serviço em que é participante, pode enviar **um só comprovante** para liquidar tudo de uma vez.
+Um **Lote de Pagamento** é uma funcionalidade que permite agrupar várias faturas de um único participante num único documento. Em vez de efetuar vários pagamentos e enviar um comprovante para cada serviço, o participante pode liquidar tudo de uma só vez.
 
-## Quem pode criar um Lote?
+---
 
-| Ator | Pode criar? | Restrição |
-|---|---|---|
-| **Participante** | ✅ Sim | Apenas as suas próprias cobranças pendentes |
-| **Administrador** (em nome de outro) | ✅ Sim | Apenas cobranças de participantes da sua conta |
+## Quem Pode Gerenciar Lotes?
 
-## Regras de Validação ao Criar um Lote
+- **Participantes**: Podem agrupar as suas próprias faturas pendentes para facilitar o pagamento.
+- **Organizadores**: Podem consolidar as faturas dos seus membros para simplificar a gestão da conta.
 
-O sistema aplica estas validações **dentro de uma transação ACID** antes de criar qualquer lote:
+---
 
-1. A lista de cobranças não pode estar vazia
-2. Todas as cobranças têm de ter status `pendente` ou `atrasado`
-3. Nenhuma cobrança pode já pertencer a outro lote (`lotePagamentoId = null`)
-4. **Todas as cobranças têm de pertencer ao mesmo participante** — não é possível misturar faturas de pessoas diferentes num único lote
-5. Se detectada concorrência (outra transação modificou as cobranças entretanto), o sistema aborta com erro: *"Concorrência detectada: algumas cobranças foram modificadas durante a criação do lote."*
+## Regras de Funcionamento
 
-<Callout tipo="aviso">
-Se criar um lote manualmente, ele expira em **24 horas**. Lotes criados automaticamente pelo sistema têm **10 dias** de validade. Após a expiração, o lote é cancelado e as cobranças voltam ao estado `pendente`.
-</Callout>
+Para garantir que a gestão financeira seja precisa, o sistema aplica algumas normas importantes:
 
-## Fluxo Completo de um Lote
+1. **Mesmo Participante**: Só é possível agrupar faturas que pertençam à mesma pessoa.
+2. **Faturas em Aberto**: Apenas faturas com estado "Pendente" ou "Em Atraso" podem ser incluídas.
+3. **Exclusividade**: Uma fatura não pode pertencer a dois grupos diferentes ao mesmo tempo.
+4. **Validade**: Lotes criados manualmente expiram em **24 horas**. Lotes gerados automaticamente pela plataforma têm uma validade maior (normalmente **10 dias**). Após a expiração, as faturas voltam ao seu estado original individual.
 
-```
-Lote criado (pendente)
-    ↓ Participante envia comprovante
-aguardando_aprovacao
-    ↓ Administrador analisa
-    ├─ Aprovado → pago
-    └─ Rejeitado → pendente (comprovante limpo, pode reenviar)
-```
+---
 
-### Passo 1 — Envio do Comprovante
+## Fluxo de Aprovação de um Lote
 
-O participante faz upload do comprovante (imagem ou PDF). O sistema:
-- Faz o upload do arquivo para o armazenamento seguro (Supabase Storage)
-- Muda o status do lote para `aguardando_aprovacao`
-- Muda o status de **todas as cobranças vinculadas** ao lote para `aguardando_aprovacao` também
-- Notifica o administrador da conta com: *"O participante X enviou um comprovante para o Lote #Y"*
+O processo de liquidação de um lote segue estas etapas:
 
-### Passo 2 — Aprovação pelo Administrador
+### 1. Envio do Comprovante
+O participante faz o upload do comprovante do valor total do lote. Nesse momento:
+- O lote e todas as faturas incluídas nele passam para o estado **"Aguardando Aprovação"**.
+- O Organizador é notificado sobre o novo comprovante a aguardar análise.
 
-O administrador revê o comprovante no painel **Faturas > Lotes Pendentes**:
+### 2. Validação pelo Organizador
+O Organizador analisa o documento no seu painel de gestão:
 
-**Se Aprovar:**
-- O lote muda para `pago`
-- Todas as cobranças do lote mudam para `pago` com a data atual como `dataPagamento`
-- O sistema avalia automaticamente se a assinatura deve ser **reativada** (caso estivesse suspensa por atraso)
-- O participante recebe uma notificação: *"Lote de Pagamento Aprovado. As faturas foram dadas como pagas."*
-- São enviadas notificações externas (e-mail e WhatsApp) de forma assíncrona
+- **Se for Aprovado**: O lote e as faturas são marcados como pagos. Se houver assinaturas suspensas por atraso, o sistema reativa-as automaticamente.
+- **Se for Rejeitado**: O lote volta ao estado pendente. O participante recebe uma notificação com o motivo da rejeição e pode submeter um novo comprovante corrigido.
 
-**Se Rejeitar:**
-- O lote volta para `pendente`
-- O comprovante é removido (`comprovanteUrl = null`)
-- O administrador deve indicar um motivo que é enviado ao participante
-- O participante pode enviar um novo comprovante
+### 3. Cancelamento
+Um lote pode ser cancelado enquanto ainda não estiver pago. Se for cancelado, as faturas que estavam agrupadas voltam a ficar disponíveis individualmente para pagamento ou nova consolidação.
 
-### Passo 3 — Cancelamento (por qualquer ator)
-
-Um lote pode ser cancelado se estiver nos estados `pendente` ou `aguardando_aprovacao`.
-
-| Quem cancela | Regras adicionais |
-|---|---|
-| Participante (dono do lote) | Pode cancelar sem motivo |
-| Administrador | **Obrigatório informar um motivo** para o cancelamento |
-
-Ao cancelar, as cobranças são desvinculadas do lote (`lotePagamentoId = null`) e voltam ao status `pendente`, ficando disponíveis para um novo lote.
+---
 
 ## Consolidação Automática Mensal
 
-O administrador pode correr a consolidação manualmente pelo botão **"Consolidar Faturas"** no painel, ou aguardar o cron job diário que o faz automaticamente. A lógica:
-
-- Pega todas as cobranças `pendente`/`atrasado` sem lote vinculado
-- Agrupa por **participante**
-- Cria um lote por participante para o mês de referência
-- Garante idempotência: se já existir um lote para `participanteId + mês + contaId`, não cria duplicado
+Para poupar tempo a todos, o StreamShare executa uma rotina automática que identifica membros com múltiplas faturas em aberto e cria estes agrupamentos (lotes) de forma autónoma. Isso garante que o participante receba sempre um valor único consolidado no final de cada período, facilitando a organização financeira de todos.

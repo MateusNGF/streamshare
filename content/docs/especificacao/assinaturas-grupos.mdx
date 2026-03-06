@@ -1,6 +1,6 @@
 ---
 titulo: "Assinaturas e Grupos"
-description: "Ciclo de vida das assinaturas individuais e em lote, e organização de serviços em grupos de compartilhamento."
+descricao: "Ciclo de vida das assinaturas individuais e em lote, e organização de serviços em grupos de compartilhamento."
 ordem: 5
 seccao: "especificacao"
 ---
@@ -17,7 +17,7 @@ O Organizador cria uma assinatura para um Participante ao associá-lo a um Servi
 
 - **Valor da contribuição:** O montante que aquele participante irá pagar por ciclo. Deve ser um valor positivo.
 - **Frequência de pagamento:** O ritmo das cobranças — mensal, trimestral, semestral ou anual. Cada frequência determina automaticamente o período coberto por cada fatura.
-- **Data de início:** O dia em que o acesso do participante começa. O sistema aceita datas com até 1 ano no passado e até 1 mês no futuro, protegendo a integridade dos registros.
+- **Data de início:** O dia em que o acesso do participante começa.
 - **Assinalação "Já pago":** Se o Organizador marcar esta opção, o sistema considera o primeiro período como já liquidado, ativando imediatamente a assinatura sem gerar uma cobrança inicial em aberto.
 
 ### Validações antes da Criação
@@ -33,21 +33,20 @@ Se qualquer uma destas condições falhar, a criação é interrompida com uma m
 
 Imediatamente após a criação da assinatura, o sistema gera a primeira cobrança de forma automática. O cálculo do valor e do período desta primeira cobrança depende das configurações da conta:
 
-- **Com dias de vencimento configurados:** A primeira cobrança cobre apenas os dias entre a data de início e a próxima data de vencimento configurada (cálculo pro-rata). Por exemplo, se a assinatura começa a 10 de março e o vencimento está configurado para o dia 1, a primeira cobrança cobre apenas os 21 dias restantes de março, com o valor proporcional.
+- **Com dias de vencimento configurados:** A primeira cobrança cobre apenas os dias entre a data de início e a próxima data de vencimento configurada (cálculo proporcional). Por exemplo, se a assinatura começa a 10 de março e o vencimento está configurado para o dia 1, a primeira cobrança cobre apenas os dias restantes de março, com o valor proporcional.
 - **Sem dias de vencimento configurados:** O sistema usa a frequência escolhida para calcular o período completo (30 dias para mensal, 90 para trimestral, etc.).
 
 ---
 
 ## Criação de Assinaturas em Lote
 
-Para situações em que o Organizador precisa de inscrever simultaneamente vários participantes em vários serviços, a plataforma disponibiliza uma ferramenta de criação em lote. Esta ferramenta aplica todas as mesmas regras de validação individual, com um comportamento adicional importante:
+Para situações em que o Organizador precisa de inscrever simultaneamente vários participantes em vários serviços, a plataforma disponibiliza uma ferramenta de criação em lote. Esta ferramenta aplica todas as mesmas regras de validação individual.
 
-### Integridade na Escrita em Bloco
+### Comportamento "Tudo ou Nada"
 
-Para garantir a segurança, a criação em lote é executada numa **transação atômica única**:
-- **Tudo ou nada:** Se qualquer um dos pares participante-serviço falhar na validação (por falta de vagas, duplicata, etc.), a operação inteira é revertida (*rollback*). Nenhuma assinatura é criada parcialmente.
-- **Verificação de Vagas:** O sistema calcula a lotação total necessária antes de iniciar a escrita, prevenindo que o último lugar seja ocupado por dois processos simultâneos.
-- **Resiliência:** Devido ao volume de processamento, estas operações têm uma tolerância de tempo alargada para evitar timeouts durante a geração massiva de registros e notificações.
+A criação em lote é feita de forma segura e consistente:
+- Se qualquer um dos participantes falhar na validação (por falta de vagas, assinatura duplicada, etc.), **nenhuma assinatura é criada** — a operação inteira é cancelada. Isto evita situações em que parte das assinaturas é criada e outra não.
+- O sistema verifica a lotação total necessária antes de iniciar, prevenindo conflitos entre operações simultâneas.
 
 ---
 
@@ -61,7 +60,7 @@ Ocorre quando não existe nenhum período pago em vigor. O acesso do participant
 ### Cancelamento com Período Garantido
 Se o participante tiver uma cobrança paga que ainda cobre o período corrente (por exemplo, pagou a mensalidade de março e ainda estamos em março), o cancelamento é **agendado** para o fim desse período. A assinatura permanece ativa até ao último dia coberto pelo pagamento vigente e só então é encerrada automaticamente pelo sistema.
 
-O Organizador pode registrar o motivo do cancelamento, que fica guardado no histórico da assinatura para futuras consultas. Todo o cancelamento obriga ao registro do motivo e do administrador responsável pela ação, mantendo um histórico claro para suporte e transparência.
+O Organizador pode registrar o motivo do cancelamento, que fica guardado no histórico da assinatura para futuras consultas.
 
 ---
 

@@ -1,36 +1,42 @@
 ---
 titulo: 'O que é o StreamShare?'
-descricao: 'Missão, modelo de negócio e como a plataforma protege todos os usuários.'
+descricao: 'Missão, funcionamento e como a plataforma protege os serviços e os usuários.'
 ordem: 1
 seccao: 'introducao'
 ---
 
 # O que é o StreamShare?
 
-O **StreamShare** é uma plataforma B2C que facilita o **compartilhamento legal e organizado de assinaturas de streaming**, como Netflix, Spotify, Disney+, entre outras. O produto resolve dois problemas reais:
+O **StreamShare** é uma plataforma que facilita o **compartilhamento organizado de assinaturas de streaming**, como Netflix, Spotify, Disney+, entre outras. O produto resolve os principais problemas deste modelo de divisão de custos:
 
-1. **Para quem tem a conta**: Tem perfis sobrando, mas não tem forma segura de monetizá-los sem perseguir amigos para pagar.
-2. **Para quem quer entrar**: Quer pagar menos, mas não quer se preocupar com inadimplência ou desentendimentos.
+1. **Para quem gerencia a conta**: Permite partilhar perfis excedentes de forma segura, sem a necessidade de cobrar manualmente cada amigo ou familiar.
+2. **Para quem utiliza**: Oferece acesso a serviços de qualidade com custos reduzidos, num ambiente organizado e transparente.
 
-## Modelo de Funcionamento
+---
 
-O StreamShare **atua** como um **intermediário financeiro e tecnológico**:
+## Como Funciona
 
-- Gerencia os ciclos de cobrança de forma automática
-- Retém o dinheiro em custódia e repassa ao administrador após confirmação
-- Suspende o acesso de **usuários** inadimplentes automaticamente (via Cron Job diário)
-- Envia notificações por e-mail, WhatsApp e no app
+O StreamShare atua como um facilitador tecnológico para garantir a segurança de todos os envolvidos:
 
-## O que o StreamShare **não** garante
+- **Automação Financeira**: Gerencia os períodos de cobrança de forma automática.
+- **Segurança nos Repasses**: O sistema assegura que os valores cheguem ao Organizador conforme as regras estabelecidas.
+- **Gestão de Acessos**: Identifica usuários que entrarem em atraso e sinaliza a suspensão da assinatura automaticamente.
+- **Notificações Inteligentes**: Mantém todos informados via e-mail, WhatsApp e através da própria plataforma.
+
+---
+
+## O que o StreamShare Recomendamos
 
 <Callout tipo="aviso">
-O StreamShare não verifica se o compartilhamento de uma conta específica é permitido pelos termos de serviço daquele serviço de streaming. **Essa responsabilidade é integralmente do usuário.** Muitos serviços permitem compartilhamento dentro de um mesmo lar ou perfis adicionais — verifique as condições do seu plano.
+O StreamShare não verifica se o compartilhamento de uma determinada conta é permitido pelos termos de serviço específicos de cada plataforma de streaming. **Essa responsabilidade cabe ao usuário.** Recomendamos que verifique as condições do seu plano junto ao serviço original.
 </Callout>
 
-## Onde os dados ficam armazenados?
+---
 
-O StreamShare utiliza:
-- **PostgreSQL** (via Supabase) para todos os dados transacionais (**usuários**, assinaturas, cobranças)
-- **Supabase Storage** para comprovantes de pagamento (**arquivos** enviados pelos participantes)
-- **Stripe** como processador de pagamentos externo para cartões de crédito
-- Toda a comunicação é feita sobre **HTTPS com TLS 1.3**
+## Proteção de Dados e Segurança
+
+A plataforma foi construída com foco na segurança da informação:
+
+- **Armazenamento Seguro**: Todas as informações de faturamento e membros são guardadas em ambientes protegidos e isolados.
+- **Gestão de Documentos**: Os comprovantes enviados são mantidos em armazenamento exclusivo para fins de auditoria e conferência pelo Organizador.
+- **Criptografia**: Toda a comunicação entre o seu navegador e o nosso sistema é feita através de ligações seguras e encriptadas, seguindo os mais altos padrões de segurança da internet.

@@ -1,17 +1,15 @@
 ---
 titulo: "Processos Automatizados"
-description: "Rotinas de fundo executadas periodicamente pelo sistema para manter a consistência do ciclo financeiro e operacional da plataforma."
+descricao: "Rotinas periódicas que o sistema executa de forma silenciosa para manter o ciclo financeiro e operacional das contas sempre atualizado."
 ordem: 8
 seccao: "especificacao"
 ---
 
 # Processos Automatizados
 
-O StreamShare executa um conjunto de processos em segundo plano, de forma regular e silenciosa, sem necessitar de qualquer intervenção manual do Organizador. Estes processos garantem que o estado financeiro de todas as contas está sempre atualizado, que os participantes são notificados em tempo hábil e que os registros do sistema se mantêm consistentes.
+O StreamShare executa um conjunto de processos em segundo plano, de forma regular e sem necessitar de qualquer intervenção manual do Organizador. Estes processos garantem que o estado financeiro de todas as contas está sempre atualizado, que os participantes são notificados em tempo hábil e que os registros do sistema se mantêm consistentes.
 
-### Garantia de Execução Única (Advisory Locks)
-
-Para prevenir que dois processos de renovação corram ao mesmo tempo e gerem cobranças duplicadas, o sistema utiliza um mecanismo de **bloqueio distribuído** (*Advisory Lock*). Se uma rotina de fundo for iniciada enquanto outra ainda está em curso, a segunda é imediatamente cancelada por segurança.
+> **O que são processos em segundo plano?** São rotinas automáticas que o sistema executa periodicamente — por exemplo, todos os dias à meia-noite — sem que o Organizador precise fazer nada. É semelhante à forma como uma aplicação bancária atualiza o seu saldo automaticamente.
 
 ---
 
@@ -19,11 +17,13 @@ Para prevenir que dois processos de renovação corram ao mesmo tempo e gerem co
 
 Este é o processo central da plataforma. É executado periodicamente e percorre todas as assinaturas ativas para avaliar as ações necessárias em cada uma, seguindo uma ordem rigorosa de prioridade:
 
-**1. Sincronização de Atrasos:** Antes de qualquer outra ação, o sistema identifica faturas pendentes que ultrapassaram o vencimento e atualiza-as para o estado de "Inadimplência" (Atraso). Esta atualização garante que os painéis de controle refletem a situação real em tempo útil.
+**1. Sincronização de Atrasos**
+
+Antes de qualquer outra ação, o sistema identifica faturas pendentes que ultrapassaram o vencimento e atualiza-as para o estado de "Em Atraso". Esta atualização garante que os painéis de controle refletem a situação real em tempo útil.
 
 **2. Execução de Cancelamentos Agendados**
 
-Se uma assinatura tinha um cancelamento previamente agendado (por exemplo, o Organizador cancelou a assinatura mas havia um período pago a decorrer), e esse período já terminou, o sistema executa o cancelamento definitivo neste momento.
+Se uma assinatura tinha um cancelamento previamente agendado (por exemplo, o Organizador cancelou mas havia um período pago a decorrer) e esse período já terminou, o sistema executa o cancelamento definitivo neste momento.
 
 **3. Suspensão por Inadimplência**
 
@@ -33,9 +33,9 @@ O sistema verifica se alguma assinatura tem cobranças em atraso há **mais de 3
 
 **4. Geração do Próximo Ciclo de Cobrança**
 
-Para assinaturas sem dívidas em atraso cujo período atual está a aproximar-se do fim (faltam 5 ou menos dias para o vencimento), o sistema gera automaticamente a cobrança do ciclo seguinte. A data de vencimento da nova cobrança respeita os dias de vencimento configurados pelo Organizador na sua conta.
+Para assinaturas sem dívidas em atraso cujo período atual está próximo do fim (faltam 5 ou menos dias para o vencimento), o sistema gera automaticamente a cobrança do ciclo seguinte. A data de vencimento da nova cobrança respeita os dias de vencimento configurados pelo Organizador na sua conta.
 
-> O sistema é **idempotente**: antes de criar qualquer cobrança, verifica se já existe uma para o mesmo período. Em caso de execução duplicada acidental, nunca são geradas cobranças duplicadas.
+> O sistema foi desenvolvido para evitar cobranças duplicadas: antes de criar qualquer cobrança, verifica se já existe uma para o mesmo período.
 
 ---
 
@@ -45,7 +45,7 @@ Para contas com integração WhatsApp ativa, o sistema executa periodicamente tr
 
 ### Avisos de Vencimento Próximo
 
-O sistema identifica cobranças cujo prazo de vencimento está dentro da **janela de aviso configurada** pelo Organizador (por exemplo, 3 dias antes do vencimento) e envia uma mensagem WhatsApp ao participante, informando o valor e o número de dias que restam para pagar.
+O sistema identifica cobranças cujo prazo de vencimento está próximo (dentro da janela de aviso configurada pelo Organizador) e envia uma mensagem WhatsApp ao participante, informando o valor e o número de dias que restam para pagar.
 
 ### Alertas de Atraso
 
@@ -55,7 +55,7 @@ De forma similar, o sistema identifica cobranças já vencidas e envia mensagens
 
 Para participantes com lotes de pagamento pendentes, o sistema envia uma mensagem consolidada com o total a pagar e os serviços incluídos na fatura, facilitando a liquidação de uma só vez.
 
-**Nota sobre Anti-Spam:** Em todas estas rotinas automáticas, o sistema respeita o intervalo mínimo de **24 horas** entre notificações do mesmo tipo para o mesmo participante, evitando o envio repetido de mensagens. Para lotes, este intervalo é alargado para **7 dias**.
+**Nota sobre Anti-Spam:** Em todas estas rotinas automáticas, o sistema respeita um intervalo mínimo entre notificações do mesmo tipo para o mesmo participante, evitando o envio repetido de mensagens. Para lotes, este intervalo é mais alargado.
 
 ---
 
@@ -69,4 +69,4 @@ Lotes de pagamento que atinjam a sua data de validade sem que o participante ten
 
 No início de cada mês, o sistema analisa os participantes de cada conta que têm múltiplas cobranças em aberto e cria automaticamente um **Lote de Pagamento** por participante, agrupando todas as suas faturas pendentes numa única fatura consolidada. Este processo reduz o trabalho manual do Organizador e simplifica a liquidação para o participante.
 
-A consolidação é executada de forma isolada para cada participante: se a criação do lote de um participante falhar por qualquer motivo, os restantes participantes não são afetados.
+A consolidação é feita de forma isolada para cada participante: se a criação do lote de um participante apresentar algum problema, os restantes participantes não são afetados.

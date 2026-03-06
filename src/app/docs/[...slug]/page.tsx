@@ -15,6 +15,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
+import { remarkMermaid } from '@/lib/remark-mermaid';
 
 interface DocPageProps {
     params: { slug: string[] };
@@ -72,7 +73,7 @@ export default async function DocPage({ params }: DocPageProps) {
                             components={mdxComponents}
                             options={{
                                 mdxOptions: {
-                                    remarkPlugins: [remarkGfm],
+                                    remarkPlugins: [remarkGfm, remarkMermaid],
                                     rehypePlugins: [
                                         rehypeSlug,
                                         [rehypeAutolinkHeadings, { behavior: 'wrap' }],

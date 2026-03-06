@@ -1,64 +1,58 @@
 ---
-titulo: 'Ciclo de Faturamento e Cron Job'
-descricao: 'Como o motor financeiro funciona: renovações, atrasos e o processo automático diário.'
+titulo: 'Ciclo de Faturamento e Automação'
+descricao: 'Como a gestão financeira funciona: renovações, avisos e o processamento automático da plataforma.'
 ordem: 1
 seccao: 'pagamentos'
 ---
 
-# Ciclo de Faturamento e Cron Job
+# Ciclo de Faturamento e Automação
 
-O coração do StreamShare é o seu **motor de faturamento automático**. Compreender como ele funciona ajuda a evitar sustos e a gerenciar as suas finanças dentro da plataforma.
+A base do StreamShare é o seu sistema de gestão financeira automática. Compreender como ele funciona ajuda a manter as suas partilhas em dia e sem preocupações manuais.
 
-## O Cron Job Diário
+---
 
-Todos os dias às **08h00 UTC**, um processo automático é executado nos servidores. Este processo é protegido por um token secreto e segue esta sequência de 4 etapas:
+## O Processamento Automático
 
-### Etapa 1 — Processamento de Renovações e Atrasos
+Diariamente, o sistema executa rotinas de manutenção para garantir que tudo está atualizado. Este processo ocorre de forma silenciosa e automática, seguindo estas etapas fundamentais:
 
-O sistema procura todas as assinaturas ativas com cobranças cujo `dataVencimento` já passou. Para cada uma:
-- Muda o status da cobrança de `pendente` para `atrasado`
-- Pode suspender a assinatura do participante dependendo da configuração do administrador
+### 1. Atualização de Atrasos
 
-### Etapa 2 — Consolidação Automática de Lotes
+O sistema identifica faturas que ultrapassaram a data de vencimento sem que o pagamento tenha sido confirmado. Para cada caso:
+- O estado da fatura é atualizado para "Em Atraso".
+- O participante é sinalizado e, se configurado, o sistema alerta sobre a suspensão da assinatura.
 
-O sistema encontra **todas as cobranças pendentes ou em atraso** que ainda não foram agrupadas num Lote de Pagamento. Agrupa-as **por participante** e cria Lotes automaticamente. Isso significa que, mesmo que o participante não tenha acessado à plataforma, as suas faturas são consolidadas automaticamente num único lote mensal.
+### 2. Agrupamento de Faturas (Lotes)
 
-- Cada lote recebe uma data de expiração de **+10 dias** a partir da criação automática
-- Um lote automático nunca é criado se já existir um lote para aquele mês e participante (`participanteId + referenciaMes + contaId` é único)
-- Lotes já expirados são automaticamente **cancelados** nesta etapa, devolvendo as cobranças ao estado `pendente` e liberando-as para nova consolidação
+Para facilitar a vida dos membros, o sistema identifica cobranças de um mesmo participante que ainda não foram pagas e agrupa-as automaticamente numa fatura única mensal.
+- Isso permite que o participante faça um único pagamento em vez de vários separados.
+- Estas faturas agrupadas têm um prazo de validade estendido para que haja tempo suficiente para a liquidação.
 
-### Etapa 3 — Notificações de Cobranças Próximas do Vencimento
+### 3. Avisos de Vencimento
 
-O sistema envia lembretes (e-mail e notificação no app) a todos os participantes com cobranças que vencem nos próximos dias.
+O sistema envia lembretes automáticos para os participantes que têm faturas a vencer nos próximos dias, garantindo que ninguém se esqueça de manter a sua partilha ativa.
 
-### Etapa 4 — Notificações de Cobranças em Atraso
+### 4. Alertas de Pendência
 
-O sistema envia alertas de atraso a participantes e ao administrador sobre cobranças já vencidas que ainda não foram pagas.
+Caso existam faturas que já venceram, o sistema envia alertas tanto para o participante quanto para o Organizador, facilitando a regularização rápida da situação.
 
-<Callout tipo="info">
-O processo completo leva geralmente menos de 30 segundos para a maioria das contas. Se tiver um grande número de participantes, pode levar até 2–3 minutos.
-</Callout>
+---
 
-## Linha de Tempo de uma Cobrança
+## Linha do Tempo de uma Cobrança
 
-```
-Cobrança gerada (pendente)
-    ↓ 5 dias para pagar
-Data de Vencimento
-    ↓ venceu sem pagamento?
-Atrasado  →  Notificação enviada
-    ↓ prazo adicional
-Assinatura suspensa (automático pelo cron)
-    ↓ participante paga?
-Reativação da assinatura
-```
+1. **Fatura Gerada**: O sistema cria a fatura e o participante é avisado.
+2. **Prazo de Pagamento**: Período entre a geração e a data de vencimento.
+3. **Data de Vencimento**: Dia limite para o pagamento sem sinalização de atraso.
+4. **Estado de Atraso**: Caso o pagamento não ocorra, o sistema sinaliza o atraso e envia lembretes.
+5. **Regularização**: Assim que o pagamento é feito e validado, a assinatura é reativada instantaneamente.
 
-## Estados de uma Cobrança
+---
 
-| Status | Significado |
+## Estados da Fatura
+
+| Estado | Significado |
 |---|---|
-| `pendente` | Gerada, aguarda pagamento |
-| `aguardando_aprovacao` | Comprovante enviado, aguarda revisão do admin |
-| `pago` | Aprovado e liquidado |
-| `atrasado` | Passou da data de vencimento sem pagamento |
-| `cancelado` | Anulada (ex: participante removido antes de pagar) |
+| **Pendente** | Fatura gerada, aguardando pagamento por parte do membro. |
+| **Aguardando Aprovação** | O comprovante foi enviado e aguarda a conferência pelo Organizador. |
+| **Paga** | O pagamento foi validado e a fatura está liquidada. |
+| **Em Atraso** | A data de vencimento passou sem que o pagamento fosse confirmado. |
+| **Cancelada** | A fatura foi anulada (por exemplo, se o membro sair da partilha). |

@@ -1,101 +1,81 @@
 ---
 titulo: "Participantes e Convites"
-description: "Gestão de membros, regras de unicidade, mecanismos de convite e fluxos de ingresso autônomo via Explorer."
+description: "Gestão de membros, regras de conta única, mecanismos de convite e fluxos de ingresso via Explorer."
 ordem: 4
 seccao: "especificacao"
 ---
 
 # Participantes e Convites
 
-Os Participantes são os membros que integram os compartilhamentos de streaming gerenciados por um Organizador. A plataforma oferece múltiplos mecanismos para adicionar e gerenciar estes membros, desde a inserção manual até ao ingresso autônomo via link de convite ou pelo Explorer.
+Os Participantes são os membros que integram as partilhas de streaming gerenciadas por um Organizador. A plataforma oferece múltiplos mecanismos para adicionar e gerenciar estes membros, desde a inserção manual pelo Organizador até ao ingresso autónomo via link de convite ou através do Explorer.
 
 ---
 
 ## Registro de Participantes
 
-O Organizador pode adicionar participantes manualmente, fornecendo os dados de contato de cada pessoa. Os campos disponíveis são:
+O Organizador pode adicionar participantes manualmente ao seu painel, fornecendo os dados básicos de contato:
 
 - **Nome** (obrigatório);
-- **Número de WhatsApp** (opcional, necessário para notificações);
+- **Número de WhatsApp** (necessário para o envio de notificações de cobrança);
 - **CPF** (opcional, para identificação adicional);
-- **E-mail** (opcional, permite vinculação automática a uma conta StreamShare).
+- **E-mail** (opcional, permite que o participante aceda ao seu próprio painel no StreamShare).
 
-### Regras de Unicidade
+### Regras de Organização
 
-Para garantir que cada participante é representado de forma única dentro de uma conta:
+Para garantir que a gestão financeira seja precisa e evitar confusões:
 
-- **CPF único por conta:** Não podem existir dois participantes com o mesmo CPF dentro da mesma conta.
-- **WhatsApp único por conta:** Não podem existir dois participantes com o mesmo número de WhatsApp dentro da mesma conta.
+- **Identificação Única**: Cada participante deve ter um CPF e um número de WhatsApp exclusivos dentro de cada conta de Organizador. Isso evita que uma pessoa receba faturas duplicadas ou que as notificações sejam enviadas para o contacto errado.
 
-Estas restrições evitam duplicações que poderiam gerar cobranças duplicadas ou notificações redundantes.
+### Vinculação Automática de Conta
 
-### Vinculação Automática a uma Conta StreamShare
-
-Se o e-mail de um participante corresponder a um usuário já registrado na plataforma, o sistema estabelece automaticamente o vínculo entre os dois. A partir desse momento, o participante passa a ter acesso ao seu painel pessoal de faturas sem necessitar de fazer qualquer ação adicional.
-
-### Herança de Verificação de WhatsApp
-
-Quando um Organizador adiciona um participante com um número de WhatsApp, a plataforma verifica se esse número já foi validado por outro usuário do StreamShare. Se sim, a verificação é herdada automaticamente — dispensando o participante de passar pelo processo de validação novamente.
+Se o e-mail de um participante corresponder a um usuário já registrado na plataforma, o StreamShare estabelece automaticamente a ligação. Assim, o participante pode entrar na plataforma com a sua própria senha e consultar todas as suas faturas e histórico de pagamentos de forma independente.
 
 ---
 
 ## Verificação do Número de WhatsApp
 
-Para que as notificações automáticas por WhatsApp cheguem ao participante correto, o número de telefone deve estar verificado. O processo de verificação é simples:
+Para que as notificações automáticas cheguem ao participante correto, o número de telefone deve ser validado. O processo é simples:
 
-1. O Organizador inicia a verificação a partir do perfil do participante no painel.
-2. O sistema envia automaticamente um código numérico de 6 dígitos para o número de WhatsApp do participante.
-3. O Organizador — ou o próprio participante, se tiver acesso — introduz o código recebido para concluir a verificação.
+1. O Organizador solicita a verificação no perfil do participante.
+2. O sistema envia um código de 6 dígitos para o WhatsApp da pessoa.
+3. O código é inserido no sistema para confirmar que o contacto é legítimo.
 
-Só após este processo é que as notificações automáticas por WhatsApp ficam ativas para aquele participante.
+Se um número já tiver sido verificado anteriormente por outro Organizador no StreamShare, o sistema reconhece essa validação automaticamente, poupando tempo ao novo membro.
 
 ---
 
 ## Remoção de Participantes
 
-Um participante só pode ser removido da conta se não tiver **nenhuma assinatura ativa ou suspensa**. Se houver vínculos ativos com serviços, o sistema bloqueia a remoção e informa o Organizador quantas assinaturas precisam de ser canceladas antes de prosseguir.
+Um participante só pode ser removido da conta do Organizador se não tiver **nenhuma assinatura ativa ou suspensa**. Se ainda houver serviços vinculados, o sistema solicitará o cancelamento dessas assinaturas antes de permitir a remoção definitiva.
 
-A remoção de um participante não elimina o seu histórico financeiro — todas as cobranças e pagamentos passados ficam preservados através de um mecanismo de **remoção lógica** (*soft delete*).
+> Mesmo após a remoção de um membro, o histórico de pagamentos e faturas passadas é preservado para fins de consulta e prestação de contas.
 
 ---
 
-## Convites por E-mail
+## Convites por E-mail ou Link
 
-O mecanismo de convite por e-mail permite ao Organizador convidar um usuário externo para integrar a sua conta no StreamShare. O usuário convidado recebe um e-mail com um link exclusivo e com prazo de validade de **7 dias**.
+O Organizador pode enviar convites exclusivos que permitem a novos usuários integrarem a sua conta. Estes convites têm uma validade padrão de **7 dias**.
 
-### Regras do Fluxo de Convite
+### Regras dos Convites
 
-- **Auto-convite Interditado:** O Organizador não pode enviar convites para o seu próprio endereço de e-mail.
-- **Participante Já Ativo:** Se o e-mail já pertencer a um membro da conta, o convite é bloqueado.
-- **Prevenção de Duplicados:** O sistema não permite enviar um novo convite se já existir um pendente e dentro do prazo para o mesmo destinatário.
-- **Prazo de Expiração:** Os convites têm uma validade estrita de **7 dias**.
-- **Vínculo a Serviço:** O convite pode ser vinculado a um serviço específico — ao aceitar, o usuário convidado é automaticamente inscrito nesse serviço.
+- **Prevenção de Duplicados**: O sistema evita o envio de múltiplos convites pendentes para o mesmo destinatário.
+- **Vínculo Direto**: Um convite pode ser configurado para já inscrever o usuário num serviço específico assim que ele for aceite.
 
 ### Aceitação do Convite
 
-Quando o usuário aceita o convite:
-1. Deve estar autenticado na plataforma (ou criar uma conta caso ainda não tenha).
-2. É automaticamente registrado como participante na conta do Organizador.
-3. Se o convite estiver vinculado a um serviço e o usuário ainda não tiver uma assinatura ativa para ele, a assinatura e a primeira cobrança são criadas imediatamente.
+Quando um usuário clica no link de convite:
+1. Ele deve criar uma conta ou entrar com o seu acesso existente.
+2. Ao aceitar, ele é imediatamente listado como participante no painel do Organizador.
+3. Caso o convite inclua um serviço específico, a assinatura e a primeira fatura são geradas automaticamente.
 
 ---
 
-## Ingresso pelo Explorer (Solicitações Públicas)
+## Ingresso pelo Explorer (Vagas Públicas)
 
-O Explorer é a área pública da plataforma onde usuários autenticados podem descobrir serviços de streaming com vagas disponíveis.
+O Explorer é a área pública onde usuários podem descobrir partilhas com vagas disponíveis.
 
-### Fluxo com Aprovação Automática
+### Aprovação Automática
+Se o Organizador permitir, o usuário pode entrar na partilha imediatamente ao clicar em "Solicitar Entrada", desde que existam vagas disponíveis.
 
-Se o Organizador do serviço ativou a aprovação automática:
-1. O usuário clica em "Solicitar Entrada" no Explorer.
-2. A plataforma verifica se ainda existem vagas disponíveis.
-3. O usuário é imediatamente registrado como participante e a assinatura é criada, sem qualquer intervenção do Organizador.
-
-### Fluxo com Aprovação Manual
-
-Se o serviço requer aprovação manual:
-1. O usuário submete a sua "Intenção de Ingresso" pelo Explorer.
-2. A solicitação fica pendente e os Administradores da conta são notificados.
-3. A solicitação expira automaticamente após **48 horas** caso não seja aprovada ou recusada.
-4. Se o Organizador aprovar, o usuário é registrado como participante e a assinatura é criada.
-5. Se o Organizador recusar, o usuário recebe uma notificação informando que o seu pedido não foi aceito.
+### Aprovação Manual
+Nesta modalidade, a solicitação de entrada fica a aguardar a decisão do Organizador. O pedido expira automaticamente após **48 horas** caso não seja aprovado ou recusado, garantindo agilidade no processo.

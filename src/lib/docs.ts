@@ -77,7 +77,7 @@ export async function getAllDocsMeta(): Promise<SidebarSection[]> {
     }
 
     // Define a ordem desejada das seções
-    const sectionOrder = ['introducao', 'assinaturas', 'pagamentos', 'especificacao'];
+    const sectionOrder = ['introducao', 'especificacao', 'assinaturas', 'pagamentos'];
 
     const result: SidebarSection[] = [];
 

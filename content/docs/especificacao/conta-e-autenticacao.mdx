@@ -1,6 +1,6 @@
 ---
 titulo: "Conta e Autenticação"
-description: "Regras de negócio sobre criação de conta, validação de identidade e configurações financeiras e operacionais da conta."
+descricao: "Regras de negócio sobre criação de conta, validação de identidade e configurações financeiras e operacionais da conta."
 ordem: 2
 seccao: "especificacao"
 ---
@@ -11,21 +11,12 @@ seccao: "especificacao"
 
 A criação de uma conta no StreamShare é o ponto de partida para qualquer Organizador. No momento do registro, o usuário fornece o seu nome completo, endereço de e-mail e define uma senha.
 
-Adicionalmente, é obrigatória a leitura e concordância com os **Termos de Uso** e a **Política de Privacidade** da plataforma. A data e a versão dos documentos aceitos ficam registradas de forma permanente, garantindo a conformidade legal e a rastreabilidade do consentimento do usuário.
+Adicionalmente, é obrigatória a leitura e concordância com os **Termos de Uso** e a **Política de Privacidade** da plataforma. A data e a versão dos documentos aceitos ficam registradas de forma permanente para garantir a conformidade e a rastreabilidade do consentimento.
 
 ### Regras de Unicidade
 
 - Cada endereço de e-mail só pode estar associado a uma única conta. Tentativas de registro com um e-mail já existente são bloqueadas com uma mensagem clara.
-- Não existe conta sem proprietário: o usuário que se registra é automaticamente o proprietário da conta e recebe privilégios totais de administração.
-
-### Validação Segura e Tokens Temporários
-
-Para garantir a integridade dos dados, o sistema adota um fluxo de validação rigoroso:
-
-- **Token Temporário:** Durante o processo de registro, os dados do usuário são mantidos num estado temporário e seguro. Nenhum registro é criado na base de dados principal até que a identidade seja confirmada.
-- **Validação por OTP:** Um processo de envio de código numérico (OTP) de 6 dígitos ao e-mail garante que apenas o proprietário daquele endereço ative a sua conta. Se o processo demorar em excesso, o token expira e o registro deve ser reiniciado por segurança.
-- **Criação Atômica:** Uma vez validado o código, o sistema executa uma **operação atômica** (transação) que cria simultaneamente o perfil do usuário, a sua conta empresarial e estabelece o vínculo de propriedade. Isto garante que nunca existam usuários sem uma conta associada ou contas "órfãs".
-- **Boas-vindas:** Assim que a conta é criada com sucesso, o sistema despacha automaticamente um e-mail de boas-vindas com orientações iniciais para o novo Organizador.
+- O usuário que se registra é automaticamente o proprietário da conta e recebe privilégios totais de administração.
 
 ### Validação de Identidade por Código
 
@@ -36,7 +27,9 @@ Para garantir que apenas o legítimo titular do e-mail possa ativar a conta, o s
 3. O usuário introduz o código na plataforma.
 4. Somente após a validação bem-sucedida do código é que a conta é criada e o acesso é disponibilizado.
 
-> Este mecanismo garante que uma conta nunca é ativada com dados que não pertençam ao usuário, protegendo o sistema de fraudes de identidade.
+> Este mecanismo garante que uma conta nunca é ativada com dados que não pertençam ao usuário, protegendo o sistema de acessos indevidos.
+
+> **O que acontece se o código expirar?** Cada código tem um prazo de validade. Se não for inserido a tempo, o processo de registro precisa ser reiniciado — basta aceder novamente ao formulário e solicitar um novo código.
 
 ### Autenticação via Google (OAuth)
 
@@ -71,9 +64,9 @@ A plataforma suporta múltiplas moedas. O Organizador escolhe a moeda que será 
 
 O Organizador pode configurar um ou mais dias do mês que servem como datas-alvo de vencimento para as cobranças da sua conta. Por exemplo, ao configurar os dias 5 e 20, todas as cobranças geradas automaticamente terão como data de vencimento o próximo dia 5 ou 20 a contar da data de início da assinatura.
 
-Esta configuração tem um impacto direto no cálculo pro-rata da primeira cobrança de cada assinatura: o sistema calcula automaticamente o valor proporcional aos dias de acesso entre o início da assinatura e o próximo dia de vencimento configurado.
+Esta configuração tem um impacto direto no cálculo proporcional da primeira cobrança de cada assinatura: o sistema calcula automaticamente o valor referente aos dias de acesso entre o início da assinatura e o próximo dia de vencimento configurado.
 
-> Os dias de vencimento devem estar entre 1 e 28, evitando variações mensais — o sistema nunca usa dias 29, 30 ou 31.
+> Os dias de vencimento devem estar entre 1 e 28, evitando variações mensais causadas por meses com diferentes números de dias.
 
 ### Chave de Pagamento (PIX)
 

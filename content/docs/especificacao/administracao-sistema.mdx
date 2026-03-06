@@ -1,32 +1,35 @@
 ---
-titulo: "Administração do Sistema"
-description: "Funcionalidades de controle global e gestão do catálogo de serviços, reservadas à equipe de administração do StreamShare."
+titulo: "Administração da Plataforma"
+descricao: "Gestão do catálogo global de serviços de streaming disponíveis na plataforma StreamShare."
 ordem: 9
 seccao: "especificacao"
 ---
 
-# Administração do Sistema (Super-Admin)
+# Administração da Plataforma
 
-O papel de **Administrador do Sistema** (ou Super-Admin) é reservado à equipe interna da StreamShare e destina-se à manutenção da infraestrutura global de dados que serve todas as contas da plataforma.
+Algumas funcionalidades do StreamShare são gerenciadas centralmente pela equipe da plataforma e não estão disponíveis para utilizadores finais. Esta seção descreve o que é gerenciado a nível de plataforma e como isso afeta os Organizadores.
 
 ---
 
 ## Catálogo Global de Streamings
 
-O Catálogo Global é o repositório central que define quais as plataformas de streaming que os Organizadores podem gerenciar. 
+O Catálogo Global é o repositório central que define quais as plataformas de streaming que os Organizadores podem gerenciar. Ele é mantido e atualizado regularmente pela equipe do StreamShare.
 
-### Gestão de Plataformas
-Apenas usuários com nível de acesso administrativo podem:
-- **Registrar novas plataformas:** Definir o nome oficial, carregar o logotipo e associar categorias (Vídeo, Música, Jogos, etc.).
-- **Conteúdo Adulto:** Marcar plataformas que possuam restrições de idade ou conteúdo sensível para fins de filtragem e conformidade.
-- **Desativação (Soft Delete):** Desativar itens do catálogo que já não sejam suportados. Tal como em outras entidades, esta ação não remove o registro físico para proteger os vínculos históricos de milhares de contas que utilizam aquele serviço.
+### O que está no Catálogo
 
----
+O catálogo inclui as principais plataformas de streaming disponíveis no mercado, como Netflix, Spotify, Disney+, entre muitas outras. Para cada plataforma, o catálogo regista:
 
-## Auditoria e Suporte
+- **Nome oficial** da plataforma;
+- **Logotipo** para identificação visual;
+- **Categoria** (Vídeo, Música, Jogos, etc.);
+- **Indicação de conteúdo adulto**, quando aplicável, para fins de filtragem.
 
-O Super-Admin possui ferramentas de visibilidade que permitem o suporte técnico eficiente:
-- **Visualização de Contas:** Capacidade de consultar dados consolidados de uso para identificar problemas de performance ou erros sistêmicos.
-- **Parâmetros do Sistema:** Configuração de termos globais, versões de termos de uso e outros parâmetros que afetam o comportamento de todas as instâncias da plataforma.
+### Impacto para os Organizadores
 
-> **Importante:** O acesso às funcionalidades de Super-Admin é protegido por camadas adicionais de segurança e autenticação, sendo restrito a endereços de e-mail autorizados pela organização.
+Ao adicionar um novo serviço, o Organizador seleciona a plataforma base no catálogo e herda automaticamente as suas informações. Não é possível adicionar um serviço que não esteja no catálogo.
+
+> Se um serviço que usa estiver em falta no catálogo, pode solicitá-lo à equipa de suporte do StreamShare. Novos serviços são adicionados regularmente.
+
+### Histórico e Preservação de Dados
+
+Se uma plataforma for descontinuada ou removida do catálogo, os registros históricos das contas que utilizavam esse serviço são preservados. Relatórios e faturas antigas continuam a exibir os dados corretos.

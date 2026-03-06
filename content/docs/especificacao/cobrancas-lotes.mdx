@@ -1,6 +1,6 @@
 ---
 titulo: "Cobranças e Lotes"
-description: "Ciclo financeiro completo das cobranças individuais e consolidação de múltiplas faturas num único lote de pagamento."
+descricao: "Ciclo financeiro completo das cobranças individuais e consolidação de múltiplas faturas num único lote de pagamento."
 ordem: 6
 seccao: "especificacao"
 ---
@@ -25,12 +25,11 @@ As cobranças são geradas de forma automática pelo sistema em dois momentos:
 Quando um participante efetua o pagamento de uma cobrança, o Organizador pode confirmá-lo de duas formas:
 
 - **Confirmação direta:** O Organizador marca a cobrança como paga no painel, registrando o método de pagamento ou adicionando uma nota.
-- **Confirmação com comprovante:** O Organizador (ou o participante) anexa um comprovante. O sistema utiliza **armazenamento externo seguro** para estas imagens, garantindo que os documentos fiquem acessíveis para auditoria sem sobrecarregar a base de dados principal.
-- **Idempotência:** O sistema garante que uma cobrança paga nunca seja confirmada duas vezes, prevenindo duplicações de balanço.
+- **Confirmação com comprovante:** O Organizador ou o participante anexa uma imagem do comprovante. O sistema armazena estes documentos de forma segura, garantindo que fiquem acessíveis para consulta e auditoria futura.
 
 ### Rejeição de Comprovante
 
-Se o comprovante submetido pelo participante apresentar inconsistências (valor errado, data incorreta, transferência para conta diferente, etc.), o Organizador pode **rejeitar o comprovante**:
+Se o comprovante submetido pelo participante apresentar inconsistências (valor errado, data incorreta, etc.), o Organizador pode **rejeitar o comprovante**:
 
 - A cobrança regressa ao estado pendente, sendo necessário submeter um novo comprovante.
 - O participante vinculado recebe uma notificação informando que o seu comprovante foi rejeitado e solicitando a submissão de um novo.
@@ -53,9 +52,9 @@ Participantes que assinem múltiplos serviços numa mesma conta acumularão vár
 
 Um Lote agrupa as cobranças pendentes ou em atraso de **um único participante**. Não é possível misturar cobranças de participantes diferentes num mesmo lote.
 
-**Controle de Concorrência:** O sistema possui mecanismos de proteção que impedem que uma mesma cobrança seja incluída em dois lotes diferentes ao mesmo tempo. Se uma cobrança for paga ou agrupada enquanto o Organizador prepara um lote, a operação é interrompida para evitar inconsistências.
-
 O valor total do lote é a soma dos valores de todas as cobranças incluídas. O participante efetua um único pagamento (uma transferência PIX, por exemplo) e submete um único comprovante para liquidar todas as faturas de uma só vez.
+
+> O sistema garante que uma mesma cobrança não pode ser incluída em dois lotes diferentes ao mesmo tempo. Se houver qualquer conflito, a operação é interrompida para evitar inconsistências.
 
 ### Prazos de Validade
 

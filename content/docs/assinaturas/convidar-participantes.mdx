@@ -1,51 +1,57 @@
 ---
-titulo: 'Convites e Entrada em Grupos'
-descricao: 'Como convidar participantes, validações do token e o fluxo de aceitação.'
+titulo: 'Convites e Entrada em Streaming'
+descricao: 'Como convidar participantes, validações de acesso e o fluxo de aceitação de convites.'
 ordem: 2
 seccao: 'assinaturas'
 ---
 
-# Convites e Entrada em Grupos
+# Convites e Entrada em Streaming
 
-Qualquer novo membro do StreamShare entra num grupo de streaming por **convite**. Existem dois tipos.
+Qualquer novo membro do StreamShare entra numa partilha de streaming através de um **convite**. Existem dois tipos principais de convite.
 
 ## Tipos de Convite
 
 | Tipo | Quem envia | Como funciona |
 |---|---|---|
-| **Link direto** | Administrador, a partir do painel da assinatura | URL com token único. Qualquer pessoa com o link pode solicitar entrada. |
-| **Convite por e-mail / WhatsApp** | Administrador, via botões de compartilhamento | Pré-formata uma mensagem com o link e informações do grupo. |
+| **Link direto** | Organizador, a partir do painel do serviço | Um link exclusivo. Qualquer pessoa com o link pode solicitar a sua entrada. |
+| **Convite por e-mail / WhatsApp** | Organizador, via botões de partilha | O sistema pré-formata uma mensagem com o link e as informações básicas da partilha. |
+
+---
 
 ## O Fluxo de Aceitação de um Convite
 
-Quando um usuário clica no link de convite, o sistema executa estas validações, **nesta ordem exata**, antes de mostrar a opção de aceitar:
+Quando um usuário clica no link de convite, o sistema executa um conjunto de verificações para garantir que o processo é seguro e justo:
 
 <Steps>
-1. **Valida o token**: O token é pesquisado na base de dados. Se não existir, o usuário vê um erro *"Token de convite inválido"*.
-2. **Verifica o estado do convite**: O convite tem de ter estado `pendente`. Se já foi `utilizado` ou `cancelado`, o sistema informa o usuário.
-3. **Verifica a data de expiração**: Convites têm uma data de expiração. Se `expiresAt < agora`, o usuário vê *"Este convite expirou"*.
-4. **Verifica vagas disponíveis**: O sistema conta as assinaturas com status `ativa`, `suspensa` e `pendente`. Se `assinaturas >= limiteParticipantes`, exibe *"As vagas já foram preenchidas"*.
-5. **Usuário aceita (autenticado)**: Ao clicar em "Aceitar", o sistema cria a assinatura e a primeira cobrança, tudo numa única transação ACID com **bloqueio de linha** (`SELECT FOR UPDATE`) para evitar que dois usuários entrem na última vaga em simultâneo.
+1. **Validação do link**: O sistema verifica se o link é legítimo. Caso contrário, o usuário recebe um aviso informando que o convite é inválido.
+2. **Verificação do estado**: Só é possível aceitar convites que ainda estejam pendentes. Convites que já foram utilizados ou cancelados não podem ser aceites novamente.
+3. **Prazo de validade**: Os convites têm um tempo limitado para serem aceites. Se o prazo terminar, o usuário será informado de que o convite expirou.
+4. **Disponibilidade de vagas**: O sistema verifica em tempo real se ainda existem lugares disponíveis, considerando todos os membros já inscritos. Se o limite for atingido, o sistema avisa que as vagas foram preenchidas.
+5. **Aceitação (autenticação)**: Ao aceitar o convite, o sistema cria automaticamente o vínculo entre o participante e o serviço, além de gerar a primeira cobrança de forma segura, garantindo que o limite de vagas nunca seja ultrapassado.
 </Steps>
 
-## O que acontece depois do aceite?
+---
+
+## O que acontece após aceitar?
 
 Imediatamente após a aceitação:
-- Uma nova `Assinatura` com status `pendente` é criada para o participante
-- A primeira `Cobrança` é gerada com a data de vencimento calculada (normalmente 5 dias a partir da entrada)
-- O Administrador recebe uma notificação no painel
-- O Participante é redirecionado para a página de pagamento
+- A nova assinatura é criada com o estado inicial pendente.
+- A primeira cobrança é gerada com a data de vencimento calculada.
+- O Organizador é notificado sobre o novo participante.
+- O Participante é encaminhado para as instruções de pagamento.
 
-### Cálculo Pro-Rata
+### Cálculo Proporcional (Pro-Rata)
 
-Se o participante entrou no meio do ciclo de faturamento, o sistema calcula automaticamente o **valor proporcional** aos dias restantes do período. Exemplo prático:
+Se o participante entrar durante um ciclo de faturamento já em curso, o sistema calcula automaticamente o **valor proporcional** aos dias de acesso que restam até ao próximo vencimento.
 
-> Ciclo de um serviço que cobra dia 1. O participante entrou dia 15. O sistema cobra exatamente 50% do valor mensal para cobrir os dias 15–31.
+> **Exemplo:** Num serviço com vencimento no dia 1, se um participante entrar no dia 15, o sistema cobrará apenas o valor correspondente aos dias restantes do mês.
 
 <Callout tipo="info">
-O cálculo de pro-rata é feito com precisão de casas decimais. O valor exato é mostrado na tela de confirmação antes do participante aceitar o convite.
+O valor exato do rateio é apresentado de forma clara na tela de confirmação antes de o participante aceitar formalmente o convite.
 </Callout>
+
+---
 
 ## Quando as vagas esgotam
 
-Quando o último convite é aceite com sucesso, todos os convites com status `solicitado` que estavam na fila de espera são automaticamente **recusados em massa** e os respectivos usuários são notificados com a mensagem: *"Infelizmente, as vagas para este grupo acabaram antes da sua aprovação."*
+No momento em que o último lugar disponível é preenchido, os pedidos que ainda se encontravam em fila de espera são automaticamente cancelados e os respectivos usuários são notificados. Isso garante que ninguém fique a aguardar por uma vaga que já não existe.

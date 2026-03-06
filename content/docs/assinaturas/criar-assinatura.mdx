@@ -1,65 +1,68 @@
 ---
-titulo: 'Criar e Gerenciar uma Assinatura'
-descricao: 'Fluxo completo de criação, validações do sistema e estados possíveis.'
+titulo: 'Gerenciar Assinaturas'
+descricao: 'Fluxo completo de criação de partilhas, verificações do sistema e estados possíveis das assinaturas.'
 ordem: 1
 seccao: 'assinaturas'
 ---
 
-# Criar e Gerenciar uma Assinatura
+# Gerenciar Assinaturas
 
-Este guia é para o **Administrador da Conta** — quem cria o grupo de streaming e é responsável por ele.
+Este guia destina-se ao **Organizador** — a pessoa responsável por criar a partilha de um serviço de streaming e gerenciar os seus membros.
 
-## Antes de Começar: Pré-requisitos
+---
 
-Para criar uma assinatura, a sua conta precisa:
-- Estar com um **plano ativo** na plataforma StreamShare
-- Ter os dados de cobrança preenchidos nas **Configurações**
+## Antes de Começar
 
-## Fluxo de Criação
+Para criar e gerenciar partilhas, a sua conta deve:
+- Ter um **plano ativo** que permita a gestão de serviços (Pro ou Business).
+- Ter as informações de pagamento (como a chave PIX) configuradas no seu perfil.
+
+---
+
+## Fluxo de Criação de uma Partilha
 
 <Steps>
-1. **Acesse o Dashboard e clique em "Nova Assinatura"** na seção "Minhas Assinaturas".
-2. **Escolha o serviço** no catálogo de streamings suportados (Netflix, Spotify, Amazon Prime, etc.)
-3. **Defina as vagas**: O número de participantes que irão compartilhar o custo. O sistema divide automaticamente o valor total da conta.
-4. **Defina o dia de vencimento**: O dia do mês em que as cobranças serão geradas para os participantes.
-5. **Confirme e aguarde participantes**: O grupo é criado e um link de convite é gerado.
+1. **Aceda ao Painel e escolha "Nova Assinatura"** na seção de gestão de serviços.
+2. **Selecione o serviço** no catálogo (Netflix, Spotify, Disney+, etc.).
+3. **Defina a lotação**: Indique quantos lugares estarão disponíveis para partilha. O sistema ajudará a calcular o custo proporcional para cada membro.
+4. **Configure o vencimento**: Escolha o dia do mês em que as cobranças automáticas serão geradas para os participantes.
+5. **Convide os membros**: Assim que a partilha é criada, o sistema gera um link exclusivo que pode enviar aos seus amigos ou familiares.
 </Steps>
 
-## Validações do Sistema ao Criar
+---
 
-O sistema verifica automaticamente, em **transação ACID** para evitar corridas de dados:
+## Como o Sistema Protege a sua Partilha
 
-- `limiteParticipantes` — Se o número de vagas está dentro do permitido pelo plano do streamings
-- `status` das assinaturas existentes — Conta apenas assinaturas `ativa`, `suspensa` ou `pendente` para calcular o espaço ocupado
-- Ao aceitar o último convite disponível, todos os pedidos pendentes de outros usuários são **automaticamente recusados** e eles são notificados
+Sempre que uma nova assinatura é criada ou um membro é adicionado, o StreamShare executa verificações automáticas para garantir a integridade dos dados:
 
-## Estados de uma Assinatura
+- **Limite de Vagas**: O sistema impede que o número de participantes exceda a lotação máxima configurada para o serviço.
+- **Estado de Ocupação**: São considerados não apenas os membros ativos, mas também aqueles com pagamentos pendentes, garantindo que nunca existam conflitos de espaço.
+- **Gestão Automática de Pedidos**: Quando a última vaga de um serviço é preenchida, outros pedidos que estivessem a aguardar aprovação são automaticamente informados de que a partilha ficou completa.
 
-```
-pendente  →  ativa
-ativa     →  suspensa
-suspensa  →  ativa (após pagamento) | cancelada
-```
+---
 
-| Estado | Significado |
+## Ciclo de Vida de uma Assinatura
+
+As assinaturas dos participantes evoluem de acordo com o estado dos pagamentos:
+
+| Estado | O que significa |
 |---|---|
-| `pendente` | 1ª cobrança gerada, aguardando pagamento para ativar |
-| `ativa` | Participante pagou; acesso confirmado |
-| `suspensa` | Participante entrou em atraso; acesso suspenso pelo sistema |
-| `cancelada` | Saiu do grupo definitivamente |
+| **Pendente** | A primeira cobrança foi gerada e o sistema aguarda a confirmação do pagamento para ativar o acesso. |
+| **Ativa** | O pagamento foi confirmado e o participante está com o acesso regularizado. |
+| **Suspensa** | Houve um atraso no pagamento. O sistema bloqueia o acesso automaticamente até que a situação seja regularizada. |
+| **Cancelada** | O participante deixou a partilha definitivamente. |
 
-<Callout tipo="dica">
-Pode suspender manualmente um participante antes do vencimento caso seja necessário. O cron job diário trata automaticamente dos atrasos.
-</Callout>
+---
 
 ## Como Remover um Participante
 
-Dentro do painel de detalhes da assinatura, clique nos três pontos ao lado do participante e escolha **"Remover Participante"**. O sistema:
+Caso precise de remover um membro do grupo, pode fazê-lo através do painel de detalhes do serviço:
 
-1. Cancela a assinatura do participante
-2. Cancela quaisquer cobranças **pendentes** não pagas vinculadas a ele
-3. Gera uma notificação para o participante removido
+1. Localize o participante e selecione a opção **"Remover Participante"**.
+2. O sistema encerrará o vínculo do participante com o serviço.
+3. Quaisquer faturas que ainda estivessem em aberto (não pagas) para esse participante serão anuladas automaticamente.
+4. O membro será notificado sobre a alteração no seu acesso.
 
 <Callout tipo="aviso">
-Cobranças já **pagas** não são estornadas. Se o participante pagou o mês corrente e foi removido no meio do período, o valor não é devolvido automaticamente — o processo é manual.
+**Importante:** Cobranças que já tenham sido pagas não são estornadas automaticamente pelo sistema. Acordos sobre períodos já liquidados devem ser tratados diretamente entre o Organizador e o participante.
 </Callout>

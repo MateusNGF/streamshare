@@ -1,64 +1,62 @@
 ---
 titulo: 'Métodos de Pagamento'
-descricao: 'Opções disponíveis para pagar faturas (PIX, Cartão) e receber (Saques).'
+descricao: 'Opções disponíveis para pagar faturas e receber valores na plataforma.'
 ordem: 3
 seccao: 'pagamentos'
 ---
 
 # Métodos de Pagamento
 
-O StreamShare integra dois sistemas de pagamento complementares: **Stripe** (para cartões internacionais e recorrência) e **PIX** (para pagamentos instantâneos no Brasil).
+O StreamShare suporta diferentes formas de liquidação de faturas, adaptando-se à realidade de cada Organizador e Participante.
 
-## Para Pagar Faturas
+---
 
-| Método | Tempo de Confirmação | Automático? |
+## Formas de Pagamento
+
+| Método | Tempo de Confirmação | Como Funciona |
 |---|---|---|
-| **PIX** | Segundos (após identificação bancária) | Não (manual via comprovante) |
-| **Cartão de Crédito** | Imediato | Sim (AutoPay recorrente) |
-| **Saldo na Carteira** | Instantâneo | Prioritário (usado antes de gerar nova fatura) |
+| **PIX** | Imediato (após validação) | Manual, requer o envio de comprovante. |
+| **Cartão de Crédito** | Instantâneo | Automático e recorrente. |
+| **Saldo Disponível** | Instantâneo | Prioritário, utilizado para abater valores de faturas futuras. |
 
-### PIX (Recomendado)
+### Pagamento via PIX
 
-1. Acesse a fatura ou o Lote de Pagamento
-2. Clique em **"Pagar com PIX"**
-3. Leia o QR Code ou copie o código **Copia e Cola**
-4. Confirme o pagamento no seu banco
-5. Volte ao StreamShare e clique em **"Enviar Comprovante"** com o comprovante do banco
+Este é o método mais comum e prático para o envio de valores:
+
+1. Aceda à fatura ou ao Lote de Pagamento.
+2. Utilize o QR Code ou o sistema **Copia e Cola** para realizar a transferência no seu banco.
+3. Após pagar, volte à plataforma e utilize a opção **"Enviar Comprovante"**.
 
 <Callout tipo="info">
-A confirmação de um pagamento PIX no sistema **não é automática**. Você precisa enviar o comprovante e aguardar a aprovação manual do administrador do grupo. Isso garante que o valor correto foi transferido.
+**Atenção**: A confirmação de pagamentos via PIX não é automática. O Organizador da partilha deve validar o comprovante enviado para que o sistema dê a fatura como paga.
 </Callout>
 
-### Cartão de Crédito (AutoPay)
+### Cartão de Crédito
 
-Nas configurações da sua conta, pode adicionar um cartão de crédito para **cobranças automáticas recorrentes**. Funciona via Stripe e segue os padrões PCI-DSS de segurança.
+Pode registar um cartão de crédito para que as cobranças ocorram de forma automática em cada ciclo de renovação. Isso evita esquecimentos e garante que o seu acesso nunca seja interrompido por atrasos.
 
-<Callout tipo="aviso">
-O Boleto Bancário **não** é suportado. A sua compensação de até 3 dias úteis é incompatível com o sistema de ativação imediata após pagamento.
-</Callout>
+---
 
-## Fluxo de Comprovante: Passo a Passo
+## Como Funciona a Validação de Comprovantes
 
 <Steps>
-1. O participante abre a fatura ou lote no painel
-2. Faz o **upload do arquivo** (imagem JPG/PNG ou PDF)
-3. O sistema valida o status da cobrança (não pode já estar `pago`)
-4. O arquivo é enviado para armazenamento seguro e a cobrança muda para `aguardando_aprovacao`
-5. Uma notificação é enviada ao **Administrador**: *"Novo Comprovante Recebido de [Nome]"*
-6. O Administrador aprova (→ `pago`) ou rejeita (→ `pendente`, comprovante limpo)
+1. O participante submete o arquivo (imagem ou PDF) através da plataforma.
+2. O sistema armazena o documento de forma segura e notifica o Organizador.
+3. O Organizador analisa os dados do pagamento.
+4. Após a validação, a fatura é liquidada e a assinatura é atualizada instantaneamente.
 </Steps>
 
-## Para Receber Pagamentos (Saques)
+---
 
-Se é Administrador de um grupo, os pagamentos dos participantes acumulam no seu **saldo da carteira**.
+## Recebimentos e Repasses (Para Organizadores)
 
-Para solicitar um saque:
+Se você gerencia uma partilha, os valores pagos pelos participantes são acumulados no seu saldo dentro da plataforma.
 
-1. Acesse o menu **Saques** no sidebar
-2. Confirme ou registre a sua **Chave PIX** de destino
-3. Solicite o valor pretendido
-4. O crédito chega em poucas horas (PIX) ou em até 2 dias úteis (para outros métodos)
+Para solicitar o valor:
+1. Aceda à seção de **Repasses** no painel de gestão.
+2. Certifique-se de que a sua **Chave PIX** de destino está correta.
+3. Solicite o resgate do valor pretendido.
 
 <Callout tipo="dica">
-Mantenha a sua chave PIX sempre atualizada nas configurações para evitar atrasos nos repasses.
+Mantenha os seus dados de recebimento sempre atualizados nas configurações da conta para garantir que os repasses ocorram sem contratempos.
 </Callout>

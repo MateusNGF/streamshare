@@ -1,70 +1,64 @@
 ---
 titulo: "Estados e Transições"
-description: "Ciclo de vida completo das entidades transacionais da plataforma — assinaturas, cobranças, lotes e convites."
+description: "Guia sobre o ciclo de vida das assinaturas, cobranças e convites dentro da plataforma."
 ordem: 11
 seccao: "especificacao"
 ---
 
 # Estados e Transições
 
-As principais entidades financeiras e operacionais do StreamShare percorrem um ciclo de vida bem definido. Compreender os estados e as transições possíveis é fundamental para interpretar o painel de controle e tomar as decisões certas em cada momento.
+Todas as partes importantes da gestão no StreamShare — como as assinaturas e as cobranças — percorrem um ciclo de vida com diferentes estados. Compreender estes estados ajuda a interpretar o seu painel de controlo e a saber que ação tomar em cada momento.
 
 ---
 
-## Assinatura
+## Assinaturas
 
-A Assinatura representa o vínculo formal entre um Participante e um Serviço. É a entidade de maior longevidade no sistema — pode durar meses ou anos.
+A Assinatura é o vínculo entre um Participante e um Serviço. É aqui que se define quanto e com que frequência a pessoa paga.
 
-| Estado | Descrição | Transições Possíveis |
+| Estado | O que significa | O que pode acontecer a seguir? |
 |---|---|---|
-| **Pendente** | Estado inicial após criação, antes do primeiro pagamento ser confirmado. | → Ativa (após pagamento confirmado) |
-| **Ativa** | Funcionamento normal. O participante tem acesso ao serviço e novos ciclos são gerados automaticamente. | → Suspensa (inadimplência); → Cancelada |
-| **Suspensa** | Bloqueio temporário por falta de pagamento. O acesso ao serviço é interrompido. | → Ativa (após pagamento regularizado); → Cancelada |
-| **Cancelada** | Estado terminal. O vínculo foi encerrado definitivamente. | — (sem retorno) |
+| **Pendente** | A assinatura foi criada, mas o sistema ainda aguarda a confirmação do primeiro pagamento. | Torna-se **Ativa** assim que pagar. |
+| **Ativa** | Tudo regularizado. O participante tem acesso ao serviço e as próximas faturas serão geradas automaticamente. | Pode ser **Suspensa** por falta de pagamento ou **Cancelada**. |
+| **Suspensa** | O acesso foi bloqueado temporariamente por atraso no pagamento. | Volta a ser **Ativa** após o pagamento ou pode ser **Cancelada**. |
+| **Cancelada** | O vínculo foi encerrado definitivamente. | Não há retorno; um novo convite seria necessário para reingressar. |
 
-### Notas Importantes
+### Destaques
 
-- Uma assinatura suspensa **não** gera novas cobranças enquanto se mantiver nesse estado.
-- Ao confirmar o pagamento de uma cobrança em atraso, a assinatura suspensa é **reativada automaticamente** sem necessidade de intervenção do Organizador.
-- Um cancelamento pode ser **imediato** ou **agendado** (ver [Assinaturas e Grupos](/docs/especificacao/assinaturas-grupos)).
+- Assinaturas suspensas **não** geram novas cobranças automáticas para não acumular dívidas desnecessárias.
+- Assim que o Organizador confirma o pagamento de uma fatura em atraso, a assinatura é **reativada na hora** pelo sistema.
 
 ---
 
-## Cobrança (Fatura Individual)
+## Cobranças (Faturas)
 
-Cada cobrança corresponde a um período específico de uso de um serviço e ao valor que o participante deve pagar por esse período.
+Cada fatura representa o valor devido por um período específico de uso de um serviço.
 
-| Estado | Descrição | Transições Possíveis |
-|---|---|---|
-| **Pendente** | Cobrança gerada e aguardando pagamento dentro do prazo. | → Em Atraso; → Aguardando Aprovação; → Cancelada |
-| **Em Atraso** | O prazo de vencimento passou e o pagamento ainda não foi registrado. | → Aguardando Aprovação; → Paga; → Cancelada |
-| **Aguardando Aprovação** | O participante submeteu um comprovante e aguarda validação do Organizador. | → Paga (aprovação); → Pendente (rejeição) |
-| **Paga** | Pagamento confirmado. Estado terminal. | — (sem retorno) |
-| **Cancelada** | Cobrança anulada pelo Organizador. Estado terminal. | — (sem retorno) |
-
----
-
-## Lote de Pagamento
-
-O Lote agrupa múltiplas cobranças de um mesmo participante para liquidação conjunta.
-
-| Estado | Descrição | Transições Possíveis |
-|---|---|---|
-| **Pendente** | Lote criado e aguardando o envio do comprovante pelo participante. Expira após o prazo de validade. | → Aguardando Aprovação; → Cancelado |
-| **Aguardando Aprovação** | Comprovante submetido, aguardando validação do Organizador. | → Pago (aprovação); → Pendente (rejeição) |
-| **Pago** | Aprovado pelo Organizador. Todas as cobranças do lote foram marcadas como pagas. Estado terminal. | — (sem retorno) |
-| **Cancelado** | Lote cancelado manualmente ou por expiração do prazo. As cobranças voltam ao estado individual. Estado terminal. | — (sem retorno) |
+| Estado | O que significa |
+|---|---|
+| **Pendente** | Fatura gerada dentro do prazo, aguardando pagamento. |
+| **Em Atraso** | A data de vencimento passou e o pagamento ainda não foi registado. |
+| **Em Análise** | O participante enviou um comprovante que agora aguarda a validação do Organizador. |
+| **Paga** | Pagamento confirmado com sucesso. |
+| **Cancelada** | A fatura foi anulada pelo Organizador (por exemplo, por erro na criação). |
 
 ---
 
-## Convite
+## Lotes de Pagamento (Faturas Consolidadas)
 
-Os convites controlam o processo de ingresso de novos membros na conta de um Organizador.
+Um Lote serve para agrupar várias faturas de um mesmo participante num único pagamento total.
 
-| Estado | Descrição | Transições Possíveis |
-|---|---|---|
-| **Pendente** | Convite emitido por e-mail e aguardando resposta do destinatário. Válido por 7 dias. | → Aceito; → Recusado; → Expirado |
-| **Solicitado** | Pedido de ingresso submetido pelo usuário via Explorer. Válido por 48 horas. | → Aceito; → Recusado; → Expirado |
-| **Aceito** | O usuário aceitou o convite ou o pedido foi aprovado. Estado terminal. | — (sem retorno) |
-| **Recusado** | O convite foi cancelado pelo Organizador ou o pedido foi rejeitado. Estado terminal. | — (sem retorno) |
-| **Expirado** | O prazo de validade terminou sem resposta. Estado terminal. | — (sem retorno) |
+- **Pendente**: O lote foi criado e aguarda o envio do comprovante único.
+- **Em Análise**: O comprovante do total foi enviado e aguarda aprovação do Organizador.
+- **Pago**: Todas as faturas incluídas no lote são marcadas como pagas simultaneamente.
+- **Cancelado**: O lote foi anulado. Se isso acontecer, as faturas originais voltam a aparecer individualmente no sistema.
+
+---
+
+## Convites
+
+Controlam a entrada de novos membros no sistema.
+
+- **Pendente**: O convite foi enviado e aguarda que o convidado o aceite.
+- **Solicitado**: Alguém viu o serviço no Explorer e pediu para entrar (aguarda aprovação).
+- **Aceito**: O processo foi concluído com sucesso e o novo membro já faz parte do grupo.
+- **Recusado / Expirado**: O convite não foi aceite a tempo ou o Organizador decidiu não aprovar a entrada.

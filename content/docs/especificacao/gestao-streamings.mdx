@@ -1,6 +1,6 @@
 ---
 titulo: "Gestão de Streamings"
-description: "Regras e processos relativos ao registro, configuração, visibilidade e ciclo de vida dos serviços de streaming compartilhados."
+descricao: "Regras e processos relativos ao registro, configuração, visibilidade e ciclo de vida dos serviços de streaming compartilhados."
 ordem: 3
 seccao: "especificacao"
 ---
@@ -13,7 +13,7 @@ Os Serviços de Streaming são o objeto central do compartilhamento no StreamSha
 
 ## Catálogo Global de Serviços
 
-Para garantir consistência visual e de dados em toda a plataforma, o StreamShare mantém um **Catálogo Global** de serviços de streaming reconhecidos. Este catálogo é gerenciado internamente pela equipe do StreamShare e inclui plataformas populares como Netflix, Spotify, Disney+, entre muitas outras.
+Para garantir consistência visual e de dados em toda a plataforma, o StreamShare mantém um **Catálogo Global** de serviços de streaming reconhecidos. Este catálogo é gerenciado pela equipe do StreamShare e inclui plataformas populares como Netflix, Spotify, Disney+, entre muitas outras.
 
 Ao adicionar um novo serviço, o Organizador seleciona o serviço base neste catálogo. O StreamShare herda automaticamente o nome oficial, o logotipo e a categoria do serviço (vídeo, música, jogos, etc.). O Organizador pode, opcionalmente, dar um **apelido personalizado** ao serviço para diferenciá-lo de outros do mesmo tipo — por exemplo, "Netflix - Casa" e "Netflix - Escritório".
 
@@ -43,8 +43,7 @@ Ao registrar um novo serviço, o Organizador define as seguintes informações:
 - **Número Máximo de Vagas:** Quantas pessoas podem compartilhar o serviço em simultâneo. A plataforma nunca permite ultrapassar este limite.
 - **Frequências de Pagamento Permitidas:** Quais os ciclos aceitos para as cobranças dos participantes — mensal, trimestral, semestral ou anual.
 - **Apelido:** Nome personalizado para identificar este serviço no painel.
-- **Credenciais de Acesso:** O Organizador pode guardar as credenciais (login e senha) do serviço. Por segurança, as senhas são **armazenadas de forma criptografada**, garantindo que nunca fiquem expostas em texto claro na base de dados.
-- **Token Público de Acesso:** Cada serviço recebe automaticamente um identificador único universal (UUID) que permite o acesso direto à sua página de detalhes pública sem necessidade de login.
+- **Credenciais de Acesso:** O Organizador pode guardar as credenciais (login e senha) do serviço de forma segura. As senhas são armazenadas de forma protegida e nunca ficam visíveis em texto legível.
 
 ---
 
@@ -80,9 +79,9 @@ Um serviço só pode ser removido do sistema quando **não tiver nenhuma assinat
 
 Para remover um serviço com participantes ativos, o Organizador deve primeiro cancelar todas as assinaturas existentes.
 
-### Preservação de Histórico (Remoção Lógica)
+### Preservação de Histórico
 
-Quando um serviço é removido, o sistema executa uma **remoção lógica** (*soft delete*). O registro não desaparece da base de dados; em vez disso, é marcado como inativo e a data de remoção é registrada. Isto permite que:
+Quando um serviço é removido, o registro é marcado como inativo mas não é eliminado definitivamente. Isto permite que:
 - Relatórios financeiros e faturas antigas continuem a exibir os dados corretos do serviço que existia na altura.
 - O histórico de auditoria da conta permaneça íntegro.
 - O Organizador possa consultar dados de serviços descontinuados para fins contábeis.

@@ -1,48 +1,52 @@
 ---
 titulo: 'Como Começar no StreamShare'
-descricao: 'Primeiros passos, atores do sistema e visão geral dos fluxos.'
+descricao: 'Primeiros passos, perfis de usuário e visão geral do funcionamento da plataforma.'
 ordem: 2
 seccao: 'introducao'
 ---
 
 # Como Começar no StreamShare
 
-Bem-vindo! O StreamShare é uma plataforma de **economia colaborativa para compartilhamento de assinaturas de streaming**. Ele automatiza cobranças, controla vagas e garante que ninguém pague mais do que deve.
+Bem-vindo! O StreamShare é uma plataforma de **economia colaborativa focada na gestão de assinaturas de streaming**. O sistema automatiza as cobranças, controla a disponibilidade de vagas e garante que a divisão de custos seja feita de forma justa e transparente para todos.
 
-## Os Atores do Sistema
+---
 
-O StreamShare foi construído em torno de **três perfis de usuário**. Cada um tem responsabilidades e permissões distintas.
+## Os Perfis de Usuário
 
-| Perfil | Quem é? | Pode fazer... |
+O StreamShare foi construído com base em perfis distintos. Cada um tem responsabilidades e permissões específicas dentro da plataforma.
+
+| Perfil | Quem é? | Principais Ações |
 |---|---|---|
-| **Administrador da Conta** | Quem cria a conta organizadora e gerencia o grupo | Criar streamings, aprovar pagamentos, gerenciar participantes, sacar fundos |
-| **Participante** | Quem entra num grupo de streaming | Visualizar cobranças, enviar comprovantes, criar lotes de pagamento |
-| **Administrador do Sistema** | Equipe interna do StreamShare | Acesso total para suporte e monitoria |
+| **Organizador** | Quem cria a partilha e gerencia o grupo de serviços. | Criar partilhas, aprovar pagamentos, gerenciar membros e solicitar repasses. |
+| **Participante** | Quem utiliza um serviço compartilhado. | Consultar faturas, enviar comprovantes de pagamento e gerir as suas assinaturas. |
+| **Equipe StreamShare** | Equipe de suporte interna da plataforma. | Apoio técnico, monitoria e manutenção do catálogo global. |
 
 <Callout tipo="info">
-Um mesmo usuário pode ser **Administrador** num grupo e **Participante** noutro. Os dois papéis são independentes e coexistem.
+Um usuário pode ser **Organizador** numa partilha e **Participante** noutra de forma independente. Os papéis coexistem na mesma conta.
 </Callout>
 
-## Visão Geral do Fluxo Principal
+---
 
-O fluxo padrão de vida de uma assinatura no StreamShare segue esta sequência:
+## Visão Geral do Funcionamento
+
+O ciclo de vida de uma assinatura no StreamShare segue normalmente este fluxo:
 
 <Steps>
-1. **Administrador cria um streaming**: Define o serviço (ex: Netflix), o valor total da conta e o número de vagas disponíveis.
-2. **Participante recebe um convite**: Via link ou QR Code. O sistema valida token, expiração e vagas disponíveis em tempo real.
-3. **Participante aceita e uma cobrança é gerada automaticamente**: O sistema cria uma `Assinatura` com status `pendente` e a primeira `Cobrança` com data de vencimento.
-4. **Participante paga e envia comprovante**: Pode pagar cobranças individuais ou agrupá-las num **Lote de Pagamento** para enviar um único comprovante.
-5. **Administrador aprova**: O comprovante é analisado e, ao aprovar, o status da assinatura muda para `ativa`.
-6. **Ciclo mensal automatizado (Cron Job)**: Todos os dias às 08h, o sistema verifica renovações, gera novas cobranças e envia notificações de vencimento próximo ou atraso.
+1. **O Organizador cria a partilha**: Escolhe o serviço (ex: Netflix), define o valor total e o número de vagas.
+2. **O Participante recebe um convite**: Através de um link ou código exclusivo. O sistema verifica a validade do convite e a disponibilidade de vagas.
+3. **O Convite é aceite**: Ao entrar, o sistema cria a assinatura e gera a primeira fatura com uma data de vencimento definida.
+4. **O Participante efetua o pagamento**: Pode pagar faturas individuais ou agrupá-las para facilitar o processo. Após o pagamento, envia o comprovante pelo sistema.
+5. **O Organizador valida o pagamento**: O comprovante é analisado e, após a aprovação, o acesso é regularizado no sistema.
+6. **Gestão Automática Mensal**: O sistema trabalha continuamente para gerar renovações, enviar avisos de vencimento e alertas de atraso, mantendo tudo organizado.
 </Steps>
 
-## Os Estados de uma Assinatura
+---
 
-```
-pendente → ativa → suspensa → cancelada
-```
+## Estados da Assinatura
 
-- **`pendente`**: Aguarda o primeiro pagamento.
-- **`ativa`**: Pagamento confirmado, acesso liberado.
-- **`suspensa`**: Pagamento em atraso. O administrador suspende o acesso.
-- **`cancelada`**: Assinatura encerrada permanentemente.
+As assinaturas podem passar por diferentes estados ao longo do tempo:
+
+- **Pendente**: O participante acabou de entrar e o sistema aguarda a primeira confirmação de pagamento.
+- **Ativa**: O pagamento foi validado e o participante está com o acesso em dia.
+- **Suspensa**: Existe um atraso no pagamento. O sistema sinaliza a suspensão até que a situação seja regularizada.
+- **Cancelada**: A participação no serviço foi encerrada definitivamente.
