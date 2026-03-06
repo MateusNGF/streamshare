@@ -77,7 +77,7 @@ export async function getAllDocsMeta(): Promise<SidebarSection[]> {
     }
 
     // Define a ordem desejada das seções
-    const sectionOrder = ['introducao', 'especificacao', 'assinaturas', 'pagamentos'];
+    const sectionOrder = ['especificacao', 'assinaturas', 'pagamentos'];
 
     const result: SidebarSection[] = [];
 
@@ -106,7 +106,7 @@ function formatSectionTitle(key: string): string {
     if (key === 'introducao') return '🚀 Introdução';
     if (key === 'assinaturas') return '📋 Gestão de Assinaturas';
     if (key === 'pagamentos') return '💰 Pagamentos e Cobranças';
-    if (key === 'especificacao') return '⚙️ Regras e Especificações';
+    if (key === 'especificacao') return '🚀 Introdução e Regras';
 
     // Capitaliza a primeira letra para os restantes
     return key.charAt(0).toUpperCase() + key.slice(1);
