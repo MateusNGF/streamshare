@@ -60,6 +60,12 @@ Cada coluna deve possuir um ícone representativo (`lucide-react`, size 12) ao l
 - **Tipografia**: `text-[10px]`, `font-black`, `uppercase`, `tracking-wider`.
 - **Cores**: Texto `gray-500`, Ícones `gray-400`.
 
+### 4.3. Smart Grouping (Agrupamento Inteligente)
+Em telas de gestão massiva (como a tabela de cobranças do Admin), os itens devem ser agrupados por contexto (Participante).
+- **Sticky Headers**: Cabeçalhos de grupo que dão contexto sobre o montante.
+- **Seleção Massiva**: Possibilidade de selecionar o grupo inteiro com um checkbox no header.
+- **Isolamento**: Regras de UI que impedem a seleção cruzada de diferentes grupos quando a ação final exige um contexto único.
+
 ### 4.2. Estrutura de Colunas (Assinaturas)
 1. **Participante**: Nome e e-mail.
 2. **Status**: Badge logo após o participante para visibilidade imediata.
@@ -82,3 +88,12 @@ Cada coluna deve possuir um ícone representativo (`lucide-react`, size 12) ao l
 - [ ] Os cabeçalhos de tabela possuem ícones de 12px e tipografia uppercase?
 - [ ] A coluna de Status está posicionada estrategicamente?
 - [ ] Os cálculos foram validados com `financeiro-utils.ts`?
+
+## 6. Jornada de "Carrinho Financeiro" (Bulk Selection)
+
+Para ações em massa que envolvem dinheiro, a UI deve seguir o padrão de "Carrinho":
+
+1.  **Feedback de Seleção**: A linha selecionada deve sofrer alteração de fundo (`bg-primary/5`) e ganhar uma borda lateral de acento.
+2.  **Micro-interações**: Checkboxes devem possuir animações (Ex: bounce via Framer Motion) para confirmar a ação.
+3.  **Barra de Ação Crítica**: Utilizar o `BatchActionBar` posicionado na zona ergonômica (inferior central).
+4.  **Tangibilização**: Sempre mostre os ícones dos serviços que estão sendo pagos ou cobrados (`LoteCompositionStrip`).

@@ -13,6 +13,7 @@ import { ViewMode } from "@/components/ui/ViewModeToggle";
 interface LotesTabProps {
     lotes: any[];
     viewMode?: ViewMode;
+    isAdmin?: boolean;
 }
 
 export function LotesTab({ lotes, viewMode = "table" }: LotesTabProps) {

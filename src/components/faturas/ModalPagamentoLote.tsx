@@ -37,6 +37,7 @@ import {
     StepHeader,
     StepIcon
 } from "@/components/ui/step-modal";
+import { LoteCompositionStrip } from "./LoteCompositionStrip";
 
 interface ModalPagamentoLoteProps {
     isOpen: boolean;
@@ -206,12 +207,25 @@ export function ModalPagamentoLote({ isOpen, onClose, lote, isAdmin = false }: M
         <StepContainer step={step} className="space-y-4">
             <div className="bg-zinc-50 rounded-[32px] border border-zinc-100 p-6 relative overflow-hidden">
                 <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <Receipt size={14} className="text-primary opacity-60" />
-                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Valor do Lote</span>
+                    <div className="space-y-3 w-full">
+                        <LoteCompositionStrip
+                            cobrancas={lote.cobrancas}
+                            total={valor}
+                            format={format}
+                        />
+                        <div className="flex items-center justify-between border-t border-zinc-100 pt-3">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <Receipt size={14} className="text-primary opacity-60" />
+                                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Total a Pagar</span>
+                                </div>
+                                <h2 className="text-4xl font-black text-zinc-900 tracking-tighter">{format(valor)}</h2>
+                            </div>
+                            <div className="bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10">
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest block">Lote</span>
+                                <span className="text-lg font-black text-primary leading-none">#{lote.id}</span>
+                            </div>
                         </div>
-                        <h2 className="text-4xl font-black text-zinc-900 tracking-tighter">{format(valor)}</h2>
                     </div>
                 </div>
             </div>

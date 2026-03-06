@@ -52,8 +52,16 @@ Participantes que assinem múltiplos serviços numa mesma conta acumularão vár
 
 Um Lote agrupa as cobranças pendentes ou em atraso de **um único participante**. Não é possível misturar cobranças de participantes diferentes num mesmo lote.
 
-O valor total do lote é a soma dos valores de todas as cobranças incluídas. O participante efetua um único pagamento (uma transferência PIX, por exemplo) e submete um único comprovante para liquidar todas as faturas de uma só vez.
+### Jornada de "Carrinho de Compras" Financeiro
 
+O StreamShare adota uma abordagem de jornada de "carrinho" para a gestão de lotes, priorizando a segurança e a clareza em cada etapa:
+
+1. **Seleção Inteligente (Smart Grouping):** Para o Organizador, a interface agrupa automaticamente as pendências por participante. Isso permite selecionar todo o montante de uma pessoa com um único clique, eliminando a chance de misturar cobranças.
+2. **Destaque Visual (Row Highlighting):** Ao selecionar itens, as faturas ganham destaque visual imediato na tabela, facilitando a conferência do que está sendo consolidado.
+3. **Review & Preview (Batch Preview):** Antes de gerar o lote final, o sistema abre um painel de revisão (Drawer) que mostra o resumo detalhado dos itens, o total e uma prévia da mensagem de WhatsApp que será enviada ao participante.
+4. **Tangibilização com Logos:** No momento do pagamento, o sistema exibe uma "tira" de logos dos serviços incluídos (ex: [Netflix] + [Spotify] = R$ 45,90), tornando o valor do dinheiro mais tangível para o participante.
+
+> [!IMPORTANT]
 > O sistema garante que uma mesma cobrança não pode ser incluída em dois lotes diferentes ao mesmo tempo. Se houver qualquer conflito, a operação é interrompida para evitar inconsistências.
 
 ### Prazos de Validade
@@ -76,6 +84,8 @@ O processo de aprovação de um Lote de Pagamento segue os mesmos princípios de
 3. **Se aprovado:** Todas as cobranças do lote são marcadas como pagas de uma só vez. Assinaturas suspensas associadas a essas cobranças são reativadas automaticamente.
 4. **Se rejeitado:** O comprovante é removido e o lote regressa ao estado pendente, aguardando nova submissão.
 
-### Consolidação Automática Mensal
-
 Para contas com muitos participantes, o sistema oferece uma funcionalidade de **consolidação automática mensal**: periodicamente, o sistema identifica todos os participantes com múltiplas cobranças pendentes no mês corrente e cria automaticamente um lote por participante, sem necessitar de qualquer ação manual do Organizador.
+
+### Atalhos de Pagamento (One-Click Clearing)
+
+Para facilitar a vida do participante e acelerar o fluxo de caixa do Organizador, o sistema disponibiliza o botão **"Selecionar Tudo e Pagar"**. Este atalho identifica automaticamente todas as faturas em aberto e inicia o fluxo de consolidação de lote com um único toque, eliminando a necessidade de seleção manual de cada serviço.
