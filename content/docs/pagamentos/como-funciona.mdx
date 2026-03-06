@@ -1,13 +1,13 @@
 ---
-titulo: 'Ciclo de Faturação e Cron Job'
+titulo: 'Ciclo de Faturamento e Cron Job'
 descricao: 'Como o motor financeiro funciona: renovações, atrasos e o processo automático diário.'
 ordem: 1
 seccao: 'pagamentos'
 ---
 
-# Ciclo de Faturação e Cron Job
+# Ciclo de Faturamento e Cron Job
 
-O coração do StreamShare é o seu **motor de faturação automático**. Compreender como ele funciona ajuda a evitar sustos e a gerir as suas finanças dentro da plataforma.
+O coração do StreamShare é o seu **motor de faturamento automático**. Compreender como ele funciona ajuda a evitar sustos e a gerenciar as suas finanças dentro da plataforma.
 
 ## O Cron Job Diário
 
@@ -21,11 +21,11 @@ O sistema procura todas as assinaturas ativas com cobranças cujo `dataVenciment
 
 ### Etapa 2 — Consolidação Automática de Lotes
 
-O sistema encontra **todas as cobranças pendentes ou em atraso** que ainda não foram agrupadas num Lote de Pagamento. Agrupa-as **por participante** e cria Lotes automaticamente. Isso significa que, mesmo que o participante não tenha acedido à plataforma, as suas faturas são consolidadas automaticamente num único lote mensal.
+O sistema encontra **todas as cobranças pendentes ou em atraso** que ainda não foram agrupadas num Lote de Pagamento. Agrupa-as **por participante** e cria Lotes automaticamente. Isso significa que, mesmo que o participante não tenha acessado à plataforma, as suas faturas são consolidadas automaticamente num único lote mensal.
 
 - Cada lote recebe uma data de expiração de **+10 dias** a partir da criação automática
 - Um lote automático nunca é criado se já existir um lote para aquele mês e participante (`participanteId + referenciaMes + contaId` é único)
-- Lotes já expirados são automaticamente **cancelados** nesta etapa, devolvendo as cobranças ao estado `pendente` e libertando-as para nova consolidação
+- Lotes já expirados são automaticamente **cancelados** nesta etapa, devolvendo as cobranças ao estado `pendente` e liberando-as para nova consolidação
 
 ### Etapa 3 — Notificações de Cobranças Próximas do Vencimento
 

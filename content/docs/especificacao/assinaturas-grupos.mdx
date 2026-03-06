@@ -1,6 +1,8 @@
 ---
 titulo: "Assinaturas e Grupos"
-description: "Ciclo de vida das assinaturas individuais e em lote, e organização de serviços em grupos de partilha."
+description: "Ciclo de vida das assinaturas individuais e em lote, e organização de serviços em grupos de compartilhamento."
+ordem: 5
+seccao: "especificacao"
 ---
 
 # Assinaturas e Grupos
@@ -15,7 +17,7 @@ O Organizador cria uma assinatura para um Participante ao associá-lo a um Servi
 
 - **Valor da contribuição:** O montante que aquele participante irá pagar por ciclo. Deve ser um valor positivo.
 - **Frequência de pagamento:** O ritmo das cobranças — mensal, trimestral, semestral ou anual. Cada frequência determina automaticamente o período coberto por cada fatura.
-- **Data de início:** O dia em que o acesso do participante começa. O sistema aceita datas com até 1 ano no passado e até 1 mês no futuro, protegendo a integridade dos registos.
+- **Data de início:** O dia em que o acesso do participante começa. O sistema aceita datas com até 1 ano no passado e até 1 mês no futuro, protegendo a integridade dos registros.
 - **Assinalação "Já pago":** Se o Organizador marcar esta opção, o sistema considera o primeiro período como já liquidado, ativando imediatamente a assinatura sem gerar uma cobrança inicial em aberto.
 
 ### Validações antes da Criação
@@ -42,10 +44,10 @@ Para situações em que o Organizador precisa de inscrever simultaneamente vári
 
 ### Integridade na Escrita em Bloco
 
-Para garantir a segurança, a criação em lote é executada numa **transação atómica única**:
+Para garantir a segurança, a criação em lote é executada numa **transação atômica única**:
 - **Tudo ou nada:** Se qualquer um dos pares participante-serviço falhar na validação (por falta de vagas, duplicata, etc.), a operação inteira é revertida (*rollback*). Nenhuma assinatura é criada parcialmente.
 - **Verificação de Vagas:** O sistema calcula a lotação total necessária antes de iniciar a escrita, prevenindo que o último lugar seja ocupado por dois processos simultâneos.
-- **Resiliência:** Devido ao volume de processamento, estas operações têm uma tolerância de tempo alargada para evitar timeouts durante a geração massiva de registos e notificações.
+- **Resiliência:** Devido ao volume de processamento, estas operações têm uma tolerância de tempo alargada para evitar timeouts durante a geração massiva de registros e notificações.
 
 ---
 
@@ -59,17 +61,17 @@ Ocorre quando não existe nenhum período pago em vigor. O acesso do participant
 ### Cancelamento com Período Garantido
 Se o participante tiver uma cobrança paga que ainda cobre o período corrente (por exemplo, pagou a mensalidade de março e ainda estamos em março), o cancelamento é **agendado** para o fim desse período. A assinatura permanece ativa até ao último dia coberto pelo pagamento vigente e só então é encerrada automaticamente pelo sistema.
 
-O Organizador pode registar o motivo do cancelamento, que fica guardado no histórico da assinatura para futuras consultas. Todo o cancelamento obriga ao registo do motivo e do administrador responsável pela ação, mantendo um histórico claro para suporte e transparência.
+O Organizador pode registrar o motivo do cancelamento, que fica guardado no histórico da assinatura para futuras consultas. Todo o cancelamento obriga ao registro do motivo e do administrador responsável pela ação, mantendo um histórico claro para suporte e transparência.
 
 ---
 
-## Grupos de Partilha
+## Grupos de Compartilhamento
 
-Os Grupos permitem ao Organizador agrupar múltiplos Serviços de Streaming sob um mesmo contexto. São particularmente úteis para famílias ou grupos de amigos que subscrevem vários serviços em conjunto.
+Os Grupos permitem ao Organizador agrupar múltiplos Serviços de Streaming sob um mesmo contexto. São particularmente úteis para famílias ou grupos de amigos que assinam vários serviços em conjunto.
 
 ### O que é um Grupo?
 
-Um Grupo tem um nome, uma descrição opcional e uma lista de Serviços associados. O Organizador pode incluir qualquer serviço que pertença à sua conta. Cada grupo recebe automaticamente um **link de partilha único** que pode ser enviado pelo Organizador para os seus membros.
+Um Grupo tem um nome, uma descrição opcional e uma lista de Serviços associados. O Organizador pode incluir qualquer serviço que pertença à sua conta. Cada grupo recebe automaticamente um **link de compartilhamento único** que pode ser enviado pelo Organizador para os seus membros.
 
 ### Mensagem de Renovação Mensal
 

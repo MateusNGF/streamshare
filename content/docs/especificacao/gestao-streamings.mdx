@@ -1,27 +1,29 @@
 ---
 titulo: "Gestão de Streamings"
-description: "Regras e processos relativos ao registo, configuração, visibilidade e ciclo de vida dos serviços de streaming partilhados."
+description: "Regras e processos relativos ao registro, configuração, visibilidade e ciclo de vida dos serviços de streaming compartilhados."
+ordem: 3
+seccao: "especificacao"
 ---
 
 # Gestão de Streamings
 
-Os Serviços de Streaming são o objeto central da partilha no StreamShare. Cada serviço representa uma assinatura real que o Organizador detém (por exemplo, um plano familiar de Netflix ou de Spotify) e que é partilhada com um grupo controlado de participantes.
+Os Serviços de Streaming são o objeto central do compartilhamento no StreamShare. Cada serviço representa uma assinatura real que o Organizador detém (por exemplo, um plano familiar de Netflix ou de Spotify) e que é compartilhada com um grupo controlado de participantes.
 
 ---
 
 ## Catálogo Global de Serviços
 
-Para garantir consistência visual e de dados em toda a plataforma, o StreamShare mantém um **Catálogo Global** de serviços de streaming reconhecidos. Este catálogo é gerido internamente pela equipa do StreamShare e inclui plataformas populares como Netflix, Spotify, Disney+, entre muitas outras.
+Para garantir consistência visual e de dados em toda a plataforma, o StreamShare mantém um **Catálogo Global** de serviços de streaming reconhecidos. Este catálogo é gerenciado internamente pela equipe do StreamShare e inclui plataformas populares como Netflix, Spotify, Disney+, entre muitas outras.
 
-Ao adicionar um novo serviço, o Organizador seleciona o serviço base neste catálogo. O StreamShare herda automaticamente o nome oficial, a logomarca e a categoria do serviço (vídeo, música, jogos, etc.). O Organizador pode, opcionalmente, dar um **apelido personalizado** ao serviço para diferenciá-lo de outros do mesmo tipo — por exemplo, "Netflix - Casa" e "Netflix - Escritório".
+Ao adicionar um novo serviço, o Organizador seleciona o serviço base neste catálogo. O StreamShare herda automaticamente o nome oficial, o logotipo e a categoria do serviço (vídeo, música, jogos, etc.). O Organizador pode, opcionalmente, dar um **apelido personalizado** ao serviço para diferenciá-lo de outros do mesmo tipo — por exemplo, "Netflix - Casa" e "Netflix - Escritório".
 
-> Não é possível adicionar um serviço de streaming sem que este esteja registado no Catálogo Global. Esta restrição garante uniformidade e evita registos duplicados ou com dados inconsistentes.
+> Não é possível adicionar um serviço de streaming sem que este esteja registrado no Catálogo Global. Esta restrição garante uniformidade e evita registros duplicados ou com dados inconsistentes.
 
 ---
 
 ## Limites por Plano
 
-O número de serviços que um Organizador pode gerir em simultâneo depende diretamente do seu plano de subscrição no StreamShare:
+O número de serviços que um Organizador pode gerenciar em simultâneo depende diretamente do seu plano de assinatura no StreamShare:
 
 | Plano | Máximo de Serviços |
 |---|---|
@@ -35,15 +37,13 @@ Ao atingir o limite do plano, o Organizador deve fazer upgrade ou remover servi�
 
 ## Configuração de um Serviço
 
-Ao registar um novo serviço, o Organizador define as seguintes informações:
+Ao registrar um novo serviço, o Organizador define as seguintes informações:
 
 - **Valor Total da Assinatura:** O custo completo que o Organizador paga à plataforma (ex: R$ 59,90 pelo plano Netflix Premium).
-- **Número Máximo de Vagas:** Quantas pessoas podem partilhar o serviço em simultâneo. A plataforma nunca permite ultrapassar este limite.
-- **Frequências de Pagamento Permitidas:** Quais os ciclos aceites para as cobranças dos participantes — mensal, trimestral, semestral ou anual.
+- **Número Máximo de Vagas:** Quantas pessoas podem compartilhar o serviço em simultâneo. A plataforma nunca permite ultrapassar este limite.
+- **Frequências de Pagamento Permitidas:** Quais os ciclos aceitos para as cobranças dos participantes — mensal, trimestral, semestral ou anual.
 - **Apelido:** Nome personalizado para identificar este serviço no painel.
-- **Credenciais de Acesso:** O Organizador pode guardar as credenciais (login e palavra-passe) do serviço. Por segurança, as palavras-passe são **armazenadas de forma encriptada**, garantindo que nunca fiquem expostas em texto claro na base de dados.
-- **Frequências de Pagamento Permitidas:** Quais os ciclos aceites para as cobranças dos participantes — mensal, trimestral, semestral ou anual.
-- **Apelido:** Nome personalizado para identificar este serviço no painel.
+- **Credenciais de Acesso:** O Organizador pode guardar as credenciais (login e senha) do serviço. Por segurança, as senhas são **armazenadas de forma criptografada**, garantindo que nunca fiquem expostas em texto claro na base de dados.
 - **Token Público de Acesso:** Cada serviço recebe automaticamente um identificador único universal (UUID) que permite o acesso direto à sua página de detalhes pública sem necessidade de login.
 
 ---
@@ -52,9 +52,9 @@ Ao registar um novo serviço, o Organizador define as seguintes informações:
 
 Por padrão, um serviço é privado — visível apenas aos participantes já vinculados e ao Organizador. O Organizador pode, contudo, tornar o serviço **público**, o que significa que ele passa a aparecer na página Explorer da plataforma.
 
-O Explorer é um espaço aberto onde qualquer utilizador autenticado pode navegar e descobrir serviços de streaming com vagas disponíveis. Quando um serviço é público, o Organizador pode configurar duas modalidades de ingresso:
+O Explorer é um espaço aberto onde qualquer usuário autenticado pode navegar e descobrir serviços de streaming com vagas disponíveis. Quando um serviço é público, o Organizador pode configurar duas modalidades de ingresso:
 
-- **Aprovação Automática:** Qualquer utilizador que solicite uma vaga é aceite imediatamente e uma assinatura é criada de forma automática — sem intervenção manual do Organizador.
+- **Aprovação Automática:** Qualquer usuário que solicite uma vaga é aceito imediatamente e uma assinatura é criada de forma automática — sem intervenção manual do Organizador.
 - **Aprovação Manual:** A solicitação de ingresso fica pendente e o Organizador é notificado. O Organizador tem 48 horas para aprovar ou recusar o pedido. Após esse prazo, a solicitação expira.
 
 Quando o último lugar de um serviço público é ocupado, o serviço é automaticamente removido do Explorer até que uma vaga fique disponível.
@@ -82,7 +82,7 @@ Para remover um serviço com participantes ativos, o Organizador deve primeiro c
 
 ### Preservação de Histórico (Remoção Lógica)
 
-Quando um serviço é removido, o sistema executa uma **remoção lógica** (*soft delete*). O registo não desaparece da base de dados; em vez disso, é marcado como inativo e a data de remoção é registada. Isto permite que:
+Quando um serviço é removido, o sistema executa uma **remoção lógica** (*soft delete*). O registro não desaparece da base de dados; em vez disso, é marcado como inativo e a data de remoção é registrada. Isto permite que:
 - Relatórios financeiros e faturas antigas continuem a exibir os dados corretos do serviço que existia na altura.
 - O histórico de auditoria da conta permaneça íntegro.
-- O Organizador possa consultar dados de serviços descontinuados para fins contabilísticos.
+- O Organizador possa consultar dados de serviços descontinuados para fins contábeis.

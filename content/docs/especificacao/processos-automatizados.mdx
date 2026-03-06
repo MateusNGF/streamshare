@@ -1,11 +1,13 @@
 ---
 titulo: "Processos Automatizados"
 description: "Rotinas de fundo executadas periodicamente pelo sistema para manter a consistência do ciclo financeiro e operacional da plataforma."
+ordem: 8
+seccao: "especificacao"
 ---
 
 # Processos Automatizados
 
-O StreamShare executa um conjunto de processos em segundo plano, de forma regular e silenciosa, sem necessitar de qualquer intervenção manual do Organizador. Estes processos garantem que o estado financeiro de todas as contas está sempre atualizado, que os participantes são notificados atempadamente e que os registos do sistema se mantêm consistentes.
+O StreamShare executa um conjunto de processos em segundo plano, de forma regular e silenciosa, sem necessitar de qualquer intervenção manual do Organizador. Estes processos garantem que o estado financeiro de todas as contas está sempre atualizado, que os participantes são notificados em tempo hábil e que os registros do sistema se mantêm consistentes.
 
 ### Garantia de Execução Única (Advisory Locks)
 
@@ -13,11 +15,11 @@ Para prevenir que dois processos de renovação corram ao mesmo tempo e gerem co
 
 ---
 
-## Ciclo de Renovação e Faturação
+## Ciclo de Renovação e Faturamento
 
 Este é o processo central da plataforma. É executado periodicamente e percorre todas as assinaturas ativas para avaliar as ações necessárias em cada uma, seguindo uma ordem rigorosa de prioridade:
 
-**1. Sincronização de Atrasos:** Antes de qualquer outra ação, o sistema identifica faturas pendentes que ultrapassaram o vencimento e atualiza-as para o estado de "Incumprimento" (Atraso). Esta atualização garante que os painéis de controlo reflectem a situação real em tempo útil.
+**1. Sincronização de Atrasos:** Antes de qualquer outra ação, o sistema identifica faturas pendentes que ultrapassaram o vencimento e atualiza-as para o estado de "Inadimplência" (Atraso). Esta atualização garante que os painéis de controle refletem a situação real em tempo útil.
 
 **2. Execução de Cancelamentos Agendados**
 

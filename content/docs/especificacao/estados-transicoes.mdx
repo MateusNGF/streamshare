@@ -1,11 +1,13 @@
 ---
 titulo: "Estados e Transições"
 description: "Ciclo de vida completo das entidades transacionais da plataforma — assinaturas, cobranças, lotes e convites."
+ordem: 11
+seccao: "especificacao"
 ---
 
 # Estados e Transições
 
-As principais entidades financeiras e operacionais do StreamShare percorrem um ciclo de vida bem definido. Compreender os estados e as transições possíveis é fundamental para interpretar o painel de controlo e tomar as decisões certas em cada momento.
+As principais entidades financeiras e operacionais do StreamShare percorrem um ciclo de vida bem definido. Compreender os estados e as transições possíveis é fundamental para interpretar o painel de controle e tomar as decisões certas em cada momento.
 
 ---
 
@@ -35,7 +37,7 @@ Cada cobrança corresponde a um período específico de uso de um serviço e ao 
 | Estado | Descrição | Transições Possíveis |
 |---|---|---|
 | **Pendente** | Cobrança gerada e aguardando pagamento dentro do prazo. | → Em Atraso; → Aguardando Aprovação; → Cancelada |
-| **Em Atraso** | O prazo de vencimento passou e o pagamento ainda não foi registado. | → Aguardando Aprovação; → Paga; → Cancelada |
+| **Em Atraso** | O prazo de vencimento passou e o pagamento ainda não foi registrado. | → Aguardando Aprovação; → Paga; → Cancelada |
 | **Aguardando Aprovação** | O participante submeteu um comprovante e aguarda validação do Organizador. | → Paga (aprovação); → Pendente (rejeição) |
 | **Paga** | Pagamento confirmado. Estado terminal. | — (sem retorno) |
 | **Cancelada** | Cobrança anulada pelo Organizador. Estado terminal. | — (sem retorno) |
@@ -61,8 +63,8 @@ Os convites controlam o processo de ingresso de novos membros na conta de um Org
 
 | Estado | Descrição | Transições Possíveis |
 |---|---|---|
-| **Pendente** | Convite emitido por e-mail e aguardando resposta do destinatário. Válido por 7 dias. | → Aceite; → Recusado; → Expirado |
-| **Solicitado** | Pedido de ingresso submetido pelo utilizador via Explorer. Válido por 48 horas. | → Aceite; → Recusado; → Expirado |
-| **Aceite** | O utilizador aceitou o convite ou o pedido foi aprovado. Estado terminal. | — (sem retorno) |
+| **Pendente** | Convite emitido por e-mail e aguardando resposta do destinatário. Válido por 7 dias. | → Aceito; → Recusado; → Expirado |
+| **Solicitado** | Pedido de ingresso submetido pelo usuário via Explorer. Válido por 48 horas. | → Aceito; → Recusado; → Expirado |
+| **Aceito** | O usuário aceitou o convite ou o pedido foi aprovado. Estado terminal. | — (sem retorno) |
 | **Recusado** | O convite foi cancelado pelo Organizador ou o pedido foi rejeitado. Estado terminal. | — (sem retorno) |
 | **Expirado** | O prazo de validade terminou sem resposta. Estado terminal. | — (sem retorno) |

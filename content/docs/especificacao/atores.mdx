@@ -1,23 +1,25 @@
 ---
 titulo: "Atores do Sistema"
-description: "Perfis, papéis e responsabilidades dos utilizadores que interagem com a plataforma StreamShare."
+description: "Perfis, papéis e responsabilidades dos usuários que interagem com a plataforma StreamShare."
+ordem: 1
+seccao: "especificacao"
 ---
 
 # Atores do Sistema
 
-O StreamShare distingue quatro perfis distintos de utilizadores. Cada perfil tem um conjunto específico de permissões e responsabilidades dentro da plataforma.
+O StreamShare distingue quatro perfis distintos de usuários. Cada perfil tem um conjunto específico de permissões e responsabilidades dentro da plataforma.
 
 ---
 
 ## 1. Visitante
 
-O Visitante é qualquer pessoa que acede à plataforma sem uma conta ativa. Apesar de não poder gerir nenhum serviço ou participante, tem acesso a áreas públicas relevantes:
+O Visitante é qualquer pessoa que acessa a plataforma sem uma conta ativa. Apesar de não poder gerenciar nenhum serviço ou participante, tem acesso a áreas públicas relevantes:
 
 - **Página Explorer:** Navegação pelos serviços de streaming publicados publicamente pelos Organizadores, com possibilidade de solicitar uma vaga.
 - **Links de Convite:** Acesso a um convite específico enviado por um Organizador, podendo aceitar o convite após criar uma conta na plataforma.
-- **Páginas Públicas de Serviços:** Visualização de detalhes de um streaming específico cujo link tenha sido partilhado.
+- **Páginas Públicas de Serviços:** Visualização de detalhes de um streaming específico cujo link tenha sido compartilhado.
 
-> Para além de visualizar, qualquer ação operacional (solicitar vaga, aceitar convite) exige a criação prévia de uma conta.
+> Além de visualizar, qualquer ação operacional (solicitar vaga, aceitar convite) exige a criação prévia de uma conta.
 
 ---
 
@@ -25,25 +27,25 @@ O Visitante é qualquer pessoa que acede à plataforma sem uma conta ativa. Apes
 
 O Organizador é o ator central da plataforma. É quem cria, configura e mantém toda a estrutura de partilha de assinaturas. Ao criar a sua conta, assume automaticamente o papel de proprietário com privilégios totais.
 
-Pode convidar outros utilizadores para co-administrar a conta com o papel de **Administrador**, partilhando responsabilidades de gestão, sem abdicar do controlo de topo.
+Pode convidar outros usuários para co-administrar a conta com o papel de **Administrador**, compartilhando responsabilidades de gestão, sem abdicar do controle de topo.
 
 ### Responsabilidades do Organizador
 
 **Gestão de Serviços:**
 - Adicionar novos serviços de streaming ao seu painel, com base no catálogo global;
-- Definir o valor total da assinatura, o número máximo de vagas e as frequências de pagamento aceites;
+- Definir o valor total da assinatura, o número máximo de vagas e as frequências de pagamento aceitas;
 - Configurar a visibilidade pública do serviço e a política de aprovação de novos membros.
 
 **Gestão de Participantes:**
 - Adicionar, editar e remover participantes da sua conta;
 - Convidar membros por e-mail ou aprovar solicitações recebidas pelo Explorer;
-- Verificar o contacto WhatsApp de um participante para ativar as notificações automáticas.
+- Verificar o contato WhatsApp de um participante para ativar as notificações automáticas.
 
 **Gestão Financeira:**
-- Criar e gerir assinaturas individuais, definindo valor e frequência de pagamento;
-- Confirmar ou rejeitar comprovativos de pagamento enviados pelos participantes;
+- Criar e gerenciar assinaturas individuais, definindo valor e frequência de pagamento;
+- Confirmar ou rejeitar comprovantes de pagamento enviados pelos participantes;
 - Consolidar cobranças de um mesmo participante num lote único para facilitar a liquidação;
-- Monitorizar o estado de pagamento de cada participante e o saldo mensal da conta.
+- Monitorar o estado de pagamento de cada participante e o saldo mensal da conta.
 
 **Gestão de Comunicações:**
 - Enviar notificações WhatsApp manuais para avisar participantes de cobranças pendentes ou em atraso;
@@ -52,20 +54,20 @@ Pode convidar outros utilizadores para co-administrar a conta com o papel de **A
 **Configurações da Conta:**
 - Definir a moeda de preferência para formatação de valores;
 - Configurar os dias do mês em que as cobranças são geradas automaticamente;
-- Registar a chave de pagamento instantâneo (PIX) que aparecerá nas mensagens de cobrança.
+- Registrar a chave de pagamento instantâneo (PIX) que aparecerá nas mensagens de cobrança.
 
 ---
 
 ## 3. Participante
 
-O Participante é o consumidor final dos serviços partilhados. O seu papel é mais restrito: recebe cobranças, efectua pagamentos e acompanha o seu histórico financeiro na partilha.
+O Participante é o consumidor final dos serviços compartilhados. O seu papel é mais restrito: recebe cobranças, efetua pagamentos e acompanha o seu histórico financeiro na partilha.
 
 Existem dois subtipos de Participante:
 
 ### Participante Vinculado (com conta)
-Possui registo de acesso próprio na plataforma, o que lhe permite:
-- Aceder ao painel pessoal e consultar todas as suas cobranças ativas e históricas;
-- Submeter comprovativos de pagamento diretamente pela plataforma;
+Possui registro de acesso próprio na plataforma, o que lhe permite:
+- Acessar ao painel pessoal e consultar todas as suas cobranças ativas e históricas;
+- Submeter comprovantes de pagamento diretamente pela plataforma;
 - Consolidar as suas próprias cobranças num Lote para facilitar a liquidação;
 - Receber notificações in-app sobre o estado das suas faturas;
 - Solicitar entrada em serviços públicos através do Explorer.
@@ -79,7 +81,7 @@ Existe apenas no painel do Organizador, sem acesso direto à plataforma. A gest�
 
 ## 4. Administrador do Sistema (StreamShare)
 
-Utilizador interno da equipa de operações da StreamShare. Não gere partilhas de utilizadores finais, mas tem responsabilidades globais sobre a infraestrutura de conteúdo da plataforma:
+Usuário interno da equipe de operações da StreamShare. Não gerencia partilhas de usuários finais, mas tem responsabilidades globais sobre a infraestrutura de conteúdo da plataforma:
 
 - **Catálogo Global:** Adição, edição e desativação de plataformas de streaming disponíveis para todos os Organizadores (ex: Netflix, Spotify, Disney+);
 - **Auditoria de Contas:** Acesso a dados consolidados de todas as contas para fins de suporte e resolução de problemas;

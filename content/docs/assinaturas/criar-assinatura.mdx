@@ -1,11 +1,11 @@
 ---
-titulo: 'Criar e Gerir uma Assinatura'
+titulo: 'Criar e Gerenciar uma Assinatura'
 descricao: 'Fluxo completo de criação, validações do sistema e estados possíveis.'
 ordem: 1
 seccao: 'assinaturas'
 ---
 
-# Criar e Gerir uma Assinatura
+# Criar e Gerenciar uma Assinatura
 
 Este guia é para o **Administrador da Conta** — quem cria o grupo de streaming e é responsável por ele.
 
@@ -18,9 +18,9 @@ Para criar uma assinatura, a sua conta precisa:
 ## Fluxo de Criação
 
 <Steps>
-1. **Aceda ao Dashboard e clique em "Nova Assinatura"** na secção "Minhas Assinaturas".
+1. **Acesse o Dashboard e clique em "Nova Assinatura"** na seção "Minhas Assinaturas".
 2. **Escolha o serviço** no catálogo de streamings suportados (Netflix, Spotify, Amazon Prime, etc.)
-3. **Defina as vagas**: O número de participantes que irão partilhar o custo. O sistema divide automaticamente o valor total da conta.
+3. **Defina as vagas**: O número de participantes que irão compartilhar o custo. O sistema divide automaticamente o valor total da conta.
 4. **Defina o dia de vencimento**: O dia do mês em que as cobranças serão geradas para os participantes.
 5. **Confirme e aguarde participantes**: O grupo é criado e um link de convite é gerado.
 </Steps>
@@ -31,7 +31,7 @@ O sistema verifica automaticamente, em **transação ACID** para evitar corridas
 
 - `limiteParticipantes` — Se o número de vagas está dentro do permitido pelo plano do streamings
 - `status` das assinaturas existentes — Conta apenas assinaturas `ativa`, `suspensa` ou `pendente` para calcular o espaço ocupado
-- Ao aceitar o último convite disponível, todos os pedidos pendentes de outros utilizadores são **automaticamente recusados** e eles são notificados
+- Ao aceitar o último convite disponível, todos os pedidos pendentes de outros usuários são **automaticamente recusados** e eles são notificados
 
 ## Estados de uma Assinatura
 
@@ -43,7 +43,7 @@ suspensa  →  ativa (após pagamento) | cancelada
 
 | Estado | Significado |
 |---|---|
-| `pendente` | 1ª cobrança gerada, aguardando pagamento para activar |
+| `pendente` | 1ª cobrança gerada, aguardando pagamento para ativar |
 | `ativa` | Participante pagou; acesso confirmado |
 | `suspensa` | Participante entrou em atraso; acesso suspenso pelo sistema |
 | `cancelada` | Saiu do grupo definitivamente |

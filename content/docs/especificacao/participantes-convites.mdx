@@ -1,17 +1,19 @@
 ---
 titulo: "Participantes e Convites"
-description: "Gestão de membros, regras de unicidade, mecanismos de convite e fluxos de ingresso autónomo via Explorer."
+description: "Gestão de membros, regras de unicidade, mecanismos de convite e fluxos de ingresso autônomo via Explorer."
+ordem: 4
+seccao: "especificacao"
 ---
 
 # Participantes e Convites
 
-Os Participantes são os membros que integram as partilhas de streaming geridas por um Organizador. A plataforma oferece múltiplos mecanismos para adicionar e gerir estes membros, desde a inserção manual até ao ingresso autónomo via link de convite ou pelo Explorer.
+Os Participantes são os membros que integram os compartilhamentos de streaming gerenciados por um Organizador. A plataforma oferece múltiplos mecanismos para adicionar e gerenciar estes membros, desde a inserção manual até ao ingresso autônomo via link de convite ou pelo Explorer.
 
 ---
 
-## Registo de Participantes
+## Registro de Participantes
 
-O Organizador pode adicionar participantes manualmente, fornecendo os dados de contacto de cada pessoa. Os campos disponíveis são:
+O Organizador pode adicionar participantes manualmente, fornecendo os dados de contato de cada pessoa. Os campos disponíveis são:
 
 - **Nome** (obrigatório);
 - **Número de WhatsApp** (opcional, necessário para notificações);
@@ -29,11 +31,11 @@ Estas restrições evitam duplicações que poderiam gerar cobranças duplicadas
 
 ### Vinculação Automática a uma Conta StreamShare
 
-Se o e-mail de um participante corresponder a um utilizador já registado na plataforma, o sistema estabelece automaticamente o vínculo entre os dois. A partir desse momento, o participante passa a ter acesso ao seu painel pessoal de faturas sem necessitar de fazer qualquer ação adicional.
+Se o e-mail de um participante corresponder a um usuário já registrado na plataforma, o sistema estabelece automaticamente o vínculo entre os dois. A partir desse momento, o participante passa a ter acesso ao seu painel pessoal de faturas sem necessitar de fazer qualquer ação adicional.
 
 ### Herança de Verificação de WhatsApp
 
-Quando um Organizador adiciona um participante com um número de WhatsApp, a plataforma verifica se esse número já foi validado por outro utilizador do StreamShare. Se sim, a verificação é herdada automaticamente — dispensando o participante de passar pelo processo de validação novamente.
+Quando um Organizador adiciona um participante com um número de WhatsApp, a plataforma verifica se esse número já foi validado por outro usuário do StreamShare. Se sim, a verificação é herdada automaticamente — dispensando o participante de passar pelo processo de validação novamente.
 
 ---
 
@@ -59,7 +61,7 @@ A remoção de um participante não elimina o seu histórico financeiro — toda
 
 ## Convites por E-mail
 
-O mecanismo de convite por e-mail permite ao Organizador convidar um utilizador externo para integrar a sua conta no StreamShare. O utilizador convidado recebe um e-mail com um link exclusivo e com prazo de validade de **7 dias**.
+O mecanismo de convite por e-mail permite ao Organizador convidar um usuário externo para integrar a sua conta no StreamShare. O usuário convidado recebe um e-mail com um link exclusivo e com prazo de validade de **7 dias**.
 
 ### Regras do Fluxo de Convite
 
@@ -67,33 +69,33 @@ O mecanismo de convite por e-mail permite ao Organizador convidar um utilizador 
 - **Participante Já Ativo:** Se o e-mail já pertencer a um membro da conta, o convite é bloqueado.
 - **Prevenção de Duplicados:** O sistema não permite enviar um novo convite se já existir um pendente e dentro do prazo para o mesmo destinatário.
 - **Prazo de Expiração:** Os convites têm uma validade estrita de **7 dias**.
-- **Vínculo a Serviço:** O convite pode ser vinculado a um serviço específico — ao aceitar, o utilizador convidado é automaticamente inscrito nesse serviço.
+- **Vínculo a Serviço:** O convite pode ser vinculado a um serviço específico — ao aceitar, o usuário convidado é automaticamente inscrito nesse serviço.
 
 ### Aceitação do Convite
 
-Quando o utilizador aceita o convite:
+Quando o usuário aceita o convite:
 1. Deve estar autenticado na plataforma (ou criar uma conta caso ainda não tenha).
-2. É automaticamente registado como participante na conta do Organizador.
-3. Se o convite estiver vinculado a um serviço e o utilizador ainda não tiver uma assinatura ativa para ele, a assinatura e a primeira cobrança são criadas imediatamente.
+2. É automaticamente registrado como participante na conta do Organizador.
+3. Se o convite estiver vinculado a um serviço e o usuário ainda não tiver uma assinatura ativa para ele, a assinatura e a primeira cobrança são criadas imediatamente.
 
 ---
 
 ## Ingresso pelo Explorer (Solicitações Públicas)
 
-O Explorer é a área pública da plataforma onde utilizadores autenticados podem descobrir serviços de streaming com vagas disponíveis.
+O Explorer é a área pública da plataforma onde usuários autenticados podem descobrir serviços de streaming com vagas disponíveis.
 
 ### Fluxo com Aprovação Automática
 
 Se o Organizador do serviço ativou a aprovação automática:
-1. O utilizador clica em "Solicitar Entrada" no Explorer.
+1. O usuário clica em "Solicitar Entrada" no Explorer.
 2. A plataforma verifica se ainda existem vagas disponíveis.
-3. O utilizador é imediatamente registado como participante e a assinatura é criada, sem qualquer intervenção do Organizador.
+3. O usuário é imediatamente registrado como participante e a assinatura é criada, sem qualquer intervenção do Organizador.
 
 ### Fluxo com Aprovação Manual
 
 Se o serviço requer aprovação manual:
-1. O utilizador submete a sua "Intenção de Ingresso" pelo Explorer.
+1. O usuário submete a sua "Intenção de Ingresso" pelo Explorer.
 2. A solicitação fica pendente e os Administradores da conta são notificados.
 3. A solicitação expira automaticamente após **48 horas** caso não seja aprovada ou recusada.
-4. Se o Organizador aprovar, o utilizador é registado como participante e a assinatura é criada.
-5. Se o Organizador recusar, o utilizador recebe uma notificação informando que o seu pedido não foi aceite.
+4. Se o Organizador aprovar, o usuário é registrado como participante e a assinatura é criada.
+5. Se o Organizador recusar, o usuário recebe uma notificação informando que o seu pedido não foi aceito.

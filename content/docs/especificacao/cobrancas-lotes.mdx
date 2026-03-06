@@ -1,11 +1,13 @@
 ---
 titulo: "Cobranças e Lotes"
 description: "Ciclo financeiro completo das cobranças individuais e consolidação de múltiplas faturas num único lote de pagamento."
+ordem: 6
+seccao: "especificacao"
 ---
 
 # Cobranças e Lotes de Pagamento
 
-As cobranças são a unidade financeira fundamental do StreamShare. Cada cobrança representa um período de uso de um serviço e o valor que o participante deve pagar por ele. Esta secção explica como as cobranças funcionam, como são confirmadas e como podem ser consolidadas para simplificar o processo de pagamento.
+As cobranças são a unidade financeira fundamental do StreamShare. Cada cobrança representa um período de uso de um serviço e o valor que o participante deve pagar por ele. Esta seção explica como as cobranças funcionam, como são confirmadas e como podem ser consolidadas para simplificar o processo de pagamento.
 
 ---
 
@@ -16,17 +18,17 @@ As cobranças são a unidade financeira fundamental do StreamShare. Cada cobran�
 As cobranças são geradas de forma automática pelo sistema em dois momentos:
 
 1. **No momento da criação da assinatura:** A primeira cobrança é gerada imediatamente, cobrindo o período desde a data de início até ao próximo vencimento configurado (ou o período completo, se não houver dias de vencimento definidos).
-2. **No ciclo de renovação:** Próximo ao fim de cada período coberto, o sistema gera automaticamente a cobrança do ciclo seguinte, garantindo a continuidade do controlo financeiro.
+2. **No ciclo de renovação:** Próximo ao fim de cada período coberto, o sistema gera automaticamente a cobrança do ciclo seguinte, garantindo a continuidade do controle financeiro.
 
 ### Confirmação de Pagamento
 
-Quando um participante efectua o pagamento de uma cobrança, o Organizador pode confirmá-lo de duas formas:
+Quando um participante efetua o pagamento de uma cobrança, o Organizador pode confirmá-lo de duas formas:
 
-- **Confirmação direta:** O Organizador marca a cobrança como paga no painel, registando o método de pagamento ou adicionando uma nota.
-- **Confirmação com comprovativo:** O Organizador (ou o participante) anexa um comprovante. O sistema utiliza **armazenamento externo seguro** para estas imagens, garantindo que os documentos fiquem acessíveis para auditoria sem sobrecarregar a base de dados principal.
+- **Confirmação direta:** O Organizador marca a cobrança como paga no painel, registrando o método de pagamento ou adicionando uma nota.
+- **Confirmação com comprovante:** O Organizador (ou o participante) anexa um comprovante. O sistema utiliza **armazenamento externo seguro** para estas imagens, garantindo que os documentos fiquem acessíveis para auditoria sem sobrecarregar a base de dados principal.
 - **Idempotência:** O sistema garante que uma cobrança paga nunca seja confirmada duas vezes, prevenindo duplicações de balanço.
 
-### Rejeição de Comprovativo
+### Rejeição de Comprovante
 
 Se o comprovante submetido pelo participante apresentar inconsistências (valor errado, data incorreta, transferência para conta diferente, etc.), o Organizador pode **rejeitar o comprovante**:
 
@@ -45,15 +47,15 @@ Quando uma cobrança é confirmada como paga e a assinatura associada se encontr
 
 ## Lotes de Pagamento (Faturas Consolidadas)
 
-Participantes que subscrevam múltiplos serviços numa mesma conta acumularão várias cobranças em aberto ao longo do mês. Para simplificar a liquidação, o StreamShare permite consolidar todas essas cobranças numa **única fatura unificada**, chamada Lote de Pagamento.
+Participantes que assinem múltiplos serviços numa mesma conta acumularão várias cobranças em aberto ao longo do mês. Para simplificar a liquidação, o StreamShare permite consolidar todas essas cobranças numa **única fatura unificada**, chamada Lote de Pagamento.
 
 ### Como Funciona
 
 Um Lote agrupa as cobranças pendentes ou em atraso de **um único participante**. Não é possível misturar cobranças de participantes diferentes num mesmo lote.
 
-**Controlo de Concorrência:** O sistema possui mecanismos de proteção que impedem que uma mesma cobrança seja incluída em dois lotes diferentes ao mesmo tempo. Se uma cobrança for paga ou agrupada enquanto o Organizador prepara um lote, a operação é interrompida para evitar inconsistências.
+**Controle de Concorrência:** O sistema possui mecanismos de proteção que impedem que uma mesma cobrança seja incluída em dois lotes diferentes ao mesmo tempo. Se uma cobrança for paga ou agrupada enquanto o Organizador prepara um lote, a operação é interrompida para evitar inconsistências.
 
-O valor total do lote é a soma dos valores de todas as cobranças incluídas. O participante efectua um único pagamento (uma transferência PIX, por exemplo) e submete um único comprovante para liquidar todas as faturas de uma só vez.
+O valor total do lote é a soma dos valores de todas as cobranças incluídas. O participante efetua um único pagamento (uma transferência PIX, por exemplo) e submete um único comprovante para liquidar todas as faturas de uma só vez.
 
 ### Prazos de Validade
 

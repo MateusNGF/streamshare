@@ -1,6 +1,7 @@
 import React from 'react';
 import { Info, AlertTriangle, Lightbulb, AlertCircle } from 'lucide-react';
 import { HeadingWithCopy } from './HeadingWithCopy';
+import { Mermaid } from './Mermaid';
 
 interface CalloutProps {
     tipo?: 'info' | 'aviso' | 'dica' | 'perigo';
@@ -71,17 +72,30 @@ export const mdxComponents = {
     li: (props: React.HTMLAttributes<HTMLLIElement>) => <li className="leading-relaxed" {...props} />,
     strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold text-gray-900" {...props} />,
     blockquote: (props: React.HTMLAttributes<HTMLElement>) => <blockquote className="border-l-4 border-gray-200 pl-4 py-1 italic text-gray-600 my-6 bg-gray-50 rounded-r-lg" {...props} />,
-    code: (props: React.HTMLAttributes<HTMLElement> & { className?: string }) => {
+    code: (props: React.HTMLAttributes<HTMLElement> & { className?: string; children?: React.ReactNode }) => {
+        const isMermaid = props.className === 'language-mermaid';
+        if (isMermaid) {
+            return <Mermaid chart={String(props.children)} />;
+        }
         const isInline = !props.className?.includes('language-');
         if (isInline) {
             return <code className="bg-gray-100 text-gray-800 rounded px-1.5 py-0.5 text-sm font-medium" {...props} />;
         }
         return <code {...props} />;
     },
-    pre: (props: React.HTMLAttributes<HTMLPreElement>) => (
-        <pre className="mb-6 p-4 rounded-lg bg-gray-900 overflow-x-auto text-[13px] leading-relaxed text-gray-50 shadow-sm border border-transparent" {...props} />
-    ),
+    pre: (props: React.HTMLAttributes<HTMLPreElement>) => {
+        const isMermaid = React.isValidElement(props.children) &&
+            (props.children.props as any)?.className === 'language-mermaid';
+
+        if (isMermaid) {
+            return <>{props.children}</>;
+        }
+        return (
+            <pre className="mb-6 p-4 rounded-lg bg-gray-900 overflow-x-auto text-[13px] leading-relaxed text-gray-50 shadow-sm border border-transparent" {...props} />
+        );
+    },
     hr: (props: React.HTMLAttributes<HTMLHRElement>) => <hr className="my-10 border-gray-200" {...props} />,
     Callout,
     Steps,
+    StepItem,
 };

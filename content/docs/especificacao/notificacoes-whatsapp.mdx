@@ -1,11 +1,13 @@
 ---
 titulo: "Notificações WhatsApp"
 description: "Regras de negócio para o envio de notificações automáticas e manuais via WhatsApp aos participantes."
+ordem: 7
+seccao: "especificacao"
 ---
 
 # Notificações WhatsApp
 
-O StreamShare integra-se com o WhatsApp para garantir que os participantes recebem os avisos financeiros no canal que utilizam no dia a dia. Esta secção descreve quando e como estas notificações são enviadas, tanto de forma automática como a pedido do Organizador.
+O StreamShare integra-se com o WhatsApp para garantir que os participantes recebam os avisos financeiros no canal que utilizam no dia a dia. Esta seção descreve quando e como estas notificações são enviadas, tanto de forma automática como a pedido do Organizador.
 
 ---
 
@@ -13,10 +15,10 @@ O StreamShare integra-se com o WhatsApp para garantir que os participantes receb
 
 Para que um participante possa receber notificações via WhatsApp, são necessárias duas condições:
 
-1. **Número de WhatsApp verificado:** O participante deve ter um número registado e validado na plataforma. A verificação é feita por um código enviado ao próprio número (ver [Participantes e Convites](/docs/especificacao/participantes-convites)).
+1. **Número de WhatsApp verificado:** O participante deve ter um número registrado e validado na plataforma. A verificação é feita por um código enviado ao próprio número (ver [Participantes e Convites](/docs/especificacao/participantes-convites)).
 2. **Integração ativa na conta:** O Organizador deve ter a integração WhatsApp configurada e ativa nas definições da sua conta.
 
-Se uma dessas condições não estiver satisfeita e o Organizador tentar enviar uma notificação, o sistema oferece um **link de envio manual** (`wa.me`) com a mensagem já pré-formatada, permitindo ao Organizador copiar e enviar pelo seu próprio telemóvel.
+Se uma dessas condições não estiver satisfeita e o Organizador tentar enviar uma notificação, o sistema oferece um **link de envio manual** (`wa.me`) com a mensagem já pré-formatada, permitindo ao Organizador copiar e enviar pelo seu próprio celular.
 
 ---
 
@@ -28,7 +30,7 @@ O conteúdo da mensagem enviada é determinado automaticamente pelo estado da co
 |---|---|
 | **Pendente (a vencer)** | Aviso amigável informando que a cobrança se aproxima do prazo de vencimento, com o número de dias restantes |
 | **Em Atraso** | Alerta informando que a cobrança está vencida, com o número de dias de atraso |
-| **Paga** | Confirmação de que o pagamento foi recebido e registado com sucesso |
+| **Paga** | Confirmação de que o pagamento foi recebido e registrado com sucesso |
 
 ---
 
@@ -54,4 +56,4 @@ A mensagem consolidada lista todos os serviços com cobranças em aberto, o valo
 
 ## Notificações Automáticas (Cron)
 
-Para além dos envios manuais, o StreamShare executa rotinas automáticas de notificação que verificam periodicamente as cobranças de todas as contas com a integração WhatsApp ativa. Estas rotinas são detalhadas na secção [Processos Automatizados](/docs/especificacao/processos-automatizados).
+Para além dos envios manuais, o StreamShare executa rotinas automáticas de notificação que verificam periodicamente as cobranças de todas as contas com a integração WhatsApp ativa. Estas rotinas são detalhadas na seção [Processos Automatizados](/docs/especificacao/processos-automatizados).

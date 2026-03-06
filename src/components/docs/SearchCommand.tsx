@@ -59,7 +59,7 @@ export function SearchCommand({ sections }: SearchCommandProps) {
                 <Command.Dialog
                     open={open}
                     onOpenChange={setOpen}
-                    className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[20vh] p-4"
+                    className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[20vh] p-6"
                 >
                     <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <Command

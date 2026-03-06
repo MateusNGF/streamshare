@@ -1,7 +1,7 @@
 ---
 titulo: 'O que é o StreamShare?'
-descricao: 'Missão, modelo de negócio e como a plataforma protege todos os utilizadores.'
-ordem: 2
+descricao: 'Missão, modelo de negócio e como a plataforma protege todos os usuários.'
+ordem: 1
 seccao: 'introducao'
 ---
 
@@ -14,23 +14,23 @@ O **StreamShare** é uma plataforma B2C que facilita a **partilha legal e organi
 
 ## Modelo de Funcionamento
 
-O StreamShare actua como um **intermediário financeiro e tecnológico**:
+O StreamShare **atua** como um **intermediário financeiro e tecnológico**:
 
 - Gere os ciclos de cobrança de forma automática
 - Retém o dinheiro em custódia e repassa ao administrador após confirmação
-- Suspende o acesso de utilizadores inadimplentes automaticamente (via Cron Job diário)
+- Suspende o acesso de **usuários** inadimplentes automaticamente (via Cron Job diário)
 - Envia notificações por e-mail, WhatsApp e no app
 
 ## O que o StreamShare **não** garante
 
 <Callout tipo="aviso">
-O StreamShare não verifica se a partilha de uma conta específica é permitida pelos termos de serviço daquele serviço de streaming. **Essa responsabilidade é integralmente do utilizador.** Muitos serviços permitem partilha dentro de um mesmo lar ou perfis adicionais — verifique as condições do seu plano.
+O StreamShare não verifica se a partilha de uma conta específica é permitida pelos termos de serviço daquele serviço de streaming. **Essa responsabilidade é integralmente do usuário.** Muitos serviços permitem partilha dentro de um mesmo lar ou perfis adicionais — verifique as condições do seu plano.
 </Callout>
 
 ## Onde os dados ficam armazenados?
 
 O StreamShare utiliza:
-- **PostgreSQL** (via Supabase) para todos os dados transacionais (utilizadores, assinaturas, cobranças)
-- **Supabase Storage** para comprovantes de pagamento (ficheiros enviados pelos participantes)
+- **PostgreSQL** (via Supabase) para todos os dados transacionais (**usuários**, assinaturas, cobranças)
+- **Supabase Storage** para comprovantes de pagamento (**arquivos** enviados pelos participantes)
 - **Stripe** como processador de pagamentos externo para cartões de crédito
 - Toda a comunicação é feita sobre **HTTPS com TLS 1.3**

@@ -44,6 +44,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.378.0",
     "matter-js": "^0.20.0",
+    "mermaid": "^11.12.3",
     "next": "14.2.3",
     "next-mdx-remote": "^6.0.0",
     "node-cron": "^4.2.1",

@@ -44,7 +44,7 @@ aguardando_aprovacao
 ### Passo 1 — Envio do Comprovante
 
 O participante faz upload do comprovante (imagem ou PDF). O sistema:
-- Faz o upload do ficheiro para o armazenamento seguro (Supabase Storage)
+- Faz o upload do arquivo para o armazenamento seguro (Supabase Storage)
 - Muda o status do lote para `aguardando_aprovacao`
 - Muda o status de **todas as cobranças vinculadas** ao lote para `aguardando_aprovacao` também
 - Notifica o administrador da conta com: *"O participante X enviou um comprovante para o Lote #Y"*
@@ -55,8 +55,8 @@ O administrador revê o comprovante no painel **Faturas > Lotes Pendentes**:
 
 **Se Aprovar:**
 - O lote muda para `pago`
-- Todas as cobranças do lote mudam para `pago` com a data actual como `dataPagamento`
-- O sistema avalia automaticamente se a assinatura deve ser **reactivada** (caso estivesse suspensa por atraso)
+- Todas as cobranças do lote mudam para `pago` com a data atual como `dataPagamento`
+- O sistema avalia automaticamente se a assinatura deve ser **reativada** (caso estivesse suspensa por atraso)
 - O participante recebe uma notificação: *"Lote de Pagamento Aprovado. As faturas foram dadas como pagas."*
 - São enviadas notificações externas (e-mail e WhatsApp) de forma assíncrona
 
@@ -66,7 +66,7 @@ O administrador revê o comprovante no painel **Faturas > Lotes Pendentes**:
 - O administrador deve indicar um motivo que é enviado ao participante
 - O participante pode enviar um novo comprovante
 
-### Passo 3 — Cancelamento (por qualquer actor)
+### Passo 3 — Cancelamento (por qualquer ator)
 
 Um lote pode ser cancelado se estiver nos estados `pendente` ou `aguardando_aprovacao`.
 

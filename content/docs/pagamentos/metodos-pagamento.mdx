@@ -19,14 +19,14 @@ O StreamShare integra dois sistemas de pagamento complementares: **Stripe** (par
 
 ### PIX (Recomendado)
 
-1. Aceda à fatura ou ao Lote de Pagamento
+1. Acesse a fatura ou o Lote de Pagamento
 2. Clique em **"Pagar com PIX"**
 3. Leia o QR Code ou copie o código **Copia e Cola**
 4. Confirme o pagamento no seu banco
 5. Volte ao StreamShare e clique em **"Enviar Comprovante"** com o comprovante do banco
 
 <Callout tipo="info">
-A confirmação de um pagamento PIX no sistema **não é automática**. Você precisa de enviar o comprovante e aguardar a aprovação manual do administrador do grupo. Isso garante que o valor correcto foi transferido.
+A confirmação de um pagamento PIX no sistema **não é automática**. Você precisa enviar o comprovante e aguardar a aprovação manual do administrador do grupo. Isso garante que o valor correto foi transferido.
 </Callout>
 
 ### Cartão de Crédito (AutoPay)
@@ -34,16 +34,16 @@ A confirmação de um pagamento PIX no sistema **não é automática**. Você pr
 Nas configurações da sua conta, pode adicionar um cartão de crédito para **cobranças automáticas recorrentes**. Funciona via Stripe e segue os padrões PCI-DSS de segurança.
 
 <Callout tipo="aviso">
-O Boleto Bancário **não** é suportado. A sua compensação de até 3 dias úteis é incompatível com o sistema de activação imediata após pagamento.
+O Boleto Bancário **não** é suportado. A sua compensação de até 3 dias úteis é incompatível com o sistema de ativação imediata após pagamento.
 </Callout>
 
 ## Fluxo de Comprovante: Passo a Passo
 
 <Steps>
 1. O participante abre a fatura ou lote no painel
-2. Faz o **upload do ficheiro** (imagem JPG/PNG ou PDF)
+2. Faz o **upload do arquivo** (imagem JPG/PNG ou PDF)
 3. O sistema valida o status da cobrança (não pode já estar `pago`)
-4. O ficheiro é enviado para armazenamento seguro e a cobrança muda para `aguardando_aprovacao`
+4. O arquivo é enviado para armazenamento seguro e a cobrança muda para `aguardando_aprovacao`
 5. Uma notificação é enviada ao **Administrador**: *"Novo Comprovante Recebido de [Nome]"*
 6. O Administrador aprova (→ `pago`) ou rejeita (→ `pendente`, comprovante limpo)
 </Steps>
@@ -54,11 +54,11 @@ Se é Administrador de um grupo, os pagamentos dos participantes acumulam no seu
 
 Para solicitar um saque:
 
-1. Aceda ao menu **Saques** no sidebar
-2. Confirme ou registe a sua **Chave PIX** de destino
+1. Acesse o menu **Saques** no sidebar
+2. Confirme ou registre a sua **Chave PIX** de destino
 3. Solicite o valor pretendido
 4. O crédito chega em poucas horas (PIX) ou em até 2 dias úteis (para outros métodos)
 
 <Callout tipo="dica">
-Mantenha a sua chave PIX sempre actualizada nas configurações para evitar atrasos nos repasses.
+Mantenha a sua chave PIX sempre atualizada nas configurações para evitar atrasos nos repasses.
 </Callout>

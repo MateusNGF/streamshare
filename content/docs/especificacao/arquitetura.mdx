@@ -1,0 +1,38 @@
+---
+titulo: 'Arquitetura do Sistema'
+descricao: 'Diagramas de arquitetura, fluxo de dados e estados das entidades.'
+ordem: 10
+seccao: 'especificacao'
+---
+
+# Arquitetura e Fluxo de Dados
+
+Abaixo está o diagrama de estados da entidade **Cobrança** (Invoice), que é o coração do motor financeiro do StreamShare.
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDENTE: Criação (Manual ou Cron)
+    PENDENTE --> ANALISE: Envio de Comprovante
+    ANALISE --> PAGA: Aprovação pelo Admin
+    ANALISE --> PENDENTE: Recusa pelo Admin
+    PENDENTE --> ATRASADA: Vencimento atingido
+    ATRASADA --> ANALISE: Envio de Comprovante
+    PAGA --> [*]: Ciclo Concluído
+    ATRASADA --> CANCELADA: Remoção do Participante
+```
+
+## Fluxo de Notificações
+
+Este diagrama ilustra como o sistema reage a eventos importantes para manter os usuários informados.
+
+```mermaid
+graph TD
+    A[Evento de Sistema] --> B{Tipo de Evento?}
+    B -- Nova Cobrança --> C[Notificar Participante]
+    B -- Comprovante Enviado --> D[Notificar Administrador]
+    B -- Pagamento Atrasado --> E[Alerta WhatsApp]
+    
+    C --> F[E-mail + App]
+    D --> F
+    E --> G[Fila de Mensagens]
+```

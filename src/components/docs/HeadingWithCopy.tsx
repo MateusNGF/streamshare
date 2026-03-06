@@ -22,7 +22,7 @@ export const HeadingWithCopy = ({ level, children, id, className, ...props }: He
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+    const Tag = `h${level}` as 'h2' | 'h3';
 
     return (
         <Tag id={id} className={`group flex items-center gap-2 scroll-mt-24 ${className}`} {...props}>
