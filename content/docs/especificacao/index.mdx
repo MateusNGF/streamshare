@@ -1,0 +1,59 @@
+---
+titulo: "Visão Geral"
+description: "Ponto de entrada para a especificação de casos de uso e regras de negócio da plataforma StreamShare."
+---
+
+# Especificação do Sistema StreamShare
+
+O **StreamShare** é uma plataforma SaaS dedicada à gestão colaborativa e transparente de assinaturas de serviços de streaming. Resolve um problema muito comum: grupos de pessoas — famílias, amigos ou colegas — que dividem o custo de uma ou mais plataformas de entretenimento digital (vídeo, música, jogos, e-books) e precisam de uma forma justa, rastreável e automática de organizar os pagamentos de cada um.
+
+## O Problema que Resolvemos
+
+Sem uma ferramenta dedicada, o rateio de uma assinatura partilhada implica:
+
+- Controlo manual em planilhas ou cadernos;
+- Cobranças enviadas individualmente por WhatsApp, muitas vezes repetidas ou esquecidas;
+- Dificuldade em saber quem pagou, quem está em atraso e qual o valor correto;
+- Falta de rastreabilidade sobre as partilhas de credenciais do serviço.
+
+O StreamShare substitui toda essa operação manual por um sistema centralizado, automatizado e auditável.
+
+## O que a Plataforma Oferece
+
+| Funcionalidade | Descrição |
+|---|---|
+| **Gestão de Serviços** | Registo e organização dos serviços partilhados com base num catálogo global de plataformas |
+| **Assinaturas Individuais** | Vinculação formal de cada participante a cada serviço, com valor e frequência definidos |
+| **Cobranças Automáticas** | Geração e acompanhamento mensal do ciclo financeiro de cada participante |
+| **Lotes de Pagamento** | Consolidação de múltiplas cobranças de um só participante numa fatura única |
+| **Grupos de Partilha** | Agrupamento de múltiplos serviços com link e mensagem de renovação personalizados |
+| **Convites e Explorer** | Ingresso de novos membros por e-mail ou pela página pública de serviços disponíveis |
+| **Notificações WhatsApp** | Avisos automáticos e manuais de vencimento, atraso e confirmação de pagamento |
+| **Relatórios Financeiros** | Visão consolidada do balanço mensal da conta e das contribuições por participante |
+
+## Planos e Limites
+
+O acesso às funcionalidades de gestão é regulado pelo plano contratado pelo Organizador:
+
+| Plano | Serviços Máximos | Participantes | Cobrança Manual | Automação | Preço |
+|---|---|---|---|---|---|
+| **Free** | 0 | — | — | — | Gratuito |
+| **Pro** | 20 | Ilimitados | ✓ | — | R$ 29,90/mês |
+| **Business** | Ilimitados | Ilimitados | ✓ | ✓ | R$ 99,90/mês |
+
+> O plano **Business** inclui automação de cobranças e integração total com WhatsApp Business. Está atualmente em fase de pré-lançamento.
+
+## Índice desta Especificação
+
+Esta secção documenta em detalhe as regras de negócio, fluxos de processo e comportamentos de cada área funcional da plataforma:
+
+1. [Atores do Sistema](/docs/especificacao/atores) — Perfis, papéis e permissões
+2. [Conta e Autenticação](/docs/especificacao/conta-e-autenticacao) — Registo, acesso e configurações da conta
+3. [Gestão de Streamings](/docs/especificacao/gestao-streamings) — Adição, edição e visibilidade dos serviços
+4. [Participantes e Convites](/docs/especificacao/participantes-convites) — Gestão de membros e mecanismos de ingresso
+5. [Assinaturas e Grupos](/docs/especificacao/assinaturas-grupos) — Vínculos contratuais e agrupamentos
+6. [Cobranças e Lotes](/docs/especificacao/cobrancas-lotes) — Ciclo financeiro individual e consolidado
+7. [Notificações WhatsApp](/docs/especificacao/notificacoes-whatsapp) — Avisos automáticos e manuais
+8. [Processos Automatizados](/docs/especificacao/processos-automatizados) — Rotinas de fundo do sistema
+9. [Administração do Sistema](/docs/especificacao/administracao-sistema) — Controlo global e catálogo
+10. [Estados e Transições](/docs/especificacao/estados-transicoes) — Ciclo de vida das entidades

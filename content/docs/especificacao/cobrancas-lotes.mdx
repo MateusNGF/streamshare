@@ -1,0 +1,80 @@
+---
+titulo: "Cobranças e Lotes"
+description: "Ciclo financeiro completo das cobranças individuais e consolidação de múltiplas faturas num único lote de pagamento."
+---
+
+# Cobranças e Lotes de Pagamento
+
+As cobranças são a unidade financeira fundamental do StreamShare. Cada cobrança representa um período de uso de um serviço e o valor que o participante deve pagar por ele. Esta secção explica como as cobranças funcionam, como são confirmadas e como podem ser consolidadas para simplificar o processo de pagamento.
+
+---
+
+## Cobranças Individuais
+
+### Como São Geradas
+
+As cobranças são geradas de forma automática pelo sistema em dois momentos:
+
+1. **No momento da criação da assinatura:** A primeira cobrança é gerada imediatamente, cobrindo o período desde a data de início até ao próximo vencimento configurado (ou o período completo, se não houver dias de vencimento definidos).
+2. **No ciclo de renovação:** Próximo ao fim de cada período coberto, o sistema gera automaticamente a cobrança do ciclo seguinte, garantindo a continuidade do controlo financeiro.
+
+### Confirmação de Pagamento
+
+Quando um participante efectua o pagamento de uma cobrança, o Organizador pode confirmá-lo de duas formas:
+
+- **Confirmação direta:** O Organizador marca a cobrança como paga no painel, registando o método de pagamento ou adicionando uma nota.
+- **Confirmação com comprovativo:** O Organizador (ou o participante) anexa um comprovante. O sistema utiliza **armazenamento externo seguro** para estas imagens, garantindo que os documentos fiquem acessíveis para auditoria sem sobrecarregar a base de dados principal.
+- **Idempotência:** O sistema garante que uma cobrança paga nunca seja confirmada duas vezes, prevenindo duplicações de balanço.
+
+### Rejeição de Comprovativo
+
+Se o comprovante submetido pelo participante apresentar inconsistências (valor errado, data incorreta, transferência para conta diferente, etc.), o Organizador pode **rejeitar o comprovante**:
+
+- A cobrança regressa ao estado pendente, sendo necessário submeter um novo comprovante.
+- O participante vinculado recebe uma notificação informando que o seu comprovante foi rejeitado e solicitando a submissão de um novo.
+
+### Cancelamento de uma Cobrança
+
+O Organizador pode cancelar individualmente uma cobrança que tenha sido criada por engano ou que já não faça sentido (por exemplo, devido a um acordo externo com o participante). Uma cobrança cancelada é preservada no histórico mas não é contabilizada como dívida ativa do participante.
+
+### Reativação Automática Após Pagamento
+
+Quando uma cobrança é confirmada como paga e a assinatura associada se encontrava **suspensa** (por inadimplência) ou **pendente**, o sistema avalia automaticamente se o pagamento cobre o período atual. Se sim, a assinatura é **reativada de imediato** — sem intervenção do Organizador — e o participante recupera o acesso ao serviço.
+
+---
+
+## Lotes de Pagamento (Faturas Consolidadas)
+
+Participantes que subscrevam múltiplos serviços numa mesma conta acumularão várias cobranças em aberto ao longo do mês. Para simplificar a liquidação, o StreamShare permite consolidar todas essas cobranças numa **única fatura unificada**, chamada Lote de Pagamento.
+
+### Como Funciona
+
+Um Lote agrupa as cobranças pendentes ou em atraso de **um único participante**. Não é possível misturar cobranças de participantes diferentes num mesmo lote.
+
+**Controlo de Concorrência:** O sistema possui mecanismos de proteção que impedem que uma mesma cobrança seja incluída em dois lotes diferentes ao mesmo tempo. Se uma cobrança for paga ou agrupada enquanto o Organizador prepara um lote, a operação é interrompida para evitar inconsistências.
+
+O valor total do lote é a soma dos valores de todas as cobranças incluídas. O participante efectua um único pagamento (uma transferência PIX, por exemplo) e submete um único comprovante para liquidar todas as faturas de uma só vez.
+
+### Prazos de Validade
+
+Os lotes têm um prazo de validade a partir do momento da sua criação:
+
+| Origem do Lote | Prazo de Validade |
+|---|---|
+| Criado manualmente pelo Organizador ou Participante | 24 horas |
+| Gerado automaticamente pelo sistema na consolidação mensal | 10 dias |
+
+Se o participante não submeter o comprovante dentro do prazo, o lote é **cancelado automaticamente** pelo sistema e as cobranças voltam ao seu estado individual original — ficando disponíveis para serem reagrupadas ou pagas separadamente.
+
+### Ciclo de Aprovação do Lote
+
+O processo de aprovação de um Lote de Pagamento segue os mesmos princípios de uma cobrança individual, mas aplicados a todas as cobranças do lote simultaneamente:
+
+1. O participante submete o comprovante de pagamento para o lote → estado **"Aguardando Aprovação"**.
+2. O Organizador é notificado e revê o comprovante.
+3. **Se aprovado:** Todas as cobranças do lote são marcadas como pagas de uma só vez. Assinaturas suspensas associadas a essas cobranças são reativadas automaticamente.
+4. **Se rejeitado:** O comprovante é removido e o lote regressa ao estado pendente, aguardando nova submissão.
+
+### Consolidação Automática Mensal
+
+Para contas com muitos participantes, o sistema oferece uma funcionalidade de **consolidação automática mensal**: periodicamente, o sistema identifica todos os participantes com múltiplas cobranças pendentes no mês corrente e cria automaticamente um lote por participante, sem necessitar de qualquer ação manual do Organizador.

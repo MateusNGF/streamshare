@@ -1,10 +1,20 @@
 import { notFound } from 'next/navigation';
-import { getDocBySlug, getAllDocsMeta } from '@/lib/docs';
+import { getDocBySlug, getAllDocsMeta, getAdjacentDocs } from '@/lib/docs';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { mdxComponents } from '@/components/docs/MDXComponents';
 import { Metadata } from 'next';
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { TableOfContents } from '@/components/docs/TableOfContents';
+import { DocNavigation } from '@/components/docs/DocNavigation';
+import { FeedbackWidget } from '@/components/docs/FeedbackWidget';
+import { DocBreadcrumb } from '@/components/docs/DocBreadcrumb';
+import { DocHeader } from '@/components/docs/DocHeader';
+import { DocFooter } from '@/components/docs/DocFooter';
+
+// MDX Plugins
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import rehypePrettyCode from 'rehype-pretty-code';
+import remarkGfm from 'remark-gfm';
 
 interface DocPageProps {
     params: { slug: string[] };
@@ -45,41 +55,45 @@ export default async function DocPage({ params }: DocPageProps) {
         notFound();
     }
 
+    const { prev: prevDoc, next: nextDoc } = await getAdjacentDocs(doc.slug);
+    const githubEditUrl = `https://github.com/MateusNGF/streamshare/edit/main/content/docs/${params.slug.join('/')}.mdx`;
+
     return (
-        <article className="max-w-none pt-4">
-            {/* Breadcrumb simples */}
-            <nav className="flex text-sm text-gray-500 mb-8 items-center" aria-label="Breadcrumb">
-                <span>Central de Ajuda</span>
-                <ChevronRight className="w-4 h-4 mx-1 flex-shrink-0 opacity-50" />
-                {doc.meta.seccao && (
-                    <>
-                        <span className="capitalize">{doc.meta.seccao}</span>
-                        <ChevronRight className="w-4 h-4 mx-1 flex-shrink-0 opacity-50" />
-                    </>
-                )}
-                <span className="text-gray-900 font-medium truncate">{doc.meta.titulo}</span>
-            </nav>
+        <div className="flex xl:gap-12 pb-16">
+            <div className="flex-1 min-w-0">
+                <article className="max-w-none pt-4">
+                    <DocBreadcrumb meta={doc.meta} />
+                    <DocHeader meta={doc.meta} />
 
-            <header className="mb-10 pb-10 border-b border-gray-100">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-4 font-sans">
-                    {doc.meta.titulo}
-                </h1>
-                {doc.meta.descricao && (
-                    <p className="text-lg text-gray-500 leading-relaxed font-sans max-w-2xl">
-                        {doc.meta.descricao}
-                    </p>
-                )}
-            </header>
+                    {/* Corpo da documentação gerado pelo MDX */}
+                    <div className="prose prose-violet prose-gray pr-4 font-sans max-w-none prose-a:font-medium prose-a:text-violet-600 hover:prose-a:text-violet-500 prose-headings:tracking-tight prose-headings:text-gray-900">
+                        <MDXRemote
+                            source={doc.content}
+                            components={mdxComponents}
+                            options={{
+                                mdxOptions: {
+                                    remarkPlugins: [remarkGfm],
+                                    rehypePlugins: [
+                                        rehypeSlug,
+                                        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+                                        [rehypePrettyCode, { theme: 'github-dark' }]
+                                    ]
+                                }
+                            }}
+                        />
+                    </div>
 
-            {/* Corpo da documentação gerado pelo MDX */}
-            <div className="prose prose-violet prose-gray pr-4 font-sans max-w-none prose-a:font-medium prose-a:text-violet-600 hover:prose-a:text-violet-500 prose-headings:tracking-tight prose-headings:text-gray-900">
-                <MDXRemote source={doc.content} components={mdxComponents} />
+                    <FeedbackWidget />
+                    <DocNavigation prev={prevDoc} next={nextDoc} />
+                    <DocFooter githubEditUrl={githubEditUrl} />
+                </article>
             </div>
 
-            <footer className="mt-16 pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-                <p>Ainda tem dúvidas? <Link href="mailto:suporte@streamshare.com.br" className="text-violet-600 hover:underline">Entre em contacto com o suporte</Link>.</p>
-                <p className="mt-4 md:mt-0">Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
-            </footer>
-        </article>
+            <aside className="hidden xl:block w-64 flex-shrink-0 pt-4">
+                <div className="sticky top-12">
+                    <TableOfContents content={doc.content} />
+                </div>
+            </aside>
+        </div>
     );
 }

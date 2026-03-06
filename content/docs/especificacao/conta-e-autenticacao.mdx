@@ -1,0 +1,78 @@
+---
+titulo: "Conta e Autenticação"
+description: "Regras de negócio sobre criação de conta, validação de identidade e configurações financeiras e operacionais da conta."
+---
+
+# Conta e Autenticação
+
+## Criação de Conta
+
+A criação de uma conta no StreamShare é o ponto de partida para qualquer Organizador. No momento do registo, o utilizador fornece o seu nome completo, endereço de e-mail e define uma palavra-passe.
+
+Adicionalmente, é obrigatória a leitura e concordância com os **Termos de Uso** e a **Política de Privacidade** da plataforma. A data e a versão dos documentos aceites ficam registadas de forma permanente, garantindo a conformidade legal e a rastreabilidade do consentimento do utilizador.
+
+### Regras de Unicidade
+
+- Cada endereço de e-mail só pode estar associado a uma única conta. Tentativas de registo com um e-mail já existente são bloqueadas com uma mensagem clara.
+- Não existe conta sem proprietário: o utilizador que se regista é automaticamente o proprietário da conta e recebe privilégios totais de administração.
+
+### Validação Segura e Tokens Temporários
+
+Para garantir a integridade dos dados, o sistema adota um fluxo de validação rigoroso:
+
+- **Token Temporário:** Durante o processo de registo, os dados do utilizador são mantidos num estado temporário e seguro. Nenhum registo é criado na base de dados principal até que a identidade seja confirmada.
+- **Validação por OTP:** Um processo de envio de código numérico (OTP) de 6 dígitos ao e-mail garante que apenas o proprietário daquele endereço ative a sua conta. Se o processo demorar em excesso, o token expira e o registo deve ser reiniciado por segurança.
+- **Criação Atómica:** Uma vez validado o código, o sistema executa uma **operação atómica** (transação) que cria simultaneamente o perfil do utilizador, a sua conta empresarial e estabelece o vínculo de propriedade. Isto garante que nunca existam utilizadores sem uma conta associada ou contas "órfãs".
+- **Boas-vindas:** Assim que a conta é criada com sucesso, o sistema despacha automaticamente um e-mail de boas-vindas com orientações iniciais para o novo Organizador.
+
+### Validação de Identidade por Código
+
+Para garantir que apenas o legítimo titular do e-mail possa ativar a conta, o sistema adota um processo de verificação em dois passos:
+
+1. O utilizador preenche o formulário de registo.
+2. É enviado um código numérico de 6 dígitos — com prazo de validade — para o endereço de e-mail fornecido.
+3. O utilizador introduz o código na plataforma.
+4. Somente após a validação bem-sucedida do código é que a conta é criada e o acesso é disponibilizado.
+
+> Este mecanismo garante que uma conta nunca é ativada com dados que não pertençam ao utilizador, protegendo o sistema de fraudes de identidade.
+
+### Autenticação via Google (OAuth)
+
+Como alternativa ao registo tradicional, o utilizador pode autenticar-se usando uma conta Google existente. Neste caso:
+- O fluxo de validação por código é dispensado, uma vez que o Google já confirma a identidade do utilizador.
+- A conta StreamShare é criada automaticamente com os dados provenientes da conta Google.
+- O e-mail herdado do Google é considerado verificado desde o primeiro momento.
+
+### Plano Inicial
+
+Toda nova conta começa automaticamente no **plano Free**. Neste plano, o utilizador pode participar em partilhas enquanto Participante Vinculado, mas não tem acesso às funcionalidades de gestão de serviços e cobranças. Para gerir partilhas, é necessário fazer upgrade para o plano **Pro** ou **Business**.
+
+---
+
+## Configurações Gerais da Conta
+
+Após o registo, o Organizador pode ajustar diversas configurações que influenciam diretamente o comportamento financeiro e comunicacional da plataforma.
+
+### Perfil Pessoal
+
+O utilizador pode atualizar o seu nome, endereço de e-mail e número de WhatsApp em qualquer momento. O número de WhatsApp, quando adicionado, passa por um processo de verificação por código para garantir a validade do contacto antes de ser usado em notificações.
+
+### Dados de Identificação da Conta
+
+O Organizador pode personalizar o nome da conta e o endereço de e-mail de contacto associado. O e-mail da conta deve ser único no sistema — não pode coincidir com o e-mail de outra conta existente.
+
+### Moeda de Preferência
+
+A plataforma suporta múltiplas moedas. O Organizador escolhe a moeda que será usada para formatar todos os valores apresentados no painel, nos relatórios e nas mensagens de notificação enviadas aos participantes (ex: R$, €, $).
+
+### Dias de Vencimento
+
+O Organizador pode configurar um ou mais dias do mês que servem como datas-alvo de vencimento para as cobranças da sua conta. Por exemplo, ao configurar os dias 5 e 20, todas as cobranças geradas automaticamente terão como data de vencimento o próximo dia 5 ou 20 a contar da data de início da assinatura.
+
+Esta configuração tem um impacto direto no cálculo pro-rata da primeira cobrança de cada assinatura: o sistema calcula automaticamente o valor proporcional aos dias de acesso entre o início da assinatura e o próximo dia de vencimento configurado.
+
+> Os dias de vencimento devem estar entre 1 e 28, evitando variações mensais — o sistema nunca usa dias 29, 30 ou 31.
+
+### Chave de Pagamento (PIX)
+
+O Organizador pode registar a sua chave PIX preferencial. Esta informação é incluída automaticamente em todas as mensagens de renovação e cobrança geradas pelo sistema para os participantes, eliminando a necessidade de comunicar a chave manualmente a cada ciclo de pagamento.

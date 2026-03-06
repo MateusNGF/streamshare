@@ -1,0 +1,68 @@
+---
+titulo: "Estados e Transições"
+description: "Ciclo de vida completo das entidades transacionais da plataforma — assinaturas, cobranças, lotes e convites."
+---
+
+# Estados e Transições
+
+As principais entidades financeiras e operacionais do StreamShare percorrem um ciclo de vida bem definido. Compreender os estados e as transições possíveis é fundamental para interpretar o painel de controlo e tomar as decisões certas em cada momento.
+
+---
+
+## Assinatura
+
+A Assinatura representa o vínculo formal entre um Participante e um Serviço. É a entidade de maior longevidade no sistema — pode durar meses ou anos.
+
+| Estado | Descrição | Transições Possíveis |
+|---|---|---|
+| **Pendente** | Estado inicial após criação, antes do primeiro pagamento ser confirmado. | → Ativa (após pagamento confirmado) |
+| **Ativa** | Funcionamento normal. O participante tem acesso ao serviço e novos ciclos são gerados automaticamente. | → Suspensa (inadimplência); → Cancelada |
+| **Suspensa** | Bloqueio temporário por falta de pagamento. O acesso ao serviço é interrompido. | → Ativa (após pagamento regularizado); → Cancelada |
+| **Cancelada** | Estado terminal. O vínculo foi encerrado definitivamente. | — (sem retorno) |
+
+### Notas Importantes
+
+- Uma assinatura suspensa **não** gera novas cobranças enquanto se mantiver nesse estado.
+- Ao confirmar o pagamento de uma cobrança em atraso, a assinatura suspensa é **reativada automaticamente** sem necessidade de intervenção do Organizador.
+- Um cancelamento pode ser **imediato** ou **agendado** (ver [Assinaturas e Grupos](/docs/especificacao/assinaturas-grupos)).
+
+---
+
+## Cobrança (Fatura Individual)
+
+Cada cobrança corresponde a um período específico de uso de um serviço e ao valor que o participante deve pagar por esse período.
+
+| Estado | Descrição | Transições Possíveis |
+|---|---|---|
+| **Pendente** | Cobrança gerada e aguardando pagamento dentro do prazo. | → Em Atraso; → Aguardando Aprovação; → Cancelada |
+| **Em Atraso** | O prazo de vencimento passou e o pagamento ainda não foi registado. | → Aguardando Aprovação; → Paga; → Cancelada |
+| **Aguardando Aprovação** | O participante submeteu um comprovante e aguarda validação do Organizador. | → Paga (aprovação); → Pendente (rejeição) |
+| **Paga** | Pagamento confirmado. Estado terminal. | — (sem retorno) |
+| **Cancelada** | Cobrança anulada pelo Organizador. Estado terminal. | — (sem retorno) |
+
+---
+
+## Lote de Pagamento
+
+O Lote agrupa múltiplas cobranças de um mesmo participante para liquidação conjunta.
+
+| Estado | Descrição | Transições Possíveis |
+|---|---|---|
+| **Pendente** | Lote criado e aguardando o envio do comprovante pelo participante. Expira após o prazo de validade. | → Aguardando Aprovação; → Cancelado |
+| **Aguardando Aprovação** | Comprovante submetido, aguardando validação do Organizador. | → Pago (aprovação); → Pendente (rejeição) |
+| **Pago** | Aprovado pelo Organizador. Todas as cobranças do lote foram marcadas como pagas. Estado terminal. | — (sem retorno) |
+| **Cancelado** | Lote cancelado manualmente ou por expiração do prazo. As cobranças voltam ao estado individual. Estado terminal. | — (sem retorno) |
+
+---
+
+## Convite
+
+Os convites controlam o processo de ingresso de novos membros na conta de um Organizador.
+
+| Estado | Descrição | Transições Possíveis |
+|---|---|---|
+| **Pendente** | Convite emitido por e-mail e aguardando resposta do destinatário. Válido por 7 dias. | → Aceite; → Recusado; → Expirado |
+| **Solicitado** | Pedido de ingresso submetido pelo utilizador via Explorer. Válido por 48 horas. | → Aceite; → Recusado; → Expirado |
+| **Aceite** | O utilizador aceitou o convite ou o pedido foi aprovado. Estado terminal. | — (sem retorno) |
+| **Recusado** | O convite foi cancelado pelo Organizador ou o pedido foi rejeitado. Estado terminal. | — (sem retorno) |
+| **Expirado** | O prazo de validade terminou sem resposta. Estado terminal. | — (sem retorno) |

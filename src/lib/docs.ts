@@ -64,7 +64,7 @@ export async function getAllDocsMeta(): Promise<SidebarSection[]> {
                 const { data } = matter(fileContents);
 
                 return {
-                    title: data.titulo || file.replace('.mdx', ''),
+                    title: data.titulo || data.title || file.replace('.mdx', ''),
                     slug: `${sectionName}/${file.replace('.mdx', '')}`,
                     order: data.ordem || 99,
                 };
@@ -77,7 +77,7 @@ export async function getAllDocsMeta(): Promise<SidebarSection[]> {
     }
 
     // Define a ordem desejada das seções
-    const sectionOrder = ['introducao', 'assinaturas', 'pagamentos'];
+    const sectionOrder = ['introducao', 'especificacao', 'assinaturas', 'pagamentos'];
 
     const result: SidebarSection[] = [];
 
@@ -107,6 +107,19 @@ function formatSectionTitle(key: string): string {
     if (key === 'assinaturas') return 'Assinaturas';
     if (key === 'pagamentos') return 'Pagamentos';
 
+    if (key === 'especificacao') return 'Especificação';
+
     // Capitaliza a primeira letra para os restantes
     return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+export async function getAdjacentDocs(currentSlug: string) {
+    const sections = await getAllDocsMeta();
+    const allDocs = sections.flatMap(s => s.items);
+    const currentIndex = allDocs.findIndex(d => d.slug === currentSlug);
+
+    const prev = currentIndex > 0 ? allDocs[currentIndex - 1] : null;
+    const next = currentIndex !== -1 && currentIndex < allDocs.length - 1 ? allDocs[currentIndex + 1] : null;
+
+    return { prev, next };
 }
