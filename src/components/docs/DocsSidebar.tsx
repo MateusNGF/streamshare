@@ -18,13 +18,13 @@ export function DocsSidebar({ sections }: DocsSidebarProps) {
     return (
         <>
             {/* Mobile Header & Hamburger */}
-            <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white min-h-[64px]">
+            <div className="md:hidden w-full sticky top-0 z-30 flex items-center justify-between p-4 border-b border-gray-200 bg-white min-h-[64px]">
                 <Link
                     href="/dashboard"
                     className="flex items-center text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Sair
+                    Voltar
                 </Link>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
