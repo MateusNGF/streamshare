@@ -81,8 +81,8 @@ As atualizações devem ser inseridas no topo do array `changelogData` em:
 
 ## 📅 Destaques Recentes (07/03/2026)
 
-- **Mobile**: Nova ergonomia na Barra de Ações em Lote (Mobile-first).
-- **Interface**: Correção de scroll duplo e otimização do contêiner principal.
-- **Performance**: Otimização de renderização em tabelas financeiras de alta densidade.
-- **Versão**: Lançamento da **v1.1 (Beta)**.
+- **Integrações**: Correção na lógica de seleção de faturas (Indeterminate state & Organizer locking).
+- **Mobile**: Nova ergonomia na Barra de Ações em Lote.
+- **Interface**: Refinamento do Layout Container e correção de scroll.
+- **Versão**: Lançamento da **v1.2**.
 
