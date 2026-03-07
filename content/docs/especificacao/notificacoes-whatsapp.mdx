@@ -1,0 +1,66 @@
+---
+titulo: "Notificações WhatsApp"
+description: "Regras de negócio para o envio de notificações automáticas e manuais via WhatsApp aos participantes."
+ordem: 9
+seccao: "especificacao"
+---
+
+# Notificações WhatsApp
+
+O StreamShare integra-se com o WhatsApp para garantir que os participantes recebam os avisos financeiros no canal que utilizam no dia a dia. Esta seção descreve quando e como estas notificações são enviadas, tanto de forma automática como a pedido do Organizador.
+
+---
+
+## Pré-Requisitos para Envio
+
+Para que um participante possa receber notificações via WhatsApp, são necessárias duas condições:
+
+1. **Número de WhatsApp verificado:** O participante deve ter um número registrado e validado na plataforma. A verificação é feita por um código enviado ao próprio número.
+2. **Integração ativa na conta:** O Organizador deve ter a integração WhatsApp configurada e ativa nas definições da sua conta.
+
+Se uma dessas condições não estiver satisfeita e o Organizador tentar enviar uma notificação, o sistema oferece um **link de envio manual** com a mensagem já pré-formatada, permitindo ao Organizador copiar e enviar pelo seu próprio celular de forma simples.
+
+---
+
+## Tipos de Notificação
+
+O conteúdo da mensagem enviada é determinado automaticamente pelo estado da cobrança em questão:
+
+| Estado da Cobrança | Mensagem Enviada |
+|---|---|
+| **Pendente (a vencer)** | Aviso amigável informando que a cobrança se aproxima do prazo de vencimento, com o número de dias restantes para o pagamento. |
+| **Em Atraso** | Alerta informando que a cobrança está vencida, apresentando o número de dias de atraso. |
+| **Paga** | Confirmação de que o pagamento foi recebido e registrado com sucesso no sistema. |
+
+---
+
+## Envio Manual pelo Organizador
+
+O Organizador pode, a qualquer momento, enviar uma notificação WhatsApp manualmente a partir do painel de cobranças — seja para relembrar um participante de um vencimento próximo, alertar sobre um atraso ou confirmar um pagamento recente.
+
+### Regra de Frequência (Intervalo de 24 Horas)
+
+Para evitar comunicações excessivas e garantir uma boa experiência ao usuário, o sistema impõe um **intervalo mínimo de 24 horas** entre notificações do mesmo tipo para o mesmo participante.
+
+Se o Organizador tentar enviar uma nova notificação antes desse prazo, o sistema informará há quanto tempo foi feita a última comunicação.
+
+---
+
+## Envio Consolidado (Múltiplas Cobranças)
+
+### Preview do Lote (Batch Preview)
+
+Para garantir segurança total no envio manual de lotes, o sistema apresenta um painel lateral de **Preview**. Nele, o Organizador pode visualizar:
+- A lista de todos os serviços que estão sendo cobrados.
+- O valor individual de cada um e o total acumulado.
+- A **prévia exata da mensagem** que será disparada pelo WhatsApp.
+
+Isso permite uma conferência final antes da geração definitiva do lote e do disparo da notificação, reduzindo drasticamente erros de cobrança.
+
+A mensagem consolidada lista todos os serviços pendentes, o valor de cada um, o total acumulado e a chave PIX do Organizador para facilitar a liquidação imediata.
+
+---
+
+## Notificações Automáticas
+
+Para além dos envios manuais, o StreamShare possui rotinas que verificam periodicamente as faturas de todas as contas com integração ativa e enviam os lembretes necessários de forma totalmente autónoma, conforme detalhado na seção de [Processos Automatizados](/docs/especificacao/processos-automatizados).

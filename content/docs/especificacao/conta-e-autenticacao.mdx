@@ -1,0 +1,73 @@
+---
+titulo: "Conta e Autenticação"
+descricao: "Regras de negócio sobre criação de conta, validação de identidade e configurações financeiras e operacionais da conta."
+ordem: 4
+seccao: "especificacao"
+---
+
+# Conta e Autenticação
+
+## Criação de Conta
+
+A criação de uma conta no StreamShare é o ponto de partida para qualquer Organizador. No momento do registro, o usuário fornece o seu nome completo, endereço de e-mail e define uma senha.
+
+Adicionalmente, é obrigatória a leitura e concordância com os **Termos de Uso** e a **Política de Privacidade** da plataforma. A data e a versão dos documentos aceitos ficam registradas de forma permanente para garantir a conformidade e a rastreabilidade do consentimento.
+
+### Regras de Unicidade
+
+- Cada endereço de e-mail só pode estar associado a uma única conta. Tentativas de registro com um e-mail já existente são bloqueadas com uma mensagem clara.
+- O usuário que se registra é automaticamente o proprietário da conta e recebe privilégios totais de administração.
+
+### Validação de Identidade por Código
+
+Para garantir que apenas o legítimo titular do e-mail possa ativar a conta, o sistema adota um processo de verificação em dois passos:
+
+1. O usuário preenche o formulário de registro.
+2. É enviado um código numérico de 6 dígitos — com prazo de validade — para o endereço de e-mail fornecido.
+3. O usuário introduz o código na plataforma.
+4. Somente após a validação bem-sucedida do código é que a conta é criada e o acesso é disponibilizado.
+
+> Este mecanismo garante que uma conta nunca é ativada com dados que não pertençam ao usuário, protegendo o sistema de acessos indevidos.
+
+> **O que acontece se o código expirar?** Cada código tem um prazo de validade. Se não for inserido a tempo, o processo de registro precisa ser reiniciado — basta aceder novamente ao formulário e solicitar um novo código.
+
+### Autenticação via Google (OAuth)
+
+Como alternativa ao registro tradicional, o usuário pode autenticar-se usando uma conta Google existente. Neste caso:
+- O fluxo de validação por código é dispensado, uma vez que o Google já confirma a identidade do usuário.
+- A conta StreamShare é criada automaticamente com os dados provenientes da conta Google.
+- O e-mail herdado do Google é considerado verificado desde o primeiro momento.
+
+### Plano Inicial
+
+Toda nova conta começa automaticamente no **plano Free**. Neste plano, o usuário pode participar em partilhas enquanto Participante Vinculado, mas não tem acesso às funcionalidades de gestão de serviços e cobranças. Para gerenciar partilhas, é necessário fazer upgrade para o plano **Pro** ou **Business**.
+
+---
+
+## Configurações Gerais da Conta
+
+Após o registro, o Organizador pode ajustar diversas configurações que influenciam diretamente o comportamento financeiro e comunicacional da plataforma.
+
+### Perfil Pessoal
+
+O usuário pode atualizar o seu nome, endereço de e-mail e número de WhatsApp em qualquer momento. O número de WhatsApp, quando adicionado, passa por um processo de verificação por código para garantir a validade do contato antes de ser usado em notificações.
+
+### Dados de Identificação da Conta
+
+O Organizador pode personalizar o nome da conta e o endereço de e-mail de contato associado. O e-mail da conta deve ser único no sistema — não pode coincidir com o e-mail de outra conta existente.
+
+### Moeda de Preferência
+
+A plataforma suporta múltiplas moedas. O Organizador escolhe a moeda que será usada para formatar todos os valores apresentados no painel, nos relatórios e nas mensagens de notificação enviadas aos participantes (ex: R$, €, $).
+
+### Dias de Vencimento
+
+O Organizador pode configurar um ou mais dias do mês que servem como datas-alvo de vencimento para as cobranças da sua conta. Por exemplo, ao configurar os dias 5 e 20, todas as cobranças geradas automaticamente terão como data de vencimento o próximo dia 5 ou 20 a contar da data de início da assinatura.
+
+Esta configuração tem um impacto direto no cálculo proporcional da primeira cobrança de cada assinatura: o sistema calcula automaticamente o valor referente aos dias de acesso entre o início da assinatura e o próximo dia de vencimento configurado.
+
+> Os dias de vencimento devem estar entre 1 e 28, evitando variações mensais causadas por meses com diferentes números de dias.
+
+### Chave de Pagamento (PIX)
+
+O Organizador pode registrar a sua chave PIX preferencial. Esta informação é incluída automaticamente em todas as mensagens de renovação e cobrança geradas pelo sistema para os participantes, eliminando a necessidade de comunicar a chave manualmente a cada ciclo de pagamento.

@@ -9,7 +9,12 @@ import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { useToast } from "@/hooks/useToast";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export function TicketHistoryTable() {
+interface TicketHistoryTableProps {
+    onTicketClick?: (ticket: any) => void;
+    activeTicketId?: string; // or number, based on what Prisma returns, likely string
+}
+
+export function TicketHistoryTable({ onTicketClick, activeTicketId }: TicketHistoryTableProps = {}) {
     const [tickets, setTickets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const toast = useToast();
@@ -63,7 +68,15 @@ export function TicketHistoryTable() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {tickets.map((ticket) => (
-                            <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors group">
+                            <tr
+                                key={ticket.id}
+                                onClick={() => onTicketClick?.(ticket)}
+                                className={`
+                                    transition-colors group
+                                    ${onTicketClick ? "cursor-pointer" : ""}
+                                    ${activeTicketId === ticket.id ? "bg-violet-50 hover:bg-violet-100" : "hover:bg-gray-50/50"}
+                                `}
+                            >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {format(new Date(ticket.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                                 </td>

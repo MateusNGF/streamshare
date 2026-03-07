@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { calcularProximoVencimento, calcularValorPeriodo, calcularDataVencimentoPadrao } from "@/lib/financeiro-utils";
+import { calcularProximoVencimento, calcularValorPeriodo, calcularDataVencimentoPadrao, escolherProximoDiaVencimento, calcularValorProRata } from "@/lib/financeiro-utils";
 import { BillingDecision, ChargeCreationData, SubscriptionWithCharges } from "@/types/subscription.types";
 import { isBefore, differenceInDays } from "date-fns";
 
@@ -40,7 +40,10 @@ export const billingService = {
                         select: {
                             contaId: true,
                             nome: true,
-                            userId: true
+                            userId: true,
+                            conta: {
+                                select: { diasVencimento: true }
+                            }
                         }
                     },
                     cobrancas: { orderBy: { periodoFim: "desc" }, take: 1 }
@@ -223,12 +226,24 @@ export const billingService = {
         valorMensal: number,
         frequencia: any,
         dataInicio: Date,
-        pago: boolean
+        pago: boolean,
+        diasVencimento?: number[]
     }) => {
-        const { assinaturaId, valorMensal, frequencia, dataInicio, pago } = params;
+        const { assinaturaId, valorMensal, frequencia, dataInicio, pago, diasVencimento } = params;
 
-        const periodoFim = calcularProximoVencimento(dataInicio, frequencia, dataInicio);
-        const valorCobranca = calcularValorPeriodo(valorMensal, frequencia);
+        const isFixarVencimento = diasVencimento && diasVencimento.length > 0;
+
+        const dataVencimento = isFixarVencimento
+            ? escolherProximoDiaVencimento(diasVencimento, dataInicio)
+            : calcularDataVencimentoPadrao(new Date());
+
+        const periodoFim = isFixarVencimento
+            ? dataVencimento
+            : calcularProximoVencimento(dataInicio, frequencia, dataInicio);
+
+        const valorCobranca = isFixarVencimento
+            ? calcularValorProRata(valorMensal, dataInicio, dataVencimento)
+            : calcularValorPeriodo(valorMensal, frequencia);
 
         return await tx.cobranca.create({
             data: {
@@ -238,7 +253,7 @@ export const billingService = {
                 periodoFim,
                 status: pago ? "pago" : "pendente",
                 dataPagamento: pago ? new Date() : null,
-                dataVencimento: calcularDataVencimentoPadrao(new Date())
+                dataVencimento
             }
         });
     },
@@ -352,6 +367,11 @@ function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobr
         const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia, assinatura.dataInicio);
         const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
 
+        const diasVencimento = assinatura.participante.conta?.diasVencimento || [];
+        const nextDataVencimento = diasVencimento.length > 0
+            ? escolherProximoDiaVencimento(diasVencimento, agora)
+            : calcularDataVencimentoPadrao(agora);
+
         return {
             action: 'CREATE_CHARGE',
             data: {
@@ -359,7 +379,7 @@ function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobr
                 valor,
                 periodoInicio,
                 periodoFim,
-                dataVencimento: calcularDataVencimentoPadrao(agora) // 5 days from emission (agora)
+                dataVencimento: nextDataVencimento
             }
         };
     }

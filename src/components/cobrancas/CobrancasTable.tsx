@@ -3,19 +3,20 @@
 import {
     Table,
     TableBody,
-    TableCell,
     TableHead,
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Trash, Clock, Search, History, QrCode, AlertCircle } from "lucide-react";
-import { StreamingLogo } from "@/components/ui/StreamingLogo";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Dropdown } from "@/components/ui/Dropdown";
+import { Trash, Clock, Search, History, QrCode, AlertCircle, User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle } from "lucide-react";
+import React, { useState } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "./shared/BillingTableCells";
+
+// Refactored Sub-components
+import { CobrancaGroupHeader } from "./items/CobrancaGroupHeader";
+import { CobrancaSelectableRow } from "./items/CobrancaSelectableRow";
+import { CobrancaRow } from "./items/CobrancaRow";
 
 interface CobrancasTableProps {
     cobrancas: any[];
@@ -36,7 +37,6 @@ interface CobrancasTableProps {
 
 /**
  * SRP: Centraliza a lógica de quais ações estão disponíveis para uma cobrança.
- * Isso isola a regra de negócio da lógica de renderização da tabela.
  */
 const getAvailableCobrancaActions = (cobranca: any, config: {
     isAdmin: boolean;
@@ -61,7 +61,6 @@ const getAvailableCobrancaActions = (cobranca: any, config: {
         }
     ];
 
-    // Regra: Participantes veem QR Code. Admins não precisam (já têm Confirmar Pagamento).
     if (isPendingOrOverdue && !isAdmin) {
         actions.push({
             label: "Ver QR Code / PIX",
@@ -70,24 +69,19 @@ const getAvailableCobrancaActions = (cobranca: any, config: {
         });
     }
 
-    // Ações exclusivas para Administradores
     if (canManageAdmin) {
         actions.push({ type: "separator" as const });
-
         actions.push({
             label: "Confirmar Pagamento",
             icon: <Check size={16} />,
             onClick: () => onConfirm?.(cobranca.id)
         });
-
         actions.push({
             label: "Enviar WhatsApp",
             icon: <MessageCircle size={16} />,
             onClick: () => onWhatsApp?.(cobranca.id)
         });
-
         actions.push({ type: "separator" as const });
-
         actions.push({
             label: "Cancelar",
             icon: <AlertCircle size={16} />,
@@ -116,6 +110,11 @@ export function CobrancasTable({
     onSelectAll
 }: CobrancasTableProps) {
     const isCompact = variant === "compact";
+    const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+    const toggleGroup = (groupName: string) => {
+        setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+    };
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -132,6 +131,23 @@ export function CobrancasTable({
         } else {
             onSelectAll([]);
         }
+    };
+
+    // Smart Grouping Logic
+    const groupedCobrancas = isAdmin && !isCompact ? cobrancas.reduce((groups: any, c: any) => {
+        const participantName = c.assinatura.participante.nome;
+        if (!groups[participantName]) groups[participantName] = [];
+        groups[participantName].push(c);
+        return groups;
+    }, {}) : null;
+
+    const participantNames = groupedCobrancas ? Object.keys(groupedCobrancas) : [];
+
+    const canSelectGroup = (participantName: string) => {
+        if (!selectedIds || selectedIds.size === 0) return true;
+        const firstSelectedId = Array.from(selectedIds)[0];
+        const firstSelectedCobranca = cobrancas.find(c => c.id === firstSelectedId);
+        return firstSelectedCobranca?.assinatura.participante.nome === participantName;
     };
 
     if (cobrancas.length === 0) {
@@ -221,114 +237,85 @@ export function CobrancasTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {cobrancas.slice(0, isCompact ? 5 : undefined).map((cobranca: any, index: number) => {
-                            const isPaid = cobranca.status === 'pago';
-                            const isCancelled = cobranca.status === 'cancelado';
+                        {groupedCobrancas ? (
+                            participantNames.map((pName) => {
+                                const participantCobrancas = groupedCobrancas[pName];
+                                const selectableInGroup = participantCobrancas.filter((c: any) => ['pendente', 'atrasado'].includes(c.status));
+                                const allInGroupSelected = selectableInGroup.length > 0 && selectedIds && selectableInGroup.every((c: any) => selectedIds.has(c.id));
+                                const someInGroupSelected = selectableInGroup.length > 0 && selectedIds && !allInGroupSelected && selectableInGroup.some((c: any) => selectedIds.has(c.id));
+                                const isGroupDisabled = !canSelectGroup(pName);
 
-                            // Refatoração Clean Code: Delegando a lógica de ações para uma construção mais clara
-                            const options = getAvailableCobrancaActions(cobranca, {
-                                isAdmin,
-                                onDetails: onViewDetails,
-                                onQrCode: onViewQrCode,
-                                onConfirm: onConfirmPayment,
-                                onWhatsApp: onSendWhatsApp,
-                                onCancel: onCancelPayment
-                            });
-
-                            return (
-                                <TableRow
-                                    key={cobranca.id}
-                                    className={cn(
-                                        isCancelled && "opacity-60",
-                                        "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both"
-                                    )}
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                    {!isCompact && (
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                {['pendente', 'atrasado'].includes(cobranca.status) ? (
-                                                    <Checkbox
-                                                        checked={selectedIds?.has(cobranca.id) || false}
-                                                        onCheckedChange={() => onToggleSelect?.(cobranca.id)}
-                                                    />
-                                                ) : (
-                                                    <div className="w-5 h-5" /> // Spacer
-                                                )}
-                                                <div className="flex items-center gap-3">
-                                                    <StreamingLogo
-                                                        name={cobranca.assinatura.streaming.catalogo.nome}
-                                                        iconeUrl={cobranca.assinatura.streaming.catalogo.iconeUrl}
-                                                        color={cobranca.assinatura.streaming.catalogo.corPrimaria}
-                                                        size="sm"
-                                                        rounded="md"
-                                                    />
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-gray-900 leading-tight">
-                                                            {cobranca.assinatura.participante.nome}
-                                                        </span>
-                                                        <span className="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">
-                                                            {cobranca.assinatura.streaming.apelido || cobranca.assinatura.streaming.catalogo.nome}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                    )}
-
-                                    {isCompact && (
-                                        <TableCell className="px-4 py-3">
-                                            <BillingPeriodCell inicio={cobranca.periodoInicio} fim={cobranca.periodoFim} />
-                                        </TableCell>
-                                    )}
-
-                                    {!isCompact && (
-                                        <TableCell className="text-center font-medium text-xs text-gray-500">
-                                            {formatDate(cobranca.createdAt).split(',')[0]}
-                                        </TableCell>
-                                    )}
-
-                                    <TableCell className="px-4 py-3">
-                                        <BillingDueDateCell data={cobranca.dataVencimento} status={cobranca.status} />
-                                    </TableCell>
-
-                                    <TableCell className="text-center">
-                                        <StatusBadge status={cobranca.status} className="scale-75" />
-                                    </TableCell>
-
-                                    {!isCompact && (
-                                        <TableCell className="text-center text-sm font-black text-gray-700">
-                                            {cobranca.dataPagamento ? formatDate(cobranca.dataPagamento).split(',')[0] : "-"}
-                                        </TableCell>
-                                    )}
-
-                                    <TableCell className="px-4 py-3">
-                                        <BillingValueCell
-                                            valor={cobranca.valor}
+                                return (
+                                    <React.Fragment key={pName}>
+                                        <CobrancaGroupHeader
+                                            participantName={pName}
+                                            itemCount={participantCobrancas.length}
+                                            isSelected={allInGroupSelected ? true : someInGroupSelected ? "indeterminate" : false}
+                                            isCompact={isCompact}
+                                            isDisabled={selectableInGroup.length === 0}
+                                            showWarning={isGroupDisabled && selectableInGroup.length > 0}
+                                            isExpanded={!collapsedGroups[pName]}
+                                            onToggleExpand={() => toggleGroup(pName)}
+                                            onSelectChange={(checked) => {
+                                                if (!onSelectAll) return;
+                                                if (!checked) {
+                                                    const groupIds = participantCobrancas.map((c: any) => c.id);
+                                                    const nextIds = new Set(selectedIds);
+                                                    groupIds.forEach((id: number) => nextIds.delete(id));
+                                                    onSelectAll(Array.from(nextIds));
+                                                } else {
+                                                    if (canSelectGroup(pName)) {
+                                                        const existingIds = selectedIds ? Array.from(selectedIds) : [];
+                                                        const groupIds = selectableInGroup.map((c: any) => c.id);
+                                                        onSelectAll([...existingIds, ...groupIds]);
+                                                    } else {
+                                                        onSelectAll(selectableInGroup.map((c: any) => c.id));
+                                                    }
+                                                }
+                                            }}
                                         />
-                                    </TableCell>
-
-                                    {!isCompact && (
-                                        <TableCell className="text-center">
-                                            <div className="flex flex-col items-center gap-0.5">
-                                                <span className="text-[9px] font-black uppercase text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-100">
-                                                    {cobranca.gatewayProvider || "Manual"}
-                                                </span>
-                                                {cobranca.gatewayTransactionId && (
-                                                    <span className="text-[9px] text-gray-400 font-mono truncate max-w-[60px]" title={cobranca.gatewayTransactionId}>
-                                                        ID:{cobranca.gatewayTransactionId.slice(-6)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    )}
-
-                                    <TableCell className="text-center">
-                                        <Dropdown options={options} />
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
+                                        {!collapsedGroups[pName] && participantCobrancas.map((cobranca: any) => (
+                                            <CobrancaSelectableRow
+                                                key={cobranca.id}
+                                                cobranca={cobranca}
+                                                isSelected={selectedIds?.has(cobranca.id) || false}
+                                                isDisabled={isGroupDisabled && ['pendente', 'atrasado'].includes(cobranca.status)}
+                                                formatDate={formatDate}
+                                                onToggle={() => onToggleSelect?.(cobranca.id)}
+                                                options={getAvailableCobrancaActions(cobranca, {
+                                                    isAdmin,
+                                                    onDetails: onViewDetails,
+                                                    onQrCode: onViewQrCode,
+                                                    onConfirm: onConfirmPayment,
+                                                    onWhatsApp: onSendWhatsApp,
+                                                    onCancel: onCancelPayment
+                                                })}
+                                            />
+                                        ))}
+                                    </React.Fragment>
+                                );
+                            })
+                        ) : (
+                            cobrancas.slice(0, isCompact ? 5 : undefined).map((cobranca, index) => (
+                                <CobrancaRow
+                                    key={cobranca.id}
+                                    cobranca={cobranca}
+                                    index={index}
+                                    isCompact={isCompact}
+                                    selectedIds={selectedIds}
+                                    onToggleSelect={onToggleSelect}
+                                    options={getAvailableCobrancaActions(cobranca, {
+                                        isAdmin,
+                                        onDetails: onViewDetails,
+                                        onQrCode: onViewQrCode,
+                                        onConfirm: onConfirmPayment,
+                                        onWhatsApp: onSendWhatsApp,
+                                        onCancel: onCancelPayment
+                                    })}
+                                    formatDate={formatDate}
+                                />
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>

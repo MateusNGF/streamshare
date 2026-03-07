@@ -7,12 +7,16 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { cancelarLotePagamento } from "@/actions/cobrancas";
 import { useToast } from "@/hooks/useToast";
+import { LoteCard } from "./LoteCard";
+import { ViewMode } from "@/components/ui/ViewModeToggle";
 
 interface LotesTabProps {
     lotes: any[];
+    viewMode?: ViewMode;
+    isAdmin?: boolean;
 }
 
-export function LotesTab({ lotes }: LotesTabProps) {
+export function LotesTab({ lotes, viewMode = "table" }: LotesTabProps) {
     const [selectedLote, setSelectedLote] = useState<any>(null);
     const searchParams = useSearchParams();
 
@@ -47,12 +51,25 @@ export function LotesTab({ lotes }: LotesTabProps) {
 
     return (
         <div className="space-y-6">
-            <LotesTable
-                lotes={lotes}
-                onViewDetails={handleViewLote}
-                onCancelLote={handleCancelLote}
-                isAdmin={false}
-            />
+            {viewMode === "grid" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {lotes.map(lote => (
+                        <LoteCard
+                            key={lote.id}
+                            lote={lote}
+                            onViewDetails={handleViewLote}
+                            onCancelLote={handleCancelLote}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <LotesTable
+                    lotes={lotes}
+                    onViewDetails={handleViewLote}
+                    onCancelLote={handleCancelLote}
+                    isAdmin={false}
+                />
+            )}
 
             {selectedLote && (
                 <ModalPagamentoLote

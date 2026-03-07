@@ -41,10 +41,19 @@ Este hook abstrai a complexidade dos cálculos financeiros para os componentes d
 ### `AssinaturaModal`
 Modal para criação de assinatura individual. Utiliza o hook `useBillingCalculations` para exibir indicadores de transparência financeira (Lucro/Custo) enquanto o administrador digita o valor.
 
-### `AssinaturaMultiplaModal`
-Modal complexo para criação em massa. 
-- **Padrão SRP**: A configuração de cada streaming foi extraída para o subcomponente `StreamingConfigItem`.
 - **Validação de Capacidade**: Monitora em tempo real se a soma das vagas solicitadas ultrapassa o limite disponível em qualquer um dos streamings selecionados.
+
+### `BatchActionBar`
+**Localização**: `src/components/cobrancas/BatchActionBar.tsx`
+Barra flutuante inteligente que orquestra a jornada de "Carrinho Financeiro".
+- **Modos de Operação**: Alterna labels e ações entre Administrador ("Gerar Lote") e Participante ("Pagar Selecionadas").
+- **Psicologia Financeira**: Exibe sub-textos de alívio ("Você está quitando X faturas") para aumentar a conversão.
+
+### `BatchPreviewDrawer`
+Painel lateral de revisão final. Permite conferir os itens do lote e visualizar a prévia da mensagem de WhatsApp antes do disparo definitivo.
+
+### `LoteCompositionStrip`
+Componente visual que utiliza as logos dos streamings (`StreamingLogo`) para resumir a composição de um lote em modais de pagamento.
 
 ### `CurrencyInput`
 **Localização**: `src/components/ui/CurrencyInput.tsx`

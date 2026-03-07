@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { calcularCustoBase, calcularTotalCiclo, arredondarMoeda } from "@/lib/financeiro-utils";
+import { calcularCustoBase, calcularTotalCiclo, arredondarMoeda, escolherProximoDiaVencimento, calcularDataVencimentoPadrao, calcularValorProRata } from "@/lib/financeiro-utils";
 import { StreamingOption, ParticipanteOption, SelectedStreaming, ModalStep } from "./types";
 
 interface UseAssinaturaMultiplaProps {
@@ -10,13 +10,15 @@ interface UseAssinaturaMultiplaProps {
     streamings: StreamingOption[];
     onClose: () => void;
     onSave: (data: any) => void;
+    diasVencimento?: number[];
 }
 
 export function useAssinaturaMultipla({
     participantes,
     streamings,
     onClose,
-    onSave
+    onSave,
+    diasVencimento = []
 }: UseAssinaturaMultiplaProps) {
     const [step, setStep] = useState<ModalStep>(ModalStep.STREAMING);
     const [selectedParticipanteIds, setSelectedParticipanteIds] = useState<Set<number>>(new Set());
@@ -218,7 +220,18 @@ export function useAssinaturaMultipla({
             revenueMensalPerSlot = revenueMensalPerSlot.plus(valorCobrado);
             custoMensalPerSlot = custoMensalPerSlot.plus(custoBase);
 
-            const cycleTotalPerSeat = calcularTotalCiclo(config.valor, config.frequencia as FrequenciaPagamento);
+            const isFixarVencimento = diasVencimento.length > 0;
+            const dataVencObj = isFixarVencimento
+                ? escolherProximoDiaVencimento(diasVencimento, new Date(dataInicio))
+                : calcularDataVencimentoPadrao(new Date(dataInicio));
+
+            let cycleTotalPerSeat = new Prisma.Decimal(0);
+            if (isFixarVencimento) {
+                cycleTotalPerSeat = calcularValorProRata(valorCobrado, new Date(dataInicio), dataVencObj);
+            } else {
+                cycleTotalPerSeat = calcularTotalCiclo(valorCobrado, config.frequencia as FrequenciaPagamento);
+            }
+
             nextCycleTotal = nextCycleTotal.plus(cycleTotalPerSeat.mul(totalVagasSelecionadas));
         });
 
@@ -238,7 +251,7 @@ export function useAssinaturaMultipla({
             margemLucro: Math.round(margemLucro),
             totalAssinaturas: selectedStreamingIds.size * totalVagasSelecionadas
         };
-    }, [configurations, totalVagasSelecionadas, selectedStreamings, selectedStreamingIds.size]);
+    }, [configurations, totalVagasSelecionadas, selectedStreamings, selectedStreamingIds.size, diasVencimento, dataInicio]);
 
     const handleSubmit = useCallback(() => {
         if (selectedParticipanteIds.size === 0 || configurations.size === 0 || isOverloaded) return;

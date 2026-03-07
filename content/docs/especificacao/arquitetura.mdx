@@ -1,0 +1,46 @@
+---
+titulo: 'Arquitetura do Sistema'
+descricao: 'Diagramas de estados e fluxos das principais entidades da plataforma.'
+ordem: 12
+seccao: 'especificacao'
+---
+
+# Arquitetura e Fluxo de Dados
+
+Esta seção apresenta diagramas visuais que ilustram o ciclo de vida das principais entidades da plataforma — como uma cobrança evolui do momento da criação até ao encerramento.
+
+## Ciclo de Vida de uma Cobrança
+
+O diagrama abaixo representa todos os estados possíveis de uma cobrança individual e as transições entre eles.
+
+> **Legenda de termos:** "ANALISE" indica que o comprovante foi submetido e está aguardando validação pelo Organizador. "ATRASADA" indica que a data de vencimento passou sem pagamento registrado.
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDENTE: Criação da cobrança
+    PENDENTE --> ANALISE: Comprovante enviado
+    ANALISE --> PAGA: Aprovado pelo Organizador
+    ANALISE --> PENDENTE: Comprovante rejeitado
+    PENDENTE --> ATRASADA: Data de vencimento atingida
+    ATRASADA --> ANALISE: Comprovante enviado
+    PAGA --> [*]: Ciclo Concluído
+    ATRASADA --> CANCELADA: Assinatura encerrada
+```
+
+## Fluxo de Notificações
+
+Este diagrama ilustra como o sistema reage a eventos importantes para manter os participantes informados.
+
+> O sistema identifica o tipo de evento ocorrido e seleciona automaticamente o canal de comunicação mais adequado para notificar o destinatário correto.
+
+```mermaid
+graph TD
+    A[Evento de Sistema] --> B{Tipo de Evento?}
+    B -- Nova Cobrança --> C[Notificar Participante]
+    B -- Comprovante Enviado --> D[Notificar Organizador]
+    B -- Pagamento em Atraso --> E[Alerta ao Participante]
+
+    C --> F[E-mail + Notificação no App]
+    D --> F
+    E --> G[Mensagem WhatsApp]
+```

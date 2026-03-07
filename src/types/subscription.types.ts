@@ -65,6 +65,7 @@ export interface SubscriptionWithCharges {
     participante: {
         id: number;
         contaId: number;
+        conta?: { diasVencimento: number[] };
         nome: string;
         whatsappNumero: string | null;
         email: string | null;

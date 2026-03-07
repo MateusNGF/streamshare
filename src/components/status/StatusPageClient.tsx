@@ -47,6 +47,15 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-03-06",
+        date: "06/03/2026",
+        changes: [
+            { category: "Experiência", description: "Localização completa e padronização da **Central de Ajuda** para o Português do Brasil, unificando a terminologia de negócio e removendo regionalismos para uma comunicação mais clara e profissional." },
+            { category: "Interface", description: "Redesign da navegação na **Documentação do Sistema**, com nova hierarquia lógica e visual que facilita a localização de guias técnicos e manuais operacionais via barra lateral intuitiva." },
+            { category: "Precisão", description: "Otimização do motor de indexação e carregamento de artigos na **Base de Conhecimento**, garantindo que as visões gerais e guias de início rápido sejam priorizados na estrutura de acesso." },
+        ],
+    },
+    {
         id: "2026-03-02",
         date: "02/03/2026",
         changes: [

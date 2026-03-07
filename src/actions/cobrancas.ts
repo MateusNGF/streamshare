@@ -888,6 +888,8 @@ export async function getLotesUsuario() {
                 createdAt: true,
                 updatedAt: true,
                 comprovanteUrl: true,
+                referenciaMes: true,
+                contaId: true,
                 participante: {
                     select: {
                         id: true,
@@ -959,6 +961,8 @@ export async function getLotesGestor() {
                 createdAt: true,
                 updatedAt: true,
                 comprovanteUrl: true,
+                referenciaMes: true,
+                contaId: true,
                 participante: {
                     select: {
                         id: true,
@@ -1120,5 +1124,65 @@ export async function cancelarLotePagamento(loteId: number, motivo?: string) {
     } catch (error: any) {
         console.error("[CANCELAR_LOTE_ERROR]", error);
         return { success: false, error: error.message || "Erro ao cancelar lote." };
+    }
+}
+
+/**
+ * Consolidar faturas mensais de todos os participantes do organizador logado.
+ */
+export async function consolidarFaturasMensaisAction(referenciaMes?: string) {
+    try {
+        const { getCurrentUser } = await import("@/lib/auth");
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true }
+        });
+
+        if (!userAccount || (userAccount.nivelAcesso !== "admin" && userAccount.nivelAcesso !== "owner")) {
+            return { success: false, error: "Acesso negado: apenas administradores podem consolidar faturas." };
+        }
+
+        const { LotePagamentoService } = await import("@/services/lote-pagamento.service");
+        const result = await LotePagamentoService.consolidarFaturasMensais(userAccount.contaId, referenciaMes);
+
+        revalidatePath("/cobrancas");
+        revalidatePath("/faturas");
+        return { success: true, data: result };
+    } catch (error: any) {
+        console.error("[CONSOLIDAR_FATURAS_MENSAIS_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao consolidar faturas mensais" };
+    }
+}
+/**
+ * Analisa as faturas mensais (apenas retorno de read) para o modal de confirmação
+ */
+export async function analisarFaturasMensaisAction(referenciaMes?: string) {
+    try {
+        const { getCurrentUser } = await import("@/lib/auth");
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado" };
+
+        const userAccount = await prisma.contaUsuario.findFirst({
+            where: { usuarioId: user.userId, isAtivo: true },
+            select: { contaId: true, nivelAcesso: true }
+        });
+
+        if (!userAccount || (userAccount.nivelAcesso !== "admin" && userAccount.nivelAcesso !== "owner")) {
+            return { success: false, error: "Acesso negado." };
+        }
+
+        const { LotePagamentoService } = await import("@/services/lote-pagamento.service");
+        const analysis = await LotePagamentoService.analisarFaturasMensais(userAccount.contaId, referenciaMes);
+
+        return {
+            success: true,
+            data: analysis
+        };
+    } catch (error: any) {
+        console.error("[ANALISAR_FATURAS_MENSAIS_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao analisar faturas mensais" };
     }
 }

@@ -138,17 +138,21 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
 
     // Batch Actions
     const handleAbrirLote = async () => {
-        if (selectedIds.size === 0) return;
+        if (selectedIds.size === 0) return false;
         setLoading(true);
         try {
             const result = await criarLotePagamento(Array.from(selectedIds), true);
             if (result.success && result.data) {
                 router.push(`/cobrancas/lotes?loteId=${result.data.id}`);
+                return true;
             } else if (result.error) {
                 toast.error(result.error);
+                return false;
             }
+            return false;
         } catch (error) {
             toast.error("Erro ao preparar lote de pagamento");
+            return false;
         } finally {
             setLoading(false);
         }

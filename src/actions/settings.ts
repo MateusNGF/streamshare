@@ -28,6 +28,7 @@ export async function getSettingsData() {
                         plano: true,
 
                         moedaPreferencia: true,
+                        diasVencimento: true,
                         chavePix: true,
                         stripeSubscriptionStatus: true,
                         stripeCancelAtPeriodEnd: true,
@@ -194,6 +195,58 @@ export async function updateCurrency(currencyCode: string) {
     } catch (error: any) {
         console.error("[UPDATE_CURRENCY_ERROR]", error);
         return { success: false, error: "Erro ao atualizar moeda" };
+    }
+}
+
+export async function updateDiasVencimento(diasAgendados: number[]) {
+    try {
+        const { contaId, userId } = await getContext();
+
+        // Validar dias
+        const validDays = diasAgendados.every(d => d >= 1 && d <= 28);
+        if (!validDays) {
+            return { success: false, error: "Os dias de vencimento devem estar entre 1 e 28." };
+        }
+
+        const diasUnicosOrdenados = Array.from(new Set(diasAgendados)).sort((a, b) => a - b);
+
+        await prisma.$transaction(async (tx) => {
+            await tx.conta.update({
+                where: { id: contaId },
+                data: { diasVencimento: diasUnicosOrdenados },
+            });
+
+            await tx.notificacao.create({
+                data: {
+                    contaId,
+                    usuarioId: null,
+                    tipo: "configuracao_alterada",
+                    titulo: `Dias de vencimento atualizados`,
+                    descricao: `Os dias padrão de vencimento foram atualizados para: ${diasUnicosOrdenados.join(', ') || 'Padrão'}`,
+                    lida: false
+                }
+            });
+        });
+
+        revalidatePath('/configuracoes');
+        return { success: true };
+    } catch (error: any) {
+        console.error("[UPDATE_DIAS_VENCIMENTO_ERROR]", error);
+        return { success: false, error: "Erro ao atualizar dias de vencimento" };
+    }
+}
+
+export async function getAccountDiasVencimento() {
+    try {
+        const { contaId } = await getContext();
+        const conta = await prisma.conta.findUnique({
+            where: { id: contaId },
+            select: { diasVencimento: true },
+        });
+        return { success: true, data: conta?.diasVencimento || [] };
+    } catch (error: any) {
+        console.error("[GET_ACCOUNT_DIAS_VENCIMENTO_ERROR]", error);
+        return { success: false, error: "Erro ao buscar dias de vencimento" };
     }
 }
 

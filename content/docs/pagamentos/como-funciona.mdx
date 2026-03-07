@@ -1,0 +1,58 @@
+---
+titulo: 'Ciclo de Faturamento e Automação'
+descricao: 'Como a gestão financeira funciona: renovações, avisos e o processamento automático da plataforma.'
+ordem: 1
+seccao: 'pagamentos'
+---
+
+# Ciclo de Faturamento e Automação
+
+A base do StreamShare é o seu sistema de gestão financeira automática. Compreender como ele funciona ajuda a manter as suas partilhas em dia e sem preocupações manuais.
+
+---
+
+## O Processamento Automático
+
+Diariamente, o sistema executa rotinas de manutenção para garantir que tudo está atualizado. Este processo ocorre de forma silenciosa e automática, seguindo estas etapas fundamentais:
+
+### 1. Atualização de Atrasos
+
+O sistema identifica faturas que ultrapassaram a data de vencimento sem que o pagamento tenha sido confirmado. Para cada caso:
+- O estado da fatura é atualizado para "Em Atraso".
+- O participante é sinalizado e, se configurado, o sistema alerta sobre a suspensão da assinatura.
+
+### 2. Agrupamento de Faturas (Lotes)
+
+Para facilitar a vida dos membros, o sistema identifica cobranças de um mesmo participante que ainda não foram pagas e agrupa-as automaticamente numa fatura única mensal.
+- Isso permite que o participante faça um único pagamento em vez de vários separados.
+- Estas faturas agrupadas têm um prazo de validade estendido para que haja tempo suficiente para a liquidação.
+
+### 3. Avisos de Vencimento
+
+O sistema envia lembretes automáticos para os participantes que têm faturas a vencer nos próximos dias, garantindo que ninguém se esqueça de manter a sua partilha ativa.
+
+### 4. Alertas de Pendência
+
+Caso existam faturas que já venceram, o sistema envia alertas tanto para o participante quanto para o Organizador, facilitando a regularização rápida da situação.
+
+---
+
+## Linha do Tempo de uma Cobrança
+
+1. **Fatura Gerada**: O sistema cria a fatura e o participante é avisado.
+2. **Prazo de Pagamento**: Período entre a geração e a data de vencimento.
+3. **Data de Vencimento**: Dia limite para o pagamento sem sinalização de atraso.
+4. **Estado de Atraso**: Caso o pagamento não ocorra, o sistema sinaliza o atraso e envia lembretes.
+5. **Regularização**: Assim que o pagamento é feito e validado, a assinatura é reativada instantaneamente.
+
+---
+
+## Estados da Fatura
+
+| Estado | Significado |
+|---|---|
+| **Pendente** | Fatura gerada, aguardando pagamento por parte do membro. |
+| **Aguardando Aprovação** | O comprovante foi enviado e aguarda a conferência pelo Organizador. |
+| **Paga** | O pagamento foi validado e a fatura está liquidada. |
+| **Em Atraso** | A data de vencimento passou sem que o pagamento fosse confirmado. |
+| **Cancelada** | A fatura foi anulada (por exemplo, se o membro sair da partilha). |

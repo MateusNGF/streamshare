@@ -134,12 +134,11 @@ As mensagens são padronizadas para garantir clareza e profissionalismo. Arquivo
 
 ## Fluxos Principais
 
-### Envio de Notificação Manual (Free/Pro)
-1. Administrador clica em **Enviar WhatsApp** na planilha de cobranças.
+1. Administrador clica em **Enviar WhatsApp** (ou **Lote**) na planilha de cobranças.
 2. Sistema verifica que o plano é `Pro`.
-3. Chama `sendWhatsApp` com `automated: false`.
-4. O serviço gera um link `https://wa.me/55...`.
-5. Retorna para o frontend o link.
+3. Abre o **Batch Preview Drawer** (Review) para conferência de itens e total.
+4. O administrador visualiza a **prévia exata da mensagem** mockada via `WhatsAppPreviewCard`.
+5. Ao confirmar, o serviço gera um link `https://wa.me/55...`.
 6. O browser abre o link em uma nova aba, pronto para o "Enter" do usuário.
 
 ### Envio de Notificação Automática (Business)

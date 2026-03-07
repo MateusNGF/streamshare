@@ -1,5 +1,5 @@
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { addMonths, lastDayOfMonth, isAfter, getDate, setDate, addDays } from "date-fns";
+import { addMonths, lastDayOfMonth, isAfter, getDate, setDate, addDays, differenceInDays, getDaysInMonth } from "date-fns";
 
 export const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
     mensal: 1,
@@ -122,6 +122,54 @@ export function calcularTotalCiclo(valorMensal: Prisma.Decimal | number | string
 export function calcularDataVencimentoPadrao(dataEmissao: Date = new Date()): Date {
     return addDays(dataEmissao, PRAZO_VENCIMENTO_PADRAO_DIAS);
 }
+
+/**
+ * Dado um array de dias de vencimento configurados (ex: [5, 10, 20])
+ * e uma data de referência, retorna a data de vencimento mais próxima no futuro.
+ * Se não houver nenhuma no mês corrente, avança para o primeiro dia configurado do próximo mês.
+ */
+export function escolherProximoDiaVencimento(diasVencimento: number[], dataReferencia: Date): Date {
+    if (!diasVencimento || diasVencimento.length === 0) {
+        return calcularDataVencimentoPadrao(dataReferencia);
+    }
+
+    const diaAtual = getDate(dataReferencia);
+    const diasOrdenados = [...diasVencimento].sort((a, b) => a - b);
+
+    // Tentar encontrar um dia no mês atual que seja maior ou igual ao dia atual
+    const proximoDiaMesAtual = diasOrdenados.find(d => d >= diaAtual);
+
+    if (proximoDiaMesAtual !== undefined) {
+        return setDate(dataReferencia, proximoDiaMesAtual);
+    }
+
+    // Se todos os dias do mês atual já passaram, pega o primeiro dia configurado do próximo mês
+    const proximoMes = addMonths(dataReferencia, 1);
+    return setDate(proximoMes, diasOrdenados[0]);
+}
+
+/**
+ * Calcula o valor proporcional (pro-rata) da primeira cobrança.
+ * Cobre o período parcial de `dataInicio` até `dataVencimento`.
+ * Fórmula: (valorMensal / diasNoMes) * diasCobertos
+ */
+export function calcularValorProRata(
+    valorMensal: Prisma.Decimal | number,
+    dataInicio: Date,
+    dataVencimento: Date
+): Prisma.Decimal {
+    const valorDecimal = new Prisma.Decimal(valorMensal.toString());
+
+    // Garantir ao menos 1 dia cobrado para evitar valores 0
+    const diasCobertos = Math.max(1, differenceInDays(dataVencimento, dataInicio));
+
+    const diasNoMes = getDaysInMonth(dataInicio);
+
+    const valorDiario = valorDecimal.div(diasNoMes);
+
+    return valorDiario.mul(diasCobertos).toDecimalPlaces(2);
+}
+
 /**
  * Formata um valor numérico para moeda.
  * 

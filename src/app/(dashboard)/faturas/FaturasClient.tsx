@@ -18,6 +18,9 @@ import { CreditCard, Loader2, FileText, History } from "lucide-react";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { BatchActionBar } from "@/components/cobrancas/BatchActionBar";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
+import { formatMesReferencia } from "@/lib/dateUtils";
 
 const FaturasTable = dynamic(() => import("@/components/faturas/FaturasTable").then(mod => mod.FaturasTable), {
     loading: () => <TableSkeleton />
@@ -43,8 +46,11 @@ interface FaturasClientProps {
 }
 
 export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientProps) {
+    const faturasPendentesForTab = faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
+    const lotesPendentes = lotes.filter(l => l.status === 'pendente' || l.status === 'atrasado' || l.status === 'aguardando_aprovacao');
+
     const [viewMode, setViewMode] = useState<ViewMode>("table");
-    const [activeTabId, setActiveTabId] = useState("faturas");
+    const [activeTabId, setActiveTabId] = useState(() => (faturasPendentesForTab.length === 0 && lotesPendentes.length > 0) ? "lotes" : "faturas");
     const [selectedFatura, setSelectedFatura] = useState<any>(null);
     const [selectedFaturaIds, setSelectedFaturaIds] = useState<number[]>([]);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -132,16 +138,18 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                         title="Minhas Cobranças"
                                         className="mb-0"
                                         rightElement={
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                                                 {faturasPendentes.length === 0 && faturasAguardando.length > 0 && (
-                                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full">
+                                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full text-center">
                                                         {faturasAguardando.length} em análise
                                                     </span>
                                                 )}
-                                                <ViewModeToggle
-                                                    viewMode={viewMode}
-                                                    setViewMode={setViewMode}
-                                                />
+                                                <div className="flex-1 w-full sm:w-auto flex justify-center">
+                                                    <ViewModeToggle
+                                                        viewMode={viewMode}
+                                                        setViewMode={setViewMode}
+                                                    />
+                                                </div>
                                             </div>
                                         }
                                     />
@@ -179,8 +187,17 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                             icon: History,
                             content: (
                                 <div className="space-y-6">
-                                    <SectionHeader title="Meus Pagamentos Consolidados" />
-                                    <LotesTab lotes={lotes} />
+                                    <SectionHeader
+                                        title="Meus Pagamentos Consolidados"
+                                        className="mb-0"
+                                        rightElement={
+                                            <ViewModeToggle
+                                                viewMode={viewMode}
+                                                setViewMode={setViewMode}
+                                            />
+                                        }
+                                    />
+                                    <LotesTab lotes={lotes} viewMode={viewMode} />
                                 </div>
                             )
                         }
@@ -194,47 +211,34 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                 cobranca={selectedFatura}
             />
 
-            {/* Bottom Bar: Carrinho de Dívidas */}
-            {selectedFaturaIds.length > 0 && activeTabId === "faturas" && (
-                <div className="fixed bottom-0 left-0 right-0 md:pl-64 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-                    <div className="bg-white border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] p-4 px-6 sm:px-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                                <Wallet size={24} />
-                            </div>
-                            <div>
-                                <h4 className="text-gray-900 font-bold leading-tight">Lote de Pagamento</h4>
-                                <p className="text-sm font-medium text-gray-500">
-                                    {selectedFaturaIds.length} {selectedFaturaIds.length === 1 ? 'fatura selecionada' : 'faturas selecionadas'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                            <div className="text-right flex-1 sm:flex-none">
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Total</span>
-                                <span className="text-xl font-black text-gray-900 leading-none">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                                        faturas.filter(f => selectedFaturaIds.includes(f.id)).reduce((acc, curr) => acc + Number(curr.valor), 0)
-                                    )}
-                                </span>
-                            </div>
-
-                            <Button
-                                className="w-full sm:w-auto"
-                                size="lg"
-                                onClick={handleCreateLote}
-                                disabled={isCreatingLote}
-                            >
-                                {isCreatingLote ? (
-                                    <><Loader2 size={20} className="animate-spin mr-2" /> Aguarde...</>
-                                ) : (
-                                    <><CreditCard size={20} className="mr-2" /> Pagar Lote</>
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+            {/* Reusable Batch Selection Bar */}
+            {activeTabId === "faturas" && (
+                <BatchActionBar
+                    count={selectedFaturaIds.length}
+                    total={faturas.filter(f => selectedFaturaIds.includes(f.id)).reduce((acc, curr) => acc + Number(curr.valor), 0)}
+                    isAdmin={false}
+                    onPay={handleCreateLote}
+                    onClear={() => setSelectedFaturaIds([])}
+                    loading={isCreatingLote}
+                    summaryItems={faturas
+                        .filter(f => selectedFaturaIds.includes(f.id))
+                        .map(f => ({
+                            id: f.id,
+                            title: f.assinatura?.streaming?.apelido || f.assinatura?.streaming?.catalogo?.nome || "Serviço",
+                            description: `Org.: ${f.assinatura?.participante?.conta?.nome || "Desconhecido"} - Ref: ${formatMesReferencia(f.mesReferencia || f.periodoInicio || f.dataVencimento)}`,
+                            value: Number(f.valor),
+                            icon: (
+                                <StreamingLogo
+                                    name={f.assinatura?.streaming?.catalogo?.nome || "Icon"}
+                                    iconeUrl={f.assinatura?.streaming?.catalogo?.iconeUrl}
+                                    color={f.assinatura?.streaming?.catalogo?.corPrimaria}
+                                    size="xs"
+                                    rounded="md"
+                                />
+                            )
+                        }))
+                    }
+                />
             )}
         </PageContainer>
     );

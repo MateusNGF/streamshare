@@ -137,6 +137,7 @@ export async function checkAndNotifyPendingBillings() {
         logPrefix: 'CRON_VENCENDO',
         getBillingFilter: (config) => ({
             status: 'pendente',
+            lotePagamentoId: null,
             periodoFim: {
                 lte: addDays(new Date(), config.diasAvisoVencimento),
                 gte: new Date()
@@ -167,6 +168,7 @@ export async function checkAndNotifyOverdueBillings() {
         logPrefix: 'CRON_ATRASO',
         getBillingFilter: (config) => ({
             status: 'atrasado',
+            lotePagamentoId: null,
             assinatura: {
                 participante: { contaId: config.contaId }
             }
@@ -182,3 +184,74 @@ export async function checkAndNotifyOverdueBillings() {
         }
     });
 }
+
+/**
+ * Verifica Lotes pendentes (Faturas Consolidadas) e envia notificação unificada.
+ */
+export async function checkAndNotifyConsolidatedBillings() {
+    const configs = await prisma.whatsAppConfig.findMany({
+        where: { isAtivo: true, notificarCobrancaGerada: true },
+        include: { conta: { select: { moedaPreferencia: true } } }
+    });
+
+    for (const config of configs) {
+        // Encontra lotes pendentes que ainda não foram notificados nas últimas 24h
+        const lotes = await prisma.lotePagamento.findMany({
+            where: {
+                status: 'pendente',
+                contaId: config.contaId,
+            },
+            include: {
+                participante: true,
+                cobrancas: {
+                    include: {
+                        assinatura: { include: { streaming: { include: { catalogo: true } } } }
+                    }
+                }
+            }
+        });
+
+        const moeda = (config.conta.moedaPreferencia as CurrencyCode) || 'BRL';
+
+        for (const lote of lotes) {
+            if (lote.cobrancas.length === 0) continue;
+
+            const participanteId = lote.participanteId;
+            const logType = 'cobranca_gerada' as TipoNotificacaoWhatsApp;
+
+            // Evitar spam: checar se já mandou notificação de cobrança gerada para ESTE lote.
+            const ultimoLog = await prisma.whatsAppLog.findFirst({
+                where: {
+                    configId: config.id,
+                    participanteId,
+                    tipo: logType,
+                    mensagem: { contains: "Sua fatura consolidada StreamShare" },
+                    createdAt: { gte: subHours(new Date(), 24 * 7) } // Uma vez por período para faturas
+                }
+            });
+
+            if (ultimoLog) continue;
+
+            const servicosNames = lote.cobrancas.map(c => c.assinatura.streaming.catalogo.nome).join(', ');
+
+            const mensagem = whatsappTemplates.faturaConsolidada(
+                lote.participante.nome,
+                servicosNames,
+                formatCurrency(lote.valorTotal.toNumber(), moeda),
+                lote.expiresAt ? new Date(lote.expiresAt).toLocaleDateString('pt-BR') : 'N/D'
+            );
+
+            const result = await sendWhatsAppNotification(
+                config.contaId,
+                logType,
+                participanteId,
+                mensagem
+            );
+
+            if (result.success) {
+                console.log(`[CRON_LOTE] ✅ Fatura consolidada notificada para ${lote.participante.nome}`);
+            }
+        }
+    }
+}
+

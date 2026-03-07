@@ -12,6 +12,7 @@ Cada componente ou função deve ter apenas um motivo para existir e mudar.
 *   **Server Actions**: Localizadas em `src/actions/`, devem lidar apenas com a lógica de orquestração de dados e interação com o Banco de Dados.
 *   **Hooks**: Localizados em `src/hooks/`, devem gerenciar apenas o estado local e efeitos de um contexto específico.
 *   **Componentes de UI**: Devem focar na apresentação. Lógica complexa de formatação deve ser extraída para utilitários ou hooks.
+*   **Gestão de Tabelas Complexas**: Componentes como `CobrancasTable` devem ser decompostos em sub-diretórios (ex: `items/`, `shared/`, `batch/`) para isolar a responsabilidade de cabeçalhos de grupo, linhas selecionáveis e componentes de resumo.
 
 ### 2. DRY (Don't Repeat Yourself) & Componentização
 A lógica comum deve ser centralizada.

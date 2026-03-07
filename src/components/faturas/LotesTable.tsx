@@ -102,9 +102,14 @@ export function LotesTable({
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     <TableCell>
-                                        <span className="font-bold text-gray-900 leading-tight">
+                                        <span className="font-bold text-gray-900 leading-tight block">
                                             #{lote.id}
                                         </span>
+                                        {lote.referenciaMes && (
+                                            <span className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 whitespace-nowrap">
+                                                🗓️ Ref: {lote.referenciaMes.split('-').reverse().join('/')}
+                                            </span>
+                                        )}
                                     </TableCell>
 
                                     <TableCell className="px-4 py-3 text-center text-sm text-gray-600">

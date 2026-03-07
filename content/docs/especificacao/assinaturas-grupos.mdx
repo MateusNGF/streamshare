@@ -1,0 +1,83 @@
+---
+titulo: "Assinaturas e Grupos"
+descricao: "Ciclo de vida das assinaturas individuais e em lote, e organização de serviços em grupos de compartilhamento."
+ordem: 7
+seccao: "especificacao"
+---
+
+# Assinaturas e Grupos
+
+As Assinaturas formalizam o vínculo entre um Participante e um Serviço de Streaming. São elas que desencadeiam o ciclo de cobranças e determinam as condições de acesso de cada membro.
+
+---
+
+## Criação de Assinaturas Individuais
+
+O Organizador cria uma assinatura para um Participante ao associá-lo a um Serviço de Streaming, definindo:
+
+- **Valor da contribuição:** O montante que aquele participante irá pagar por ciclo. Deve ser um valor positivo.
+- **Frequência de pagamento:** O ritmo das cobranças — mensal, trimestral, semestral ou anual. Cada frequência determina automaticamente o período coberto por cada fatura.
+- **Data de início:** O dia em que o acesso do participante começa.
+- **Assinalação "Já pago":** Se o Organizador marcar esta opção, o sistema considera o primeiro período como já liquidado, ativando imediatamente a assinatura sem gerar uma cobrança inicial em aberto.
+
+### Validações antes da Criação
+
+Antes de formalizar a assinatura, o sistema verifica automaticamente:
+
+1. **Disponibilidade de vagas:** O serviço tem capacidade para mais um participante? A contagem considera não apenas os participantes ativos, mas também os suspensos e os pendentes.
+2. **Ausência de duplicatas:** O participante já tem uma assinatura em vigor para este serviço? Não é possível ter duas assinaturas simultâneas ativas para o mesmo par participante-serviço.
+
+Se qualquer uma destas condições falhar, a criação é interrompida com uma mensagem explicativa.
+
+### Cobrança Inicial Automática
+
+Imediatamente após a criação da assinatura, o sistema gera a primeira cobrança de forma automática. O cálculo do valor e do período desta primeira cobrança depende das configurações da conta:
+
+- **Com dias de vencimento configurados:** A primeira cobrança cobre apenas os dias entre a data de início e a próxima data de vencimento configurada (cálculo proporcional). Por exemplo, se a assinatura começa a 10 de março e o vencimento está configurado para o dia 1, a primeira cobrança cobre apenas os dias restantes de março, com o valor proporcional.
+- **Sem dias de vencimento configurados:** O sistema usa a frequência escolhida para calcular o período completo (30 dias para mensal, 90 para trimestral, etc.).
+
+---
+
+## Criação de Assinaturas em Lote
+
+Para situações em que o Organizador precisa de inscrever simultaneamente vários participantes em vários serviços, a plataforma disponibiliza uma ferramenta de criação em lote. Esta ferramenta aplica todas as mesmas regras de validação individual.
+
+### Comportamento "Tudo ou Nada"
+
+A criação em lote é feita de forma segura e consistente:
+- Se qualquer um dos participantes falhar na validação (por falta de vagas, assinatura duplicada, etc.), **nenhuma assinatura é criada** — a operação inteira é cancelada. Isto evita situações em que parte das assinaturas é criada e outra não.
+- O sistema verifica a lotação total necessária antes de iniciar, prevenindo conflitos entre operações simultâneas.
+
+---
+
+## Cancelamento de Assinaturas
+
+O Organizador pode cancelar uma assinatura ativa ou suspensa a qualquer momento. O sistema avalia automaticamente o estado atual da assinatura e procede da forma mais justa para ambas as partes:
+
+### Cancelamento Imediato
+Ocorre quando não existe nenhum período pago em vigor. O acesso do participante ao serviço é encerrado de imediato e a assinatura transita para o estado **Cancelada**.
+
+### Cancelamento com Período Garantido
+Se o participante tiver uma cobrança paga que ainda cobre o período corrente (por exemplo, pagou a mensalidade de março e ainda estamos em março), o cancelamento é **agendado** para o fim desse período. A assinatura permanece ativa até ao último dia coberto pelo pagamento vigente e só então é encerrada automaticamente pelo sistema.
+
+O Organizador pode registrar o motivo do cancelamento, que fica guardado no histórico da assinatura para futuras consultas.
+
+---
+
+## Grupos de Compartilhamento
+
+Os Grupos permitem ao Organizador agrupar múltiplos Serviços de Streaming sob um mesmo contexto. São particularmente úteis para famílias ou grupos de amigos que assinam vários serviços em conjunto.
+
+### O que é um Grupo?
+
+Um Grupo tem um nome, uma descrição opcional e uma lista de Serviços associados. O Organizador pode incluir qualquer serviço que pertença à sua conta. Cada grupo recebe automaticamente um **link de compartilhamento único** que pode ser enviado pelo Organizador para os seus membros.
+
+### Mensagem de Renovação Mensal
+
+Uma das funcionalidades mais úteis dos Grupos é a geração automática de uma **mensagem de renovação** formatada para envio no WhatsApp. Esta mensagem lista todos os serviços do grupo com o valor que cada participante deve pagar, calculado da seguinte forma:
+
+> **Valor por participante** = Valor total do serviço ÷ Número máximo de vagas
+
+Por exemplo, se o serviço de vídeo custa R$ 55,90 e tem 5 vagas, cada participante paga R$ 11,18. A mensagem inclui ainda a chave PIX configurada na conta, facilitando a liquidação imediata.
+
+A mensagem também inclui o estado de pagamento de cada participante no mês de referência, permitindo ao Organizador ter uma visão rápida de quem já pagou e quem está em falta.

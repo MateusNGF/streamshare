@@ -6,10 +6,10 @@ import { useToast } from "@/contexts/ToastContext";
 
 interface UseSupportFormProps {
     onSuccess?: () => void;
-    isOpen: boolean;
+    isOpen?: boolean;
 }
 
-export function useSupportForm({ onSuccess, isOpen }: UseSupportFormProps) {
+export function useSupportForm({ onSuccess, isOpen = true }: UseSupportFormProps = {}) {
     const [isPending, startTransition] = useTransition();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const { showToast } = useToast();
