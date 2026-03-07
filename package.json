@@ -28,6 +28,7 @@
     "@supabase/supabase-js": "^2.97.0",
     "@types/matter-js": "^0.20.2",
     "@types/nodemailer": "^7.0.5",
+    "@vercel/analytics": "^1.6.1",
     "autoprefixer": "^10.0.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
