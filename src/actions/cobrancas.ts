@@ -879,7 +879,8 @@ export async function getLotesUsuario() {
 
         const lotes = await prisma.lotePagamento.findMany({
             where: {
-                participante: { userId: user.userId }
+                participante: { userId: user.userId },
+                status: { not: "cancelado" }
             },
             select: {
                 id: true,
@@ -952,7 +953,8 @@ export async function getLotesGestor() {
 
         const lotes = await prisma.lotePagamento.findMany({
             where: {
-                participante: { contaId: userAccount.contaId }
+                participante: { contaId: userAccount.contaId },
+                status: { not: "cancelado" }
             },
             select: {
                 id: true,

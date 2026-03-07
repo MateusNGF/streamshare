@@ -8,7 +8,8 @@ import {
     TableRow,
 } from "@/components/ui/Table";
 import { Trash, Clock, Search, History, QrCode, AlertCircle, User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useMemo, Fragment } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -133,14 +134,29 @@ export function CobrancasTable({
         }
     };
 
-    // Smart Grouping Logic
-    const groupedCobrancas = isAdmin && !isCompact ? cobrancas.reduce((groups: any, c: any) => {
-        const participantName = c.assinatura.participante.nome;
-        if (!groups[participantName]) groups[participantName] = [];
-        groups[participantName].push(c);
-        return groups;
-    }, {}) : null;
+    // Smart Grouping Logic - Only group 'pendente' and 'atrasado'
+    const groupedData = useMemo(() => {
+        if (!isAdmin || isCompact) return { groups: null, individual: cobrancas };
 
+        const groups: Record<string, any[]> = {};
+        const individual: any[] = [];
+
+        cobrancas.forEach(c => {
+            const isGroupable = c.status === 'pendente' || c.status === 'atrasado';
+            if (isGroupable) {
+                const participantName = c.assinatura.participante.nome;
+                if (!groups[participantName]) groups[participantName] = [];
+                groups[participantName].push(c);
+            } else {
+                individual.push(c);
+            }
+        });
+
+        return { groups, individual };
+    }, [cobrancas, isAdmin, isCompact]);
+
+    const groupedCobrancas = groupedData.groups;
+    const individualCobrancas = groupedData.individual;
     const participantNames = groupedCobrancas ? Object.keys(groupedCobrancas) : [];
 
     const canSelectGroup = (participantName: string) => {
@@ -238,63 +254,85 @@ export function CobrancasTable({
                     </TableHeader>
                     <TableBody>
                         {groupedCobrancas ? (
-                            participantNames.map((pName) => {
-                                const participantCobrancas = groupedCobrancas[pName];
-                                const selectableInGroup = participantCobrancas.filter((c: any) => ['pendente', 'atrasado'].includes(c.status));
-                                const allInGroupSelected = selectableInGroup.length > 0 && selectedIds && selectableInGroup.every((c: any) => selectedIds.has(c.id));
-                                const someInGroupSelected = selectableInGroup.length > 0 && selectedIds && !allInGroupSelected && selectableInGroup.some((c: any) => selectedIds.has(c.id));
-                                const isGroupDisabled = !canSelectGroup(pName);
+                            <>
+                                {participantNames.map((pName) => {
+                                    const participantCobrancas = groupedCobrancas[pName];
+                                    const selectableInGroup = participantCobrancas.filter((c: any) => ['pendente', 'atrasado'].includes(c.status));
+                                    const allInGroupSelected = selectableInGroup.length > 0 && selectedIds && selectableInGroup.every((c: any) => selectedIds.has(c.id));
+                                    const someInGroupSelected = selectableInGroup.length > 0 && selectedIds && !allInGroupSelected && selectableInGroup.some((c: any) => selectedIds.has(c.id));
+                                    const isGroupDisabled = !canSelectGroup(pName);
 
-                                return (
-                                    <React.Fragment key={pName}>
-                                        <CobrancaGroupHeader
-                                            participantName={pName}
-                                            itemCount={participantCobrancas.length}
-                                            isSelected={allInGroupSelected ? true : someInGroupSelected ? "indeterminate" : false}
-                                            isCompact={isCompact}
-                                            isDisabled={selectableInGroup.length === 0}
-                                            showWarning={isGroupDisabled && selectableInGroup.length > 0}
-                                            isExpanded={!collapsedGroups[pName]}
-                                            onToggleExpand={() => toggleGroup(pName)}
-                                            onSelectChange={(checked) => {
-                                                if (!onSelectAll) return;
-                                                if (!checked) {
-                                                    const groupIds = participantCobrancas.map((c: any) => c.id);
-                                                    const nextIds = new Set(selectedIds);
-                                                    groupIds.forEach((id: number) => nextIds.delete(id));
-                                                    onSelectAll(Array.from(nextIds));
-                                                } else {
-                                                    if (canSelectGroup(pName)) {
-                                                        const existingIds = selectedIds ? Array.from(selectedIds) : [];
-                                                        const groupIds = selectableInGroup.map((c: any) => c.id);
-                                                        onSelectAll([...existingIds, ...groupIds]);
+                                    return (
+                                        <Fragment key={pName}>
+                                            <CobrancaGroupHeader
+                                                participantName={pName}
+                                                itemCount={participantCobrancas.length}
+                                                isSelected={allInGroupSelected ? true : someInGroupSelected ? "indeterminate" : false}
+                                                isCompact={isCompact}
+                                                isDisabled={selectableInGroup.length === 0}
+                                                showWarning={isGroupDisabled && selectableInGroup.length > 0}
+                                                isExpanded={!collapsedGroups[pName]}
+                                                onToggleExpand={() => toggleGroup(pName)}
+                                                onSelectChange={(checked) => {
+                                                    if (!onSelectAll) return;
+                                                    if (!checked) {
+                                                        const groupIds = participantCobrancas.map((c: any) => c.id);
+                                                        const nextIds = new Set(selectedIds);
+                                                        groupIds.forEach((id: number) => nextIds.delete(id));
+                                                        onSelectAll(Array.from(nextIds));
                                                     } else {
-                                                        onSelectAll(selectableInGroup.map((c: any) => c.id));
+                                                        if (canSelectGroup(pName)) {
+                                                            const existingIds = selectedIds ? Array.from(selectedIds) : [];
+                                                            const groupIds = selectableInGroup.map((c: any) => c.id);
+                                                            onSelectAll([...existingIds, ...groupIds]);
+                                                        } else {
+                                                            onSelectAll(selectableInGroup.map((c: any) => c.id));
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                        />
-                                        {!collapsedGroups[pName] && participantCobrancas.map((cobranca: any) => (
-                                            <CobrancaSelectableRow
-                                                key={cobranca.id}
-                                                cobranca={cobranca}
-                                                isSelected={selectedIds?.has(cobranca.id) || false}
-                                                isDisabled={isGroupDisabled && ['pendente', 'atrasado'].includes(cobranca.status)}
-                                                formatDate={formatDate}
-                                                onToggle={() => onToggleSelect?.(cobranca.id)}
-                                                options={getAvailableCobrancaActions(cobranca, {
-                                                    isAdmin,
-                                                    onDetails: onViewDetails,
-                                                    onQrCode: onViewQrCode,
-                                                    onConfirm: onConfirmPayment,
-                                                    onWhatsApp: onSendWhatsApp,
-                                                    onCancel: onCancelPayment
-                                                })}
+                                                }}
                                             />
-                                        ))}
-                                    </React.Fragment>
-                                );
-                            })
+                                            <AnimatePresence initial={false}>
+                                                {!collapsedGroups[pName] && participantCobrancas.map((cobranca: any) => (
+                                                    <CobrancaSelectableRow
+                                                        key={cobranca.id}
+                                                        cobranca={cobranca}
+                                                        isSelected={selectedIds?.has(cobranca.id) || false}
+                                                        isDisabled={isGroupDisabled && ['pendente', 'atrasado'].includes(cobranca.status)}
+                                                        formatDate={formatDate}
+                                                        onToggle={() => onToggleSelect?.(cobranca.id)}
+                                                        options={getAvailableCobrancaActions(cobranca, {
+                                                            isAdmin,
+                                                            onDetails: onViewDetails,
+                                                            onQrCode: onViewQrCode,
+                                                            onConfirm: onConfirmPayment,
+                                                            onWhatsApp: onSendWhatsApp,
+                                                            onCancel: onCancelPayment
+                                                        })}
+                                                    />
+                                                ))}
+                                            </AnimatePresence>
+                                        </Fragment>
+                                    );
+                                })}
+                                {individualCobrancas.map((cobranca: any) => (
+                                    <CobrancaSelectableRow
+                                        key={cobranca.id}
+                                        cobranca={cobranca}
+                                        isSelected={selectedIds?.has(cobranca.id) || false}
+                                        isDisabled={false}
+                                        formatDate={formatDate}
+                                        onToggle={() => onToggleSelect?.(cobranca.id)}
+                                        options={getAvailableCobrancaActions(cobranca, {
+                                            isAdmin,
+                                            onDetails: onViewDetails,
+                                            onQrCode: onViewQrCode,
+                                            onConfirm: onConfirmPayment,
+                                            onWhatsApp: onSendWhatsApp,
+                                            onCancel: onCancelPayment
+                                        })}
+                                    />
+                                ))}
+                            </>
                         ) : (
                             cobrancas.slice(0, isCompact ? 5 : undefined).map((cobranca, index) => (
                                 <CobrancaRow

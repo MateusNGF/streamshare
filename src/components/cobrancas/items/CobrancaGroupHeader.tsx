@@ -4,6 +4,7 @@ import { TableCell, TableRow } from "@/components/ui/Table";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { User, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Fragment } from "react";
 
 interface CobrancaGroupHeaderProps {
     participantName: string;
@@ -37,25 +38,20 @@ export function CobrancaGroupHeader({
     return (
         <TableRow
             className={cn(
-                "bg-gray-50/30 border-b border-gray-100 transition-colors",
+                "bg-gray-50/50 border-b border-gray-100 transition-colors",
                 onToggleExpand ? "cursor-pointer hover:bg-gray-50/80" : "hover:bg-gray-50/50"
             )}
             onClick={handleRowClick}
         >
-            <TableCell colSpan={isCompact ? 6 : 9} className="py-3 px-4">
+            <TableCell colSpan={isCompact ? 6 : 9} >
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between gap-3">
                         <Checkbox
                             checked={isSelected}
                             onCheckedChange={onSelectChange}
                             disabled={isDisabled}
                         />
                         <div className="flex items-center gap-2">
-                            {onToggleExpand && (
-                                <div className="text-gray-400 hover:text-gray-600 transition-colors">
-                                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                </div>
-                            )}
                             <span className="text-xs font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
                                 <User size={14} className="text-primary" />
                                 Pendências de {participantName}
@@ -64,6 +60,11 @@ export function CobrancaGroupHeader({
                                 </span>
                             </span>
                         </div>
+                        {onToggleExpand && (
+                            <div className="px-4 text-gray-400 hover:text-gray-600 transition-colors">
+                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </div>
+                        )}
                     </div>
 
                     {showWarning && (

@@ -47,6 +47,16 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-03-07",
+        date: "07/03/2026",
+        changes: [
+            { category: "Integrações", description: "Correção crítica na **Lógica de Seleção de Faturas**, garantindo comportamento consistente, suporte a estado indeterminado e bloqueio inteligente por organizador." },
+            { category: "Mobile", description: "Refinamento da **Barra de Ações em Lote** para dispositivos móveis, introduzindo posicionamento fixo na base e ajustes estéticos para maior clareza e ergonomia." },
+            { category: "Interface", description: "Otimização do **Contêiner de Páginas**, refinando espaçamentos internos e eliminando redundâncias de rolagem para uma navegação mais fluida." },
+            { category: "Experiência", description: "Lançamento da versão **v1.2**, consolidando correções de layout, melhorias na gestão de lotes e estabilidade global do sistema." },
+        ],
+    },
+    {
         id: "2026-03-06",
         date: "06/03/2026",
         changes: [
