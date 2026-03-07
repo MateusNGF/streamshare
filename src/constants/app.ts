@@ -1,2 +1,2 @@
 export const APP_NAME = "Stream Share";
-export const APP_VERSION = "Beta v1.1";
+export const APP_VERSION = "v1.2";
