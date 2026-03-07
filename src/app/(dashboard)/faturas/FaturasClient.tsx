@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { BatchActionBar } from "@/components/cobrancas/BatchActionBar";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { formatMesReferencia } from "@/lib/dateUtils";
+import { sortByStatusPriority } from "@/lib/financeiro-utils";
 
 const FaturasTable = dynamic(() => import("@/components/faturas/FaturasTable").then(mod => mod.FaturasTable), {
     loading: () => <TableSkeleton />
@@ -112,6 +113,8 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
         setIsDetailsModalOpen(true);
     };
 
+    const sortedFaturas = sortByStatusPriority(faturas);
+
     return (
         <PageContainer>
             <PageHeader
@@ -165,13 +168,13 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                     ) : (
                                         viewMode === "grid" ? (
                                             <div className="grid grid-cols-1 gap-4">
-                                                {faturas.map((fatura) => (
+                                                {sortedFaturas.map((fatura) => (
                                                     <FaturaCard key={fatura.id} fatura={fatura} onConfirmPayment={handleViewDetails} onViewDetails={handleViewDetails} />
                                                 ))}
                                             </div>
                                         ) : (
                                             <FaturasTable
-                                                faturas={faturas}
+                                                faturas={sortedFaturas}
                                                 onViewDetails={handleViewDetails}
                                                 selectedIds={selectedFaturaIds}
                                                 onSelectChange={setSelectedFaturaIds}
@@ -215,12 +218,12 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
             {activeTabId === "faturas" && (
                 <BatchActionBar
                     count={selectedFaturaIds.length}
-                    total={faturas.filter(f => selectedFaturaIds.includes(f.id)).reduce((acc, curr) => acc + Number(curr.valor), 0)}
+                    total={sortedFaturas.filter(f => selectedFaturaIds.includes(f.id)).reduce((acc, curr) => acc + Number(curr.valor), 0)}
                     isAdmin={false}
                     onPay={handleCreateLote}
                     onClear={() => setSelectedFaturaIds([])}
                     loading={isCreatingLote}
-                    summaryItems={faturas
+                    summaryItems={sortedFaturas
                         .filter(f => selectedFaturaIds.includes(f.id))
                         .map(f => ({
                             id: f.id,

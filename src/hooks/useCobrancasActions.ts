@@ -12,6 +12,7 @@ import {
     confirmarLotePagamento,
     enviarWhatsAppEmLote
 } from "@/actions/cobrancas";
+import { sortByStatusPriority } from "@/lib/financeiro-utils";
 
 export function useCobrancasActions(cobrancasIniciais: any[]) {
     const toast = useToast();
@@ -98,6 +99,8 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
 
         return matchesSearch && matchesStatus && matchesStreaming && matchesMes && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
     });
+
+    const sortedCobrancas = sortByStatusPriority(filteredCobrancas);
 
     // Batch Calculations
     const batchTotal = Array.from(selectedIds).reduce((sum, id) => {
@@ -300,7 +303,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         selectedCobrancaId, setSelectedCobrancaId,
 
         // Calculated
-        filteredCobrancas,
+        filteredCobrancas: sortedCobrancas,
         selectedCobranca: cobrancasIniciais.find(c => c.id === selectedCobrancaId),
 
         // Batch States

@@ -50,7 +50,7 @@ export function BatchActionBar({
     return (
         <AnimatePresence>
             {count > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 z-[100] w-full pointer-events-none flex justify-center">
+                <div className="fixed bottom-16 lg:bottom-0 left-0 lg:left-64 right-0 z-[100] pointer-events-none flex justify-center">
                     <motion.div
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}

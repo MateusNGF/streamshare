@@ -8,24 +8,15 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, FileText, Trash } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Hash, FileText, Trash } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell } from "@/components/cobrancas/shared/BillingTableCells";
 import { formatCurrency } from "@/lib/formatCurrency";
-
-function getLoteActorDisplay(lote: any, isAdmin: boolean) {
-    const name = isAdmin
-        ? (lote.participante?.nome || 'N/A')
-        : (lote.participante?.conta?.nome || lote.participante?.nome || 'N/A');
-
-    return {
-        name,
-        initial: name.charAt(0).toUpperCase()
-    };
-}
+import { LoteTrackingBadge } from "./LoteTrackingBadge";
+import { getLoteActorName } from "@/lib/financeiro-utils";
 
 interface LotesTableProps {
     lotes: any[];
@@ -102,14 +93,11 @@ export function LotesTable({
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 >
                                     <TableCell>
-                                        <span className="font-bold text-gray-900 leading-tight block">
-                                            #{lote.id}
-                                        </span>
-                                        {lote.referenciaMes && (
-                                            <span className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 whitespace-nowrap">
-                                                🗓️ Ref: {lote.referenciaMes.split('-').reverse().join('/')}
-                                            </span>
-                                        )}
+                                        <LoteTrackingBadge
+                                            id={lote.id}
+                                            expiresAt={lote.expiresAt}
+                                            referenciaMes={lote.referenciaMes}
+                                        />
                                     </TableCell>
 
                                     <TableCell className="px-4 py-3 text-center text-sm text-gray-600">
@@ -118,7 +106,8 @@ export function LotesTable({
 
                                     <TableCell className="px-4 py-3">
                                         {(() => {
-                                            const { name, initial } = getLoteActorDisplay(lote, isAdmin);
+                                            const name = getLoteActorName(lote, isAdmin);
+                                            const initial = name.charAt(0).toUpperCase();
                                             return (
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">

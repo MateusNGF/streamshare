@@ -63,8 +63,7 @@ export function GerenciarLotesClient({ initialLotes }: GerenciarLotesClientProps
             options: [
                 { label: "Pendente", value: "pendente" },
                 { label: "Em Análise", value: "aguardando_aprovacao" },
-                { label: "Pago", value: "pago" },
-                { label: "Cancelado", value: "cancelado" }
+                { label: "Pago", value: "pago" }
             ]
         }
     ];

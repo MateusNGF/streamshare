@@ -3,6 +3,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { LoteTrackingBadge } from "./LoteTrackingBadge";
+import { getLoteActorName } from "@/lib/financeiro-utils";
 
 interface LoteCardProps {
     lote: any;
@@ -16,9 +18,7 @@ export function LoteCard({ lote, onViewDetails, onCancelLote, isAdmin = false }:
     const isAprovacao = lote.status === "aguardando_aprovacao";
     const isPago = lote.status === "pago";
 
-    const actorName = isAdmin
-        ? (lote.participante?.nome || 'N/A')
-        : (lote.participante?.conta?.nome || lote.participante?.nome || 'N/A');
+    const actorName = getLoteActorName(lote, isAdmin);
 
     return (
         <div className={cn(
@@ -43,17 +43,17 @@ export function LoteCard({ lote, onViewDetails, onCancelLote, isAdmin = false }:
                         <ReceiptText size={20} strokeWidth={2.5} />
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-black text-gray-900 leading-tight truncate">Lote #{lote.id}</span>
-                            {lote.referenciaMes && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 whitespace-nowrap">
-                                    Ref: {lote.referenciaMes.split('-').reverse().join('/')}
-                                </span>
-                            )}
+                        <LoteTrackingBadge
+                            id={lote.id}
+                            expiresAt={lote.expiresAt}
+                            referenciaMes={lote.referenciaMes}
+                            layout="card"
+                        />
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest truncate flex-1" title={actorName}>
+                                {actorName}
+                            </p>
                         </div>
-                        <p className="text-[11px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest truncate w-full" title={actorName}>
-                            {actorName}
-                        </p>
                     </div>
                 </div>
                 <StatusBadge status={lote.status} className="scale-90 origin-top-right shadow-sm flex-shrink-0" />

@@ -187,8 +187,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                 { label: "Pendente", value: "pendente" },
                                 { label: "Aguardando", value: "aguardando_aprovacao" },
                                 { label: "Pago", value: "pago" },
-                                { label: "Atrasado", value: "atrasado" },
-                                { label: "Cancelado", value: "cancelado" }
+                                { label: "Atrasado", value: "atrasado" }
                             ]
                         },
                         {

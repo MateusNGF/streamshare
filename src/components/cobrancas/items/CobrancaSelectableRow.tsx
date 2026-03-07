@@ -31,11 +31,21 @@ export function CobrancaSelectableRow({
     const isSelectable = ['pendente', 'atrasado'].includes(cobranca.status) && !isInLote;
     const isCancelled = cobranca.status === 'cancelado';
 
+    const MotionTableRow = motion(TableRow);
+
     return (
-        <TableRow
+        <MotionTableRow
+            layout
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5, transition: { duration: 0.15 } }}
+            transition={{
+                duration: 0.25,
+                ease: [0.4, 0, 0.2, 1]
+            }}
             className={cn(
                 isCancelled && "opacity-60",
-                "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both transition-all duration-200",
+                "group transition-colors duration-200",
                 isSelected ? "bg-primary/[0.04] border-l-primary shadow-sm" : "hover:bg-gray-50/50",
                 isDisabled && "opacity-40 grayscale pointer-events-none"
             )}
@@ -116,6 +126,6 @@ export function CobrancaSelectableRow({
             <TableCell className="text-center">
                 <Dropdown options={options} />
             </TableCell>
-        </TableRow>
+        </MotionTableRow>
     );
 }

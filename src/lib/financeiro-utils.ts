@@ -189,3 +189,40 @@ export function formatarMoeda(valor: number | string | Prisma.Decimal | any, moe
         currency: moeda,
     }).format(isNaN(amount) ? 0 : amount);
 }
+
+/**
+ * Prioridade de status para ordenação de cobranças e faturas.
+ * Segue a lógica: Atenção imediata (aguardando/rejeitado) > Aberto (pendente/atrasado) > Concluído (pago) > Histórico (cancelado).
+ */
+export const STATUS_PRIORITY: Record<string, number> = {
+    'aguardando_aprovacao': 0,
+    'pendente': 1,
+    'atrasado': 2,
+    'pago': 3,
+    'cancelado': 4
+};
+
+/**
+ * Ordena um array de objetos que possuam a propriedade 'status' baseado na prioridade definida.
+ * 
+ * @param items - Array de itens a serem ordenados
+ * @returns Novo array ordenado
+ */
+export function sortByStatusPriority<T extends { status: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => {
+        const priorityA = STATUS_PRIORITY[a.status] ?? 99;
+        const priorityB = STATUS_PRIORITY[b.status] ?? 99;
+        return priorityA - priorityB;
+    });
+}
+
+/**
+ * Determina o nome do ator (Organizador ou Participante) a ser exibido para um lote.
+ */
+export function getLoteActorName(lote: any, isAdmin: boolean): string {
+    if (isAdmin) {
+        return lote.participante?.nome || 'N/A';
+    }
+    return lote.participante?.nome || 'N/A';
+}
+

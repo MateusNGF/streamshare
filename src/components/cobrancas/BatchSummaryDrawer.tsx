@@ -53,13 +53,13 @@ export function BatchSummaryDrawer({
                                                 </div>
                                             )}
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-gray-900">{item.title}</span>
+                                                <span className="text-sm font-semibold text-gray-800">{item.title}</span>
                                                 {item.description && (
                                                     <span className="text-[10px] sm:text-xs text-gray-500 font-medium">{item.description}</span>
                                                 )}
                                             </div>
                                         </div>
-                                        <span className="text-sm font-black text-gray-900">
+                                        <span className="text-sm font-bold text-gray-800">
                                             {formatCurrency(item.value, currencyCode)}
                                         </span>
                                     </div>
@@ -74,7 +74,7 @@ export function BatchSummaryDrawer({
                 onClick={onToggleExpand}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-white border-b border-gray-100/50 hover:bg-gray-50 transition-colors"
             >
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Resumo da Seleção ({count})
                 </span>
                 {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronUp size={14} className="text-gray-400" />}

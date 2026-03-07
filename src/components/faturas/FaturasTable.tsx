@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { User, Calendar, DollarSign, Eye, Clock, Hash, Copy, Check, MessageCircle, AlertCircle, Trash, UploadCloud, RefreshCw, Lock, Sparkles, CheckCircle } from "lucide-react";
+import { User, Calendar, DollarSign, Eye, Clock, Hash, Check, MessageCircle, Trash, Lock, CheckCircle } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/Checkbox";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
@@ -18,7 +18,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "@/components/cobrancas/shared/BillingTableCells";
 import { useToast } from "@/hooks/useToast";
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ModalPagamentoCobranca } from "./ModalPagamentoCobranca";
 import { CobrancaGroupHeader } from "@/components/cobrancas/items/CobrancaGroupHeader";
 
@@ -43,8 +44,6 @@ export function FaturasTable({
     selectedIds = [],
     onSelectChange
 }: FaturasTableProps) {
-    const { success, error: toastError } = useToast();
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // The table manages its own payment modal for direct pay actions
     const [faturaToPayOrResend, setFaturaToPayOrResend] = useState<any>(null);
@@ -70,27 +69,6 @@ export function FaturasTable({
         }
     };
 
-    const handleSelect = (id: number) => {
-        if (!onSelectChange) return;
-        if (selectedIds.includes(id)) {
-            onSelectChange(selectedIds.filter(selectedId => selectedId !== id));
-        } else {
-            onSelectChange([...selectedIds, id]);
-        }
-    };
-
-    const formatDate = (date: Date) => {
-        return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    };
-
-    const copyPix = (chavePix: string) => {
-        if (!chavePix) {
-            toastError("Chave Pix não cadastrada pelo proprietário da conta.");
-            return;
-        }
-        navigator.clipboard.writeText(chavePix);
-        success("Chave Pix copiada!");
-    };
 
     if (faturas.length === 0) {
         return (
@@ -105,18 +83,29 @@ export function FaturasTable({
         );
     }
 
-    // Grouping Logic
-    const groupedFaturas = useMemo(() => {
-        if (isAdmin) return null; // No grouping for Admin in this specific table (Admin uses CobrancasTable)
+    // Grouping Logic - Only group 'pendente' and 'atrasado'
+    const groupedData = useMemo(() => {
+        if (isAdmin) return { groups: null, individual: faturas };
 
         const groups: Record<string, any[]> = {};
+        const individual: any[] = [];
+
         faturas.forEach(f => {
-            const organizerName = f.assinatura.participante.conta.nome || "Outros";
-            if (!groups[organizerName]) groups[organizerName] = [];
-            groups[organizerName].push(f);
+            const isGroupable = f.status === 'pendente' || f.status === 'atrasado';
+            if (isGroupable) {
+                const organizerName = f.assinatura.participante.conta.nome || "Outros";
+                if (!groups[organizerName]) groups[organizerName] = [];
+                groups[organizerName].push(f);
+            } else {
+                individual.push(f);
+            }
         });
-        return groups;
+
+        return { groups, individual };
     }, [faturas, isAdmin]);
+
+    const groupedFaturas = groupedData.groups;
+    const individualFaturas = groupedData.individual;
 
     // Check if multiple organizers are selected
     const selectedOrganizers = useMemo(() => {
@@ -226,44 +215,62 @@ export function FaturasTable({
                     </TableHeader>
                     <TableBody>
                         {groupedFaturas ? (
-                            Object.entries(groupedFaturas).map(([organizerName, groupFaturas]) => {
-                                const selectableInGroup = groupFaturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
-                                const groupIds = selectableInGroup.map(f => f.id);
-                                const isGroupSelected = groupIds.length > 0 && groupIds.every(id => selectedIds.includes(id));
-                                const isGroupIndeterminate = groupIds.some(id => selectedIds.includes(id)) && !isGroupSelected;
+                            <>
+                                {Object.entries(groupedFaturas).map(([organizerName, groupFaturas]) => {
+                                    const selectableInGroup = groupFaturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
+                                    const groupIds = selectableInGroup.map(f => f.id);
+                                    const isGroupSelected = groupIds.length > 0 && groupIds.every(id => selectedIds.includes(id));
+                                    const isGroupIndeterminate = groupIds.some(id => selectedIds.includes(id)) && !isGroupSelected;
 
-                                return (
-                                    <>
-                                        <CobrancaGroupHeader
-                                            key={`header-${organizerName}`}
-                                            participantName={organizerName}
-                                            itemCount={groupFaturas.length}
-                                            isSelected={isGroupSelected ? true : isGroupIndeterminate ? "indeterminate" : false}
-                                            onSelectChange={() => handleSelectGroup(organizerName, groupFaturas)}
-                                            isDisabled={false}
-                                            showWarning={hasMixedOrganizers && currentOrganizer !== organizerName}
-                                            isExpanded={expandedGroups[organizerName] !== false}
-                                            onToggleExpand={() => toggleGroup(organizerName)}
-                                        />
-                                        {expandedGroups[organizerName] !== false && groupFaturas.map((fatura, idx) => (
-                                            <FaturaTableRow
-                                                key={fatura.id}
-                                                fatura={fatura}
-                                                index={idx}
-                                                isAdmin={isAdmin}
-                                                onViewDetails={onViewDetails}
-                                                onConfirmPayment={onConfirmPayment}
-                                                onSendWhatsApp={onSendWhatsApp}
-                                                onCancelPayment={onCancelPayment}
-                                                selectedIds={selectedIds}
-                                                handleSelect={() => handleSelectRow(fatura)}
-                                                isDisabled={currentOrganizer !== null && currentOrganizer !== fatura.assinatura.participante.conta.nome}
-                                                setFaturaToPayOrResend={setFaturaToPayOrResend}
+                                    return (
+                                        <Fragment key={`group-${organizerName}`}>
+                                            <CobrancaGroupHeader
+                                                participantName={organizerName}
+                                                itemCount={groupFaturas.length}
+                                                isSelected={isGroupSelected ? true : isGroupIndeterminate ? "indeterminate" : false}
+                                                onSelectChange={() => handleSelectGroup(organizerName, groupFaturas)}
+                                                isDisabled={false}
+                                                showWarning={hasMixedOrganizers && currentOrganizer !== organizerName}
+                                                isExpanded={expandedGroups[organizerName] !== false}
+                                                onToggleExpand={() => toggleGroup(organizerName)}
                                             />
-                                        ))}
-                                    </>
-                                );
-                            })
+                                            <AnimatePresence initial={false}>
+                                                {expandedGroups[organizerName] !== false && groupFaturas.map((fatura, idx) => (
+                                                    <FaturaTableRow
+                                                        key={fatura.id}
+                                                        fatura={fatura}
+                                                        index={idx}
+                                                        isAdmin={isAdmin}
+                                                        onViewDetails={onViewDetails}
+                                                        onConfirmPayment={onConfirmPayment}
+                                                        onSendWhatsApp={onSendWhatsApp}
+                                                        onCancelPayment={onCancelPayment}
+                                                        selectedIds={selectedIds}
+                                                        handleSelect={() => handleSelectRow(fatura)}
+                                                        isDisabled={currentOrganizer !== null && currentOrganizer !== fatura.assinatura.participante.conta.nome}
+                                                        setFaturaToPayOrResend={setFaturaToPayOrResend}
+                                                    />
+                                                ))}
+                                            </AnimatePresence>
+                                        </Fragment>
+                                    );
+                                })}
+                                {individualFaturas.map((fatura, idx) => (
+                                    <FaturaTableRow
+                                        key={fatura.id}
+                                        fatura={fatura}
+                                        index={idx}
+                                        isAdmin={isAdmin}
+                                        onViewDetails={onViewDetails}
+                                        onConfirmPayment={onConfirmPayment}
+                                        onSendWhatsApp={onSendWhatsApp}
+                                        onCancelPayment={onCancelPayment}
+                                        selectedIds={selectedIds}
+                                        handleSelect={() => handleSelectRow(fatura)}
+                                        setFaturaToPayOrResend={setFaturaToPayOrResend}
+                                    />
+                                ))}
+                            </>
                         ) : (
                             faturas.map((fatura: any, index: number) => (
                                 <FaturaTableRow
@@ -314,6 +321,8 @@ function FaturaTableRow({
     const chavePix = fatura.assinatura?.participante?.conta?.chavePix;
     const isSelectable = !fatura.lotePagamentoId && (fatura.status === 'pendente' || fatura.status === 'atrasado');
 
+    const MotionTableRow = motion(TableRow);
+
     const options = [
         {
             label: "Ver Detalhes",
@@ -363,16 +372,23 @@ function FaturaTableRow({
     ];
 
     return (
-        <TableRow
-            key={fatura.id}
+        <MotionTableRow
+            layout
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5, transition: { duration: 0.15 } }}
+            transition={{
+                duration: 0.25,
+                delay: index * 0.03,
+                ease: [0.4, 0, 0.2, 1]
+            }}
             className={cn(
                 isCancelled && "opacity-60",
                 isAwaiting && !isAdmin && "bg-amber-50/30",
-                "group animate-in fade-in slide-in-from-left-4 duration-500 fill-mode-both transition-all duration-200",
+                "group transition-colors duration-200",
                 isSelectable && selectedIds.includes(fatura.id) ? "bg-primary/[0.04] border-l-primary shadow-sm" : "hover:bg-gray-50/50",
                 isDisabled && "opacity-40 grayscale pointer-events-none"
             )}
-            style={{ animationDelay: `${index * 50}ms` }}
         >
             {!isAdmin && handleSelect && (
                 <TableCell className="px-4 text-center">
@@ -441,6 +457,6 @@ function FaturaTableRow({
             <TableCell className="text-center">
                 <Dropdown options={options} />
             </TableCell>
-        </TableRow>
+        </MotionTableRow>
     );
 }
