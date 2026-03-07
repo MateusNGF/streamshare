@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, CheckCircle, AlertCircle, FileStack, ChevronRight } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, FileStack, ChevronRight, FileText, History } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
@@ -187,8 +187,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                 { label: "Pendente", value: "pendente" },
                                 { label: "Aguardando", value: "aguardando_aprovacao" },
                                 { label: "Pago", value: "pago" },
-                                { label: "Atrasado", value: "atrasado" },
-                                { label: "Cancelado", value: "cancelado" }
+                                { label: "Atrasado", value: "atrasado" }
                             ]
                         },
                         {
@@ -264,7 +263,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     {
                         id: "cobrancas",
                         label: "Cobranças em Aberto",
-                        icon: DollarSign,
+                        icon: FileText,
                         content: (
                             <div className="space-y-4 relative mt-2">
                                 <SectionHeader
@@ -341,7 +340,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     {
                         id: "lotes",
                         label: "Lotes Consolidados",
-                        icon: FileStack,
+                        icon: History,
                         content: (
                             <div className="space-y-6 mt-2">
                                 <SectionHeader

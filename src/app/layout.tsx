@@ -7,6 +7,7 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { SupportButton } from "@/components/support/SupportButton";
 import Script from "next/script";
 import { BetaAnnouncement } from "@/components/layout/BetaAnnouncement";
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -97,6 +98,7 @@ export default async function RootLayout({
             <ToastContainer />
           </TooltipProvider>
         </ToastProvider>
+        <Analytics />
       </body>
     </html>
   );

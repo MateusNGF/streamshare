@@ -15,16 +15,12 @@ interface BatchSummaryDrawerProps {
         icon?: React.ReactNode;
     }[];
     currencyCode: CurrencyCode;
-    onToggleExpand: () => void;
-    count: number;
 }
 
 export function BatchSummaryDrawer({
     isExpanded,
     summaryItems,
-    currencyCode,
-    onToggleExpand,
-    count
+    currencyCode
 }: BatchSummaryDrawerProps) {
     if (summaryItems.length === 0) return null;
 
@@ -38,7 +34,7 @@ export function BatchSummaryDrawer({
                         exit={{ height: 0, opacity: 0 }}
                         className="border-b border-gray-100 bg-gray-50/50 overflow-hidden"
                     >
-                        <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 py-4 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                        <div className="max-w-[1400px] mx-auto w-full px-5 sm:px-8 py-4 max-h-[40vh] overflow-y-auto custom-scrollbar">
                             <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-sm font-bold text-gray-700">Resumo da Seleção</h4>
                                 <span className="text-xs font-medium text-gray-500">{summaryItems.length} itens</span>
@@ -53,13 +49,13 @@ export function BatchSummaryDrawer({
                                                 </div>
                                             )}
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-gray-900">{item.title}</span>
+                                                <span className="text-sm font-semibold text-gray-800">{item.title}</span>
                                                 {item.description && (
                                                     <span className="text-[10px] sm:text-xs text-gray-500 font-medium">{item.description}</span>
                                                 )}
                                             </div>
                                         </div>
-                                        <span className="text-sm font-black text-gray-900">
+                                        <span className="text-sm font-bold text-gray-800">
                                             {formatCurrency(item.value, currencyCode)}
                                         </span>
                                     </div>
@@ -69,16 +65,6 @@ export function BatchSummaryDrawer({
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            <button
-                onClick={onToggleExpand}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-white border-b border-gray-100/50 hover:bg-gray-50 transition-colors"
-            >
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Resumo da Seleção ({count})
-                </span>
-                {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronUp size={14} className="text-gray-400" />}
-            </button>
         </>
     );
 }
