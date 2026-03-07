@@ -14,10 +14,18 @@ import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
 import { useState } from "react";
+import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
+import { Button } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
+import { Tabs, TabItem } from "@/components/ui/Tabs";
+import { formatMesReferencia } from "@/lib/dateUtils";
+
+const LotesTab = dynamic(() => import("@/components/faturas/LotesTab").then(mod => mod.LotesTab), {
+    loading: () => <TableSkeleton />
+});
 
 const GenericFilter = dynamic(() => import("@/components/ui/GenericFilter").then(mod => mod.GenericFilter), {
     loading: () => <Skeleton className="w-full h-16 rounded-2xl" />
@@ -37,6 +45,7 @@ const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard")
 
 const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
 const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
+const BatchPreviewDrawer = dynamic(() => import("@/components/cobrancas/BatchPreviewDrawer").then(mod => mod.BatchPreviewDrawer), { ssr: false });
 
 interface CobrancasClientProps {
     kpis: {
@@ -46,16 +55,18 @@ interface CobrancasClientProps {
         totalCobrancas: number;
     };
     cobrancasIniciais: any[];
+    lotes: any[];
     whatsappConfigurado: boolean;
     streamings: any[];
     plano: PlanoConta;
     error?: string;
 }
 
-export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, streamings, plano, error }: CobrancasClientProps) {
+export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfigurado, streamings, plano, error }: CobrancasClientProps) {
     const router = useRouter();
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
+    const [consolidateModalOpen, setConsolidateModalOpen] = useState(false);
     const {
         filters,
         handleFilterChange,
@@ -79,6 +90,9 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
         batchTotal, hasMixedParticipants, activeLote, batchPixModalOpen, setBatchPixModalOpen,
         handleAbrirLote, handleConfirmarLoteAdmin, handleEnviarWhatsAppLote
     } = useCobrancasActions(cobrancasIniciais);
+
+    const [activeTabId, setActiveTabId] = useState("cobrancas");
+    const [isPreviewDrawerOpen, setIsPreviewDrawerOpen] = useState(false);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
@@ -243,73 +257,153 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 />
             </div>
 
-            <div className="space-y-4 relative mt-2">
-                <SectionHeader
-                    title="Listagem de Cobranças"
-                    className="mb-0"
-                    rightElement={
-                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+            <Tabs
+                value={activeTabId}
+                onValueChange={setActiveTabId}
+                tabs={[
+                    {
+                        id: "cobrancas",
+                        label: "Cobranças em Aberto",
+                        icon: DollarSign,
+                        content: (
+                            <div className="space-y-4 relative mt-2">
+                                <SectionHeader
+                                    title="Listagem de Cobranças"
+                                    className="mb-0"
+                                    rightElement={
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 flex-1 justify-center sm:flex-none"
+                                                onClick={() => setConsolidateModalOpen(true)}
+                                            >
+                                                <FileStack size={16} className="mr-2 hidden sm:block" />
+                                                <span className="sm:hidden text-center w-full">Agrupar Pendências Únicas</span>
+                                                <span className="hidden sm:inline">Gerar Faturas do Mês</span>
+                                            </Button>
+                                            <div className="flex-1 w-full sm:w-auto flex justify-center">
+                                                <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                                            </div>
+                                        </div>
+                                    }
+                                />
+
+                                {!whatsappCheck.enabled && (
+                                    <UpgradeBanner
+                                        title="Automatize suas cobranças via WhatsApp"
+                                        description="No plano Business, o sistema envia cobranças automaticamente para você."
+                                        className="mb-4"
+                                    />
+                                )}
+
+                                {viewMode === "grid" ? (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {filteredCobrancas.map((cobranca) => (
+                                            <CobrancaCard
+                                                key={cobranca.id}
+                                                cobranca={cobranca}
+                                                isOverdue={cobranca.status === 'atrasado'}
+                                                formatDate={(date) => new Date(date).toLocaleDateString()}
+                                                formatPeriod={(start, end) => ""}
+                                                onViewDetails={() => {
+                                                    setSelectedCobrancaId(cobranca.id);
+                                                    setDetailsModalOpen(true);
+                                                }}
+                                                onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
+                                                onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
+                                                onCancel={() => handleCancelarCobranca(cobranca.id)}
+                                                onViewQrCode={() => handleViewQrCode(cobranca.id)}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <CobrancasTable
+                                        cobrancas={filteredCobrancas}
+                                        onViewDetails={(id) => {
+                                            setSelectedCobrancaId(id);
+                                            setDetailsModalOpen(true);
+                                        }}
+                                        onConfirmPayment={handleConfirmarPagamento}
+                                        onSendWhatsApp={handleEnviarWhatsApp}
+                                        onCancelPayment={handleCancelarCobranca}
+                                        searchTerm={filters.searchTerm}
+                                        statusFilter={filters.statusFilter}
+                                        onViewQrCode={handleViewQrCode}
+                                        selectedIds={selectedIds}
+                                        onToggleSelect={toggleSelection}
+                                        onSelectAll={selectAll}
+                                    />
+                                )}
+                            </div>
+                        )
+                    },
+                    {
+                        id: "lotes",
+                        label: "Lotes Consolidados",
+                        icon: FileStack,
+                        content: (
+                            <div className="space-y-6 mt-2">
+                                <SectionHeader
+                                    title="Lotes de Cobrança"
+                                    className="mb-0"
+                                    rightElement={
+                                        <ViewModeToggle
+                                            viewMode={viewMode}
+                                            setViewMode={setViewMode}
+                                        />
+                                    }
+                                />
+                                <LotesTab lotes={lotes} viewMode={viewMode} isAdmin={true} />
+                            </div>
+                        )
+                    }
+                ]}
+            />
+
+            {activeTabId === "cobrancas" && (
+                <BatchActionBar
+                    count={selectedIds.size}
+                    total={batchTotal}
+                    isAdmin={true}
+                    onPay={() => setIsPreviewDrawerOpen(true)}
+                    onWhatsApp={handleEnviarWhatsAppLote}
+                    onClear={clearSelection}
+                    loading={loading}
+                    whatsappLoading={whatsappLoading}
+                    hasMixedParticipants={hasMixedParticipants}
+                    summaryItems={filteredCobrancas
+                        .filter(c => selectedIds.has(c.id))
+                        .map(c => ({
+                            id: c.id,
+                            title: c.assinatura?.streaming?.apelido || c.assinatura?.streaming?.catalogo?.nome || "Serviço",
+                            description: `Parc.: ${c.assinatura?.participante?.nome} - Ref: ${formatMesReferencia(c.mesReferencia || c.periodoInicio || c.dataVencimento)}`,
+                            value: Number(c.valor),
+                            icon: (
+                                <StreamingLogo
+                                    name={c.assinatura?.streaming?.catalogo?.nome || "Icon"}
+                                    iconeUrl={c.assinatura?.streaming?.catalogo?.iconeUrl}
+                                    color={c.assinatura?.streaming?.catalogo?.corPrimaria}
+                                    size="xs"
+                                    rounded="md"
+                                />
+                            )
+                        }))
                     }
                 />
+            )
+            }
 
-                {!whatsappCheck.enabled && (
-                    <UpgradeBanner
-                        title="Automatize suas cobranças via WhatsApp"
-                        description="No plano Business, o sistema envia cobranças automaticamente para você."
-                        className="mb-4"
-                    />
-                )}
-
-                {viewMode === "grid" ? (
-                    <div className="grid grid-cols-1 gap-4">
-                        {filteredCobrancas.map((cobranca) => (
-                            <CobrancaCard
-                                key={cobranca.id}
-                                cobranca={cobranca}
-                                isOverdue={cobranca.status === 'atrasado'}
-                                formatDate={(date) => new Date(date).toLocaleDateString()}
-                                formatPeriod={(start, end) => ""}
-                                onViewDetails={() => {
-                                    setSelectedCobrancaId(cobranca.id);
-                                    setDetailsModalOpen(true);
-                                }}
-                                onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
-                                onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
-                                onCancel={() => handleCancelarCobranca(cobranca.id)}
-                                onViewQrCode={() => handleViewQrCode(cobranca.id)}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <CobrancasTable
-                        cobrancas={filteredCobrancas}
-                        onViewDetails={(id) => {
-                            setSelectedCobrancaId(id);
-                            setDetailsModalOpen(true);
-                        }}
-                        onConfirmPayment={handleConfirmarPagamento}
-                        onSendWhatsApp={handleEnviarWhatsApp}
-                        onCancelPayment={handleCancelarCobranca}
-                        searchTerm={filters.searchTerm}
-                        statusFilter={filters.statusFilter}
-                        onViewQrCode={handleViewQrCode}
-                        selectedIds={selectedIds}
-                        onToggleSelect={toggleSelection}
-                        onSelectAll={selectAll}
-                    />
-                )}
-            </div>
-
-            <BatchActionBar
-                count={selectedIds.size}
+            <BatchPreviewDrawer
+                isOpen={isPreviewDrawerOpen}
+                onClose={() => setIsPreviewDrawerOpen(false)}
+                onConfirm={async () => {
+                    const success = await handleAbrirLote();
+                    if (success) setIsPreviewDrawerOpen(false);
+                }}
+                items={filteredCobrancas.filter(c => selectedIds.has(c.id))}
                 total={batchTotal}
-                isAdmin={true}
-                onPay={handleAbrirLote}
-                onWhatsApp={handleEnviarWhatsAppLote}
-                onClear={clearSelection}
                 loading={loading}
-                whatsappLoading={whatsappLoading}
-                hasMixedParticipants={hasMixedParticipants}
             />
 
             <CobrancasModals
@@ -332,6 +426,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, whatsappConfigurado, 
                 onCloseBatchPix={() => setBatchPixModalOpen(false)}
                 activeLote={activeLote}
                 isAdmin={true}
+            />
+            <ConsolidarFaturasModal
+                isOpen={consolidateModalOpen}
+                onClose={() => setConsolidateModalOpen(false)}
+                mesReferencia={filters.mesReferencia}
             />
         </PageContainer>
     );

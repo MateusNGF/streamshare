@@ -64,14 +64,14 @@ export function Footer() {
                         <h4 className="font-bold mb-4">Suporte</h4>
                         <ul className="space-y-2 text-gray-400">
                             <li>
-                                <Link href={`${appUrl}/status`} className="hover:text-white">
-                                    Histórico de Atualizações
+                                <Link href={`${appUrl}/docs`} className="hover:text-white">
+                                    Documentação
                                 </Link>
                             </li>
                             <li>
-                                <a href={`${appUrl}/#faq`} className="hover:text-white">
-                                    Central de Ajuda
-                                </a>
+                                <Link href={`${appUrl}/status`} className="hover:text-white">
+                                    Histórico de Atualizações
+                                </Link>
                             </li>
                             <li>
                                 <a href="mailto:atendimento@streamshare.com.br" className="hover:text-white">

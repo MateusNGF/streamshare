@@ -1,4 +1,4 @@
-import { getKPIsFinanceiros, getCobrancas } from "@/actions/cobrancas";
+import { getKPIsFinanceiros, getCobrancas, getLotesGestor } from "@/actions/cobrancas";
 import { getStreamings } from "@/actions/streamings";
 import { CobrancasClient } from "./CobrancasClient";
 import { prisma } from "@/lib/db";
@@ -16,12 +16,13 @@ export default async function CobrancasPage() {
     const results = await Promise.all([
         getKPIsFinanceiros(),
         getCobrancas(),
+        getLotesGestor(),
         checkWhatsAppConfig(),
         getStreamings(),
         getAccountData()
     ]);
 
-    const [kpisRes, cobrancasRes, whatsappConfig, streamingsRes, accountData] = results;
+    const [kpisRes, cobrancasRes, lotesRes, whatsappConfig, streamingsRes, accountData] = results;
 
     const hasError = !kpisRes.success || !cobrancasRes.success || !streamingsRes.success;
     const errorMsg = hasError ? "Algumas informações de cobranças não puderam ser carregadas." : undefined;
@@ -30,6 +31,7 @@ export default async function CobrancasPage() {
         <CobrancasClient
             kpis={kpisRes.data || { totalPendente: 0, receitaConfirmada: 0, emAtraso: 0, totalCobrancas: 0 }}
             cobrancasIniciais={cobrancasRes.data || []}
+            lotes={lotesRes.data || []}
             whatsappConfigurado={whatsappConfig}
             streamings={streamingsRes.data || []}
             plano={accountData.plano as PlanoConta}

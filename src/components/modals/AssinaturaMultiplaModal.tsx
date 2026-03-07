@@ -11,6 +11,8 @@ import { StepStreamings } from "./assinatura-multipla/components/StepStreamings"
 import { StepConfiguration } from "./assinatura-multipla/components/StepConfiguration";
 import { StepParticipants } from "./assinatura-multipla/components/StepParticipants";
 import { StepSummary } from "./assinatura-multipla/components/StepSummary";
+import { getAccountDiasVencimento } from "@/actions/settings";
+import { useState, useEffect } from "react";
 
 interface AssinaturaMultiplaModalProps {
     isOpen: boolean;
@@ -29,11 +31,24 @@ export function AssinaturaMultiplaModal({
     streamings,
     loading
 }: AssinaturaMultiplaModalProps) {
+    const [diasVencimento, setDiasVencimento] = useState<number[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            getAccountDiasVencimento().then(res => {
+                if (res.success && res.data) setDiasVencimento(res.data);
+            }).catch(() => { });
+        } else {
+            setDiasVencimento([]);
+        }
+    }, [isOpen]);
+
     const logic = useAssinaturaMultipla({
         participantes,
         streamings,
         onClose,
-        onSave
+        onSave,
+        diasVencimento
     });
 
     const renderFooter = () => (
@@ -157,6 +172,7 @@ export function AssinaturaMultiplaModal({
                         onCobrancaChange={logic.setCobrancaAutomaticaPaga}
                         overloadedStreamings={logic.streamingsSemVagas}
                         financialAnalysis={logic.financialAnalysis}
+                        diasVencimento={diasVencimento}
                     />
                 )}
             </div>

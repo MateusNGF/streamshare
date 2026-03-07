@@ -62,6 +62,25 @@ export const whatsappTemplates = {
         }
     }),
 
+    faturaConsolidada: (participante: string, servicos: string, valor: string, vencimento: string): EnvioWhatsAppObj => ({
+        texto: `Olá ${participante}! 📝\n\nSua fatura consolidada StreamShare foi gerada e inclui: *${servicos}*.\n\n💰 Total: ${valor}\n📅 Vencimento: ${vencimento}\n\nAcesse sua conta para realizar o pagamento!`,
+        template: {
+            name: "cobranca_gerada",
+            language: "pt_BR",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: participante },
+                        { type: "text", text: "Fatura Mensal Unificada" },
+                        { type: "text", text: valor },
+                        { type: "text", text: vencimento },
+                    ]
+                }
+            ]
+        }
+    }),
+
     cobrancaVencendo: (participante: string, streaming: string, valor: string, dias: number): EnvioWhatsAppObj => ({
         texto: `Lembrete: Sua cobrança de *${streaming}* vence em ${dias} dia(s)! ⏰\n\n💰 Valor: ${valor}\n\nEvite suspensão do serviço realizando o pagamento.`,
         template: {

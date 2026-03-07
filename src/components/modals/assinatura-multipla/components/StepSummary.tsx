@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/Switch";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingOption, ParticipanteOption, SelectedStreaming } from "../types";
+import { escolherProximoDiaVencimento, calcularDataVencimentoPadrao } from "@/lib/financeiro-utils";
 
 interface StepSummaryProps {
     selectedStreamings: StreamingOption[];
@@ -28,6 +29,7 @@ interface StepSummaryProps {
         margemLucro: number;
         totalAssinaturas: number;
     };
+    diasVencimento?: number[];
 }
 
 /**
@@ -46,7 +48,8 @@ export function StepSummary({
     cobrancaAutomatica,
     onCobrancaChange,
     overloadedStreamings,
-    financialAnalysis
+    financialAnalysis,
+    diasVencimento = []
 }: StepSummaryProps) {
     const { format } = useCurrency();
     const isOverloaded = overloadedStreamings.length > 0;
@@ -84,7 +87,9 @@ export function StepSummary({
                         label="Primeira Cobrança"
                         value={format(financialAnalysis.totalProximaFatura)}
                         icon={<Wallet size={12} className="text-gray-400" />}
-                        subLabel={dataInicio.split('-').reverse().join('/')}
+                        subLabel={diasVencimento.length > 0
+                            ? escolherProximoDiaVencimento(diasVencimento, new Date(dataInicio)).toLocaleDateString('pt-BR')
+                            : calcularDataVencimentoPadrao(new Date(dataInicio)).toLocaleDateString('pt-BR')}
                     />
                 </div>
             </div>

@@ -59,8 +59,8 @@ O sistema deve preencher valores padrão para agilizar o cadastro, mas permitir 
 - **Data de Início**:
   - *Padrão*: Data atual (`Today`).
 - **Data de Vencimento**:
-  - *Cálculo Automático*: `Data de Início + Frequência` (ex: 1 mês depois).
-  - *Ajuste Manual*: O admin pode ajustar o dia de vencimento para alinhar com o ciclo de pagamento do participante (ex: todo dia 5).
+  - *Cálculo Automático Padrão*: `Data Emissão + 5 dias`.
+  - *Vencimento Flexível (Novo)*: Se a conta possuir **Dias de Vencimento Padrão** configurados (ex: dia 5, 10 ou 20), o sistema escolhe o dia correspondente mais próximo no futuro. A **primeira cobrança** gerada será **proporcional (pro-rata)** cobrindo o período da data de início até este primeiro vencimento. A partir da segunda cobrança, o valor passa a ser integral e o vencimento fixado no dia configurado.
 
 ### 3. Validações (Backend)
 Antes de salvar, o sistema deve garantir:

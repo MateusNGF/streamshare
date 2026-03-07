@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ShieldCheck } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { Sparkles, ShoppingCart } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
 import { getParticipantSubscriptionDetail } from "@/actions/dashboard";
@@ -39,6 +40,10 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
     const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
     const [activeLote, setActiveLote] = useState<any>(null);
     const [isCreatingLote, setIsCreatingLote] = useState(false);
+
+    const selectableSubs = useMemo(() => {
+        return subscriptions.filter(s => s.pendingCobrancaId);
+    }, [subscriptions]);
 
     const batchTotal = useMemo(() => {
         return Array.from(selectedCobrancaIds).reduce((sum, id) => {
@@ -111,7 +116,26 @@ export function MySubscriptionsSection({ subscriptions, currencyCode }: MySubscr
                 className="mb-0"
                 rightElement={
                     subscriptions.length > 0 && (
-                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                        <div className="flex items-center gap-3">
+                            {selectableSubs.length > 0 && (
+                                <Button
+                                    onClick={() => {
+                                        handleSelectAll(selectableSubs.map(s => s.pendingCobrancaId!));
+                                        setTimeout(handleAbrirLote, 100);
+                                    }}
+                                    className="hidden sm:flex items-center gap-2.5 bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 hover:bg-primary/10 rounded-2xl px-6 py-6 font-black transition-all active:scale-[0.98] group"
+                                >
+                                    <div className="bg-primary text-white p-1 rounded-lg group-hover:rotate-12 transition-transform shadow-lg shadow-primary/20">
+                                        <Sparkles size={14} strokeWidth={3} />
+                                    </div>
+                                    <div className="flex flex-col items-start leading-none">
+                                        <span className="text-[10px] uppercase tracking-wider opacity-70">Atalho Financeiro</span>
+                                        <span className="text-sm">Selecionar Tudo e Pagar (R$ {batchTotal > 0 ? batchTotal.toFixed(2) : selectableSubs.reduce((acc, s) => acc + s.valor, 0).toFixed(2)})</span>
+                                    </div>
+                                </Button>
+                            )}
+                            <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                        </div>
                     )
                 }
             />
