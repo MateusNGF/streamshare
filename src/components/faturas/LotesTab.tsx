@@ -16,7 +16,7 @@ interface LotesTabProps {
     isAdmin?: boolean;
 }
 
-export function LotesTab({ lotes, viewMode = "table" }: LotesTabProps) {
+export function LotesTab({ lotes, viewMode = "table", isAdmin = false }: LotesTabProps) {
     const [selectedLote, setSelectedLote] = useState<any>(null);
     const searchParams = useSearchParams();
 
@@ -59,6 +59,7 @@ export function LotesTab({ lotes, viewMode = "table" }: LotesTabProps) {
                             lote={lote}
                             onViewDetails={handleViewLote}
                             onCancelLote={handleCancelLote}
+                            isAdmin={isAdmin}
                         />
                     ))}
                 </div>
@@ -67,7 +68,7 @@ export function LotesTab({ lotes, viewMode = "table" }: LotesTabProps) {
                     lotes={lotes}
                     onViewDetails={handleViewLote}
                     onCancelLote={handleCancelLote}
-                    isAdmin={false}
+                    isAdmin={isAdmin}
                 />
             )}
 
