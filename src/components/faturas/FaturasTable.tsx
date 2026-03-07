@@ -18,10 +18,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "@/components/cobrancas/shared/BillingTableCells";
 import { useToast } from "@/hooks/useToast";
-import { useState, useMemo, Fragment } from "react";
+import React, { useState, useMemo, Fragment, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ModalPagamentoCobranca } from "./ModalPagamentoCobranca";
 import { CobrancaGroupHeader } from "@/components/cobrancas/items/CobrancaGroupHeader";
+import { FaturaTableRow } from "./items/FaturaTableRow";
 
 interface FaturasTableProps {
     faturas: any[];
@@ -299,164 +300,5 @@ export function FaturasTable({
                 isAdmin={isAdmin}
             />
         </div>
-    );
-}
-
-function FaturaTableRow({
-    fatura,
-    index,
-    isAdmin,
-    onViewDetails,
-    onConfirmPayment,
-    onSendWhatsApp,
-    onCancelPayment,
-    selectedIds,
-    handleSelect,
-    isDisabled,
-    setFaturaToPayOrResend
-}: any) {
-    const isPaid = fatura.status === 'pago';
-    const isCancelled = fatura.status === 'cancelado';
-    const isAwaiting = fatura.status === 'aguardando_aprovacao';
-    const chavePix = fatura.assinatura?.participante?.conta?.chavePix;
-    const isSelectable = !fatura.lotePagamentoId && (fatura.status === 'pendente' || fatura.status === 'atrasado');
-
-    const MotionTableRow = motion(TableRow);
-
-    const options = [
-        {
-            label: "Ver Detalhes",
-            icon: <Eye size={16} />,
-            onClick: () => onViewDetails(fatura.id)
-        },
-        ...(!isPaid && !isCancelled && !isAwaiting && chavePix && !isAdmin ? [
-            { type: "separator" as const },
-            {
-                label: "Pagar Fatura",
-                icon: <DollarSign size={16} />,
-                onClick: () => setFaturaToPayOrResend(fatura)
-            }
-        ] : []),
-        ...(!isPaid && !isCancelled && isAwaiting && !isAdmin ? [
-            { type: "separator" as const },
-            {
-                label: "Ver Comprovante",
-                icon: <Eye size={16} className="text-amber-500" />,
-                onClick: () => onViewDetails(fatura.id)
-            }
-        ] : []),
-        ...(!isPaid && !isCancelled && isAdmin ? [
-            { type: "separator" as const },
-            ...(isAwaiting ? [{
-                label: "Validar Comprovante",
-                icon: <Eye size={16} className="text-amber-500" />,
-                onClick: () => onViewDetails(fatura.id)
-            }] : [{
-                label: "Confirmar Pagamento",
-                icon: <Check size={16} />,
-                onClick: () => onConfirmPayment?.(fatura.id)
-            }]),
-            {
-                label: "Enviar WhatsApp",
-                icon: <MessageCircle size={16} />,
-                onClick: () => onSendWhatsApp?.(fatura.id)
-            },
-            { type: "separator" as const },
-            {
-                label: "Cancelar Cobrança",
-                icon: <Trash size={16} />,
-                onClick: () => onCancelPayment?.(fatura.id),
-                variant: "danger" as const
-            }
-        ] : [])
-    ];
-
-    return (
-        <MotionTableRow
-            layout
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5, transition: { duration: 0.15 } }}
-            transition={{
-                duration: 0.25,
-                delay: index * 0.03,
-                ease: [0.4, 0, 0.2, 1]
-            }}
-            className={cn(
-                isCancelled && "opacity-60",
-                isAwaiting && !isAdmin && "bg-amber-50/30",
-                "group transition-colors duration-200",
-                isSelectable && selectedIds.includes(fatura.id) ? "bg-primary/[0.04] border-l-primary shadow-sm" : "hover:bg-gray-50/50",
-                isDisabled && "opacity-40 grayscale pointer-events-none"
-            )}
-        >
-            {!isAdmin && handleSelect && (
-                <TableCell className="px-4 text-center">
-                    {isSelectable ? (
-                        <Checkbox
-                            checked={selectedIds.includes(fatura.id)}
-                            onCheckedChange={() => handleSelect()}
-                        />
-                    ) : (
-                        <div className="flex justify-center" title="Fatura bloqueada em um lote">
-                            <Lock size={14} className="text-gray-300" />
-                        </div>
-                    )}
-                </TableCell>
-            )}
-
-            <TableCell>
-                <div className="flex items-center gap-3">
-                    <StreamingLogo
-                        name={fatura.assinatura.streaming.catalogo.nome}
-                        iconeUrl={fatura.assinatura.streaming.catalogo.iconeUrl}
-                        color={fatura.assinatura.streaming.catalogo.corPrimaria}
-                        size="sm"
-                        rounded="md"
-                    />
-                    <div className="flex flex-col">
-                        <span className="font-bold text-gray-900 leading-tight">
-                            {fatura.assinatura.streaming.apelido || fatura.assinatura.streaming.catalogo.nome}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-medium">
-                            ID: #{fatura.id}
-                        </span>
-                    </div>
-                </div>
-            </TableCell>
-
-            <TableCell className="px-4 py-3 text-center">
-                <BillingPeriodCell inicio={fatura.periodoInicio} fim={fatura.periodoFim} />
-            </TableCell>
-
-            <TableCell className="px-4 py-3">
-                <BillingDueDateCell data={fatura.dataVencimento} status={fatura.status} />
-            </TableCell>
-
-            <TableCell className="text-center">
-                <StatusBadge status={fatura.status} className="scale-75" />
-            </TableCell>
-
-            <TableCell className="text-center">
-                <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold text-gray-700">
-                        {fatura.assinatura.participante.conta.nome}
-                    </span>
-                    <span className="text-[9px] font-black uppercase text-gray-400">
-                        Titular
-                    </span>
-                </div>
-            </TableCell>
-
-            <TableCell className="px-4 py-3">
-                <BillingValueCell
-                    valor={fatura.valor}
-                />
-            </TableCell>
-
-            <TableCell className="text-center">
-                <Dropdown options={options} />
-            </TableCell>
-        </MotionTableRow>
     );
 }

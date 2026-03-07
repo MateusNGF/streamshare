@@ -9,6 +9,7 @@ import { Lock, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell } from "../shared/BillingTableCells";
 import { motion } from "framer-motion";
+import React, { memo } from "react";
 
 interface CobrancaSelectableRowProps {
     cobranca: any;
@@ -19,7 +20,9 @@ interface CobrancaSelectableRowProps {
     formatDate: (date: Date) => string;
 }
 
-export function CobrancaSelectableRow({
+const MotionTableRow = motion(TableRow);
+
+export const CobrancaSelectableRow = memo(function CobrancaSelectableRow({
     cobranca,
     isSelected,
     onToggle,
@@ -30,8 +33,6 @@ export function CobrancaSelectableRow({
     const isInLote = !!cobranca.lotePagamentoId;
     const isSelectable = ['pendente', 'atrasado'].includes(cobranca.status) && !isInLote;
     const isCancelled = cobranca.status === 'cancelado';
-
-    const MotionTableRow = motion(TableRow);
 
     return (
         <MotionTableRow
@@ -128,4 +129,8 @@ export function CobrancaSelectableRow({
             </TableCell>
         </MotionTableRow>
     );
-}
+}, (prev, next) => {
+    return prev.isSelected === next.isSelected &&
+        prev.isDisabled === next.isDisabled &&
+        prev.cobranca === next.cobranca;
+});

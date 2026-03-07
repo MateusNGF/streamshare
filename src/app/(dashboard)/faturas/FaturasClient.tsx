@@ -5,14 +5,11 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { Wallet } from "lucide-react";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
 import { useActionError } from "@/hooks/useActionError";
-import { useState, useEffect } from "react";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import dynamic from "next/dynamic";
 import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
-import { criarLotePagamento } from "@/actions/cobrancas";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/hooks/useToast";
+import { useFaturasActions } from "@/hooks/useFaturasActions";
 import { Button } from "@/components/ui/Button";
 import { CreditCard, Loader2, FileText, History } from "lucide-react";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
@@ -47,71 +44,25 @@ interface FaturasClientProps {
 }
 
 export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientProps) {
-    const faturasPendentesForTab = faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
-    const lotesPendentes = lotes.filter(l => l.status === 'pendente' || l.status === 'atrasado' || l.status === 'aguardando_aprovacao');
-
-    const [viewMode, setViewMode] = useState<ViewMode>("table");
-    const [activeTabId, setActiveTabId] = useState(() => (faturasPendentesForTab.length === 0 && lotesPendentes.length > 0) ? "lotes" : "faturas");
-    const [selectedFatura, setSelectedFatura] = useState<any>(null);
-    const [selectedFaturaIds, setSelectedFaturaIds] = useState<number[]>([]);
-    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-    const [isCreatingLote, setIsCreatingLote] = useState(false);
-    const router = useRouter();
-    const toast = useToast();
-    const searchParams = useSearchParams();
-
-    useEffect(() => {
-        const tab = searchParams.get("tab");
-        const loteId = searchParams.get("loteId");
-
-        if (tab === "lotes") {
-            setActiveTabId("lotes");
-        }
-
-        if (loteId && lotes.length > 0) {
-            const lote = lotes.find(l => l.id === Number(loteId));
-            if (lote) {
-                // Se encontrar o lote por ID, garante que está na aba certa e abre o modal (simulado selecionando para o LotesTab)
-                setActiveTabId("lotes");
-                // Nota: O LotesTab precisaria de uma forma de receber esse lote selecionado ou o FaturasClient gerenciar o modal de lote.
-                // Atualmente o LotesTab gerencia seu próprio selectedLote. 
-                // Vamos mover o gerenciamento do ModalPagamentoLote para o FaturasClient para unificar.
-            }
-        }
-    }, [searchParams, lotes]);
+    const {
+        faturasPendentes,
+        faturasAguardando,
+        viewMode,
+        setViewMode,
+        activeTabId,
+        setActiveTabId,
+        selectedFatura,
+        selectedFaturaIds,
+        setSelectedFaturaIds,
+        clearSelection,
+        isDetailsModalOpen,
+        closeDetailsModal,
+        isCreatingLote,
+        handleCreateLote,
+        handleViewDetails,
+    } = useFaturasActions(faturas, lotes);
 
     useActionError(error);
-
-    // Only pendente/atrasado are payable - aguardando_aprovacao already has a comprovante being reviewed
-    const faturasPendentes = faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado'));
-    const faturasAguardando = faturas.filter(f => f.status === 'aguardando_aprovacao');
-
-    const handleCreateLote = async () => {
-        if (selectedFaturaIds.length === 0) return;
-        setIsCreatingLote(true);
-        try {
-            const result = await criarLotePagamento(selectedFaturaIds);
-            if (result.success && result.data) {
-                toast.success("Lote criado com sucesso! Redirecionando...");
-                setSelectedFaturaIds([]);
-                // Refresh data and switch to lotes tab with the new lote ID
-                router.refresh();
-                router.push(`/faturas?tab=lotes&loteId=${result.data.id}`);
-            } else {
-                toast.error(result.error || "Erro ao criar lote.");
-            }
-        } catch (err) {
-            toast.error("Erro inesperado ao criar lote.");
-        } finally {
-            setIsCreatingLote(false);
-        }
-    };
-
-    const handleViewDetails = (id: number) => {
-        const fatura = faturas.find(f => f.id === id);
-        setSelectedFatura(fatura);
-        setIsDetailsModalOpen(true);
-    };
 
     const sortedFaturas = sortByStatusPriority(faturas);
 
@@ -210,7 +161,7 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
 
             <DetalhesCobrancaModal
                 isOpen={isDetailsModalOpen}
-                onClose={() => setIsDetailsModalOpen(false)}
+                onClose={closeDetailsModal}
                 cobranca={selectedFatura}
             />
 
@@ -221,7 +172,7 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                     total={sortedFaturas.filter(f => selectedFaturaIds.includes(f.id)).reduce((acc, curr) => acc + Number(curr.valor), 0)}
                     isAdmin={false}
                     onPay={handleCreateLote}
-                    onClear={() => setSelectedFaturaIds([])}
+                    onClear={clearSelection}
                     loading={isCreatingLote}
                     summaryItems={sortedFaturas
                         .filter(f => selectedFaturaIds.includes(f.id))

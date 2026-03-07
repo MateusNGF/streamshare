@@ -8,6 +8,7 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { Lock, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BillingValueCell, BillingDueDateCell, BillingPeriodCell } from "../shared/BillingTableCells";
+import React, { memo } from "react";
 
 interface CobrancaRowProps {
     cobranca: any;
@@ -19,7 +20,7 @@ interface CobrancaRowProps {
     formatDate: (date: Date) => string;
 }
 
-export function CobrancaRow({
+export const CobrancaRow = memo(function CobrancaRow({
     cobranca,
     index,
     isCompact,
@@ -135,4 +136,10 @@ export function CobrancaRow({
             </TableCell>
         </TableRow>
     );
-}
+}, (prev, next) => {
+    const wasSelected = prev.selectedIds?.has(prev.cobranca.id);
+    const isSelected = next.selectedIds?.has(next.cobranca.id);
+    return wasSelected === isSelected &&
+        prev.isCompact === next.isCompact &&
+        prev.cobranca === next.cobranca;
+});
