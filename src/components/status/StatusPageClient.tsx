@@ -47,6 +47,16 @@ const statusItems = [
 
 const changelogData = [
     {
+        id: "2026-03-07",
+        date: "07/03/2026",
+        changes: [
+            { category: "Mobile", description: "Refinamento da **Barra de Ações em Lote** para dispositivos móveis, introduzindo posicionamento fixo na base e ajustes estéticos para maior clareza e ergonomia na gestão financeira." },
+            { category: "Interface", description: "Ajustes estruturais no **Contêiner de Páginas**, eliminando redundâncias de rolagem e garantindo visibilidade total de componentes flutuantes e menus nativos." },
+            { category: "Performance", description: "Implementação de memorização no **Motor de Renderização de Listagens**, otimizando o processamento de grandes volumes de faturas e reduzindo o impacto computacional em interações frequentes." },
+            { category: "Experiência", description: "Atualização da versão de sistema para **Beta v1.1**, consolidando correções de layout e melhorias contínuas na estabilidade da plataforma." },
+        ],
+    },
+    {
         id: "2026-03-06",
         date: "06/03/2026",
         changes: [

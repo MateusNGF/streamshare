@@ -76,3 +76,13 @@ Antes de salvar no `StatusPageClient.tsx`, valide:
 ## 📍 Localização Técnica
 As atualizações devem ser inseridas no topo do array `changelogData` em:
 `src/components/status/StatusPageClient.tsx`
+
+---
+
+## 📅 Destaques Recentes (07/03/2026)
+
+- **Mobile**: Nova ergonomia na Barra de Ações em Lote (Mobile-first).
+- **Interface**: Correção de scroll duplo e otimização do contêiner principal.
+- **Performance**: Otimização de renderização em tabelas financeiras de alta densidade.
+- **Versão**: Lançamento da **v1.1 (Beta)**.
+
