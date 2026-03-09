@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { calcularCustoBase, calcularTotalCiclo, arredondarMoeda, escolherProximoDiaVencimento, calcularDataVencimentoPadrao, calcularValorProRata } from "@/lib/financeiro-utils";
+import { calcularCustoBase, calcularTotalCiclo, arredondarMoeda, escolherProximoDiaVencimento, calcularDataVencimentoPadrao, calcularValorProRata, parseLocalDate } from "@/lib/financeiro-utils";
+import { isBefore, startOfDay } from "date-fns";
 import { StreamingOption, ParticipanteOption, SelectedStreaming, ModalStep } from "./types";
 
 interface UseAssinaturaMultiplaProps {
@@ -24,6 +25,7 @@ export function useAssinaturaMultipla({
     const [selectedParticipanteIds, setSelectedParticipanteIds] = useState<Set<number>>(new Set());
     const [dataInicio, setDataInicio] = useState(new Date().toISOString().split('T')[0]);
     const [cobrancaAutomaticaPaga, setCobrancaAutomaticaPaga] = useState(false);
+    const [primeiroCicloJaPago, setPrimeiroCicloJaPago] = useState(false);
     const [selectedStreamingIds, setSelectedStreamingIds] = useState<Set<number>>(new Set());
     const [configurations, setConfigurations] = useState<Map<number, SelectedStreaming>>(new Map());
     const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
@@ -172,6 +174,7 @@ export function useAssinaturaMultipla({
         setQuantities(new Map());
         setDataInicio(new Date().toISOString().split('T')[0]);
         setCobrancaAutomaticaPaga(false);
+        setPrimeiroCicloJaPago(false);
         setSelectedStreamingIds(new Set());
         setConfigurations(new Map());
         setStreamingSearchTerm("");
@@ -222,12 +225,12 @@ export function useAssinaturaMultipla({
 
             const isFixarVencimento = diasVencimento.length > 0;
             const dataVencObj = isFixarVencimento
-                ? escolherProximoDiaVencimento(diasVencimento, new Date(dataInicio))
-                : calcularDataVencimentoPadrao(new Date(dataInicio));
+                ? escolherProximoDiaVencimento(diasVencimento, parseLocalDate(dataInicio))
+                : calcularDataVencimentoPadrao(parseLocalDate(dataInicio));
 
             let cycleTotalPerSeat = new Prisma.Decimal(0);
             if (isFixarVencimento) {
-                cycleTotalPerSeat = calcularValorProRata(valorCobrado, new Date(dataInicio), dataVencObj);
+                cycleTotalPerSeat = calcularValorProRata(valorCobrado, parseLocalDate(dataInicio), dataVencObj);
             } else {
                 cycleTotalPerSeat = calcularTotalCiclo(valorCobrado, config.frequencia as FrequenciaPagamento);
             }
@@ -249,7 +252,8 @@ export function useAssinaturaMultipla({
             lucroLiquidoMensal: arredondarMoeda(lucroLiquidoMensal).toNumber(),
             totalProximaFatura: arredondarMoeda(nextCycleTotal).toNumber(),
             margemLucro: Math.round(margemLucro),
-            totalAssinaturas: selectedStreamingIds.size * totalVagasSelecionadas
+            totalAssinaturas: selectedStreamingIds.size * totalVagasSelecionadas,
+            isPastDate: isBefore(startOfDay(parseLocalDate(dataInicio)), startOfDay(new Date()))
         };
     }, [configurations, totalVagasSelecionadas, selectedStreamings, selectedStreamingIds.size, diasVencimento, dataInicio]);
 
@@ -270,9 +274,10 @@ export function useAssinaturaMultipla({
                 valor: parseFloat(config.valor)
             })),
             dataInicio,
-            cobrancaAutomaticaPaga
+            cobrancaAutomaticaPaga,
+            primeiroCicloJaPago
         });
-    }, [selectedParticipanteIds, configurations, isOverloaded, quantities, dataInicio, cobrancaAutomaticaPaga, onSave]);
+    }, [selectedParticipanteIds, configurations, isOverloaded, quantities, dataInicio, cobrancaAutomaticaPaga, primeiroCicloJaPago, onSave]);
 
     return {
         step,
@@ -295,6 +300,8 @@ export function useAssinaturaMultipla({
         setIsOperationReviewOpen,
         setDataInicio,
         setCobrancaAutomaticaPaga,
+        primeiroCicloJaPago,
+        setPrimeiroCicloJaPago,
         handleToggleStreaming,
         handleToggleParticipante,
         handleQuantityChange,

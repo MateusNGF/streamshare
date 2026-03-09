@@ -12,6 +12,7 @@ export function useAssinaturasActions(streamings: any[]) {
 
     // States
     const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
+    const [isIndividualModalOpen, setIsIndividualModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
@@ -96,6 +97,7 @@ export function useAssinaturasActions(streamings: any[]) {
     return {
         // States & Modals
         isMultipleModalOpen, setIsMultipleModalOpen,
+        isIndividualModalOpen, setIsIndividualModalOpen,
         cancelModalOpen, setCancelModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedAssinatura, setSelectedAssinatura,

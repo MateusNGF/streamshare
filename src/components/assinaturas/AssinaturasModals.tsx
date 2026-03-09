@@ -1,6 +1,7 @@
 "use client";
 
 import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
+import { AssinaturaModal } from "@/components/modals/AssinaturaModal";
 import { CancelarAssinaturaModal } from "@/components/modals/CancelarAssinaturaModal";
 import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
 
@@ -8,6 +9,8 @@ interface AssinaturasModalsProps {
     isMultipleModalOpen: boolean;
     onCloseMultiple: () => void;
     onSaveMultiple: (data: any) => void;
+    isIndividualModalOpen: boolean;
+    onCloseIndividual: () => void;
     loading: boolean;
     participantes: any[];
     streamingsWithOcupados: any[];
@@ -26,6 +29,8 @@ export function AssinaturasModals({
     isMultipleModalOpen,
     onCloseMultiple,
     onSaveMultiple,
+    isIndividualModalOpen,
+    onCloseIndividual,
     loading,
     participantes,
     streamingsWithOcupados,
@@ -46,6 +51,11 @@ export function AssinaturasModals({
                 participantes={participantes}
                 streamings={streamingsWithOcupados}
                 loading={loading}
+            />
+
+            <AssinaturaModal
+                isOpen={isIndividualModalOpen}
+                onClose={onCloseIndividual}
             />
 
             <CancelarAssinaturaModal

@@ -4,13 +4,15 @@ import { useMemo } from "react";
 import {
     Calendar, Users, Wallet, X, TrendingUp, Info, Zap,
     ShieldCheck, ArrowRightLeft, DollarSign, PieChart,
-    ArrowUpRight, ArrowDownRight, Activity, LayoutGrid, List
+    ArrowUpRight, ArrowDownRight, Activity, LayoutGrid, List,
+    History
 } from "lucide-react";
 import { Switch } from "@/components/ui/Switch";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingOption, ParticipanteOption, SelectedStreaming } from "../types";
-import { escolherProximoDiaVencimento, calcularDataVencimentoPadrao } from "@/lib/financeiro-utils";
+import { escolherProximoDiaVencimento, calcularDataVencimentoPadrao, parseLocalDate } from "@/lib/financeiro-utils";
 
 interface StepSummaryProps {
     selectedStreamings: StreamingOption[];
@@ -20,6 +22,8 @@ interface StepSummaryProps {
     onDataInicioChange: (val: string) => void;
     cobrancaAutomatica: boolean;
     onCobrancaChange: (val: boolean) => void;
+    primeiroCicloPago: boolean;
+    onPrimeiroCicloChange: (val: boolean) => void;
     overloadedStreamings: StreamingOption[];
     financialAnalysis: {
         receitaMensalTotal: number;
@@ -28,6 +32,7 @@ interface StepSummaryProps {
         totalProximaFatura: number;
         margemLucro: number;
         totalAssinaturas: number;
+        isPastDate: boolean;
     };
     diasVencimento?: number[];
 }
@@ -47,6 +52,8 @@ export function StepSummary({
     onDataInicioChange,
     cobrancaAutomatica,
     onCobrancaChange,
+    primeiroCicloPago,
+    onPrimeiroCicloChange,
     overloadedStreamings,
     financialAnalysis,
     diasVencimento = []
@@ -88,8 +95,8 @@ export function StepSummary({
                         value={format(financialAnalysis.totalProximaFatura)}
                         icon={<Wallet size={12} className="text-gray-400" />}
                         subLabel={diasVencimento.length > 0
-                            ? escolherProximoDiaVencimento(diasVencimento, new Date(dataInicio)).toLocaleDateString('pt-BR')
-                            : calcularDataVencimentoPadrao(new Date(dataInicio)).toLocaleDateString('pt-BR')}
+                            ? escolherProximoDiaVencimento(diasVencimento, parseLocalDate(dataInicio)).toLocaleDateString('pt-BR')
+                            : calcularDataVencimentoPadrao(parseLocalDate(dataInicio)).toLocaleDateString('pt-BR')}
                     />
                 </div>
             </div>
@@ -106,15 +113,15 @@ export function StepSummary({
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Breakdown por Serviço</span>
                             </div>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[500px]">
                                 <thead>
                                     <tr className="bg-gray-50/10">
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50">Streaming</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50">Vagas</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50 text-right">Faturamento</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50 text-right">Custo</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50 text-right">Lucro Est.</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100">Serviço</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-center">Vagas</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Faturamento</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Custo</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Margem</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -125,29 +132,32 @@ export function StepSummary({
 
                                         return (
                                             <tr key={s.id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-5 py-2 border-b border-gray-50 last:border-0">
-                                                    <div className="flex items-center gap-2">
+                                                <td className="px-5 py-3 border-b border-gray-50 last:border-0">
+                                                    <div className="flex items-center gap-3">
                                                         <StreamingLogo
                                                             name={s.nome}
                                                             color={s.cor}
                                                             iconeUrl={s.iconeUrl}
                                                             size="xs"
-                                                            rounded="md"
+                                                            rounded="lg"
                                                         />
-                                                        <span className="text-[11px] font-bold text-gray-700">{s.nome}</span>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="text-[11px] font-black text-gray-800 tracking-tight leading-none">{s.nome}</span>
+                                                            <span className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">ID: {s.id}</span>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-5 py-2 border-b border-gray-50 last:border-0">
-                                                    <span className="text-[10px] font-black text-gray-400">{totalSlots} / {s.limiteParticipantes - s.ocupados}</span>
+                                                <td className="px-5 py-3 border-b border-gray-50 last:border-0 text-center font-black text-[10px] text-gray-400">
+                                                    {totalSlots} / {s.limiteParticipantes - s.ocupados}
                                                 </td>
-                                                <td className="px-5 py-2 border-b border-gray-50 last:border-0 text-right text-[11px] font-bold text-gray-900">
+                                                <td className="px-5 py-3 border-b border-gray-50 last:border-0 text-right text-[11px] font-black text-gray-900 whitespace-nowrap">
                                                     {format(price * totalSlots)}
                                                 </td>
-                                                <td className="px-5 py-2 border-b border-gray-50 last:border-0 text-right text-[11px] font-bold text-gray-400">
+                                                <td className="px-5 py-3 border-b border-gray-50 last:border-0 text-right text-[11px] font-black text-gray-400/80 whitespace-nowrap">
                                                     -{format(cost * totalSlots)}
                                                 </td>
-                                                <td className="px-5 py-2 border-b border-gray-50 last:border-0 text-right">
-                                                    <span className="text-[11px] font-black text-green-600">
+                                                <td className="px-5 py-3 border-b border-gray-50 last:border-0 text-right whitespace-nowrap">
+                                                    <span className="text-[11px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100">
                                                         +{format((price - cost) * totalSlots)}
                                                     </span>
                                                 </td>
@@ -175,14 +185,14 @@ export function StepSummary({
                                 </div>
                             )}
                         </div>
-                        <div className="overflow-x-auto max-h-[240px] overflow-y-auto custom-scrollbar">
-                            <table className="w-full text-left">
+                        <div className="overflow-x-auto max-h-[280px] overflow-y-auto custom-scrollbar">
+                            <table className="w-full text-left min-w-[500px]">
                                 <thead className="sticky top-0 bg-white z-10 shadow-sm">
                                     <tr>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50">Usuário</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50 text-center">Vagas</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50 text-right">Valor Mensal</th>
-                                        <th className="px-5 py-2 text-[9px] font-black uppercase text-gray-400 border-b border-gray-50 text-right">Contribuição Lucro</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100">Usuário</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-center">Vagas</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Valor Total</th>
+                                        <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Contribuição Lucro</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -191,25 +201,25 @@ export function StepSummary({
                                         const userProfit = (financialAnalysis.lucroLiquidoMensal / totalSlots) * (p.quantidade || 1);
                                         return (
                                             <tr key={p.id} className="hover:bg-primary/[0.02] transition-colors group">
-                                                <td className="px-5 py-2.5">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className="w-7 h-7 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-[10px] font-black text-gray-400 group-hover:text-primary transition-colors">
+                                                <td className="px-5 py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-[11px] font-black text-gray-500 group-hover:text-primary group-hover:bg-primary/5 transition-all">
                                                             {p.nome.charAt(0)}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className="text-[11px] font-bold text-gray-800 leading-tight">{p.nome}</span>
-                                                            <span className="text-[8px] text-gray-400 font-bold uppercase">{p.whatsappNumero}</span>
+                                                            <span className="text-[11px] font-black text-gray-800 leading-tight tracking-tight">{p.nome}</span>
+                                                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter opacity-60">{p.whatsappNumero}</span>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-5 py-2.5 text-center">
-                                                    <span className="text-[10px] font-black text-gray-600 opacity-60">x{p.quantidade || 1}</span>
+                                                <td className="px-5 py-3 text-center">
+                                                    <span className="text-[10px] font-black text-gray-400">x{p.quantidade || 1}</span>
                                                 </td>
-                                                <td className="px-5 py-2.5 text-right font-black text-[11px] text-gray-900">
+                                                <td className="px-5 py-3 text-right font-black text-[11px] text-gray-900 whitespace-nowrap">
                                                     {format(userRevenue)}
                                                 </td>
-                                                <td className="px-5 py-2.5 text-right">
-                                                    <span className="text-[10px] font-black text-green-500 uppercase">
+                                                <td className="px-5 py-3 text-right whitespace-nowrap">
+                                                    <span className="text-[10px] font-black text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-100 tracking-tight">
                                                         +{format(userProfit)}
                                                     </span>
                                                 </td>
@@ -248,17 +258,46 @@ export function StepSummary({
                             <ShieldCheck size={18} />
                         </div>
                         <div className="space-y-0.5">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none block">Automação</label>
-                            <span className="text-sm font-black text-gray-800 block leading-tight">Marcar como Pago</span>
+                            <div className="flex items-center gap-1.5">
+                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none block">Próximos Ciclos</label>
+                                <Tooltip content="Todas as renovações futuras serão marcadas como Pagas automaticamente.">
+                                    <Info size={10} className="text-gray-300" />
+                                </Tooltip>
+                            </div>
+                            <span className="text-sm font-black text-gray-800 block leading-tight">Sempre Pago</span>
                         </div>
                     </div>
-                    <div className="flex flex-col items-center">
-                        <Switch
-                            checked={cobrancaAutomatica}
-                            onCheckedChange={onCobrancaChange}
-                            className="scale-90"
-                        />
+                    <Switch
+                        checked={cobrancaAutomatica}
+                        onCheckedChange={onCobrancaChange}
+                        className="scale-90"
+                    />
+                </div>
+
+                {/* Migration Toggle */}
+                <div className={`flex-1 rounded-[22px] px-4 py-3 flex items-center justify-between border transition-all ${primeiroCicloPago ? 'bg-amber-50 border-amber-100' : 'bg-gray-50/50 border-transparent hover:border-gray-100'
+                    }`}>
+                    <div className="flex items-center gap-4">
+                        <div className={`p-2 rounded-xl shadow-sm ring-1 ${primeiroCicloPago ? 'bg-white text-amber-600 ring-amber-200' : 'bg-white text-gray-400 ring-gray-100'
+                            }`}>
+                            <History size={18} />
+                        </div>
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                                <label className={`text-[9px] font-black uppercase tracking-widest leading-none block ${primeiroCicloPago ? 'text-amber-500' : 'text-gray-400'
+                                    }`}>Migração</label>
+                                <Tooltip content="Marca a primeira cobrança (e eventuais retroativas) como Paga.">
+                                    <Info size={10} className="text-gray-300" />
+                                </Tooltip>
+                            </div>
+                            <span className="text-sm font-black text-gray-800 block leading-tight">Ciclo Pago</span>
+                        </div>
                     </div>
+                    <Switch
+                        checked={primeiroCicloPago}
+                        onCheckedChange={onPrimeiroCicloChange}
+                        className="scale-90 data-[state=checked]:bg-amber-500"
+                    />
                 </div>
 
                 {/* Efficiency Badge */}
@@ -278,6 +317,21 @@ export function StepSummary({
                     </div>
                 </div>
             </div>
+
+            {financialAnalysis.isPastDate && (
+                <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-[24px] flex items-start gap-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="p-2.5 bg-amber-100 rounded-xl text-amber-600 shrink-0">
+                        <History size={20} />
+                    </div>
+                    <div>
+                        <h5 className="font-black text-[11px] uppercase tracking-wider text-amber-900 mb-1">Impacto de Retroatividade</h5>
+                        <p className="text-[10px] font-bold text-amber-800 leading-relaxed max-w-2xl">
+                            A data de início está no passado. O sistema irá gerar cobranças retroativas para cada ciclo desde a data escolhida até hoje.
+                            Recomendamos marcar <strong className="text-amber-950 underline">Ciclo Pago</strong> acima se esses meses já foram liquidados fora do StreamShare.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {isOverloaded && (
                 <div className="p-4 bg-red-50 border-2 border-red-100 rounded-[20px] text-red-700 flex items-center gap-4 animate-bounce-subtle">

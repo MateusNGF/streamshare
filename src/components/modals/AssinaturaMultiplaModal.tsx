@@ -170,6 +170,8 @@ export function AssinaturaMultiplaModal({
                         onDataInicioChange={logic.setDataInicio}
                         cobrancaAutomatica={logic.cobrancaAutomaticaPaga}
                         onCobrancaChange={logic.setCobrancaAutomaticaPaga}
+                        primeiroCicloPago={logic.primeiroCicloJaPago}
+                        onPrimeiroCicloChange={logic.setPrimeiroCicloJaPago}
                         overloadedStreamings={logic.streamingsSemVagas}
                         financialAnalysis={logic.financialAnalysis}
                         diasVencimento={diasVencimento}

@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Search, Users, Activity, TrendingUp } from "lucide-react";
+import { Plus, Search, Users, Activity, TrendingUp, ChevronDown } from "lucide-react";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useEffect, useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
@@ -65,6 +66,7 @@ export default function AssinaturasClient({
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
         isMultipleModalOpen, setIsMultipleModalOpen,
+        isIndividualModalOpen, setIsIndividualModalOpen,
         cancelModalOpen, setCancelModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedAssinatura, setSelectedAssinatura,
@@ -146,14 +148,28 @@ export default function AssinaturasClient({
                 title="Assinaturas"
                 description="Gerencie as assinaturas dos participantes e monitore a receita."
                 action={
-                    <Button
-                        onClick={() => setIsMultipleModalOpen(true)}
-                        className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all"
-                    >
-                        <Plus size={20} />
-                        <span className="hidden sm:inline">Nova Assinatura</span>
-                        <span className="sm:hidden">Nova</span>
-                    </Button>
+                    <Dropdown
+                        trigger={
+                            <div className="flex items-center gap-2">
+                                <Plus size={20} />
+                                <span className="hidden sm:inline font-bold">Nova Assinatura</span>
+                                <span className="sm:hidden font-bold">Nova</span>
+                                <ChevronDown size={14} className="opacity-50" />
+                            </div>
+                        }
+                        options={[
+                            {
+                                label: "Individual",
+                                icon: <Plus size={16} />,
+                                onClick: () => setIsIndividualModalOpen(true)
+                            },
+                            {
+                                label: "Em Lote Coringa",
+                                icon: <Users size={16} />,
+                                onClick: () => setIsMultipleModalOpen(true)
+                            }
+                        ]}
+                    />
                 }
             />
 
@@ -269,6 +285,8 @@ export default function AssinaturasClient({
                 isMultipleModalOpen={isMultipleModalOpen}
                 onCloseMultiple={() => setIsMultipleModalOpen(false)}
                 onSaveMultiple={handleCreateMultiple}
+                isIndividualModalOpen={isIndividualModalOpen}
+                onCloseIndividual={() => setIsIndividualModalOpen(false)}
                 loading={loading}
                 participantes={participantes}
                 streamingsWithOcupados={streamingsWithOcupados}

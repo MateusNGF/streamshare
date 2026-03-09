@@ -227,15 +227,16 @@ export const billingService = {
         frequencia: any,
         dataInicio: Date,
         pago: boolean,
-        diasVencimento?: number[]
+        diasVencimento?: number[],
+        manualMigration?: boolean
     }) => {
-        const { assinaturaId, valorMensal, frequencia, dataInicio, pago, diasVencimento } = params;
+        const { assinaturaId, valorMensal, frequencia, dataInicio, pago, diasVencimento, manualMigration } = params;
 
         const isFixarVencimento = diasVencimento && diasVencimento.length > 0;
 
         const dataVencimento = isFixarVencimento
             ? escolherProximoDiaVencimento(diasVencimento, dataInicio)
-            : calcularDataVencimentoPadrao(new Date());
+            : calcularDataVencimentoPadrao(dataInicio); // ← base = dataInicio, not today
 
         const periodoFim = isFixarVencimento
             ? dataVencimento
@@ -253,9 +254,43 @@ export const billingService = {
                 periodoFim,
                 status: pago ? "pago" : "pendente",
                 dataPagamento: pago ? new Date() : null,
-                dataVencimento
+                dataVencimento,
+                gatewayTransactionId: manualMigration ? "manual_migration" : null
             }
         });
+    },
+
+    /**
+     * Generates multiple retroactive charges based on calculated cycles.
+     */
+    gerarCobrancasRetroativas: async (tx: any, params: {
+        assinaturaId: number,
+        ciclos: any[], // RetroactiveCycle[]
+        paidIndices: number[]
+    }) => {
+        const { assinaturaId, ciclos, paidIndices } = params;
+        const created = [];
+
+        for (let i = 0; i < ciclos.length; i++) {
+            const ciclo = ciclos[i];
+            const isPaid = paidIndices.includes(i);
+
+            const cobranca = await tx.cobranca.create({
+                data: {
+                    assinaturaId,
+                    valor: ciclo.valor,
+                    periodoInicio: ciclo.periodoInicio,
+                    periodoFim: ciclo.periodoFim,
+                    status: isPaid ? "pago" : "pendente",
+                    dataPagamento: isPaid ? new Date() : null,
+                    dataVencimento: ciclo.dataVencimento,
+                    gatewayTransactionId: isPaid ? "manual_migration" : null
+                }
+            });
+            created.push(cobranca);
+        }
+
+        return created;
     },
 
     /**

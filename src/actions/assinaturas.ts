@@ -7,6 +7,7 @@ import { billingService } from "@/services/billing-service";
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
+import { parseLocalDate } from "@/lib/financeiro-utils";
 
 export async function getAssinaturasKPIs() {
     try {
@@ -156,6 +157,9 @@ export async function getAssinaturas(filters?: {
     }
 }
 
+import { gerarCiclosRetroativos } from "@/lib/subscription-backfill";
+import { isBefore, startOfDay } from "date-fns";
+
 export async function createAssinatura(data: CreateSubscriptionDTO) {
     try {
         const { contaId, userId } = await getContext();
@@ -163,9 +167,12 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
         // 1. Validations (SRP - Delegated to Validator)
         subscriptionValidator.validateValues(data.valor);
 
-        // Ensure dataInicio is a Date object
-        const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
+        // Ensure dataInicio is a Date object (Safely parsing local time)
+        const dataInicio = parseLocalDate(data.dataInicio);
         subscriptionValidator.validateDates(dataInicio);
+
+        const hoje = startOfDay(new Date());
+        const isRetroactive = isBefore(startOfDay(dataInicio), hoje);
 
         // 2. Transaction (Atomicity)
         const result = await prisma.$transaction(async (tx) => {
@@ -180,6 +187,20 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
             });
             const diasVencimento = contaInfo?.diasVencimento || [];
 
+            // Determine initial status
+            // If retroactive and at least one paid charge covering today exists, or if firstCyclePaid is true
+            let status: StatusAssinatura = StatusAssinatura.pendente;
+            if (data.primeiroCicloJaPago) {
+                status = StatusAssinatura.ativa;
+            } else if (isRetroactive && data.retroactivePaidIndices && data.retroactivePaidIndices.length > 0) {
+                // Simplified check: if any retroactive charge is paid, we assume active for now 
+                // Alternatively, find the cycle covering today and check if it's in paidIndices
+                status = StatusAssinatura.ativa;
+            } else if (data.cobrancaAutomaticaPaga) {
+                // If "always paid" is on, start as active (existing behavior)
+                status = StatusAssinatura.ativa;
+            }
+
             // Create Subscription
             const assinatura = await tx.assinatura.create({
                 data: {
@@ -188,20 +209,37 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                     frequencia: data.frequencia,
                     valor: data.valor,
                     dataInicio: dataInicio,
-                    status: (data.cobrancaAutomaticaPaga ?? false) ? StatusAssinatura.ativa : StatusAssinatura.pendente,
+                    status: status,
                     cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
                 },
             });
 
-            // Create Initial Charge (Delegated to Billing Service)
-            const cobranca = await billingService.gerarCobrancaInicial(tx, {
-                assinaturaId: assinatura.id,
-                valorMensal: data.valor,
-                frequencia: data.frequencia,
-                dataInicio,
-                pago: !!data.cobrancaAutomaticaPaga,
-                diasVencimento
-            });
+            // Create Charges
+            if (isRetroactive) {
+                const ciclos = gerarCiclosRetroativos({
+                    dataInicio,
+                    frequencia: data.frequencia,
+                    valorMensal: data.valor,
+                    diasVencimento
+                });
+
+                await billingService.gerarCobrancasRetroativas(tx, {
+                    assinaturaId: assinatura.id,
+                    ciclos,
+                    paidIndices: data.retroactivePaidIndices || []
+                });
+            } else {
+                // Create Initial Charge (Delegated to Billing Service)
+                await billingService.gerarCobrancaInicial(tx, {
+                    assinaturaId: assinatura.id,
+                    valorMensal: data.valor,
+                    frequencia: data.frequencia,
+                    dataInicio,
+                    pago: !!data.primeiroCicloJaPago || !!data.cobrancaAutomaticaPaga,
+                    diasVencimento,
+                    manualMigration: !!data.primeiroCicloJaPago
+                });
+            }
 
             const participante = await tx.participante.findUnique({
                 where: { id: data.participanteId },
@@ -209,11 +247,10 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
             });
 
             // System Notification
-            // User requested: Notifications must refer to the user (subscription owner)
             await tx.notificacao.create({
                 data: {
                     contaId,
-                    usuarioId: participante?.userId || userId, // Target participant if linked, otherwise creator/admin
+                    usuarioId: participante?.userId || userId,
                     tipo: "assinatura_criada",
                     titulo: `Nova assinatura criada`,
                     descricao: `Assinatura de ${streaming.catalogo.nome} para ${participante?.nome || 'participante'} foi criada.`,
@@ -222,7 +259,7 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 }
             });
 
-            return { assinatura, cobranca, participante, streaming };
+            return { assinatura, participante, streaming };
         });
 
         // 3. Side Effects (Async Notifications)
@@ -240,8 +277,11 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
     const startTime = performance.now();
     try {
         const { contaId, userId } = await getContext();
-        const dataInicio = typeof data.dataInicio === 'string' ? new Date(data.dataInicio) : data.dataInicio;
+        const dataInicio = parseLocalDate(data.dataInicio);
         const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
+
+        const hoje = startOfDay(new Date());
+        const isRetroactive = isBefore(startOfDay(dataInicio), hoje);
 
         console.log(`[BULK_ASSINATURA] Iniciando criação de ${data.assinaturas.length} tipos de assinatura para ${data.participanteIds.length} participantes. Total esperado: ${data.assinaturas.length * data.participanteIds.length} assinaturas.`);
 
@@ -249,7 +289,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
             const txStartTime = performance.now();
             const validStreamings = new Map();
 
-            // 1. Validate Streamings & Slots (Batched and cached for the transaction)
+            // 1. Validate Streamings & Slots
             const streamingIds = Array.from(new Set(data.assinaturas.map(a => a.streamingId)));
 
             const streamingsData = await tx.streaming.findMany({
@@ -289,10 +329,11 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
             });
             const diasVencimento = contaInfo?.diasVencimento || [];
 
-            // 2. Create Subscriptions and Charges sequentially to maintain order and simplify error tracking
-            // Use for...of to ensure async sequence within transaction as per Prisma requirements
+            // 2. Create Subscriptions and Charges
             for (const participanteId of data.participanteIds) {
                 for (const ass of data.assinaturas) {
+                    const status: StatusAssinatura = (data.primeiroCicloJaPago || data.cobrancaAutomaticaPaga) ? StatusAssinatura.ativa : StatusAssinatura.pendente;
+
                     const assinatura = await tx.assinatura.create({
                         data: {
                             participanteId,
@@ -300,20 +341,39 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                             frequencia: ass.frequencia,
                             valor: ass.valor,
                             dataInicio,
-                            status: (data.cobrancaAutomaticaPaga ?? false) ? 'ativa' : 'pendente',
+                            status: status,
                             cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
                         }
                     });
 
-                    // 3. Create Initial Charge
-                    await billingService.gerarCobrancaInicial(tx, {
-                        assinaturaId: assinatura.id,
-                        valorMensal: ass.valor,
-                        frequencia: ass.frequencia,
-                        dataInicio,
-                        pago: !!data.cobrancaAutomaticaPaga,
-                        diasVencimento
-                    });
+                    // 3. Create Charges
+                    if (isRetroactive) {
+                        const ciclos = gerarCiclosRetroativos({
+                            dataInicio,
+                            frequencia: ass.frequencia,
+                            valorMensal: ass.valor,
+                            diasVencimento
+                        });
+
+                        // For bulk, we don't support individual paid indices yet, 
+                        // but if primeiroCicloJaPago is true, we mark all as paid?
+                        // Rule: If bulk migration is checked, we assume all backfill is paid.
+                        await billingService.gerarCobrancasRetroativas(tx, {
+                            assinaturaId: assinatura.id,
+                            ciclos,
+                            paidIndices: data.primeiroCicloJaPago ? ciclos.map((_, i) => i) : []
+                        });
+                    } else {
+                        await billingService.gerarCobrancaInicial(tx, {
+                            assinaturaId: assinatura.id,
+                            valorMensal: ass.valor,
+                            frequencia: ass.frequencia,
+                            dataInicio,
+                            pago: !!data.primeiroCicloJaPago || !!data.cobrancaAutomaticaPaga,
+                            diasVencimento,
+                            manualMigration: !!data.primeiroCicloJaPago
+                        });
+                    }
 
                     results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });
                 }

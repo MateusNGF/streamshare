@@ -1,5 +1,22 @@
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { addMonths, lastDayOfMonth, isAfter, getDate, setDate, addDays, differenceInDays, getDaysInMonth } from "date-fns";
+import { addMonths, lastDayOfMonth, isAfter, getDate, setDate, addDays, differenceInDays, getDaysInMonth, parseISO, startOfDay } from "date-fns";
+
+/**
+ * Safely parses a date string (YYYY-MM-DD) as a local Date object.
+ * Prevents the common bug where '2023-01-01' is parsed as UTC and results 
+ * in the previous day when converted back to local time in western timezones.
+ */
+export function parseLocalDate(dateInput: string | Date): Date {
+    if (dateInput instanceof Date) return startOfDay(dateInput);
+
+    // If it's a YYYY-MM-DD string, add local time component to force local parsing
+    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        const [year, month, day] = dateInput.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    return startOfDay(new Date(dateInput));
+}
 
 export const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
     mensal: 1,

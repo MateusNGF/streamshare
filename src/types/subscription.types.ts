@@ -6,7 +6,9 @@ export interface CreateSubscriptionDTO {
     frequencia: FrequenciaPagamento;
     valor: number;
     dataInicio: string | Date;
-    cobrancaAutomaticaPaga?: boolean;
+    cobrancaAutomaticaPaga?: boolean; // Label: "Cobranças futuras sempre pagas"
+    primeiroCicloJaPago?: boolean; // Label: "Migração — ciclo atual já pago" (Legacy sync)
+    retroactivePaidIndices?: number[]; // Indices of backfill cycles marked as paid
 }
 
 export interface BulkCreateSubscriptionDTO {
@@ -18,6 +20,7 @@ export interface BulkCreateSubscriptionDTO {
     }>;
     dataInicio: string | Date;
     cobrancaAutomaticaPaga?: boolean;
+    primeiroCicloJaPago?: boolean;
 }
 
 export interface ChargeCreationData {
