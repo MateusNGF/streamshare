@@ -15,6 +15,7 @@ interface StepParticipantsProps {
     searchTerm: string;
     onSearchChange: (val: string) => void;
     capacityInfo: { isOverloaded: boolean; minSlots: number; showWarning: boolean };
+    preSelectedId?: string;
 }
 
 export function StepParticipants({
@@ -26,7 +27,8 @@ export function StepParticipants({
     onSelectAll,
     searchTerm,
     onSearchChange,
-    capacityInfo
+    capacityInfo,
+    preSelectedId
 }: StepParticipantsProps) {
     const filtered = useMemo(() => {
         if (!searchTerm) return participantes;
@@ -40,6 +42,7 @@ export function StepParticipants({
 
     const totalVagas = useMemo(() => Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0), [quantities]);
 
+
     return (
         <div className="space-y-4 flex flex-col">
             <div>
@@ -49,7 +52,7 @@ export function StepParticipants({
                 </p>
             </div>
 
-            <div className="flex flex-col flex-1 p-3 gap-3 bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner">
+            <div className={`flex flex-col flex-1 p-3 gap-3 bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner`}>
                 {/* Toolbar */}
                 <div className="flex gap-2 items-center">
                     <div className="relative flex-1">

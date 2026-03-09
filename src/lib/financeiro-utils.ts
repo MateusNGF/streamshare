@@ -1,5 +1,5 @@
 import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { addMonths, lastDayOfMonth, isAfter, getDate, setDate, addDays, differenceInDays, getDaysInMonth, parseISO, startOfDay } from "date-fns";
+import { addMonths, lastDayOfMonth, isAfter, isBefore, getDate, setDate, addDays, differenceInDays, getDaysInMonth, parseISO, startOfDay } from "date-fns";
 
 /**
  * Safely parses a date string (YYYY-MM-DD) as a local Date object.
@@ -243,3 +243,37 @@ export function getLoteActorName(lote: any, isAdmin: boolean): string {
     return lote.participante?.nome || 'N/A';
 }
 
+/**
+ * Gera os ciclos de cobrança retroativos baseados em uma data de início passada.
+ */
+export function gerarCiclosRetroativos({
+    dataInicio,
+    frequencia,
+    valorMensal,
+    diasVencimento
+}: {
+    dataInicio: Date;
+    frequencia: FrequenciaPagamento;
+    valorMensal: number | Prisma.Decimal;
+    diasVencimento: number[];
+}) {
+    const ciclos = [];
+    let dataReferencia = dataInicio;
+    const hoje = startOfDay(new Date());
+
+    while (isBefore(dataReferencia, hoje)) {
+        const proximoVencimento = escolherProximoDiaVencimento(diasVencimento, dataReferencia);
+        const fimCiclo = addMonths(dataReferencia, INTERVALOS_MESES[frequencia]);
+
+        ciclos.push({
+            periodoInicio: dataReferencia,
+            periodoFim: fimCiclo,
+            dataVencimento: proximoVencimento,
+            valor: calcularValorPeriodo(valorMensal, frequencia).toNumber()
+        });
+
+        dataReferencia = fimCiclo;
+    }
+
+    return ciclos;
+}

@@ -1,11 +1,12 @@
 "use client";
 
-import { Plus, Search, Users, Activity, TrendingUp, ChevronDown } from "lucide-react";
+import { Plus, Search, Users, Activity, TrendingUp, ChevronDown, Wand2 } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useEffect, useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { FilterConfig } from "@/components/ui/GenericFilter";
@@ -62,6 +63,7 @@ export default function AssinaturasClient({
     plano,
     error
 }: AssinaturasClientProps) {
+    const router = useRouter();
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
@@ -161,12 +163,12 @@ export default function AssinaturasClient({
                             {
                                 label: "Individual",
                                 icon: <Plus size={16} />,
-                                onClick: () => setIsIndividualModalOpen(true)
+                                onClick: () => router.push("/assinaturas/novo?mode=single")
                             },
                             {
-                                label: "Em Lote Coringa",
+                                label: "Em Lote Wizard",
                                 icon: <Users size={16} />,
-                                onClick: () => setIsMultipleModalOpen(true)
+                                onClick: () => router.push("/assinaturas/novo")
                             }
                         ]}
                     />
@@ -282,12 +284,6 @@ export default function AssinaturasClient({
             </div>
 
             <AssinaturasModals
-                isMultipleModalOpen={isMultipleModalOpen}
-                onCloseMultiple={() => setIsMultipleModalOpen(false)}
-                onSaveMultiple={handleCreateMultiple}
-                isIndividualModalOpen={isIndividualModalOpen}
-                onCloseIndividual={() => setIsIndividualModalOpen(false)}
-                loading={loading}
                 participantes={participantes}
                 streamingsWithOcupados={streamingsWithOcupados}
                 cancelModalOpen={cancelModalOpen}

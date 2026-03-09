@@ -12,6 +12,7 @@ interface StepStreamingsProps {
     onToggle: (id: number) => void;
     searchTerm: string;
     onSearchChange: (val: string) => void;
+    onNext?: () => void;
 }
 
 export function StepStreamings({
@@ -19,7 +20,8 @@ export function StepStreamings({
     selectedIds,
     onToggle,
     searchTerm,
-    onSearchChange
+    onSearchChange,
+    onNext
 }: StepStreamingsProps) {
     const { format } = useCurrency();
 
@@ -64,7 +66,10 @@ export function StepStreamings({
                         <button
                             key={streaming.id}
                             type="button"
-                            onClick={() => !isFull && onToggle(streaming.id)}
+                            onClick={() => {
+                                if (isFull) return;
+                                onToggle(streaming.id);
+                            }}
                             disabled={isFull}
                             className={`relative p-4 rounded-2xl border-2 transition-all text-left group ${isSelected
                                 ? 'border-primary bg-primary/5 shadow-md'
