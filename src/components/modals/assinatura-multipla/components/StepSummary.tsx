@@ -8,6 +8,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { StreamingOption, ParticipanteOption, SelectedStreaming } from "../types";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import { FrequenciaPagamento } from "@prisma/client";
+import { cn } from "@/lib/utils";
 
 // Sub-components
 import { SummaryKPIs } from "./summary/SummaryKPIs";
@@ -15,6 +16,7 @@ import { ServiceConfigTable } from "./summary/ServiceConfigTable";
 import { RetroactiveCyclesGrid } from "./summary/RetroactiveCyclesGrid";
 import { BillingPreviewTable } from "./summary/BillingPreviewTable";
 import { MembersList } from "./summary/MembersList";
+import { Switch } from "@/components/ui/Switch";
 
 interface StepSummaryProps {
     selectedStreamings: StreamingOption[];
@@ -27,20 +29,11 @@ interface StepSummaryProps {
     primeiroCicloPago: boolean;
     onPrimeiroCicloChange: (val: boolean) => void;
     overloadedStreamings: StreamingOption[];
-    financialAnalysis: {
-        receitaMensalTotal: number;
-        custoMensalTotal: number;
-        lucroLiquidoMensal: number;
-        totalProximaFatura: number;
-        margemLucro: number;
-        totalAssinaturas: number;
-        isPastDate: boolean;
-        cobrancasProjetadas: any[];
-    };
-    diasVencimento?: number[];
-    onUpdateConfig?: (id: number, field: keyof SelectedStreaming, value: any) => void;
-    retroactivePaidIndices?: number[];
-    onRetroactivePaidIndicesChange?: (indices: number[]) => void;
+    financialAnalysis: any;
+    diasVencimento: number[];
+    onUpdateConfig: (streamingId: number, field: any, value: any) => void;
+    retroactivePaidPeriods: Array<{ streamingId: number, index: number }>;
+    onRetroactivePaidPeriodsChange: (periods: Array<{ streamingId: number, index: number }>) => void;
 }
 
 export function StepSummary({
@@ -49,13 +42,15 @@ export function StepSummary({
     configurations,
     dataInicio,
     onDataInicioChange,
+    cobrancaAutomatica,
+    onCobrancaChange,
     primeiroCicloPago,
     onPrimeiroCicloChange,
     financialAnalysis,
-    diasVencimento = [],
+    diasVencimento,
     onUpdateConfig,
-    retroactivePaidIndices = [],
-    onRetroactivePaidIndicesChange
+    retroactivePaidPeriods,
+    onRetroactivePaidPeriodsChange
 }: StepSummaryProps) {
     const { format } = useCurrency();
 
@@ -63,36 +58,14 @@ export function StepSummary({
         return selectedParticipants.reduce((sum, p) => sum + (p.quantidade || 0), 0);
     }, [selectedParticipants]);
 
-    const ciclosRetroativos = useMemo(() => {
-        if (!dataInicio || !financialAnalysis.isPastDate) return [];
-        const streaming = selectedStreamings[0];
-        if (!streaming) return [];
-
-        return gerarCiclosRetroativos({
-            dataInicio: parseLocalDate(dataInicio),
-            frequencia: configurations.get(streaming.id)?.frequencia || FrequenciaPagamento.mensal,
-            valorMensal: configurations.get(streaming.id)?.valor ? parseFloat(configurations.get(streaming.id)!.valor) : 0,
-            diasVencimento
-        });
-    }, [dataInicio, financialAnalysis.isPastDate, selectedStreamings, configurations, diasVencimento]);
-
-    const handleToggleRetroactive = (index: number) => {
-        if (!onRetroactivePaidIndicesChange) return;
-        const newIndices = retroactivePaidIndices.includes(index)
-            ? retroactivePaidIndices.filter(i => i !== index)
-            : [...retroactivePaidIndices, index];
-        onRetroactivePaidIndicesChange(newIndices);
-    };
-
-    const nextInvoiceDate = useMemo(() => {
-        return diasVencimento && diasVencimento.length > 0
-            ? escolherProximoDiaVencimento(diasVencimento, parseLocalDate(dataInicio)).toLocaleDateString('pt-BR')
-            : calcularDataVencimentoPadrao(parseLocalDate(dataInicio)).toLocaleDateString('pt-BR');
-    }, [diasVencimento, dataInicio]);
+    const formattedNextInvoiceDate = useMemo(() => {
+        if (!financialAnalysis.proximoVencimento) return "Pendente";
+        const date = new Date(financialAnalysis.proximoVencimento);
+        return isNaN(date.getTime()) ? "Data inválida" : date.toLocaleDateString('pt-BR');
+    }, [financialAnalysis.proximoVencimento]);
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-4">
-
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-10">
             {/* 1. COMPACT KPI BAR */}
             <SummaryKPIs
                 receitaTotal={format(financialAnalysis.receitaMensalTotal)}
@@ -100,8 +73,8 @@ export function StepSummary({
                 lucroLiquido={format(financialAnalysis.lucroLiquidoMensal)}
                 margemLucro={financialAnalysis.margemLucro}
                 totalFaturas={financialAnalysis.totalAssinaturas}
-                valorProximaFatura={format(financialAnalysis.totalProximaFatura)}
-                dataVencimento={nextInvoiceDate}
+                valorProximaFatura={format(financialAnalysis.valorTotalLancamento)}
+                dataVencimento={formattedNextInvoiceDate}
             />
 
             {/* 2. CONFIGURATION SECTION */}
@@ -119,56 +92,75 @@ export function StepSummary({
 
             {/* 3. OPERATIONAL INPUTS SECTION */}
             <SectionHeader
-                title="Configurações Operacionais"
-                description="Defina a data de início e o status de pagamento do ciclo atual."
+                title="Fluxo Financeiro"
+                description="Determine como o sistema deve processar o faturamento inicial e futuro."
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
                 <OptionCard
-                    icon={<Calendar size={18} />}
+                    icon={<Calendar size={16} />}
                     label="Data de Início"
-                    description="As cobranças retroativas e pró-rata serão calculadas a partir desta data."
-                    tooltip="Define a partir de quando o acesso foi liberado para calcular cobranças retroativas."
+                    description="A partir de quando o acesso e as cobranças começam a contar."
                 >
                     <input
                         type="date"
                         value={dataInicio}
                         onChange={(e) => onDataInicioChange(e.target.value)}
-                        className="w-full mt-2 bg-transparent border-0 border-b-2 border-primary/20 focus:ring-0 focus:border-primary px-0 py-1 text-sm font-bold transition-all"
+                        className="w-full bg-transparent border-0 border-b-2 border-primary/10 focus:ring-0 focus:border-primary px-0 py-1 text-sm font-bold transition-all"
                     />
                 </OptionCard>
 
                 <OptionCard
-                    icon={<CheckCircle size={18} />}
+                    icon={<CheckCircle size={16} className={cn(primeiroCicloPago ? "text-emerald-500" : "text-gray-300")} />}
                     label="Lançamento Inicial"
-                    description="O ciclo atual/pró-rata já foi quitado?"
-                    tooltip="Indica se o usuário já pagou o valor inicial (pro-rata ou mês atual) fora do sistema."
+                    description="Marque se os participantes já pagaram o ciclo atual (migração)."
+                    tooltip="Se ativado, as faturas geradas hoje nascerão com status 'Pago'."
                 >
-                    <div className="flex items-center gap-2 mt-2">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={primeiroCicloPago}
-                                onChange={(e) => onPrimeiroCicloChange(e.target.checked)}
-                                className="sr-only peer"
-                            />
-                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                            <span className="ml-2 text-xs font-black text-gray-700 uppercase">{primeiroCicloPago ? 'Já foi Pago' : 'Lançar como Pendente'}</span>
-                        </label>
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-gray-400">Ciclo atual já pago?</span>
+                        <Switch
+                            checked={primeiroCicloPago}
+                            onCheckedChange={onPrimeiroCicloChange}
+                        />
+                    </div>
+                </OptionCard>
+
+                <OptionCard
+                    icon={<CheckCircle size={16} className={cn(cobrancaAutomatica ? "text-emerald-500" : "text-gray-300")} />}
+                    label="Cobrança Automática"
+                    description="O sistema deve assumir que as faturas futuras sempre são pagas?"
+                    tooltip="Ideal para sistemas integrados ou onde o recebimento é garantido externamente."
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-gray-400">Faturas futuras pagas?</span>
+                        <Switch
+                            checked={cobrancaAutomatica}
+                            onCheckedChange={onCobrancaChange}
+                        />
                     </div>
                 </OptionCard>
             </div>
 
             {/* 4. RETROACTIVE CYCLES */}
-            <RetroactiveCyclesGrid
-                ciclos={ciclosRetroativos}
-                paidIndices={retroactivePaidIndices}
-                onToggle={handleToggleRetroactive}
-                formatCurrency={format}
-            />
+            {financialAnalysis.isPastDate && (
+                <RetroactiveCyclesGrid
+                    ciclos={financialAnalysis.cobrancasProjetadas.filter((p: any) => p.tipo === 'Retroativa')}
+                    paidPeriods={retroactivePaidPeriods}
+                    onToggle={(cycle) => {
+                        const isMatch = (p: any) => p.streamingId === cycle.streamingId && p.index === cycle.index;
+                        const exists = retroactivePaidPeriods.some(isMatch);
+                        if (exists) {
+                            onRetroactivePaidPeriodsChange(retroactivePaidPeriods.filter(p => !isMatch(p)));
+                        } else {
+                            onRetroactivePaidPeriodsChange([...retroactivePaidPeriods, { streamingId: cycle.streamingId, index: cycle.index }]);
+                        }
+                    }}
+                    formatCurrency={format}
+                />
+            )}
 
-            {/* 5. BILLING PREVIEW SECTION */}
+            {/* 5. FUTURE BILLING PREVIEW */}
             <BillingPreviewTable
-                projections={financialAnalysis.cobrancasProjetadas}
+                projections={financialAnalysis.cobrancasProjetadas.filter((p: any) => p.tipo !== 'Retroativa')}
                 totalSlots={totalSlots}
                 formatCurrency={format}
             />

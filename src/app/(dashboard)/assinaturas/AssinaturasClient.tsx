@@ -67,16 +67,13 @@ export default function AssinaturasClient({
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
-        isMultipleModalOpen, setIsMultipleModalOpen,
-        isIndividualModalOpen, setIsIndividualModalOpen,
         cancelModalOpen, setCancelModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedAssinatura, setSelectedAssinatura,
-        loading, cancelling,
+        cancelling,
         filters: filterValues,
         handleFilterChange,
         handleClearFilters,
-        handleCreateMultiple,
         handleCancelSubmit,
         streamingsWithOcupados
     } = useAssinaturasActions(streamings);

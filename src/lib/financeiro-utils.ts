@@ -1,5 +1,5 @@
-import { FrequenciaPagamento, Prisma } from "@prisma/client";
-import { addMonths, lastDayOfMonth, isAfter, isBefore, getDate, setDate, addDays, differenceInDays, getDaysInMonth, parseISO, startOfDay } from "date-fns";
+import { FrequenciaPagamento, Prisma, StatusAssinatura } from "@prisma/client";
+import { addMonths, lastDayOfMonth, isAfter, isBefore, getDate, setDate, addDays, differenceInDays, getDaysInMonth, parseISO, startOfDay, isValid } from "date-fns";
 
 /**
  * Safely parses a date string (YYYY-MM-DD) as a local Date object.
@@ -7,15 +7,18 @@ import { addMonths, lastDayOfMonth, isAfter, isBefore, getDate, setDate, addDays
  * in the previous day when converted back to local time in western timezones.
  */
 export function parseLocalDate(dateInput: string | Date): Date {
+    if (!dateInput) return startOfDay(new Date());
     if (dateInput instanceof Date) return startOfDay(dateInput);
 
     // If it's a YYYY-MM-DD string, add local time component to force local parsing
-    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-        const [year, month, day] = dateInput.split('-').map(Number);
+    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}(\s|T)?.*$/.test(dateInput)) {
+        const datePart = dateInput.split('T')[0].split(' ')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
         return new Date(year, month - 1, day);
     }
 
-    return startOfDay(new Date(dateInput));
+    const d = new Date(dateInput);
+    return isValid(d) ? startOfDay(d) : startOfDay(new Date());
 }
 
 export const INTERVALOS_MESES: Record<FrequenciaPagamento, number> = {
@@ -153,8 +156,9 @@ export function escolherProximoDiaVencimento(diasVencimento: number[], dataRefer
     const diaAtual = getDate(dataReferencia);
     const diasOrdenados = [...diasVencimento].sort((a, b) => a - b);
 
-    // Tentar encontrar um dia no mês atual que seja maior ou igual ao dia atual
-    const proximoDiaMesAtual = diasOrdenados.find(d => d >= diaAtual);
+    // Tentar encontrar um dia no mês atual que seja ESTRITAMENTE maior que o dia atual
+    // Isso evita cobranças "pro-rata" de 0 ou 1 dia se começarmos no dia do vencimento.
+    const proximoDiaMesAtual = diasOrdenados.find(d => d > diaAtual);
 
     if (proximoDiaMesAtual !== undefined) {
         return setDate(dataReferencia, proximoDiaMesAtual);
@@ -179,6 +183,12 @@ export function calcularValorProRata(
 
     // Garantir ao menos 1 dia cobrado para evitar valores 0
     const diasCobertos = Math.max(1, differenceInDays(dataVencimento, dataInicio));
+
+    // Regra de tolerância: se a diferença for >= 28 dias e <= 31 dias, o valor pro-rata = valor cheio.
+    // Isso evita valores "quebrados" (ex: R$ 14,51 em vez de R$ 15,00) em meses quase cheios.
+    if (diasCobertos >= 28 && diasCobertos <= 31) {
+        return valorDecimal;
+    }
 
     const diasNoMes = getDaysInMonth(dataInicio);
 
@@ -244,7 +254,28 @@ export function getLoteActorName(lote: any, isAdmin: boolean): string {
 }
 
 /**
+ * Determina o status inicial de uma assinatura baseado em regras de negócio.
+ * Centraliza a lógica para evitar duplicidade entre Actions Unitárias e Bulk.
+ */
+export function determinarStatusInicial({
+    primeiroCicloJaPago,
+    cobrancaAutomaticaPaga,
+    isRetroactive,
+    hasPaidRetroactive
+}: {
+    primeiroCicloJaPago?: boolean,
+    cobrancaAutomaticaPaga?: boolean,
+    isRetroactive: boolean,
+    hasPaidRetroactive: boolean
+}): StatusAssinatura {
+    if (primeiroCicloJaPago || cobrancaAutomaticaPaga) return StatusAssinatura.ativa;
+    if (isRetroactive && hasPaidRetroactive) return StatusAssinatura.ativa;
+    return StatusAssinatura.pendente;
+}
+
+/**
  * Gera os ciclos de cobrança retroativos baseados em uma data de início passada.
+ * Se houver dias de vencimento configurados, o primeiro ciclo será pro-rata para alinhar ao dia de vencimento.
  */
 export function gerarCiclosRetroativos({
     dataInicio,
@@ -258,21 +289,69 @@ export function gerarCiclosRetroativos({
     diasVencimento: number[];
 }) {
     const ciclos = [];
-    let dataReferencia = dataInicio;
+    const currentPeriodInicioWrapped = parseLocalDate(dataInicio);
+    let currentPeriodInicio = currentPeriodInicioWrapped;
+
+    // Otimização: Evitar instanciar Date(agora) dentro de loops
     const hoje = startOfDay(new Date());
 
-    while (isBefore(dataReferencia, hoje)) {
-        const proximoVencimento = escolherProximoDiaVencimento(diasVencimento, dataReferencia);
-        const fimCiclo = addMonths(dataReferencia, INTERVALOS_MESES[frequencia]);
+    if (!isBefore(currentPeriodInicio, hoje)) {
+        return [];
+    }
+
+    const isFixarVencimento = diasVencimento && diasVencimento.length > 0;
+    const diaAncora = getDate(currentPeriodInicio);
+
+    if (isFixarVencimento) {
+        // 1st cycle: Pro-rata/Transition to align with fixed due-date
+        const primeiroVencimento = escolherProximoDiaVencimento(diasVencimento, currentPeriodInicio);
+        const valorProRata = calcularValorProRata(valorMensal, currentPeriodInicio, primeiroVencimento);
 
         ciclos.push({
-            periodoInicio: dataReferencia,
-            periodoFim: fimCiclo,
-            dataVencimento: proximoVencimento,
-            valor: calcularValorPeriodo(valorMensal, frequencia).toNumber()
+            periodoInicio: currentPeriodInicio,
+            periodoFim: primeiroVencimento,
+            dataVencimento: primeiroVencimento,
+            valor: valorProRata.toNumber(),
+            tipo: 'Pro-rata'
         });
 
-        dataReferencia = fimCiclo;
+        currentPeriodInicio = primeiroVencimento;
+        const diaVencimentoAncora = getDate(primeiroVencimento);
+
+        while (isBefore(currentPeriodInicio, hoje)) {
+            const nextMonth = addMonths(currentPeriodInicio, INTERVALOS_MESES[frequencia]);
+            const ultimoDiaDoMes = getDate(lastDayOfMonth(nextMonth));
+            const diaAlvo = Math.min(diaVencimentoAncora, ultimoDiaDoMes);
+            const periodoFim = setDate(nextMonth, diaAlvo);
+
+            ciclos.push({
+                periodoInicio: currentPeriodInicio,
+                periodoFim,
+                dataVencimento: periodoFim,
+                valor: calcularValorPeriodo(valorMensal, frequencia).toNumber(),
+                tipo: 'Ciclo'
+            });
+
+            currentPeriodInicio = periodoFim;
+        }
+    } else {
+        // No fixed due-date, all cycles are full month(s) from dataInicio
+        while (isBefore(currentPeriodInicio, hoje)) {
+            const nextMonth = addMonths(currentPeriodInicio, INTERVALOS_MESES[frequencia]);
+            const ultimoDiaDoMes = getDate(lastDayOfMonth(nextMonth));
+            const diaAlvo = Math.min(diaAncora, ultimoDiaDoMes);
+            const periodoFim = setDate(nextMonth, diaAlvo);
+
+            ciclos.push({
+                periodoInicio: currentPeriodInicio,
+                periodoFim,
+                dataVencimento: calcularDataVencimentoPadrao(currentPeriodInicio),
+                valor: calcularValorPeriodo(valorMensal, frequencia).toNumber(),
+                tipo: 'Ciclo'
+            });
+
+            currentPeriodInicio = periodoFim;
+        }
     }
 
     return ciclos;

@@ -28,7 +28,6 @@ export interface SelectedStreaming {
 
 export enum ModalStep {
     STREAMING = 1,
-    VALUES = 2,
-    PARTICIPANTS = 3,
-    SUMMARY = 4
+    PARTICIPANTS = 2,
+    SUMMARY = 3
 }

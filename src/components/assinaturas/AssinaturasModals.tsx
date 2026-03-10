@@ -1,7 +1,5 @@
 "use client";
 
-import { AssinaturaMultiplaModal } from "@/components/modals/AssinaturaMultiplaModal";
-import { AssinaturaModal } from "@/components/modals/AssinaturaModal";
 import { CancelarAssinaturaModal } from "@/components/modals/CancelarAssinaturaModal";
 import { DetalhesAssinaturaModal } from "@/components/modals/DetalhesAssinaturaModal";
 

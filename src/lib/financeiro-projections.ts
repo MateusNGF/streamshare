@@ -11,24 +11,71 @@ import {
 } from "@/lib/financeiro-utils";
 import { isBefore, startOfDay, format as formatDate } from "date-fns";
 import { StreamingOption, SelectedStreaming } from "../components/modals/assinatura-multipla/types";
+import { BillingCycle, Projection, FinancialAnalysisResult } from "@/types/financial.types";
 
-interface Projection {
-    tipo: string;
-    periodo: string;
-    vencimento: string;
-    valor: number;
-    streaming: string;
+/**
+ * Creates a standard sequential generator for billing cycles.
+ */
+function getSubscriptionCycles(
+    config: SelectedStreaming,
+    dataInicioObj: Date,
+    diasVencimento: number[],
+    isPastDate: boolean
+): BillingCycle[] {
+    const valorCobrado = new Prisma.Decimal(config.valor || 0);
+    const isFixarVencimento = diasVencimento.length > 0;
+
+    if (isPastDate) {
+        return gerarCiclosRetroativos({
+            dataInicio: dataInicioObj,
+            frequencia: config.frequencia as FrequenciaPagamento,
+            valorMensal: valorCobrado,
+            diasVencimento
+        });
+    }
+
+    const dataVencObj = isFixarVencimento
+        ? escolherProximoDiaVencimento(diasVencimento, dataInicioObj)
+        : calcularDataVencimentoPadrao(dataInicioObj);
+
+    const valor = isFixarVencimento
+        ? calcularValorProRata(valorCobrado, dataInicioObj, dataVencObj)
+        : calcularTotalCiclo(valorCobrado, config.frequencia as FrequenciaPagamento);
+
+    return [{
+        periodoInicio: dataInicioObj,
+        periodoFim: dataVencObj,
+        dataVencimento: dataVencObj,
+        valor: valor.toNumber(),
+        tipo: isFixarVencimento ? 'Pro-rata' : 'Primeira Mensalidade'
+    }];
 }
 
-interface FinancialAnalysisResult {
-    receitaMensalTotal: number;
-    custoMensalTotal: number;
-    lucroLiquidoMensal: number;
-    totalProximaFatura: number;
-    margemLucro: number;
-    totalAssinaturas: number;
-    isPastDate: boolean;
-    cobrancasProjetadas: Projection[];
+/**
+ * Maps generic BillingCycles to UI-ready Projections.
+ */
+function mapToProjections(
+    cycles: BillingCycle[],
+    streaming: StreamingOption,
+    frequencia: FrequenciaPagamento,
+    isFixarVencimento: boolean
+): Projection[] {
+    return cycles.map((c, idx) => {
+        const isLast = idx === cycles.length - 1;
+        return {
+            ...c,
+            tipo: isLast
+                ? (c.tipo || (isFixarVencimento ? 'Pro-rata' : 'Primeira Mensalidade'))
+                : 'Retroativa',
+            periodo: `${formatDate(c.periodoInicio, "dd/MM")} - ${formatDate(c.periodoFim, "dd/MM")}`,
+            vencimento: formatDate(c.dataVencimento, "dd/MM/yyyy"),
+            streaming: streaming.nome,
+            streamingId: streaming.id,
+            cor: streaming.cor,
+            iconeUrl: streaming.iconeUrl,
+            index: isLast ? -1 : idx
+        };
+    });
 }
 
 export function calculateWizardFinancials(
@@ -38,35 +85,42 @@ export function calculateWizardFinancials(
     dataInicio: string,
     diasVencimento: number[]
 ): FinancialAnalysisResult {
+    const dataInicioObj = parseLocalDate(dataInicio);
+
+    if (isNaN(dataInicioObj.getTime())) {
+        return createEmptyAnalysis(configurations.size * totalVagas);
+    }
+
     let revenueMensalPerSlot = new Prisma.Decimal(0);
     let custoMensalPerSlot = new Prisma.Decimal(0);
     let nextCycleTotal = new Prisma.Decimal(0);
-    const dataInicioObj = parseLocalDate(dataInicio);
     const isPastDate = isBefore(startOfDay(dataInicioObj), startOfDay(new Date()));
+    const cobrancasProjetadas: Projection[] = [];
 
     configurations.forEach((config) => {
         const streaming = selectedStreamings.find(s => s.id === config.streamingId);
         if (!streaming) return;
 
-        const valorCobrado = new Prisma.Decimal(config.valor || 0);
+        const valorMensal = new Prisma.Decimal(config.valor || 0);
         const custoBase = calcularCustoBase(streaming.valorIntegral, streaming.limiteParticipantes);
 
-        revenueMensalPerSlot = revenueMensalPerSlot.plus(valorCobrado);
+        revenueMensalPerSlot = revenueMensalPerSlot.plus(valorMensal);
         custoMensalPerSlot = custoMensalPerSlot.plus(custoBase);
 
-        const isFixarVencimento = diasVencimento.length > 0;
-        const dataVencObj = isFixarVencimento
-            ? escolherProximoDiaVencimento(diasVencimento, dataInicioObj)
-            : calcularDataVencimentoPadrao(dataInicioObj);
+        // Calculate sequence of cycles for this streaming
+        const cycles = getSubscriptionCycles(config, dataInicioObj, diasVencimento, isPastDate);
 
-        let cycleTotalPerSeat = new Prisma.Decimal(0);
-        if (isFixarVencimento) {
-            cycleTotalPerSeat = calcularValorProRata(valorCobrado, dataInicioObj, dataVencObj);
-        } else {
-            cycleTotalPerSeat = calcularTotalCiclo(valorCobrado, config.frequencia as FrequenciaPagamento);
-        }
+        // Accumulate next cycle total (always the last one in the calculated sequence)
+        const lastCycle = cycles[cycles.length - 1];
+        nextCycleTotal = nextCycleTotal.plus(new Prisma.Decimal(lastCycle.valor).mul(totalVagas));
 
-        nextCycleTotal = nextCycleTotal.plus(cycleTotalPerSeat.mul(totalVagas));
+        // Add to global projections
+        cobrancasProjetadas.push(...mapToProjections(
+            cycles,
+            streaming,
+            config.frequencia as FrequenciaPagamento,
+            diasVencimento.length > 0
+        ));
     });
 
     const receitaMensalTotal = revenueMensalPerSlot.mul(totalVagas);
@@ -77,52 +131,14 @@ export function calculateWizardFinancials(
         ? lucroLiquidoMensal.div(receitaMensalTotal).mul(100).toNumber()
         : 0;
 
-    const cobrancasProjetadas: Projection[] = [];
+    // Determine the next actual due date (first non-retroactive one)
+    const futureCycles = cobrancasProjetadas.filter(p => p.tipo !== 'Retroativa');
+    const proximoVencimento = futureCycles.length > 0
+        ? futureCycles[0].dataVencimento
+        : (cobrancasProjetadas.length > 0 ? cobrancasProjetadas[0].dataVencimento : null);
 
-    configurations.forEach(config => {
-        const streaming = selectedStreamings.find(s => s.id === config.streamingId);
-        if (!streaming) return;
-
-        const valorCobrado = new Prisma.Decimal(config.valor || 0);
-        const isFixarVencimento = diasVencimento.length > 0;
-
-        // 1. Retroactive cycles
-        if (isPastDate) {
-            const ciclosRetro = gerarCiclosRetroativos({
-                dataInicio: dataInicioObj,
-                frequencia: config.frequencia as FrequenciaPagamento,
-                valorMensal: valorCobrado,
-                diasVencimento
-            });
-            cobrancasProjetadas.push(...ciclosRetro.map((c: any) => ({
-                tipo: 'Retroativa',
-                periodo: `${formatDate(c.periodoInicio, "dd/MM")} - ${formatDate(c.periodoFim, "dd/MM")}`,
-                vencimento: formatDate(c.dataVencimento, "dd/MM/yyyy"),
-                valor: c.valor,
-                streaming: streaming.nome
-            })));
-        }
-
-        // 2. Next/Current cycle
-        const dataVencObj = isFixarVencimento
-            ? escolherProximoDiaVencimento(diasVencimento, dataInicioObj)
-            : calcularDataVencimentoPadrao(dataInicioObj);
-
-        let val;
-        if (isFixarVencimento) {
-            val = calcularValorProRata(valorCobrado, dataInicioObj, dataVencObj);
-        } else {
-            val = calcularTotalCiclo(valorCobrado, config.frequencia as FrequenciaPagamento);
-        }
-
-        cobrancasProjetadas.push({
-            tipo: isFixarVencimento ? 'Pro-rata' : 'Primeira Mensalidade',
-            periodo: `${formatDate(dataInicioObj, "dd/MM")} - ${formatDate(dataVencObj, "dd/MM")}`,
-            vencimento: formatDate(dataVencObj, "dd/MM/yyyy"),
-            valor: val.toNumber(),
-            streaming: streaming.nome
-        });
-    });
+    // Total of all projected charges for initial launch
+    const valorTotalLancamento = cobrancasProjetadas.reduce((acc, c) => acc + (c.valor * totalVagas), 0);
 
     return {
         receitaMensalTotal: arredondarMoeda(receitaMensalTotal).toNumber(),
@@ -132,6 +148,23 @@ export function calculateWizardFinancials(
         margemLucro: Math.round(margemLucro),
         totalAssinaturas: configurations.size * totalVagas,
         isPastDate,
+        proximoVencimento,
+        valorTotalLancamento,
         cobrancasProjetadas
+    };
+}
+
+function createEmptyAnalysis(totalAssinaturas: number): FinancialAnalysisResult {
+    return {
+        receitaMensalTotal: 0,
+        custoMensalTotal: 0,
+        lucroLiquidoMensal: 0,
+        totalProximaFatura: 0,
+        margemLucro: 0,
+        totalAssinaturas,
+        isPastDate: false,
+        proximoVencimento: null,
+        valorTotalLancamento: 0,
+        cobrancasProjetadas: []
     };
 }

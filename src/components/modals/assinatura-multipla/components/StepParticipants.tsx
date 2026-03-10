@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Search, Check, Users, X } from "lucide-react";
 import { ParticipanteOption } from "../types";
 import { ParticipantSelectionItem } from "./ParticipantSelectionItem";
@@ -54,66 +55,76 @@ export function StepParticipants({
 
             <div className={`flex flex-col flex-1 p-3 gap-3 bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner`}>
                 {/* Toolbar */}
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center bg-white/40 p-1 rounded-2xl backdrop-blur-sm border border-white/50 shadow-sm">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/80" size={14} />
                         <input
                             type="text"
                             placeholder="Buscar por nome ou WhatsApp..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white shadow-sm"
+                            className="w-full pl-9 pr-3 py-2.5 text-xs border border-gray-100/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all bg-white shadow-sm font-medium"
                         />
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1.5 rounded-lg ${selectedIds.size > 0 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
-                            {totalVagas} {totalVagas === 1 ? 'vaga' : 'vagas'} {totalVagas === 1 ? 'selecionada' : 'selecionadas'}
+                    <div className="flex items-center gap-2 shrink-0 pr-1">
+                        <span className={cn(
+                            "text-[10px] uppercase font-extrabold tracking-wider px-3 py-2 rounded-xl tabular-nums shadow-sm transition-all duration-300",
+                            selectedIds.size > 0 ? 'bg-primary text-white shadow-primary/20' : 'bg-white text-gray-400 border border-gray-100'
+                        )}>
+                            {totalVagas} {totalVagas === 1 ? 'vaga' : 'vagas'}
                         </span>
                         <button
                             type="button"
                             onClick={onSelectAll}
-                            className={`p-1.5 rounded-lg border transition-all ${isAllFilteredSelected ? 'bg-primary border-primary text-white' : 'bg-white border-gray-200 text-gray-400 hover:border-primary hover:text-primary'}`}
+                            className={cn(
+                                "p-2.5 rounded-xl border transition-all active:scale-90",
+                                isAllFilteredSelected
+                                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                                    : 'bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary shadow-sm'
+                            )}
                             title={isAllFilteredSelected ? "Desmarcar Filtrados" : "Selecionar Filtrados"}
                         >
-                            <Check size={16} />
+                            <Check size={16} strokeWidth={3} />
                         </button>
                     </div>
                 </div>
 
                 {/* Capacity Counter/Warning */}
-                {/* Capacity Counter/Warning */}
                 {capacityInfo.showWarning && (() => {
                     const { isOverloaded, minSlots } = capacityInfo;
 
                     let config = {
-                        classes: "bg-blue-50 border-blue-200 text-blue-700 shadow-sm",
-                        icon: <Users size={14} />,
-                        title: "Vagas Disponíveis:",
-                        message: `Você ainda pode adicionar até ${minSlots} ${minSlots === 1 ? 'membro' : 'membros'}.`
+                        classes: "bg-white border-blue-100 text-blue-700 shadow-sm",
+                        icon: <Users size={14} className="text-blue-500" />,
+                        title: "Disponibilidade:",
+                        message: `Espaço para mais ${minSlots} ${minSlots === 1 ? 'vaga' : 'vagas'}.`
                     };
 
                     if (isOverloaded) {
                         config = {
-                            classes: "bg-red-50 border-red-200 text-red-700",
-                            icon: <X size={14} />,
-                            title: "Limite Excedido:",
-                            message: "A quantidade de membros é maior que as vagas disponíveis em alguns serviços."
+                            classes: "bg-red-50/50 border-red-200 text-red-700 animate-pulse",
+                            icon: <X size={14} className="text-red-500" />,
+                            title: "Overbooking:",
+                            message: "Reduza a quantidade de vagas para prosseguir."
                         };
                     } else if (minSlots === 0) {
                         config = {
-                            classes: "bg-amber-50 border-amber-200 text-amber-700",
-                            icon: <Users size={14} />,
+                            classes: "bg-amber-50/50 border-amber-100 text-amber-700",
+                            icon: <Users size={14} className="text-amber-500" />,
                             title: "Limite Atingido:",
-                            message: "Não há mais vagas disponíveis nos streamings selecionados."
+                            message: "Todas as vagas disponíveis foram preenchidas."
                         };
                     }
 
                     return (
-                        <div className={`text-xs px-3 py-2.5 rounded-xl border flex items-start gap-2 animate-in slide-in-from-top-1 transition-colors duration-300 ${config.classes}`}>
-                            <div className="mt-0.5 shrink-0">{config.icon}</div>
+                        <div className={cn(
+                            "text-[11px] px-4 py-3 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-1 transition-all duration-500",
+                            config.classes
+                        )}>
+                            <div className="shrink-0 p-1.5 bg-white rounded-lg shadow-sm">{config.icon}</div>
                             <div className="flex-1 leading-tight">
-                                <span className="font-black uppercase tracking-tighter mr-1.5">{config.title}</span>
-                                <span className="font-medium">{config.message}</span>
+                                <span className="font-extrabold uppercase tracking-tight mr-2">{config.title}</span>
+                                <span className="font-bold opacity-80">{config.message}</span>
                             </div>
                         </div>
                     );

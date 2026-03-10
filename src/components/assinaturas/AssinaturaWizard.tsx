@@ -1,9 +1,9 @@
 "use client";
 
 import { useAssinaturaMultipla } from "@/components/modals/assinatura-multipla/useAssinaturaMultipla";
+import { cn } from "@/lib/utils";
 import { ModalStep, ParticipanteOption, StreamingOption } from "@/components/modals/assinatura-multipla/types";
 import { StepStreamings } from "@/components/modals/assinatura-multipla/components/StepStreamings";
-import { StepConfiguration } from "@/components/modals/assinatura-multipla/components/StepConfiguration";
 import { StepParticipants } from "@/components/modals/assinatura-multipla/components/StepParticipants";
 import { StepSummary } from "@/components/modals/assinatura-multipla/components/StepSummary";
 import { Button } from "@/components/ui/Button";
@@ -23,8 +23,6 @@ interface AssinaturaWizardProps {
 export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizardProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const toast = useToast();
-    const [loading, setLoading] = useState(false);
     const [diasVencimento, setDiasVencimento] = useState<number[]>([]);
 
     const preSelectedParticipanteId = searchParams.get("participanteId") || undefined;
@@ -36,46 +34,15 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
         }).catch(() => { });
     }, []);
 
-    const onSave = async (data: any) => {
-        setLoading(true);
-        try {
-            let result;
-            if (data.assinaturas.length === 1 && data.participanteIds.length === 1) {
-                // Single creation optimization
-                result = await createAssinatura({
-                    participanteId: data.participanteIds[0],
-                    streamingId: data.assinaturas[0].streamingId,
-                    frequencia: data.assinaturas[0].frequencia,
-                    valor: data.assinaturas[0].valor,
-                    dataInicio: data.dataInicio,
-                    cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga,
-                    primeiroCicloJaPago: data.primeiroCicloJaPago,
-                    retroactivePaidIndices: data.retroactivePaidIndices || [],
-                });
-            } else {
-                // Batch creation
-                result = await createBulkAssinaturas(data);
-            }
-
-            if (result.success) {
-                toast.success("Assinatura(s) criada(s) com sucesso.");
-                router.push("/assinaturas");
-                router.refresh();
-            } else {
-                toast.error(result.error || "Erro ao criar assinatura(s).");
-            }
-        } catch (error) {
-            toast.error("Ocorreu um erro inesperado.");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const logic = useAssinaturaMultipla({
         participantes,
         streamings,
         onClose: () => router.push("/assinaturas"),
-        onSave,
+        onSuccess: () => {
+            router.push("/assinaturas");
+            router.refresh();
+        },
         diasVencimento,
         preSelectedParticipanteId,
         preSelectedStreamingId
@@ -93,7 +60,6 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                     </h1>
                     <p className="text-sm text-gray-500 font-bold uppercase tracking-wider opacity-60">
                         {logic.step === ModalStep.STREAMING && "Selecione os serviços desejados"}
-                        {logic.step === ModalStep.VALUES && "Configure os valores e recorrência"}
                         {logic.step === ModalStep.PARTICIPANTS && "Vincule os participantes e suas vagas"}
                         {logic.step === ModalStep.SUMMARY && "Revise e finalize o lançamento"}
                     </p>
@@ -112,14 +78,17 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
     );
 
     const renderFooter = () => (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 lg:p-6 z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 p-4 lg:p-6 z-50">
             <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-4">
                 {/* Step Indicators */}
-                <div className="flex gap-2">
-                    {[1, 2, 3, 4].map(s => (
+                <div className="flex gap-2.5">
+                    {[1, 2, 3].map(s => (
                         <div
                             key={s}
-                            className={`h-2 w-12 rounded-full transition-all duration-500 ${s <= logic.step ? 'bg-primary' : 'bg-gray-200'}`}
+                            className={cn(
+                                "h-1.5 w-12 rounded-full transition-all duration-300",
+                                s <= logic.step ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]' : 'bg-gray-100'
+                            )}
                         />
                     ))}
                 </div>
@@ -130,8 +99,8 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                         <Button
                             variant="outline"
                             onClick={logic.handleBack}
-                            disabled={loading}
-                            className="px-6 h-12 rounded-xl font-bold border-gray-200"
+                            disabled={logic.isSubmitting}
+                            className="flex-1 sm:flex-none px-6 h-12 rounded-2xl font-bold border-gray-100/80 hover:bg-gray-50/50"
                         >
                             <ChevronLeft size={20} className="mr-2" />
                             Voltar
@@ -142,17 +111,17 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                         <Button
                             onClick={logic.handleNext}
                             disabled={!logic.canNext()}
-                            className="flex-1 sm:flex-none px-10 h-12 bg-primary hover:bg-accent text-white rounded-xl font-black shadow-lg shadow-primary/25 transition-all"
+                            className="flex-1 sm:flex-none px-10 h-12 bg-primary hover:bg-accent text-white rounded-2xl font-black shadow-lg shadow-primary/25 transition-all active:scale-95"
                         >
                             Próximo
                         </Button>
                     ) : (
                         <Button
                             onClick={logic.handleSubmit}
-                            disabled={logic.selectedParticipanteIds.size === 0 || loading || logic.isOverloaded}
-                            className="flex-1 sm:flex-none px-10 h-12 bg-primary hover:bg-accent text-white rounded-xl font-black shadow-lg shadow-primary/25 transition-all"
+                            disabled={logic.selectedParticipanteIds.size === 0 || logic.isSubmitting || logic.isOverloaded}
+                            className="flex-1 sm:flex-none px-10 h-12 bg-primary hover:bg-accent text-white rounded-2xl font-black shadow-lg shadow-primary/25 transition-all active:scale-95"
                         >
-                            {loading ? (
+                            {logic.isSubmitting ? (
                                 <>
                                     <Spinner size="sm" color="white" className="mr-2" />
                                     <span>Criando...</span>
@@ -171,11 +140,11 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
     );
 
     return (
-        <div className="min-h-screen bg-gray-50/30 pb-32">
-            <div className="max-w-5xl mx-auto px-4 pt-8 lg:pt-12">
+        <div className="min-h-screen bg-[#fcfcfd] pb-32">
+            <div className="max-w-6xl mx-auto px-4 pt-8">
                 {renderHeader()}
 
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="animate-in fade-in slide-in-from-bottom-3 duration-300">
                     {logic.step === ModalStep.STREAMING && (
                         <StepStreamings
                             streamings={streamings}
@@ -187,13 +156,6 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                         />
                     )}
 
-                    {logic.step === ModalStep.VALUES && (
-                        <StepConfiguration
-                            selectedStreamings={logic.selectedStreamings}
-                            configurations={logic.configurations}
-                            onUpdate={logic.handleUpdateConfig}
-                        />
-                    )}
 
                     {logic.step === ModalStep.PARTICIPANTS && (
                         <StepParticipants
@@ -232,8 +194,8 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                             financialAnalysis={logic.financialAnalysis}
                             diasVencimento={diasVencimento}
                             onUpdateConfig={logic.handleUpdateConfig}
-                            retroactivePaidIndices={logic.retroactivePaidIndices}
-                            onRetroactivePaidIndicesChange={logic.setRetroactivePaidIndices}
+                            retroactivePaidPeriods={logic.retroactivePaidPeriods}
+                            onRetroactivePaidPeriodsChange={logic.setRetroactivePaidPeriods}
                         />
                     )}
                 </div>

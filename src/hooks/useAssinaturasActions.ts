@@ -9,18 +9,13 @@ import { useFilterParams } from "@/hooks/useFilterParams";
 export function useAssinaturasActions(streamings: any[]) {
     const router = useRouter();
     const toast = useToast();
+    const { filters, updateFilters } = useFilterParams();
 
     // States
-    const [isMultipleModalOpen, setIsMultipleModalOpen] = useState(false);
-    const [isIndividualModalOpen, setIsIndividualModalOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [cancelling, setCancelling] = useState(false);
-
-    // Filters
-    const { filters, updateFilters } = useFilterParams();
 
     const filterValues = {
         searchTerm: filters.search || "",
@@ -38,25 +33,6 @@ export function useAssinaturasActions(streamings: any[]) {
 
     const handleClearFilters = () => {
         router.push('/assinaturas');
-    };
-
-    const handleCreateMultiple = async (data: any) => {
-        setLoading(true);
-        try {
-            const result = await createBulkAssinaturas(data);
-            if (result.success && result.data) {
-                const message = `${result.data.created} assinatura${result.data.created > 1 ? 's' : ''} criada${result.data.created > 1 ? 's' : ''} com sucesso!`;
-                toast.success(message);
-                setIsMultipleModalOpen(false);
-                router.refresh();
-            } else if (result.error) {
-                toast.error(result.error);
-            }
-        } catch (error: any) {
-            toast.error(error.message || 'Falha ao criar assinaturas');
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleCancelSubmit = async (reason: string) => {
@@ -96,12 +72,10 @@ export function useAssinaturasActions(streamings: any[]) {
 
     return {
         // States & Modals
-        isMultipleModalOpen, setIsMultipleModalOpen,
-        isIndividualModalOpen, setIsIndividualModalOpen,
         cancelModalOpen, setCancelModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedAssinatura, setSelectedAssinatura,
-        loading, cancelling,
+        cancelling,
 
         // Filters
         filters: filterValues,
@@ -109,7 +83,6 @@ export function useAssinaturasActions(streamings: any[]) {
         handleClearFilters,
 
         // Actions
-        handleCreateMultiple,
         handleCancelSubmit,
         streamingsWithOcupados
     };

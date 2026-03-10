@@ -8,7 +8,8 @@ export interface CreateSubscriptionDTO {
     dataInicio: string | Date;
     cobrancaAutomaticaPaga?: boolean; // Label: "Cobranças futuras sempre pagas"
     primeiroCicloJaPago?: boolean; // Label: "Migração — ciclo atual já pago" (Legacy sync)
-    retroactivePaidIndices?: number[]; // Indices of backfill cycles marked as paid
+    retroactivePaidIndices?: number[]; // @deprecated Use retroactivePaidPeriods
+    retroactivePaidPeriods?: Array<{ streamingId: number; index: number }>;
 }
 
 export interface BulkCreateSubscriptionDTO {
@@ -21,6 +22,7 @@ export interface BulkCreateSubscriptionDTO {
     dataInicio: string | Date;
     cobrancaAutomaticaPaga?: boolean;
     primeiroCicloJaPago?: boolean;
+    retroactivePaidPeriods?: Array<{ streamingId: number; index: number }>;
 }
 
 export interface ChargeCreationData {

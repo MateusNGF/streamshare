@@ -2,12 +2,25 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { FrequenciaPagamento, StatusAssinatura } from "@prisma/client";
+import { FrequenciaPagamento, StatusAssinatura, Prisma } from "@prisma/client";
 import { billingService } from "@/services/billing-service";
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
-import { parseLocalDate } from "@/lib/financeiro-utils";
+import {
+    parseLocalDate,
+    determinarStatusInicial,
+    escolherProximoDiaVencimento,
+    calcularDataVencimentoPadrao,
+    calcularProximoVencimento,
+    calcularValorProRata,
+    calcularValorPeriodo,
+    gerarCiclosRetroativos
+} from "@/lib/financeiro-utils";
+import { SubscriptionBulkService } from "@/services/subscription-bulk-service";
+import { chargeFactory } from "@/services/charge-factory";
+import { subscriptionValidator } from "@/services/subscription-validator";
+import { startOfDay, isBefore } from "date-fns";
 
 export async function getAssinaturasKPIs() {
     try {
@@ -47,7 +60,7 @@ export async function getAssinaturasKPIs() {
         return { success: false, error: "Erro ao buscar KPIs de assinaturas" };
     }
 }
-import { subscriptionValidator } from "@/services/subscription-validator";
+
 
 export async function getAssinaturas(filters?: {
     status?: string;
@@ -157,8 +170,7 @@ export async function getAssinaturas(filters?: {
     }
 }
 
-import { gerarCiclosRetroativos } from "@/lib/subscription-backfill";
-import { isBefore, startOfDay } from "date-fns";
+
 
 export async function createAssinatura(data: CreateSubscriptionDTO) {
     try {
@@ -187,19 +199,12 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
             });
             const diasVencimento = contaInfo?.diasVencimento || [];
 
-            // Determine initial status
-            // If retroactive and at least one paid charge covering today exists, or if firstCyclePaid is true
-            let status: StatusAssinatura = StatusAssinatura.pendente;
-            if (data.primeiroCicloJaPago) {
-                status = StatusAssinatura.ativa;
-            } else if (isRetroactive && data.retroactivePaidIndices && data.retroactivePaidIndices.length > 0) {
-                // Simplified check: if any retroactive charge is paid, we assume active for now 
-                // Alternatively, find the cycle covering today and check if it's in paidIndices
-                status = StatusAssinatura.ativa;
-            } else if (data.cobrancaAutomaticaPaga) {
-                // If "always paid" is on, start as active (existing behavior)
-                status = StatusAssinatura.ativa;
-            }
+            const status = determinarStatusInicial({
+                primeiroCicloJaPago: !!data.primeiroCicloJaPago,
+                cobrancaAutomaticaPaga: !!data.cobrancaAutomaticaPaga,
+                isRetroactive,
+                hasPaidRetroactive: (data.retroactivePaidPeriods?.length || 0) > 0 || (data.retroactivePaidIndices?.length || 0) > 0
+            });
 
             // Create Subscription
             const assinatura = await tx.assinatura.create({
@@ -214,31 +219,26 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 },
             });
 
-            // Create Charges
-            if (isRetroactive) {
-                const ciclos = gerarCiclosRetroativos({
-                    dataInicio,
-                    frequencia: data.frequencia,
-                    valorMensal: data.valor,
-                    diasVencimento
-                });
+            // 2. Initial/Retroactive Charge Logic (Delegated to Factory)
+            const chargeParams = {
+                assinaturaId: assinatura.id,
+                valorMensal: data.valor,
+                frequencia: data.frequencia,
+                dataInicio,
+                diasVencimento,
+                isPaid: !!data.primeiroCicloJaPago || !!data.cobrancaAutomaticaPaga,
+                manualMigration: !!data.primeiroCicloJaPago
+            };
 
-                await billingService.gerarCobrancasRetroativas(tx, {
-                    assinaturaId: assinatura.id,
-                    ciclos,
-                    paidIndices: data.retroactivePaidIndices || []
+            if (isRetroactive) {
+                const chargesData = chargeFactory.createRetroactiveChargesData({
+                    ...chargeParams,
+                    paidIndices: data.retroactivePaidPeriods?.map(p => p.index) || data.retroactivePaidIndices || []
                 });
+                await tx.cobranca.createMany({ data: chargesData });
             } else {
-                // Create Initial Charge (Delegated to Billing Service)
-                await billingService.gerarCobrancaInicial(tx, {
-                    assinaturaId: assinatura.id,
-                    valorMensal: data.valor,
-                    frequencia: data.frequencia,
-                    dataInicio,
-                    pago: !!data.primeiroCicloJaPago || !!data.cobrancaAutomaticaPaga,
-                    diasVencimento,
-                    manualMigration: !!data.primeiroCicloJaPago
-                });
+                const chargeData = chargeFactory.createInitialChargeData(chargeParams);
+                await tx.cobranca.create({ data: chargeData });
             }
 
             const participante = await tx.participante.findUnique({
@@ -278,141 +278,82 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
     try {
         const { contaId, userId } = await getContext();
         const dataInicio = parseLocalDate(data.dataInicio);
-        const results: Array<{ streamingId: number; assinaturaId: number; participanteId: number }> = [];
 
-        const hoje = startOfDay(new Date());
-        const isRetroactive = isBefore(startOfDay(dataInicio), hoje);
+        console.log(`[BULK_ASSINATURA] Iniciando criação em lote para ${data.participanteIds.length} participantes.`);
 
-        console.log(`[BULK_ASSINATURA] Iniciando criação de ${data.assinaturas.length} tipos de assinatura para ${data.participanteIds.length} participantes. Total esperado: ${data.assinaturas.length * data.participanteIds.length} assinaturas.`);
-
-        await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx) => {
             const txStartTime = performance.now();
-            const validStreamings = new Map();
 
-            // 1. Validate Streamings & Slots
-            const streamingIds = Array.from(new Set(data.assinaturas.map(a => a.streamingId)));
+            // 1. Core Logic Delegated to Service (SRP)
+            const { results, cobrancasParaCriar, streamingsData } = await SubscriptionBulkService.processBulkCreation(tx, data, { contaId, userId });
 
-            const streamingsData = await tx.streaming.findMany({
-                where: {
-                    id: { in: streamingIds },
-                    contaId
-                },
-                include: {
-                    catalogo: true,
-                    _count: {
-                        select: {
-                            assinaturas: {
-                                where: { status: { in: ['ativa', 'suspensa', 'pendente'] } }
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Index streamings for fast lookup
-            for (const sId of streamingIds) {
-                const streaming = streamingsData.find(s => s.id === sId);
-                if (!streaming) throw new Error(`Streaming ID ${sId} não encontrado ou sem permissão.`);
-
-                const needed = data.participanteIds.length;
-                const currentCount = streaming._count.assinaturas;
-
-                if (currentCount + needed > streaming.limiteParticipantes) {
-                    throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes (${streaming.limiteParticipantes - currentCount} disponíveis, ${needed} necessárias).`);
-                }
-                validStreamings.set(sId, streaming);
+            // 2. Bulk Insert Charges
+            if (cobrancasParaCriar.length > 0) {
+                await tx.cobranca.createMany({ data: cobrancasParaCriar as any });
             }
 
-            const contaInfo = await tx.conta.findUnique({
-                where: { id: contaId },
-                select: { diasVencimento: true }
-            });
-            const diasVencimento = contaInfo?.diasVencimento || [];
+            // 3. Global Notification for the batch + Individual Notifications
+            const notificacoesParaCriar = data.participanteIds.flatMap(pId =>
+                data.assinaturas.map(ass => {
+                    const found = results.find((r: any) => r.participanteId === pId && r.streamingId === ass.streamingId);
+                    return {
+                        contaId,
+                        usuarioId: null,
+                        tipo: "assinatura_criada",
+                        titulo: `Nova assinatura`,
+                        descricao: `Criada via processamento em lote.`,
+                        entidadeId: found ? Number(found.assinaturaId) : undefined,
+                    };
+                })
+            );
 
-            // 2. Create Subscriptions and Charges
-            for (const participanteId of data.participanteIds) {
-                for (const ass of data.assinaturas) {
-                    const status: StatusAssinatura = (data.primeiroCicloJaPago || data.cobrancaAutomaticaPaga) ? StatusAssinatura.ativa : StatusAssinatura.pendente;
-
-                    const assinatura = await tx.assinatura.create({
-                        data: {
-                            participanteId,
-                            streamingId: ass.streamingId,
-                            frequencia: ass.frequencia,
-                            valor: ass.valor,
-                            dataInicio,
-                            status: status,
-                            cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga ?? false,
-                        }
-                    });
-
-                    // 3. Create Charges
-                    if (isRetroactive) {
-                        const ciclos = gerarCiclosRetroativos({
-                            dataInicio,
-                            frequencia: ass.frequencia,
-                            valorMensal: ass.valor,
-                            diasVencimento
-                        });
-
-                        // For bulk, we don't support individual paid indices yet, 
-                        // but if primeiroCicloJaPago is true, we mark all as paid?
-                        // Rule: If bulk migration is checked, we assume all backfill is paid.
-                        await billingService.gerarCobrancasRetroativas(tx, {
-                            assinaturaId: assinatura.id,
-                            ciclos,
-                            paidIndices: data.primeiroCicloJaPago ? ciclos.map((_, i) => i) : []
-                        });
-                    } else {
-                        await billingService.gerarCobrancaInicial(tx, {
-                            assinaturaId: assinatura.id,
-                            valorMensal: ass.valor,
-                            frequencia: ass.frequencia,
-                            dataInicio,
-                            pago: !!data.primeiroCicloJaPago || !!data.cobrancaAutomaticaPaga,
-                            diasVencimento,
-                            manualMigration: !!data.primeiroCicloJaPago
-                        });
-                    }
-
-                    results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId });
-                }
-            }
-
-            // 4. Global Notification for the batch
-            await tx.notificacao.create({
-                data: {
-                    contaId,
-                    usuarioId: userId,
-                    tipo: "assinatura_criada",
-                    titulo: `Assinaturas criadas em lote`,
-                    descricao: `${results.length} assinatura(s) criada(s) para ${data.participanteIds.length} participante(s).`,
-                    lida: false,
-                    metadata: {
-                        assinaturasIds: results.map((a) => a.assinaturaId),
-                        participantesIds: data.participanteIds,
-                    }
-                }
+            await tx.notificacao.createMany({
+                data: [
+                    {
+                        contaId,
+                        usuarioId: userId as number,
+                        tipo: "assinatura_criada",
+                        titulo: `Assinaturas criadas em lote`,
+                        descricao: `${results.length} assinatura(s) para ${data.participanteIds.length} participante(s).`,
+                        metadata: { assinaturasIds: results.map((a: any) => a.assinaturaId) } as any
+                    },
+                    ...notificacoesParaCriar.filter(n => n.entidadeId !== undefined) as any[]
+                ]
             });
 
             const txDuration = performance.now() - txStartTime;
-            if (txDuration > 2000) {
-                console.warn(`[PERF_CAUTION] Transação de criação em lote demorou ${txDuration.toFixed(2)}ms para ${results.length} operações.`);
-            } else {
-                console.log(`[PERF_INFO] Transação de criação em lote concluída em ${txDuration.toFixed(2)}ms.`);
-            }
-        }, {
-            timeout: 15000 // Extended timeout for large batches
-        });
+            console.log(`[PERF_INFO] Transação concluída em ${txDuration.toFixed(2)}ms.`);
 
-        const totalDuration = performance.now() - startTime;
-        console.log(`[BULK_ASSINATURA_SUCCESS] Total de ${results.length} assinaturas criadas em ${totalDuration.toFixed(2)}ms.`);
+            return { results, streamingsData };
+        }, { timeout: 30000 });
+
+        // 4. Side Effects (Async Meta API Notifications)
+        const triggerWhatsApp = async () => {
+            const { results, streamingsData } = result;
+            const whatsappPromises = data.participanteIds.map(async (pId) => {
+                const participante = await prisma.participante.findUnique({ where: { id: pId } });
+                if (!participante) return;
+
+                for (const ass of data.assinaturas) {
+                    const streaming = streamingsData.find(s => s.id === ass.streamingId);
+                    if (streaming) {
+                        await sendWhatsAppSafely({
+                            participante: { ...participante, contaId },
+                            streaming: streaming,
+                            assinatura: { id: -1 }
+                        }, ass.valor, dataInicio);
+                    }
+                }
+            });
+            await Promise.allSettled(whatsappPromises);
+        };
+
+        triggerWhatsApp().catch(e => console.error("[WHATSAPP_BULK_FAILURE]", e));
 
         revalidateAllPaths();
-        return { success: true, data: { created: results.length, assinaturas: results } };
+        return { success: true, data: { created: result.results.length, assinaturas: result.results } };
     } catch (error: any) {
-        const totalDuration = performance.now() - startTime;
-        console.error(`[BULK_ASSINATURA_ERROR] Falha após ${totalDuration.toFixed(2)}ms:`, error);
+        console.error(`[BULK_ASSINATURA_ERROR]`, error);
         return { success: false, error: error.message || "Erro ao criar assinaturas em lote" };
     }
 }
