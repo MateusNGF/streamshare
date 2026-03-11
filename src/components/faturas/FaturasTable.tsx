@@ -52,7 +52,7 @@ export function FaturasTable(props: FaturasTableProps) {
         const individual: any[] = [];
 
         faturas.forEach(f => {
-            const isGroupable = f.status === 'pendente' || f.status === 'atrasado';
+            const isGroupable = (f.status === 'pendente' || f.status === 'atrasado') && !f.lotePagamentoId;
             if (isGroupable) {
                 const organizerName = f.assinatura?.participante?.conta?.nome || "Outros";
                 if (!groups[organizerName]) groups[organizerName] = [];
