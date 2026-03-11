@@ -9,6 +9,7 @@ import { StepSummary } from "@/components/modals/assinatura-multipla/components/
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { ChevronLeft, Check, Wand2, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { createAssinatura, createBulkAssinaturas } from "@/actions/assinaturas";
@@ -69,7 +70,7 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
             <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => router.push("/assinaturas")}
+                onClick={logic.handleClose}
                 className="rounded-full hover:bg-gray-100"
             >
                 <X size={20} className="text-gray-400" />
@@ -141,6 +142,38 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
 
     return (
         <div className="min-h-screen bg-[#fcfcfd] pb-32">
+            {logic.isSubmitting && (
+                <div className="fixed inset-0 z-[100] bg-white/50 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
+                    <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 border border-gray-100">
+                        <Spinner size="lg" color="primary" />
+                        <span className="font-bold text-gray-900">Processando lote...</span>
+                    </div>
+                </div>
+            )}
+
+            <Dialog open={logic.isCancelModalOpen} onOpenChange={logic.setIsCancelModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancelar operação?</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-gray-600 mb-6 text-sm">
+                        Seu progresso da assinatura em lote não será salvo. Você precisará selecionar os participantes e streamings novamente caso retorne.
+                        Tem certeza que deseja sair?
+                    </p>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => logic.setIsCancelModalOpen(false)}>
+                            Continuar Editando
+                        </Button>
+                        <Button
+                            className="bg-red-50 text-red-600 hover:bg-red-100 border-none font-bold"
+                            onClick={logic.confirmClose}
+                        >
+                            Sim, Cancelar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="max-w-6xl mx-auto px-4 pt-8">
                 {renderHeader()}
 
@@ -161,15 +194,13 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                         <StepParticipants
                             participantes={participantes}
                             selectedIds={logic.selectedParticipanteIds}
-                            quantities={logic.participanteVagasMap}
-                            onToggle={logic.handleToggleParticipante}
-                            onQuantityChange={logic.handleQuantityChange}
-                            onSelectAll={logic.handleSelectAllParticipantes}
+                            selectedStreamings={logic.selectedStreamings}
+                            participantStreamings={logic.participantStreamings}
+                            onToggleStreaming={logic.handleToggleParticipantStreaming}
                             searchTerm={logic.participanteSearchTerm}
                             onSearchChange={logic.setParticipanteSearchTerm}
                             capacityInfo={{
                                 isOverloaded: logic.isOverloaded,
-                                minSlots: logic.minAvailableSlots,
                                 showWarning: logic.selectedStreamingIds.size > 0
                             }}
                             preSelectedId={preSelectedParticipanteId}
@@ -179,9 +210,11 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
                     {logic.step === ModalStep.SUMMARY && (
                         <StepSummary
                             selectedStreamings={logic.selectedStreamings}
+                            participantStreamings={logic.participantStreamings}
                             selectedParticipants={Array.from(logic.selectedParticipanteIds).map(id => {
                                 const original = participantes.find(p => p.id === id);
-                                return original ? { ...original, quantidade: logic.participanteVagasMap.get(id) || 1 } : null;
+                                const set = logic.participantStreamings.get(id);
+                                return original ? { ...original, quantidade: set ? set.size : 0 } : null;
                             }).filter(Boolean) as ParticipanteOption[]}
                             configurations={logic.configurations}
                             dataInicio={logic.dataInicio}

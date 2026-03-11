@@ -5,43 +5,48 @@ import { cn } from "@/lib/utils";
 import { Search, Check, Users, X } from "lucide-react";
 import { ParticipanteOption } from "../types";
 import { ParticipantSelectionItem } from "./ParticipantSelectionItem";
+import { useDebounce } from "@/hooks/useDebounce";
+
+import { StreamingOption } from "../types";
 
 interface StepParticipantsProps {
     participantes: ParticipanteOption[];
     selectedIds: Set<number>;
-    quantities: Map<number, number>;
-    onToggle: (id: number) => void;
-    onQuantityChange: (id: number, delta: number) => void;
-    onSelectAll: () => void;
+    selectedStreamings: StreamingOption[];
+    participantStreamings: Map<number, Set<number>>;
+    onToggleStreaming: (participantId: number, streamingId: number) => void;
     searchTerm: string;
     onSearchChange: (val: string) => void;
-    capacityInfo: { isOverloaded: boolean; minSlots: number; showWarning: boolean };
+    capacityInfo: { isOverloaded: boolean; showWarning: boolean };
     preSelectedId?: string;
 }
 
 export function StepParticipants({
     participantes,
     selectedIds,
-    quantities,
-    onToggle,
-    onQuantityChange,
-    onSelectAll,
+    selectedStreamings,
+    participantStreamings,
+    onToggleStreaming,
     searchTerm,
     onSearchChange,
     capacityInfo,
     preSelectedId
 }: StepParticipantsProps) {
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
     const filtered = useMemo(() => {
-        if (!searchTerm) return participantes;
+        if (!debouncedSearchTerm) return participantes;
         return participantes.filter(p =>
-            p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.whatsappNumero.includes(searchTerm)
+            p.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+            p.whatsappNumero.includes(debouncedSearchTerm)
         );
-    }, [participantes, searchTerm]);
+    }, [participantes, debouncedSearchTerm]);
 
-    const isAllFilteredSelected = filtered.length > 0 && filtered.every(p => selectedIds.has(p.id));
-
-    const totalVagas = useMemo(() => Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0), [quantities]);
+    const totalVagas = useMemo(() => {
+        let sum = 0;
+        participantStreamings.forEach(subs => sum += subs.size);
+        return sum;
+    }, [participantStreamings]);
 
 
     return (
@@ -49,7 +54,7 @@ export function StepParticipants({
             <div>
                 <h3 className="text-lg font-bold text-gray-900 leading-none">Selecione os Participantes</h3>
                 <p className="text-xs text-gray-500 mt-2">
-                    Escolha quem fará parte destas assinaturas. O sistema respeita automaticamente a disponibilidade dos streamings.
+                    Escolha quais serviços cada participante assinará, marcando na lista abaixo.
                 </p>
             </div>
 
@@ -66,81 +71,43 @@ export function StepParticipants({
                             className="w-full pl-9 pr-3 py-2.5 text-xs border border-gray-100/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all bg-white shadow-sm font-medium"
                         />
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 pr-1">
-                        <span className={cn(
-                            "text-[10px] uppercase font-extrabold tracking-wider px-3 py-2 rounded-xl tabular-nums shadow-sm transition-all duration-300",
-                            selectedIds.size > 0 ? 'bg-primary text-white shadow-primary/20' : 'bg-white text-gray-400 border border-gray-100'
-                        )}>
-                            {totalVagas} {totalVagas === 1 ? 'vaga' : 'vagas'}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={onSelectAll}
-                            className={cn(
-                                "p-2.5 rounded-xl border transition-all active:scale-90",
-                                isAllFilteredSelected
-                                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                                    : 'bg-white border-gray-100 text-gray-400 hover:border-primary/30 hover:text-primary shadow-sm'
-                            )}
-                            title={isAllFilteredSelected ? "Desmarcar Filtrados" : "Selecionar Filtrados"}
-                        >
-                            <Check size={16} strokeWidth={3} />
-                        </button>
-                    </div>
+                    <span className={cn(
+                        "text-[10px] uppercase font-extrabold tracking-wider px-3 py-2 rounded-xl tabular-nums shadow-sm transition-all duration-300",
+                        totalVagas > 0 ? 'bg-primary text-white shadow-primary/20' : 'bg-white text-gray-400 border border-gray-100'
+                    )}>
+                        {totalVagas} {totalVagas === 1 ? 'assinatura' : 'assinaturas'}
+                    </span>
                 </div>
 
                 {/* Capacity Counter/Warning */}
                 {capacityInfo.showWarning && (() => {
-                    const { isOverloaded, minSlots } = capacityInfo;
-
-                    let config = {
-                        classes: "bg-white border-blue-100 text-blue-700 shadow-sm",
-                        icon: <Users size={14} className="text-blue-500" />,
-                        title: "Disponibilidade:",
-                        message: `Espaço para mais ${minSlots} ${minSlots === 1 ? 'vaga' : 'vagas'}.`
-                    };
+                    const { isOverloaded } = capacityInfo;
 
                     if (isOverloaded) {
-                        config = {
-                            classes: "bg-red-50/50 border-red-200 text-red-700 animate-pulse",
-                            icon: <X size={14} className="text-red-500" />,
-                            title: "Overbooking:",
-                            message: "Reduza a quantidade de vagas para prosseguir."
-                        };
-                    } else if (minSlots === 0) {
-                        config = {
-                            classes: "bg-amber-50/50 border-amber-100 text-amber-700",
-                            icon: <Users size={14} className="text-amber-500" />,
-                            title: "Limite Atingido:",
-                            message: "Todas as vagas disponíveis foram preenchidas."
-                        };
-                    }
-
-                    return (
-                        <div className={cn(
-                            "text-[11px] px-4 py-3 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-1 transition-all duration-500",
-                            config.classes
-                        )}>
-                            <div className="shrink-0 p-1.5 bg-white rounded-lg shadow-sm">{config.icon}</div>
-                            <div className="flex-1 leading-tight">
-                                <span className="font-extrabold uppercase tracking-tight mr-2">{config.title}</span>
-                                <span className="font-bold opacity-80">{config.message}</span>
+                        return (
+                            <div className="text-[11px] px-4 py-3 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-1 transition-all duration-500 bg-red-50/50 border-red-200 text-red-700 animate-pulse">
+                                <div className="shrink-0 p-1.5 bg-white rounded-lg shadow-sm">
+                                    <X size={14} className="text-red-500" />
+                                </div>
+                                <div className="flex-1 leading-tight">
+                                    <span className="font-extrabold uppercase tracking-tight mr-2">Overbooking:</span>
+                                    <span className="font-bold opacity-80">Reduza a quantidade de vagas para prosseguir.</span>
+                                </div>
                             </div>
-                        </div>
-                    );
+                        );
+                    }
+                    return null;
                 })()}
 
                 {/* List */}
-                <div className="flex-1 space-y-1.5 pr-1">
+                <div className="flex-1 space-y-2 pr-1 overflow-y-auto max-h-[500px]">
                     {filtered.map(p => (
                         <ParticipantSelectionItem
                             key={p.id}
                             p={p}
-                            isSelected={selectedIds.has(p.id)}
-                            qty={quantities.get(p.id) || 1}
-                            onToggle={onToggle}
-                            onQuantityChange={onQuantityChange}
-                            canAddMore={capacityInfo.minSlots > 0}
+                            selectedStreamings={selectedStreamings}
+                            participantStreamings={participantStreamings}
+                            onToggleStreaming={onToggleStreaming}
                         />
                     ))}
 

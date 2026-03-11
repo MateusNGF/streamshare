@@ -279,7 +279,8 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
         const { contaId, userId } = await getContext();
         const dataInicio = parseLocalDate(data.dataInicio);
 
-        console.log(`[BULK_ASSINATURA] Iniciando criação em lote para ${data.participanteIds.length} participantes.`);
+        const uniqueParticipantes = new Set(data.assinaturasDedicadas.map(a => a.participanteId));
+        console.log(`[BULK_ASSINATURA] Iniciando criação em lote (${data.assinaturasDedicadas.length} assinaturas para ${uniqueParticipantes.size} participantes).`);
 
         const result = await prisma.$transaction(async (tx) => {
             const txStartTime = performance.now();
@@ -293,19 +294,17 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
             }
 
             // 3. Global Notification for the batch + Individual Notifications
-            const notificacoesParaCriar = data.participanteIds.flatMap(pId =>
-                data.assinaturas.map(ass => {
-                    const found = results.find((r: any) => r.participanteId === pId && r.streamingId === ass.streamingId);
-                    return {
-                        contaId,
-                        usuarioId: null,
-                        tipo: "assinatura_criada",
-                        titulo: `Nova assinatura`,
-                        descricao: `Criada via processamento em lote.`,
-                        entidadeId: found ? Number(found.assinaturaId) : undefined,
-                    };
-                })
-            );
+            const notificacoesParaCriar = data.assinaturasDedicadas.map(ass => {
+                const found = results.find((r: any) => r.participanteId === ass.participanteId && r.streamingId === ass.streamingId);
+                return {
+                    contaId,
+                    usuarioId: null,
+                    tipo: "assinatura_criada",
+                    titulo: `Nova assinatura`,
+                    descricao: `Criada via processamento em lote.`,
+                    entidadeId: found ? Number(found.assinaturaId) : undefined,
+                };
+            });
 
             await tx.notificacao.createMany({
                 data: [
@@ -314,7 +313,7 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
                         usuarioId: userId as number,
                         tipo: "assinatura_criada",
                         titulo: `Assinaturas criadas em lote`,
-                        descricao: `${results.length} assinatura(s) para ${data.participanteIds.length} participante(s).`,
+                        descricao: `${results.length} assinatura(s) para ${uniqueParticipantes.size} participante(s).`,
                         metadata: { assinaturasIds: results.map((a: any) => a.assinaturaId) } as any
                     },
                     ...notificacoesParaCriar.filter(n => n.entidadeId !== undefined) as any[]
@@ -330,19 +329,17 @@ export async function createBulkAssinaturas(data: BulkCreateSubscriptionDTO) {
         // 4. Side Effects (Async Meta API Notifications)
         const triggerWhatsApp = async () => {
             const { results, streamingsData } = result;
-            const whatsappPromises = data.participanteIds.map(async (pId) => {
-                const participante = await prisma.participante.findUnique({ where: { id: pId } });
+            const whatsappPromises = data.assinaturasDedicadas.map(async (ass) => {
+                const participante = await prisma.participante.findUnique({ where: { id: ass.participanteId } });
                 if (!participante) return;
 
-                for (const ass of data.assinaturas) {
-                    const streaming = streamingsData.find(s => s.id === ass.streamingId);
-                    if (streaming) {
-                        await sendWhatsAppSafely({
-                            participante: { ...participante, contaId },
-                            streaming: streaming,
-                            assinatura: { id: -1 }
-                        }, ass.valor, dataInicio);
-                    }
+                const streaming = streamingsData.find(s => s.id === ass.streamingId);
+                if (streaming) {
+                    await sendWhatsAppSafely({
+                        participante: { ...participante, contaId },
+                        streaming: streaming,
+                        assinatura: { id: -1, participanteId: ass.participanteId }
+                    }, ass.valor, dataInicio);
                 }
             });
             await Promise.allSettled(whatsappPromises);
@@ -467,8 +464,12 @@ function revalidateAllPaths() {
  */
 export async function createMultipleAssinaturas(data: any) {
     return createBulkAssinaturas({
-        participanteIds: [data.participanteId],
-        assinaturas: data.assinaturas,
+        assinaturasDedicadas: data.assinaturas.map((a: any) => ({
+            participanteId: data.participanteId,
+            streamingId: a.streamingId,
+            frequencia: a.frequencia,
+            valor: a.valor
+        })),
         dataInicio: data.dataInicio,
         cobrancaAutomaticaPaga: data.cobrancaAutomaticaPaga
     });

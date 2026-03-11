@@ -13,8 +13,8 @@ export interface CreateSubscriptionDTO {
 }
 
 export interface BulkCreateSubscriptionDTO {
-    participanteIds: number[];
-    assinaturas: Array<{
+    assinaturasDedicadas: Array<{
+        participanteId: number;
         streamingId: number;
         frequencia: FrequenciaPagamento;
         valor: number;

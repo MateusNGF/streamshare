@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/Switch";
 interface StepSummaryProps {
     selectedStreamings: StreamingOption[];
     selectedParticipants: ParticipanteOption[];
+    participantStreamings: Map<number, Set<number>>;
     configurations: Map<number, SelectedStreaming>;
     dataInicio: string;
     onDataInicioChange: (val: string) => void;
@@ -39,6 +40,7 @@ interface StepSummaryProps {
 export function StepSummary({
     selectedStreamings,
     selectedParticipants,
+    participantStreamings,
     configurations,
     dataInicio,
     onDataInicioChange,
@@ -165,9 +167,10 @@ export function StepSummary({
                 formatCurrency={format}
             />
 
-            {/* 6. PARTICIPANTS LIST */}
             <MembersList
                 participants={selectedParticipants}
+                participantStreamings={participantStreamings}
+                selectedStreamings={selectedStreamings}
                 totalSlots={totalSlots}
                 receitaTotal={financialAnalysis.receitaMensalTotal}
                 lucroTotal={financialAnalysis.lucroLiquidoMensal}

@@ -39,7 +39,7 @@ export function useAssinaturaMultipla({
     const [step, setStep] = useState(ModalStep.STREAMING);
     const [selectedStreamingIds, setSelectedStreamingIds] = useState<Set<number>>(new Set());
     const [configurations, setConfigurations] = useState<Map<number, SelectedStreaming>>(new Map());
-    const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
+    const [participantStreamings, setParticipantStreamings] = useState<Map<number, Set<number>>>(new Map());
     const [dataInicio, setDataInicio] = useState(formatDate(new Date(), "yyyy-MM-dd"));
     const [cobrancaAutomaticaPaga, setCobrancaAutomaticaPaga] = useState(true);
     const [primeiroCicloJaPago, setPrimeiroCicloJaPago] = useState(true);
@@ -47,6 +47,7 @@ export function useAssinaturaMultipla({
     const [streamingSearchTerm, setStreamingSearchTerm] = useState("");
     const [participanteSearchTerm, setParticipanteSearchTerm] = useState("");
     const [isOperationReviewOpen, setIsOperationReviewOpen] = useState(false);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [retroactivePaidPeriods, setRetroactivePaidPeriods] = useState<Array<{ streamingId: number, index: number }>>([]);
 
     // 2. Initialization from URL / Props
@@ -76,15 +77,18 @@ export function useAssinaturaMultipla({
         }
 
         const pParam = getParam('p');
-        if (pParam && quantities.size === 0) {
-            const ids = pParam.split(',').map(Number);
-            setQuantities(prev => {
-                const next = new Map(prev);
-                ids.forEach(id => {
-                    if (!next.has(id)) next.set(id, 1);
-                });
-                return next;
+        // Format p=pid:s1-s2,pid2:s1
+        if (pParam && participantStreamings.size === 0) {
+            const next = new Map<number, Set<number>>();
+            pParam.split(',').forEach(pair => {
+                const [pIdStr, sIdsStr] = pair.split(':');
+                if (pIdStr && sIdsStr) {
+                    const pId = Number(pIdStr);
+                    const sIds = new Set(sIdsStr.split('-').map(Number));
+                    next.set(pId, sIds);
+                }
             });
+            setParticipantStreamings(next);
         }
 
         // Auto-skip logic for pre-selected mode
@@ -109,10 +113,11 @@ export function useAssinaturaMultipla({
         }
 
         // Pre-selected participant
-        if (preSelectedParticipanteId && !pParam && quantities.size === 0) {
+        if (preSelectedParticipanteId && !pParam && participantStreamings.size === 0 && preSelectedStreamingId) {
             const pId = parseInt(preSelectedParticipanteId);
-            setQuantities(new Map([[pId, 1]]));
-            updateUrl({ p: pId.toString() });
+            const sId = parseInt(preSelectedStreamingId);
+            setParticipantStreamings(new Map([[pId, new Set([sId])]]));
+            updateUrl({ p: `${pId}:${sId}` });
         }
 
     }, [getParam, streamings, preSelectedStreamingId, preSelectedParticipanteId]);
@@ -120,6 +125,8 @@ export function useAssinaturaMultipla({
 
     // Helper to update URL
     const updateUrlStep = useCallback((nextStep: ModalStep) => {
+        setStreamingSearchTerm("");
+        setParticipanteSearchTerm("");
         updateUrl({ step: nextStep.toString() });
         setStep(nextStep);
     }, [updateUrl]);
@@ -150,91 +157,117 @@ export function useAssinaturaMultipla({
         updateUrl({ s: next.size > 0 ? Array.from(next).join(',') : null });
     }, [selectedStreamingIds, configurations, streamings, updateUrl]);
 
-    const totalVagasSelecionadas = useMemo(() =>
-        Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0),
-        [quantities]);
+    const totalVagasSelecionadas = useMemo(() => {
+        let sum = 0;
+        participantStreamings.forEach(subs => sum += subs.size);
+        return sum;
+    }, [participantStreamings]);
 
-    const selectedStreamings = useMemo(() =>
-        Array.from(selectedStreamingIds)
-            .map(id => streamings.find(s => s.id === id))
-            .filter(Boolean) as StreamingOption[],
-        [selectedStreamingIds, streamings]);
+    const handleToggleParticipantStreaming = useCallback((participantId: number, streamingId: number) => {
+        setParticipantStreamings(prev => {
+            const next = new Map(prev);
+            const set = next.get(participantId) || new Set<number>();
+            const nextSet = new Set(set);
 
-    const minAvailableSlots = useMemo(() => {
-        if (selectedStreamingIds.size === 0) return 0;
-        const slots = selectedStreamings.map(s => s.limiteParticipantes - s.ocupados);
-        const minTotal = Math.min(...slots);
-        return Math.max(0, minTotal - totalVagasSelecionadas);
-    }, [selectedStreamings, selectedStreamingIds, totalVagasSelecionadas]);
-
-    const handleToggleParticipante = useCallback((id: number) => {
-        const nextQuantities = new Map(quantities);
-
-        if (nextQuantities.has(id)) {
-            nextQuantities.delete(id);
-        } else if (minAvailableSlots > 0) {
-            nextQuantities.set(id, 1);
-        }
-
-        setQuantities(nextQuantities);
-        const ids = Array.from(nextQuantities.keys());
-        updateUrl({ p: ids.length > 0 ? ids.join(',') : null });
-    }, [quantities, minAvailableSlots, updateUrl]);
-
-    const handleQuantityChange = useCallback((id: number, delta: number) => {
-        const currentQty = quantities.get(id) || 1;
-        const newQty = currentQty + delta;
-
-        if (newQty <= 0) {
-            handleToggleParticipante(id);
-            return;
-        }
-
-        let totalUsedOther = 0;
-        quantities.forEach((qty, pid) => {
-            if (pid !== id) totalUsedOther += qty;
-        });
-
-        const minAvailable = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
-
-        if (totalUsedOther + newQty <= minAvailable) {
-            setQuantities(prev => new Map(prev).set(id, newQty));
-        }
-    }, [quantities, selectedStreamings, handleToggleParticipante]);
-
-    const handleSelectAllParticipantes = useCallback(() => {
-        const currentSelectedParticipanteIds = new Set(Array.from(quantities.keys()));
-        const filtered = !participanteSearchTerm
-            ? participantes
-            : participantes.filter(p =>
-                p.nome.toLowerCase().includes(participanteSearchTerm.toLowerCase()) ||
-                p.whatsappNumero.includes(participanteSearchTerm)
-            );
-
-        const allFilteredSelected = filtered.length > 0 && filtered.every(p => currentSelectedParticipanteIds.has(p.id));
-
-        const nextQuantities = new Map(quantities);
-
-        if (allFilteredSelected) {
-            filtered.forEach(p => {
-                nextQuantities.delete(p.id);
-            });
-        } else {
-            const minAvailableSlotsGlobal = Math.min(...selectedStreamings.map(s => s.limiteParticipantes - s.ocupados));
-            let currentTotal = Array.from(quantities.values()).reduce((a, b) => a + b, 0);
-
-            filtered.forEach(p => {
-                if (!nextQuantities.has(p.id) && currentTotal < minAvailableSlotsGlobal) {
-                    nextQuantities.set(p.id, 1);
-                    currentTotal++;
+            if (nextSet.has(streamingId)) {
+                nextSet.delete(streamingId);
+                if (nextSet.size === 0) {
+                    next.delete(participantId);
+                } else {
+                    next.set(participantId, nextSet);
                 }
-            });
-        }
+            } else {
+                const str = streamings.find(s => s.id === streamingId);
+                if (!str) return prev;
 
-        setQuantities(nextQuantities);
-        const ids = Array.from(nextQuantities.keys());
-        updateUrl({ p: ids.length > 0 ? ids.join(',') : null });
-    }, [participanteSearchTerm, participantes, quantities, selectedStreamings, updateUrl]);
+                let used = 0;
+                next.forEach(subs => {
+                    if (subs.has(streamingId)) used++;
+                });
+                const available = str.limiteParticipantes - str.ocupados;
+
+                if (used < available) {
+                    nextSet.add(streamingId);
+                    next.set(participantId, nextSet);
+                } else {
+                    toast.error(`Vagas esgotadas para ${str.nome}`);
+                    return prev;
+                }
+            }
+
+            const parts: string[] = [];
+            next.forEach((sIds, pId) => {
+                parts.push(`${pId}:${Array.from(sIds).join('-')}`);
+            });
+            updateUrl({ p: parts.length > 0 ? parts.join(',') : null });
+
+            return next;
+        });
+    }, [streamings, updateUrl, toast]);
+
+    // Optional: a helper to toggle a streaming for all visible participants
+    const handleToggleAllForStreaming = useCallback((streamingId: number) => {
+        setParticipantStreamings(prev => {
+            const next = new Map(prev);
+            const filtered = !participanteSearchTerm
+                ? participantes
+                : participantes.filter(p =>
+                    p.nome.toLowerCase().includes(participanteSearchTerm.toLowerCase()) ||
+                    p.whatsappNumero.includes(participanteSearchTerm)
+                );
+
+            const str = streamings.find(s => s.id === streamingId);
+            if (!str) return prev;
+
+            let used = 0;
+            next.forEach(subs => {
+                if (subs.has(streamingId)) used++;
+            });
+            let available = (str.limiteParticipantes - str.ocupados) - used;
+
+            // Check if all filtered already have it
+            const allHaveIt = filtered.every(p => {
+                const set = next.get(p.id);
+                return set && set.has(streamingId);
+            });
+
+            if (allHaveIt) {
+                // Remove from all filtered
+                filtered.forEach(p => {
+                    const set = next.get(p.id);
+                    if (set && set.has(streamingId)) {
+                        const nextSet = new Set(set);
+                        nextSet.delete(streamingId);
+                        if (nextSet.size === 0) {
+                            next.delete(p.id);
+                        } else {
+                            next.set(p.id, nextSet);
+                        }
+                    }
+                });
+            } else {
+                // Add to all filtered (up to capacity)
+                for (const p of filtered) {
+                    if (available <= 0) break;
+                    const set = next.get(p.id) || new Set<number>();
+                    if (!set.has(streamingId)) {
+                        const nextSet = new Set(set);
+                        nextSet.add(streamingId);
+                        next.set(p.id, nextSet);
+                        available--;
+                    }
+                }
+            }
+
+            const parts: string[] = [];
+            next.forEach((sIds, pId) => {
+                parts.push(`${pId}:${Array.from(sIds).join('-')}`);
+            });
+            updateUrl({ p: parts.length > 0 ? parts.join(',') : null });
+
+            return next;
+        });
+    }, [participantes, participanteSearchTerm, streamings, updateUrl]);
 
     const handleUpdateConfig = useCallback((streamingId: number, field: keyof SelectedStreaming, value: any) => {
         setConfigurations(prev => {
@@ -244,10 +277,11 @@ export function useAssinaturaMultipla({
         });
     }, []);
 
-    const handleClose = useCallback(() => {
+    const confirmClose = useCallback(() => {
+        setIsCancelModalOpen(false);
         setStep(ModalStep.STREAMING);
         setConfigurations(new Map());
-        setQuantities(new Map());
+        setParticipantStreamings(new Map());
         setDataInicio(formatDate(new Date(), "yyyy-MM-dd"));
         setCobrancaAutomaticaPaga(true);
         setPrimeiroCicloJaPago(true);
@@ -257,17 +291,34 @@ export function useAssinaturaMultipla({
         onClose();
     }, [onClose, updateUrl]);
 
+    const handleClose = useCallback(() => {
+        if (selectedStreamingIds.size > 0 || participantStreamings.size > 0) {
+            setIsCancelModalOpen(true);
+            return;
+        }
+        confirmClose();
+    }, [selectedStreamingIds.size, participantStreamings.size, confirmClose]);
 
     // --- Computed ---
 
-    const selectedParticipanteIds = useMemo(() => new Set(quantities.keys()), [quantities]);
+    const selectedParticipanteIds = useMemo(() => new Set(participantStreamings.keys()), [participantStreamings]);
 
-    const streamingsSemVagas = useMemo(() =>
-        selectedStreamings.filter(s => {
+    const selectedStreamings = useMemo(() =>
+        Array.from(selectedStreamingIds)
+            .map(id => streamings.find(s => s.id === id))
+            .filter(Boolean) as StreamingOption[],
+        [selectedStreamingIds, streamings]);
+
+    const streamingsSemVagas = useMemo(() => {
+        return selectedStreamings.filter(s => {
+            let used = 0;
+            participantStreamings.forEach(subs => {
+                if (subs.has(s.id)) used++;
+            });
             const available = s.limiteParticipantes - s.ocupados;
-            return totalVagasSelecionadas > available;
-        }),
-        [selectedStreamings, totalVagasSelecionadas]);
+            return used > available;
+        });
+    }, [selectedStreamings, participantStreamings]);
 
     const isOverloaded = streamingsSemVagas.length > 0;
 
@@ -299,44 +350,55 @@ export function useAssinaturaMultipla({
 
     // Link "Lançamento Inicial" with retroactive periods
     useEffect(() => {
-        if (primeiroCicloJaPago) {
-            const allRetros = financialAnalysis.cobrancasProjetadas
-                .filter(p => p.tipo === 'Retroativa')
-                .map(p => ({ streamingId: p.streamingId, index: p.index }));
-            setRetroactivePaidPeriods(allRetros);
-        } else {
-            setRetroactivePaidPeriods([]);
-        }
-    }, [primeiroCicloJaPago, financialAnalysis.cobrancasProjetadas.length]);
+        setRetroactivePaidPeriods(prev => {
+            if (primeiroCicloJaPago) {
+                // Keep manual choices intact, only add ones we don't have if we were strictly toggling?
+                // Actually, if we just overwrite only when primeiroCicloJaPago changes from false to true, we can do:
+                const allRetros = financialAnalysis.cobrancasProjetadas
+                    .filter(p => p.tipo === 'Retroativa')
+                    .map(p => ({ streamingId: p.streamingId, index: p.index }));
+                return allRetros;
+            } else {
+                return [];
+            }
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [primeiroCicloJaPago]); // Removed financialAnalysis from deps to prevent overwriting manual selections
 
     const handleSubmit = useCallback(async () => {
         if (selectedParticipanteIds.size === 0 || configurations.size === 0 || isOverloaded) return;
         setIsSubmitting(true);
 
         try {
-            const expandedParticipanteIds: number[] = [];
-            selectedParticipanteIds.forEach(id => {
-                const qty = quantities.get(id) || 1;
-                for (let i = 0; i < qty; i++) expandedParticipanteIds.push(id);
+            const assinaturasList: Array<{ participanteId: number, streamingId: number, frequencia: string, valor: number }> = [];
+
+            participantStreamings.forEach((sIds, pId) => {
+                sIds.forEach(sId => {
+                    const config = configurations.get(sId);
+                    if (config) {
+                        assinaturasList.push({
+                            participanteId: pId,
+                            streamingId: sId,
+                            frequencia: config.frequencia,
+                            valor: parseFloat(config.valor)
+                        });
+                    }
+                });
             });
 
+            // Pass the precise mapping of each participant to its specific streamings
             const result = await createBulkAssinaturas({
-                participanteIds: expandedParticipanteIds,
-                assinaturas: Array.from(configurations.values()).map(config => ({
-                    streamingId: config.streamingId,
-                    frequencia: config.frequencia,
-                    valor: parseFloat(config.valor)
-                })),
+                assinaturasDedicadas: assinaturasList,
                 dataInicio,
                 cobrancaAutomaticaPaga: cobrancaAutomaticaPaga,
                 primeiroCicloJaPago: primeiroCicloJaPago,
                 retroactivePaidPeriods: retroactivePaidPeriods || []
-            });
+            } as any); // temporary cast to any while we update the actions
 
             if (result.success) {
                 toast.success("Assinaturas criadas com sucesso!");
                 onSuccess();
-                handleClose();
+                confirmClose();
             } else {
                 toast.error(result.error);
             }
@@ -345,7 +407,7 @@ export function useAssinaturaMultipla({
         } finally {
             setIsSubmitting(false);
         }
-    }, [selectedParticipanteIds, configurations, isOverloaded, quantities, dataInicio, cobrancaAutomaticaPaga, primeiroCicloJaPago, retroactivePaidPeriods, onSuccess, handleClose]);
+    }, [selectedParticipanteIds, configurations, isOverloaded, participantStreamings, dataInicio, cobrancaAutomaticaPaga, primeiroCicloJaPago, retroactivePaidPeriods, onSuccess, confirmClose]);
 
     return {
         step,
@@ -354,7 +416,7 @@ export function useAssinaturaMultipla({
         cobrancaAutomaticaPaga,
         selectedStreamingIds,
         configurations,
-        participanteVagasMap: quantities,
+        participantStreamings,
         streamingSearchTerm,
         participanteSearchTerm,
         isOperationReviewOpen,
@@ -362,7 +424,6 @@ export function useAssinaturaMultipla({
         selectedStreamings,
         streamingsSemVagas,
         isOverloaded,
-        minAvailableSlots,
         isSubmitting,
         setStreamingSearchTerm,
         setParticipanteSearchTerm,
@@ -372,9 +433,8 @@ export function useAssinaturaMultipla({
         primeiroCicloJaPago,
         setPrimeiroCicloJaPago,
         handleToggleStreaming,
-        handleToggleParticipante,
-        handleQuantityChange,
-        handleSelectAllParticipantes,
+        handleToggleParticipantStreaming,
+        handleToggleAllForStreaming,
         handleUpdateConfig,
         financialAnalysis,
         handleClose,
@@ -382,6 +442,9 @@ export function useAssinaturaMultipla({
         handleBack,
         handleSubmit,
         canNext,
+        isCancelModalOpen,
+        setIsCancelModalOpen,
+        confirmClose,
         retroactivePaidPeriods,
         setRetroactivePaidPeriods
     };

@@ -5,6 +5,9 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { Search, Check } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StreamingOption } from "../types";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Tooltip } from "@/components/ui/Tooltip";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 interface StepStreamingsProps {
     streamings: StreamingOption[];
@@ -25,10 +28,12 @@ export function StepStreamings({
 }: StepStreamingsProps) {
     const { format } = useCurrency();
 
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
     const filtered = useMemo(() => {
-        if (!searchTerm) return streamings;
-        return streamings.filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [streamings, searchTerm]);
+        if (!debouncedSearchTerm) return streamings;
+        return streamings.filter(s => s.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+    }, [streamings, debouncedSearchTerm]);
 
     return (
         <div className="space-y-4">
@@ -62,7 +67,7 @@ export function StepStreamings({
                     const isSelected = selectedIds.has(streaming.id);
                     const isFull = streaming.ocupados >= streaming.limiteParticipantes;
 
-                    return (
+                    const card = (
                         <button
                             key={streaming.id}
                             type="button"
@@ -100,6 +105,20 @@ export function StepStreamings({
                             </p>
                         </button>
                     );
+
+                    if (isFull) {
+                        return (
+                            <TooltipPrimitive.Provider key={streaming.id}>
+                                <Tooltip content={`Este grupo já atingiu o limite máximo de ${streaming.limiteParticipantes} vagas.`}>
+                                    <div className="flex w-full h-full">
+                                        {card}
+                                    </div>
+                                </Tooltip>
+                            </TooltipPrimitive.Provider>
+                        );
+                    }
+
+                    return card;
                 })}
             </div>
         </div>

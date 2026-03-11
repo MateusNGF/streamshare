@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { SectionHeader } from "@/components/layout/SectionHeader";
-import { ParticipanteOption } from "../../types";
+import { ParticipanteOption, StreamingOption } from "../../types";
+import { StreamingLogo } from "@/components/ui/StreamingLogo";
 
 interface MembersListProps {
     participants: ParticipanteOption[];
+    participantStreamings: Map<number, Set<number>>;
+    selectedStreamings: StreamingOption[];
     totalSlots: number;
     receitaTotal: number;
     lucroTotal: number;
@@ -15,6 +18,8 @@ interface MembersListProps {
 
 export function MembersList({
     participants,
+    participantStreamings,
+    selectedStreamings,
     totalSlots,
     receitaTotal,
     lucroTotal,
@@ -57,7 +62,7 @@ export function MembersList({
                             <thead className="sticky top-0 bg-white z-10 shadow-sm">
                                 <tr>
                                     <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100">Usuário</th>
-                                    <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-center">Vagas</th>
+                                    <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-center">Serviços Selecionados</th>
                                     <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Faturamento</th>
                                     <th className="px-5 py-3 text-[9px] font-black uppercase text-gray-400 border-b border-gray-100 text-right">Contribuição Lucro</th>
                                 </tr>
@@ -80,7 +85,19 @@ export function MembersList({
                                                 </div>
                                             </td>
                                             <td className="px-5 py-3 text-center">
-                                                <span className="text-[10px] font-black text-gray-400">x{p.quantidade || 1}</span>
+                                                <div className="flex items-center justify-center gap-1 flex-wrap">
+                                                    {selectedStreamings.map(s => {
+                                                        const set = participantStreamings.get(p.id);
+                                                        if (set && set.has(s.id)) {
+                                                            return (
+                                                                <div key={s.id} title={s.nome} className="w-6 h-6 rounded-md overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-200">
+                                                                    <StreamingLogo name={s.nome} color={s.cor} iconeUrl={s.iconeUrl} size="sm" rounded="md" />
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })}
+                                                </div>
                                             </td>
                                             <td className="px-5 py-3 text-right font-black text-[11px] text-gray-900 whitespace-nowrap">
                                                 {formatCurrency(userRevenue)}
