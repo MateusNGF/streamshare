@@ -2,7 +2,8 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { Globe, Clock, Check, Copy } from "lucide-react";
+import { Globe, Clock, Check, Copy, Repeat } from "lucide-react";
+import { Switch } from "@/components/ui/Switch";
 import { EXPIRATION_OPTIONS } from "./constants";
 import { LinkHistoryList } from "./LinkHistoryList";
 
@@ -16,6 +17,8 @@ interface ShareLinkTabProps {
     loadingHistory: boolean;
     onRevoke: (id: string) => void;
     isPending: boolean;
+    singleUse: boolean;
+    onSingleUseChange: (val: boolean) => void;
 }
 
 export function ShareLinkTab({
@@ -27,16 +30,28 @@ export function ShareLinkTab({
     history,
     loadingHistory,
     onRevoke,
-    isPending
+    isPending,
+    singleUse,
+    onSingleUseChange
 }: ShareLinkTabProps) {
     if (!generatedLink) {
         return (
             <div className="space-y-6 pt-2">
                 <div className="bg-amber-50 p-4 rounded-xl flex gap-3 text-amber-700">
                     <Globe className="shrink-0 mt-0.5" size={20} />
-                    <p className="text-sm leading-relaxed">
-                        Crie um link de convite rápido. <strong>Atenção:</strong> Qualquer pessoa com este link poderá solicitar entrada.
-                    </p>
+                    <div className="space-y-1">
+                        <p className="text-sm leading-relaxed">
+                            Crie um link de convite rápido. <strong>Atenção:</strong> Qualquer pessoa com este link poderá solicitar entrada.
+                        </p>
+                        <a
+                            href="/docs/especificacao/participantes-convites"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-amber-800 hover:text-amber-900 underline underline-offset-2 inline-block"
+                        >
+                            Ver como funcionam os convites →
+                        </a>
+                    </div>
                 </div>
 
                 <div className="space-y-3">
@@ -61,12 +76,33 @@ export function ShareLinkTab({
                     </Select>
                 </div>
 
-                <LinkHistoryList
-                    history={history}
-                    loading={loadingHistory}
-                    onRevoke={onRevoke}
-                    isPending={isPending}
-                />
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100/50 hover:bg-gray-100/30 transition-colors group">
+                    <div className="space-y-1 pr-4">
+                        <div className="flex items-center gap-2">
+                            <Repeat size={14} className="text-primary" />
+                            <label className="text-sm font-bold text-gray-700 cursor-pointer" htmlFor="multi-use">
+                                Habilitar multiplas utilizações deste link ?
+                            </label>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-normal">
+                            Permita que o link seje usado mais de uma vez, util para migrar uma grande quantidade de participante.
+                        </p>
+                    </div>
+                    <Switch
+                        id="multi-use"
+                        checked={!singleUse}
+                        onCheckedChange={(checked) => onSingleUseChange(!checked)}
+                    />
+                </div>
+
+                <div className="space-y-3">
+                    <LinkHistoryList
+                        history={history}
+                        loading={loadingHistory}
+                        onRevoke={onRevoke}
+                        isPending={isPending}
+                    />
+                </div>
             </div>
         );
     }

@@ -497,12 +497,13 @@ model WhatsAppLog {
 
 model Convite {
   id             String        @id @default(uuid())
-  email          String
+  email          String?
   contaId        Int
   streamingId    Int?
   status         StatusConvite @default(pendente)
   token          String?       @unique
   expiresAt      DateTime?
+  singleUse      Boolean       @default(true)
   convidadoPorId Int?
   usuarioId      Int?
   createdAt      DateTime      @default(now())

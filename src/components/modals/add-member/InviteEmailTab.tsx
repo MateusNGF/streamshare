@@ -24,9 +24,19 @@ export function InviteEmailTab({ email, onEmailChange, error, isLinkedToStreamin
             />
             <div className="bg-blue-50 p-4 rounded-xl flex gap-3 text-blue-700">
                 <Mail className="shrink-0 mt-0.5" size={20} />
-                <p className="text-sm leading-relaxed">
-                    O convidado receberá um e-mail com instruções para entrar na sua conta {isLinkedToStreaming ? "e acessar o streaming selecionado." : "."}
-                </p>
+                <div className="space-y-1">
+                    <p className="text-sm leading-relaxed">
+                        O convidado receberá um e-mail com instruções para entrar na sua conta {isLinkedToStreaming ? "e acessar o streaming selecionado." : "."}
+                    </p>
+                    <a
+                        href="/docs/especificacao/participantes-convites"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-blue-800 hover:text-blue-900 underline underline-offset-2 inline-block"
+                    >
+                        Entenda os fluxos de convite →
+                    </a>
+                </div>
             </div>
         </div>
     );

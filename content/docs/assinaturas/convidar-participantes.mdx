@@ -13,8 +13,8 @@ Qualquer novo membro do StreamShare entra numa partilha de streaming através de
 
 | Tipo | Quem envia | Como funciona |
 |---|---|---|
-| **Link direto** | Organizador, a partir do painel do serviço | Um link exclusivo. Qualquer pessoa com o link pode solicitar a sua entrada. |
-| **Convite por e-mail / WhatsApp** | Organizador, via botões de partilha | O sistema pré-formata uma mensagem com o link e as informações básicas da partilha. |
+| **Link Direto (Público)** | Organizador, a partir do painel | Um link que pode ser partilhado livremente. Pode ser configurado para **uso único** ou **múltiplas utilizações**. |
+| **Convite Nominal** | Organizador, informando o e-mail | Vinculado a um endereço de e-mail específico. Apenas o dono desse e-mail pode aceitar este convite. |
 
 ---
 
@@ -24,7 +24,7 @@ Quando um usuário clica no link de convite, o sistema executa um conjunto de ve
 
 <Steps>
 1. **Validação do link**: O sistema verifica se o link é legítimo. Caso contrário, o usuário recebe um aviso informando que o convite é inválido.
-2. **Verificação do estado**: Só é possível aceitar convites que ainda estejam pendentes. Convites que já foram utilizados ou cancelados não podem ser aceites novamente.
+2. **Verificação do estado**: O sistema verifica se o link é de **Uso Único (Single-use)**. Se sim, e já tiver sido utilizado, o acesso é negado. Links de **Múltiplas Utilizações** permanecem ativos enquanto houver vagas e validade.
 3. **Prazo de validade**: Os convites têm um tempo limitado para serem aceites. Se o prazo terminar, o usuário será informado de que o convite expirou.
 4. **Disponibilidade de vagas**: O sistema verifica em tempo real se ainda existem lugares disponíveis, considerando todos os membros já inscritos. Se o limite for atingido, o sistema avisa que as vagas foram preenchidas.
 5. **Aceitação (autenticação)**: Ao aceitar o convite, o sistema cria automaticamente o vínculo entre o participante e o serviço, além de gerar a primeira cobrança de forma segura, garantindo que o limite de vagas nunca seja ultrapassado.
