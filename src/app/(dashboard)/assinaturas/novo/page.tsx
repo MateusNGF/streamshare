@@ -1,8 +1,7 @@
 import { getParticipantes } from "@/actions/participantes";
 import { getStreamings } from "@/actions/streamings";
+import { getAccountDiasVencimento } from "@/actions/settings";
 import { AssinaturaWizard } from "@/components/assinaturas/AssinaturaWizard";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,9 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function NovoAssinaturaPage() {
-    const [participantesRes, streamingsRes] = await Promise.all([
+    const [participantesRes, streamingsRes, diasVencimentoRes] = await Promise.all([
         getParticipantes(),
         getStreamings(),
+        getAccountDiasVencimento(),
     ]);
 
     // Format data to match component expectations
@@ -35,6 +35,7 @@ export default async function NovoAssinaturaPage() {
         <AssinaturaWizard
             participantes={participantes as any}
             streamings={streamings as any}
+            initialDiasVencimento={diasVencimentoRes.data || []}
         />
     );
 }

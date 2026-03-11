@@ -19,21 +19,16 @@ import { getAccountDiasVencimento } from "@/actions/settings";
 interface AssinaturaWizardProps {
     participantes: ParticipanteOption[];
     streamings: StreamingOption[];
+    initialDiasVencimento?: number[];
 }
 
-export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizardProps) {
+export function AssinaturaWizard({ participantes, streamings, initialDiasVencimento = [] }: AssinaturaWizardProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [diasVencimento, setDiasVencimento] = useState<number[]>([]);
+    const diasVencimento = initialDiasVencimento;
 
     const preSelectedParticipanteId = searchParams.get("participanteId") || undefined;
     const preSelectedStreamingId = searchParams.get("streamingId") || undefined;
-
-    useEffect(() => {
-        getAccountDiasVencimento().then(res => {
-            if (res.success && res.data) setDiasVencimento(res.data);
-        }).catch(() => { });
-    }, []);
 
 
     const logic = useAssinaturaMultipla({
@@ -143,10 +138,18 @@ export function AssinaturaWizard({ participantes, streamings }: AssinaturaWizard
     return (
         <div className="min-h-screen bg-[#fcfcfd] pb-32">
             {logic.isSubmitting && (
-                <div className="fixed inset-0 z-[100] bg-white/50 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
-                    <div className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 border border-gray-100">
-                        <Spinner size="lg" color="primary" />
-                        <span className="font-bold text-gray-900">Processando lote...</span>
+                <div className="fixed inset-0 z-[100] bg-white/60 backdrop-blur-md flex items-center justify-center pointer-events-auto animate-in fade-in duration-500">
+                    <div className="bg-white p-10 rounded-[40px] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.1)] flex flex-col items-center gap-6 animate-in zoom-in-95 slide-in-from-bottom-8 duration-700 ease-out border border-white">
+                        <div className="relative">
+                            <Spinner size="xl" color="primary" className="opacity-20" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Wand2 className="text-primary animate-pulse" size={24} />
+                            </div>
+                        </div>
+                        <div className="text-center space-y-2">
+                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Processando Lote</h3>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Organizando faturamento e acessos...</p>
+                        </div>
                     </div>
                 </div>
             )}

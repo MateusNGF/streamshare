@@ -13,7 +13,12 @@ export function TableSkeleton({ rows = 5, columns = 6, className }: TableSkeleto
             {/* Header Skeleton */}
             <div className="bg-gray-50/50 border-b border-gray-100 flex items-center px-6 py-3 gap-4">
                 {Array.from({ length: columns }).map((_, i) => (
-                    <div key={i} className={cn("flex items-center gap-2", i === 0 ? "flex-1" : "w-24 justify-center")}>
+                    <div key={i} className={cn(
+                        "flex items-center gap-2",
+                        i === 0 || i === 2 ? "flex-1" : "w-24 justify-center",
+                        i === columns - 1 ? "w-10 justify-center" : "",
+                        i === columns - 2 ? "justify-end" : ""
+                    )}>
                         <Skeleton variant="circular" width={12} height={12} className="opacity-40" />
                         <Skeleton variant="text" className="w-16 h-3 opacity-40" />
                     </div>
@@ -30,11 +35,16 @@ export function TableSkeleton({ rows = 5, columns = 6, className }: TableSkeleto
                         {Array.from({ length: columns }).map((_, colIndex) => (
                             <div
                                 key={colIndex}
-                                className={cn("flex flex-col gap-1", colIndex === 0 ? "flex-1" : "w-24 items-center")}
+                                className={cn(
+                                    "flex flex-col gap-1",
+                                    colIndex === 0 || colIndex === 2 ? "flex-1" : "items-center w-24",
+                                    colIndex === columns - 1 ? "w-10" : "",
+                                    colIndex === columns - 2 ? "items-end" : ""
+                                )}
                             >
                                 <Skeleton
                                     variant="text"
-                                    className={cn(colIndex === 0 ? "w-32 h-4" : "w-16 h-3")}
+                                    className={cn(colIndex === 0 || colIndex === 2 ? "w-32 h-4" : "w-16 h-3")}
                                 />
                                 {colIndex === 0 && (
                                     <Skeleton variant="text" className="w-24 h-2 opacity-50" />
