@@ -47,6 +47,24 @@ Caso existam faturas que já venceram, o sistema envia alertas tanto para o part
 
 ---
 
+## Transparência e Segurança
+
+O StreamShare prioriza a clareza e o controle total do Organizador sobre as operações financeiras.
+
+### Transparência Algorítmica (Pro-rata)
+Para faturas geradas no meio de um ciclo, o sistema detalha exatamente como o valor foi calculado. No modal de detalhes, encontrará:
+- **Resumo do Cálculo**: Valor base vs. Valor proporcional.
+- **Fórmula Exposta**: Dias no mês e dias efetivamente cobertos.
+- **Tolerância**: Regras automáticas que arredondam meses quase cheios para evitar centavos desnecessários.
+
+### Fluxo de Segurança (Undo)
+Ações críticas, como a confirmação de um pagamento, possuem uma camada de proteção contra cliques acidentais:
+- **Buffer de 5 segundos**: Após clicar em confirmar, o sistema aguarda um breve período antes de persistir a ação.
+- **Opção de Desfazer**: Durante este intervalo, poderá cancelar a operação instantaneamente através da notificação no ecrã.
+- **Feedback Imediato**: A interface responde instantaneamente, mas garante a segurança da reversibilidade.
+
+---
+
 ## Estados da Fatura
 
 | Estado | Significado |

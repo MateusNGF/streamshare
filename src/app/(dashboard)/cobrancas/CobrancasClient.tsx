@@ -232,8 +232,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                         {
                             key: "valor",
                             type: "numberRange",
-                            label: "Intervalo de Valor",
-                            placeholder: "Valor entre..."
+                            label: "Faixa de Preço",
+                            placeholder: "Ex: 10 a 50"
                         },
                         {
                             key: "hasWhatsapp",
@@ -255,6 +255,16 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     onChange={handleFilterChange}
                     onClear={handleClearFilters}
                 />
+
+                {/* Acessibilidade: Região aria-live para anunciar resultados de filtros */}
+                <div
+                    className="sr-only"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    {filteredCobrancas.length} {filteredCobrancas.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+                </div>
             </div>
 
             <Tabs
