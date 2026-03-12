@@ -5,6 +5,7 @@ import { ConfirmarPagamentoModal } from "@/components/modals/ConfirmarPagamentoM
 import { DetalhesCobrancaModal } from "@/components/modals/DetalhesCobrancaModal";
 import { ModalPagamentoCobranca } from "@/components/faturas/ModalPagamentoCobranca";
 import { ModalPagamentoLote } from "@/components/faturas/ModalPagamentoLote";
+import { ConfirmarGerarLoteModal } from "@/components/modals/ConfirmarGerarLoteModal";
 
 interface CobrancasModalsProps {
     cancelModalOpen: boolean;
@@ -23,6 +24,12 @@ interface CobrancasModalsProps {
     onCloseBatchPix?: () => void;
     activeLote?: any;
     isAdmin?: boolean;
+    confirmGerarLoteModalOpen?: boolean;
+    onCloseConfirmGerarLote?: () => void;
+    onConfirmGerarLote?: () => void;
+    batchCount?: number;
+    batchTotal?: number;
+    batchItems?: any[];
 }
 
 export function CobrancasModals({
@@ -41,7 +48,13 @@ export function CobrancasModals({
     batchPixModalOpen = false,
     onCloseBatchPix = () => { },
     activeLote,
-    isAdmin = true
+    isAdmin = true,
+    confirmGerarLoteModalOpen = false,
+    onCloseConfirmGerarLote = () => { },
+    onConfirmGerarLote = () => { },
+    batchCount = 0,
+    batchTotal = 0,
+    batchItems = []
 }: CobrancasModalsProps) {
     return (
         <>
@@ -78,6 +91,16 @@ export function CobrancasModals({
                 onClose={onCloseBatchPix}
                 lote={activeLote}
                 isAdmin={isAdmin}
+            />
+
+            <ConfirmarGerarLoteModal
+                isOpen={confirmGerarLoteModalOpen}
+                onClose={onCloseConfirmGerarLote}
+                onConfirm={onConfirmGerarLote}
+                loading={loading}
+                count={batchCount}
+                total={batchTotal}
+                items={batchItems}
             />
         </>
     );

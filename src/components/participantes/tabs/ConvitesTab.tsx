@@ -54,7 +54,7 @@ export function ConvitesTab({ invites, onCancel, loading }: Props) {
                         <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
                                 <h4 className="font-black text-gray-900 text-lg leading-tight group-hover:text-primary transition-colors">
-                                    {inv.email}
+                                    {inv.email || "Link de Convite Público"}
                                 </h4>
                                 <span className="text-[9px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
                                     Pendente
