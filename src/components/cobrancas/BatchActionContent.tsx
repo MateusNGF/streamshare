@@ -12,10 +12,8 @@ interface BatchActionContentProps {
     currencyCode: CurrencyCode;
     isAdmin: boolean;
     onPay: () => void;
-    onWhatsApp?: () => void;
     onClear: () => void;
     loading: boolean;
-    whatsappLoading: boolean;
     hasMixedParticipants: boolean;
     hasSummary: boolean;
     isExpanded: boolean;
@@ -28,10 +26,8 @@ export function BatchActionContent({
     currencyCode,
     isAdmin,
     onPay,
-    onWhatsApp,
     onClear,
     loading,
-    whatsappLoading,
     hasMixedParticipants,
     hasSummary,
     isExpanded,
@@ -100,22 +96,11 @@ export function BatchActionContent({
                 )}
 
                 <div className="flex w-full sm:w-auto gap-2.5">
-                    {isAdmin && onWhatsApp && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="flex-1 sm:flex-none h-10 sm:h-12 text-xs sm:text-sm rounded-xl sm:rounded-full font-semibold border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm"
-                            onClick={onWhatsApp}
-                            disabled={loading || whatsappLoading || hasMixedParticipants || total === 0}
-                        >
-                            {whatsappLoading ? <Loader2 size={16} className="animate-spin" /> : "WhatsApp"}
-                        </Button>
-                    )}
                     <Button
                         size="lg"
                         className={cn(
                             "flex-none sm:min-w-[160px] h-10 sm:h-12 text-xs sm:text-sm rounded-xl sm:rounded-full font-bold shadow-sm hover:shadow-md transition-all",
-                            (isAdmin && onWhatsApp) ? "flex-[1.5]" : "w-full"
+                            "w-full"
                         )}
                         onClick={onPay}
                         disabled={loading || hasMixedParticipants || total === 0}

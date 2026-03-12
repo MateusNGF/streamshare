@@ -28,8 +28,9 @@ export function ConfirmarGerarLoteModal({
 }: ConfirmarGerarLoteModalProps) {
     const { format } = useCurrency();
 
-    // Create WhatsApp preview message (copied logic from old BatchPreviewDrawer)
     const participantName = items?.[0]?.assinatura?.participante?.nome || "Participante";
+
+    // Create WhatsApp preview message (copied logic from old BatchPreviewDrawer)
     const whatsappMessage = items && items.length > 0
         ? `Olá ${participantName}! 👋\n\nEstou gerando o lote de cobranças das suas assinaturas no StreamShare:\n\n${items.map(item => `- ${item.assinatura.streaming.catalogo.nome}: ${format(item.valor)}`).join('\n')}\n\n*Total: ${format(total)}*\n\nVou te enviar o PIX para pagamento em seguida. 👍`
         : "";
@@ -60,7 +61,7 @@ export function ConfirmarGerarLoteModal({
                 </div>
             }
         >
-            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="space-y-6">
                 <div className="flex flex-col items-center text-center py-2">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                         <FileStack className="text-primary" size={32} />
@@ -76,6 +77,8 @@ export function ConfirmarGerarLoteModal({
                 {whatsappMessage && (
                     <WhatsAppPreviewCard message={whatsappMessage} />
                 )}
+
+
 
                 <div className="bg-blue-50 text-blue-800 p-4 rounded-xl flex items-start gap-3 border border-blue-100">
                     <AlertCircle className="shrink-0 mt-1" size={18} />

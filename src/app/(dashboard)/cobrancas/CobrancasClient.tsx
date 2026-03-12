@@ -367,10 +367,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     total={batchTotal}
                     isAdmin={true}
                     onPay={() => setIsConfirmModalOpen(true)}
-                    onWhatsApp={handleEnviarWhatsAppLote}
                     onClear={clearSelection}
                     loading={loading}
-                    whatsappLoading={whatsappLoading}
                     hasMixedParticipants={hasMixedParticipants}
                     summaryItems={filteredCobrancas
                         .filter(c => selectedIds.has(c.id))
