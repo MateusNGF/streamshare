@@ -21,6 +21,7 @@ import { SystemShowcase } from "@/components/landing/SystemShowcase";
 import { StreamingMarquee } from "@/components/landing/StreamingMarquee";
 import { Footer } from "@/components/layout/Footer";
 import { InteractiveMesh } from "@/components/backgrounds/InteractiveMesh";
+import { FeatureStepsCarousel } from "@/components/landing/FeatureStepsCarousel";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -254,31 +255,39 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="como-funciona" className="py-16 md:py-24 bg-gray-50 border-y border-gray-200/50">
-        <div className="container mx-auto px-6 text-center">
-          <div className="mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">Como Funciona</h2>
-            <p className="text-lg md:text-xl text-gray-600">Pague menos e viva melhor em 3 passos simples.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-            {[
-              { num: "1", title: "Cadastro Relâmpago", desc: "Crie sua conta em segundos e conecte seus serviços favoritos." },
-              { num: "2", title: "Setup Inteligente", desc: "Defina o valor e deixe o sistema organizar os grupos para você." },
-              { num: "3", title: "Tudo Automático", desc: "O sistema cobra, o dinheiro cai na sua conta e todos ficam felizes." },
-            ].map((step, idx) => (
-              <div key={idx} className="relative group">
-                <div className="bg-white text-primary w-20 h-20 rounded-3xl flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                  {step.num}
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* How It Works Carousel */}
+      <FeatureStepsCarousel
+        id="como-funciona"
+        title="Como Funciona"
+        description="Deslize para o lado para ver o passo a passo de como economizar."
+        items={[
+          {
+            id: 1,
+            title: 'Cadastro Relâmpago',
+            description: 'Crie sua conta em segundos e conecte seus serviços favoritos.',
+          },
+          {
+            id: 2,
+            title: 'Setup Inteligente',
+            description: 'Defina o valor e deixe o sistema organizar os grupos para você.',
+          },
+          {
+            id: 3,
+            title: 'Tudo Automático',
+            description: 'O sistema cobra, o dinheiro cai na sua conta sem dor de cabeça.',
+          },
+          {
+            id: 4,
+            title: 'Gestão de Membros',
+            description: 'Convide, remova ou substitua pessoas do seu grupo com apenas um clique.',
+          },
+          {
+            id: 5,
+            title: 'Saque Imediato',
+            description: 'Transfira seu saldo para sua conta bancária via PIX a qualquer momento.',
+          }
+        ]}
+      />
 
       {/* Bento Grid Simples - Benefícios Extras */}
       <section className="py-16 md:py-24 bg-white">
