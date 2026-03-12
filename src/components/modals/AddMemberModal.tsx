@@ -44,8 +44,8 @@ export function AddMemberModal({
 
     // Fetch history when modal opens or streaming changes
     useEffect(() => {
-        if (isOpen && streamingId !== "none" && activeTab === "link") {
-            shareLink.fetchHistory(parseInt(streamingId));
+        if (isOpen && activeTab === "link") {
+            shareLink.fetchHistory(streamingId);
         }
     }, [isOpen, streamingId, activeTab]);
 
@@ -92,8 +92,10 @@ export function AddMemberModal({
                     }}
                     history={shareLink.history}
                     loadingHistory={shareLink.loadingHistory}
-                    onRevoke={(id) => shareLink.handleRevoke(id, parseInt(streamingId))}
+                    onRevoke={(id) => shareLink.handleRevoke(id, streamingId)}
                     isPending={shareLink.isPending}
+                    singleUse={shareLink.singleUse}
+                    onSingleUseChange={shareLink.setSingleUse}
                 />
             )
         }
@@ -118,7 +120,7 @@ export function AddMemberModal({
                                 if (activeTab === "email") {
                                     emailInvite.handleInvite(streamingId !== "none" ? parseInt(streamingId) : undefined);
                                 } else {
-                                    shareLink.handleGenerate(parseInt(streamingId));
+                                    shareLink.handleGenerate(streamingId);
                                 }
                             }}
                             disabled={isPending || (activeTab === "link" && streamingId !== "none" && currentStreaming?.vagasRestantes === 0)}

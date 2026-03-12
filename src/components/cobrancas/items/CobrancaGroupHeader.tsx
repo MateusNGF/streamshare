@@ -68,7 +68,7 @@ export function CobrancaGroupHeader({
                     </div>
 
                     {showWarning && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 animate-pulse">
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 px-3 py-1 mx-5 rounded-md border border-red-200 animate-pulse">
                             Mistura de participantes não permitida.
                         </span>
                     )}

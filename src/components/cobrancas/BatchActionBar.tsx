@@ -15,10 +15,8 @@ interface BatchActionBarProps {
     currencyCode?: CurrencyCode;
     isAdmin?: boolean;
     onPay: () => void;
-    onWhatsApp?: () => void;
     onClear: () => void;
     loading?: boolean;
-    whatsappLoading?: boolean;
     hasMixedParticipants?: boolean;
     summaryItems?: {
         id: string | number;
@@ -38,10 +36,8 @@ export function BatchActionBar({
     currencyCode = "BRL",
     isAdmin = true,
     onPay,
-    onWhatsApp,
     onClear,
     loading = false,
-    whatsappLoading = false,
     hasMixedParticipants = false,
     summaryItems = []
 }: BatchActionBarProps) {
@@ -73,10 +69,8 @@ export function BatchActionBar({
                             currencyCode={currencyCode}
                             isAdmin={isAdmin}
                             onPay={onPay}
-                            onWhatsApp={onWhatsApp}
                             onClear={onClear}
                             loading={loading}
-                            whatsappLoading={whatsappLoading}
                             hasMixedParticipants={hasMixedParticipants}
                             hasSummary={summaryItems.length > 0}
                             isExpanded={isExpanded}

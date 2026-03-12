@@ -185,9 +185,12 @@ export async function acceptInvite(token: string, whatsappNumero?: string) {
 
         const result = await prisma.$transaction(async (tx) => {
             // 2. Marcar convite como aceito
+            // Logic for single-use vs multi-use links
+            const newStatus = convite.singleUse ? StatusConvite.aceito : StatusConvite.pendente;
+
             await tx.convite.update({
                 where: { id: convite.id },
-                data: { status: StatusConvite.aceito, usuarioId: userId }
+                data: { status: newStatus, usuarioId: userId }
             });
 
             // 3. Garantir Participante
@@ -237,4 +240,105 @@ export async function acceptInvite(token: string, whatsappNumero?: string) {
         console.error("[ACCEPT_INVITE_ERROR]", error);
         return { success: false, error: error.message || "Erro ao aceitar convite" };
     }
+}
+
+/**
+ * Gerar link de convite público para a conta
+ */
+export async function generateAccountShareLink(expiration: string, singleUse: boolean = true) {
+    try {
+        const { contaId, userId } = await getContext();
+
+        return prisma.$transaction(async (tx) => {
+            const token = crypto.randomUUID();
+            const expiresAt = calculateExpirationDate(expiration);
+
+            await tx.convite.create({
+                data: {
+                    email: null, // Public links don't have a specific email
+                    contaId,
+                    streamingId: null,
+                    token,
+                    status: "pendente",
+                    expiresAt,
+                    singleUse,
+                    convidadoPorId: userId
+                }
+            });
+
+            return { success: true, data: token };
+        });
+    } catch (error: any) {
+        console.error("[GENERATE_ACCOUNT_SHARE_LINK_ERROR]", error);
+        return { success: false, error: error.message || "Erro ao gerar link de compartilhamento" };
+    }
+}
+
+/**
+ * Historico de links gerados para a conta
+ */
+export async function getAccountLinksHistory() {
+    try {
+        const { contaId } = await getContext();
+        const data = await prisma.convite.findMany({
+            where: {
+                contaId,
+                streamingId: null,
+                email: null // Public links have email as null
+            },
+            orderBy: { createdAt: "desc" }
+        });
+        return { success: true, data };
+    } catch (error: any) {
+        console.error("[GET_ACCOUNT_LINKS_HISTORY_ERROR]", error);
+        return { success: false, error: "Erro ao buscar histórico de links" };
+    }
+}
+
+/**
+ * Revogar um link da conta
+ */
+export async function revokeAccountLink(inviteId: string) {
+    try {
+        const { contaId } = await getContext();
+        await prisma.convite.update({
+            where: { id: inviteId, contaId },
+            data: { status: "recusado" }
+        });
+        revalidatePath("/dashboard");
+        return { success: true };
+    } catch (error: any) {
+        console.error("[REVOKE_ACCOUNT_LINK_ERROR]", error);
+        return { success: false, error: "Erro ao revogar link" };
+    }
+}
+
+/**
+ * Clean Code & SOLID: Extracted date calculation logic
+ */
+function calculateExpirationDate(expiration: string): Date {
+    const date = new Date();
+    if (expiration === 'never') {
+        date.setFullYear(date.getFullYear() + 10);
+        return date;
+    }
+
+    const value = parseInt(expiration);
+    const unit = expiration.slice(-1);
+
+    const units: Record<string, (d: Date, v: number) => void> = {
+        'm': (d, v) => d.setMinutes(d.getMinutes() + v),
+        'h': (d, v) => d.setHours(d.getHours() + v),
+        'd': (d, v) => d.setDate(d.getDate() + v),
+    };
+
+    const updateFn = units[unit];
+    if (updateFn) {
+        updateFn(date, value);
+    } else {
+        // Default to 7 days if unit is unknown
+        date.setDate(date.getDate() + 7);
+    }
+
+    return date;
 }

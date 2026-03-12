@@ -51,7 +51,7 @@ export class StreamingService {
      * Generate a new share token for a streaming service and save it as a public invite.
      * ACID: Uses a transaction to ensure spots are checked and invite is created atomically.
      */
-    static async generateShareLink(streamingId: number, expiration: string, contaId: number, userId: number): Promise<string> {
+    static async generateShareLink(streamingId: number, expiration: string, contaId: number, userId: number, singleUse: boolean = true): Promise<string> {
         return prisma.$transaction(async (tx) => {
             const streaming = await tx.streaming.findUnique({
                 where: { id: streamingId, contaId },
@@ -71,12 +71,13 @@ export class StreamingService {
 
             await tx.convite.create({
                 data: {
-                    email: "public-link@system.internal",
+                    email: null,
                     contaId,
                     streamingId,
                     token,
                     status: "pendente",
                     expiresAt,
+                    singleUse,
                     convidadoPorId: userId
                 }
             });
