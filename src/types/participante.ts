@@ -42,7 +42,7 @@ export interface PendingRequest {
 
 export interface PendingInvite {
     id: string;
-    email: string;
+    email: string | null;
     streamingId?: number | null;
     streaming?: {
         apelido: string | null;

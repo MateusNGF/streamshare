@@ -45,7 +45,8 @@ const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard")
 
 const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
 const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
-const BatchPreviewDrawer = dynamic(() => import("@/components/cobrancas/BatchPreviewDrawer").then(mod => mod.BatchPreviewDrawer), { ssr: false });
+// BatchPreviewDrawer removed in favor of confirmation modal
+
 
 interface CobrancasClientProps {
     kpis: {
@@ -92,7 +93,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
     } = useCobrancasActions(cobrancasIniciais);
 
     const [activeTabId, setActiveTabId] = useState("cobrancas");
-    const [isPreviewDrawerOpen, setIsPreviewDrawerOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
@@ -231,8 +232,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                         {
                             key: "valor",
                             type: "numberRange",
-                            label: "Intervalo de Valor",
-                            placeholder: "Valor entre..."
+                            label: "Faixa de Preço",
+                            placeholder: "Ex: 10 a 50"
                         },
                         {
                             key: "hasWhatsapp",
@@ -254,6 +255,16 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     onChange={handleFilterChange}
                     onClear={handleClearFilters}
                 />
+
+                {/* Acessibilidade: Região aria-live para anunciar resultados de filtros */}
+                <div
+                    className="sr-only"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    {filteredCobrancas.length} {filteredCobrancas.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+                </div>
             </div>
 
             <Tabs
@@ -365,11 +376,9 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     count={selectedIds.size}
                     total={batchTotal}
                     isAdmin={true}
-                    onPay={() => setIsPreviewDrawerOpen(true)}
-                    onWhatsApp={handleEnviarWhatsAppLote}
+                    onPay={() => setIsConfirmModalOpen(true)}
                     onClear={clearSelection}
                     loading={loading}
-                    whatsappLoading={whatsappLoading}
                     hasMixedParticipants={hasMixedParticipants}
                     summaryItems={filteredCobrancas
                         .filter(c => selectedIds.has(c.id))
@@ -393,17 +402,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
             )
             }
 
-            <BatchPreviewDrawer
-                isOpen={isPreviewDrawerOpen}
-                onClose={() => setIsPreviewDrawerOpen(false)}
-                onConfirm={async () => {
-                    const success = await handleAbrirLote();
-                    if (success) setIsPreviewDrawerOpen(false);
-                }}
-                items={filteredCobrancas.filter(c => selectedIds.has(c.id))}
-                total={batchTotal}
-                loading={loading}
-            />
+            {/* BatchPreviewDrawer was here */}
 
             <CobrancasModals
                 cancelModalOpen={cancelModalOpen}
@@ -425,6 +424,15 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                 onCloseBatchPix={() => setBatchPixModalOpen(false)}
                 activeLote={activeLote}
                 isAdmin={true}
+                confirmGerarLoteModalOpen={isConfirmModalOpen}
+                onCloseConfirmGerarLote={() => setIsConfirmModalOpen(false)}
+                onConfirmGerarLote={async () => {
+                    const success = await handleAbrirLote();
+                    if (success) setIsConfirmModalOpen(false);
+                }}
+                batchCount={selectedIds.size}
+                batchTotal={batchTotal}
+                batchItems={filteredCobrancas.filter(c => selectedIds.has(c.id))}
             />
             <ConsolidarFaturasModal
                 isOpen={consolidateModalOpen}

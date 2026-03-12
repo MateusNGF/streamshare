@@ -397,6 +397,16 @@ Se encontrar problemas de acessibilidade ou responsividade:
 
 ## 📝 Changelog
 
+### v1.1.0 (2026-03-12)
+
+**Melhorias Human-Centric**:
+- ✅ **Acessibilidade de Filtros**: Adicionado `aria-live` para contagem de resultados.
+- ✅ **Linguagem Psicológica**: Refatoração de labels para reduzir carga cognitiva (Lei de Hick).
+- ✅ **Transparência Algorítmica**: Detalhamento visual pro-rata para reduzir ansiedade.
+- ✅ **Undo Flow**: Implementação de buffer de 5s para confirmação de pagamentos.
+
+---
+
 ### v1.0.0 (2026-01-14)
 
 **Adicionado**:

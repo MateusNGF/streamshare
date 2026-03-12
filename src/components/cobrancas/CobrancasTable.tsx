@@ -142,7 +142,7 @@ export function CobrancasTable({
         const individual: any[] = [];
 
         cobrancas.forEach(c => {
-            const isGroupable = c.status === 'pendente' || c.status === 'atrasado';
+            const isGroupable = (c.status === 'pendente' || c.status === 'atrasado') && !c.lotePagamentoId;
             if (isGroupable) {
                 const participantName = c.assinatura.participante.nome;
                 if (!groups[participantName]) groups[participantName] = [];

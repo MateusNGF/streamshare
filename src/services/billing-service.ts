@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
-import { calcularProximoVencimento, calcularValorPeriodo, calcularDataVencimentoPadrao, escolherProximoDiaVencimento, calcularValorProRata } from "@/lib/financeiro-utils";
-import { BillingDecision, ChargeCreationData, SubscriptionWithCharges } from "@/types/subscription.types";
+import { calcularProximoVencimento, calcularValorPeriodo } from "@/lib/financeiro-utils";
+import { BillingDecision, SubscriptionWithCharges } from "@/types/subscription.types";
 import { isBefore, differenceInDays } from "date-fns";
+import { chargeFactory } from "./charge-factory";
 
 /**
  * Service responsible for billing logic independent of user session.
@@ -14,12 +15,10 @@ export const billingService = {
      */
     processarRenovacoes: async (contaId?: number) => {
         // Use a unique lock key for billing.
-        // We use hashtext to convert a stable string into a 32-bit integer for Postgres advisory locks.
         const lockKey = contaId ? `billing:renewal:${contaId}` : 'billing:renewal:global';
 
         return await prisma.$transaction(async (tx) => {
-            // 1. Acquire advisory lock (session-level lock released at end of transaction)
-            // pg_try_advisory_xact_lock returns true if lock acquired, false otherwise.
+            // 1. Acquire advisory lock
             const [{ lock_acquired }] = await tx.$queryRawUnsafe<any>(
                 `SELECT pg_try_advisory_xact_lock(hashtext($1)) as lock_acquired`,
                 lockKey
@@ -50,16 +49,13 @@ export const billingService = {
                 }
             });
 
-            // Cast to our strictly typed interface
             const assinaturasTyped = assinaturasAtivas as unknown as SubscriptionWithCharges[];
-
-            const cobrancasParaCriar: Array<ChargeCreationData> = [];
+            const cobrancasParaCriar: any[] = [];
             const assinaturasParaCancelar: number[] = [];
             const assinaturasParaSuspender: number[] = [];
             const agora = new Date();
 
-            // 2. Mark pending charges with dataVencimento < agora as "atrasado"
-            // Delegate to the new method for code reuse
+            // 2. Sync Overdue statuses
             await billingService.syncOverdueStatuses({ contaId }, tx);
 
             // 3. Evaluate each subscription
@@ -75,32 +71,19 @@ export const billingService = {
                 }
             }
 
-            // 4. Execute Updates (passing tx to reuse the transaction)
-            const txStartTime = performance.now();
-            const result = await executeBillingTransactionWithTx(
+            // 4. Execute updates
+            return await executeBillingTransactionWithTx(
                 tx,
                 cobrancasParaCriar,
                 assinaturasParaCancelar,
                 assinaturasParaSuspender,
                 assinaturasTyped
             );
-
-            const txDuration = performance.now() - txStartTime;
-            if (txDuration > 2000) {
-                console.warn(`[PERF_CAUTION] Transação de renovação (billing) demorou ${txDuration.toFixed(2)}ms para ${assinaturasAtivas.length} assinaturas.`);
-            } else {
-                console.log(`[PERF_INFO] Transação de renovação (billing) concluída em ${txDuration.toFixed(2)}ms.`);
-            }
-
-            return result;
-        }, {
-            timeout: 30000 // Increase timeout for bulk processing
-        });
+        }, { timeout: 30000 });
     },
 
     /**
      * Sincroniza o status das cobranças pendentes, marcando-as como "atrasado" se já passaram do vencimento.
-     * Sendo executado separadamente, garante que os dados do banco estejam consistentes para as dashboards.
      */
     syncOverdueStatuses: async (filters?: { contaId?: number, participanteUserId?: number }, txOrPrisma?: any) => {
         const client = txOrPrisma || prisma;
@@ -112,9 +95,7 @@ export const billingService = {
         };
 
         if (filters?.contaId || filters?.participanteUserId) {
-            whereClause.assinatura = {
-                participante: {}
-            };
+            whereClause.assinatura = { participante: {} };
             if (filters.contaId) whereClause.assinatura.participante.contaId = filters.contaId;
             if (filters.participanteUserId) whereClause.assinatura.participante.userId = filters.participanteUserId;
         }
@@ -125,7 +106,7 @@ export const billingService = {
         });
 
         if (stats.count > 0) {
-            console.log(`[BILLING] Sincronização: ${stats.count} cobranças marcadas como atrasadas ${filters?.contaId ? `(Conta ${filters.contaId})` : '(Global)'}.`);
+            console.log(`[BILLING] Sincronização: ${stats.count} faturas marcadas como atrasadas.`);
         }
 
         return stats.count;
@@ -133,7 +114,6 @@ export const billingService = {
 
     /**
      * Updates the value of all pending charges when a subscription price changes.
-     * This ensures the "next cycle" and current pending payments are correct.
      */
     ajustarPrecosPendentes: async (tx: any, params: {
         streamingId?: number,
@@ -145,9 +125,7 @@ export const billingService = {
 
         const where: any = {
             status: "pendente",
-            assinatura: {
-                streaming: { contaId }
-            }
+            assinatura: { streaming: { contaId } }
         };
 
         if (streamingId) where.assinatura.streamingId = streamingId;
@@ -155,11 +133,7 @@ export const billingService = {
 
         const pendingCharges = await tx.cobranca.findMany({
             where,
-            include: {
-                assinatura: {
-                    select: { frequencia: true }
-                }
-            }
+            include: { assinatura: { select: { frequencia: true } } }
         });
 
         for (const charge of pendingCharges) {
@@ -184,21 +158,15 @@ export const billingService = {
     }) => {
         const { assinatura, cobranca, contaId, agora } = params;
 
-        // Criteria: (Suspended OR Pendente) AND charge covers the current date
         const isSuspendedOrPendente = assinatura.status === "suspensa" || assinatura.status === "pendente";
         const coversCurrentDate = agora >= cobranca.periodoInicio && agora <= cobranca.periodoFim;
 
         if (isSuspendedOrPendente && coversCurrentDate) {
             await tx.assinatura.update({
                 where: { id: assinatura.id },
-                data: {
-                    status: "ativa",
-                    dataSuspensao: null,
-                    motivoSuspensao: null
-                }
+                data: { status: "ativa", dataSuspensao: null, motivoSuspensao: null }
             });
 
-            // Re-activation notification (Broadcast to Admins)
             await tx.notificacao.create({
                 data: {
                     contaId,
@@ -219,74 +187,38 @@ export const billingService = {
     },
 
     /**
-     * Helper to prepare and create the initial charge for a new subscription.
+     * @deprecated Use chargeFactory.createInitialChargeData
      */
-    gerarCobrancaInicial: async (tx: any, params: {
-        assinaturaId: number,
-        valorMensal: number,
-        frequencia: any,
-        dataInicio: Date,
-        pago: boolean,
-        diasVencimento?: number[]
-    }) => {
-        const { assinaturaId, valorMensal, frequencia, dataInicio, pago, diasVencimento } = params;
-
-        const isFixarVencimento = diasVencimento && diasVencimento.length > 0;
-
-        const dataVencimento = isFixarVencimento
-            ? escolherProximoDiaVencimento(diasVencimento, dataInicio)
-            : calcularDataVencimentoPadrao(new Date());
-
-        const periodoFim = isFixarVencimento
-            ? dataVencimento
-            : calcularProximoVencimento(dataInicio, frequencia, dataInicio);
-
-        const valorCobranca = isFixarVencimento
-            ? calcularValorProRata(valorMensal, dataInicio, dataVencimento)
-            : calcularValorPeriodo(valorMensal, frequencia);
-
-        return await tx.cobranca.create({
-            data: {
-                assinaturaId,
-                valor: valorCobranca,
-                periodoInicio: dataInicio,
-                periodoFim,
-                status: pago ? "pago" : "pendente",
-                dataPagamento: pago ? new Date() : null,
-                dataVencimento
-            }
-        });
+    gerarCobrancaInicial: async (tx: any, params: any) => {
+        const data = chargeFactory.createInitialChargeData(params);
+        return await tx.cobranca.create({ data: data as any });
     },
 
     /**
-     * Cancela os Lotes de Pagamento que expiraram sem pagamento/aprovação.
-     * Libera as faturas (cobrancas) de volta ao status livre.
+     * @deprecated Use chargeFactory.createRetroactiveChargesData
+     */
+    gerarCobrancasRetroativas: async (tx: any, params: any) => {
+        const charges = chargeFactory.createRetroactiveChargesData(params);
+        return await tx.cobranca.createMany({ data: charges as any });
+    },
+
+    /**
+     * Cancela os Lotes de Pagamento que expiraram.
      */
     cancelarLotesExpirados: async () => {
         const agora = new Date();
         return await prisma.$transaction(async (tx) => {
             const lotesExpirados = await tx.lotePagamento.findMany({
-                where: {
-                    status: "pendente",
-                    expiresAt: { lt: agora }
-                }
+                where: { status: "pendente", expiresAt: { lt: agora } }
             });
 
             if (lotesExpirados.length === 0) return { cancelados: 0 };
 
             for (const lote of lotesExpirados) {
-                await tx.lotePagamento.update({
-                    where: { id: lote.id },
-                    data: { status: "cancelado" }
-                });
-
-                // Liberta as cobranças vinculadas
+                await tx.lotePagamento.update({ where: { id: lote.id }, data: { status: "cancelado" } });
                 await tx.cobranca.updateMany({
                     where: { lotePagamentoId: lote.id },
-                    data: {
-                        lotePagamentoId: null,
-                        status: "pendente"
-                    }
+                    data: { lotePagamentoId: null, status: "pendente" }
                 });
             }
 
@@ -297,100 +229,67 @@ export const billingService = {
 
 // --- Helper Functions (SOLID) ---
 
-/**
- * Main switch-board for subscription decisions
- */
 function evaluateSubscriptionRenewal(assinatura: SubscriptionWithCharges, agora: Date): BillingDecision {
     const ultimaCobranca = assinatura.cobrancas[0];
     if (!ultimaCobranca) return { action: 'NONE' };
 
-    // 1. Check for specific exit conditions (Cancellations)
     if (assinatura.dataCancelamento) {
         return checkScheduledCancellation(ultimaCobranca, agora);
     }
 
-    // 2. Check for overdue issues (Inadimplência)
     const inadimplenciaDecision = checkInadimplencia(assinatura, agora);
-    if (inadimplenciaDecision.action !== 'NONE') {
-        return inadimplenciaDecision;
-    }
+    if (inadimplenciaDecision.action !== 'NONE') return inadimplenciaDecision;
 
-    // 3. Check if it's time to generate a new charge (Renewal)
     return checkRenewalOpportunity(assinatura, ultimaCobranca, agora);
 }
 
-/**
- * SRP: Decide if subscription should be cancelled today based on end of paid period
- */
 function checkScheduledCancellation(ultimaCobranca: any, agora: Date): BillingDecision {
-    if (isBefore(ultimaCobranca.periodoFim, agora)) {
-        return { action: 'CANCEL_SCHEDULED' };
-    }
+    if (isBefore(ultimaCobranca.periodoFim, agora)) return { action: 'CANCEL_SCHEDULED' };
     return { action: 'NONE' };
 }
 
-/**
- * SRP: Decide if subscription should be suspended due to debt (Anti-Infinite Debt)
- */
 function checkInadimplencia(assinatura: SubscriptionWithCharges, agora: Date): BillingDecision {
     const cobrancasVencidas = assinatura.cobrancas.filter(c =>
         (c.status === "pendente" || c.status === "atrasado") && isBefore(c.dataVencimento, agora)
     );
 
     if (cobrancasVencidas.length > 0) {
-        // Sort to find the oldest one
         const maisAntigaVencida = [...cobrancasVencidas].sort((a, b) =>
             a.dataVencimento.getTime() - b.dataVencimento.getTime()
         )[0];
 
-        // Grace period: Suspend after 3 days of ACTUAL overdue (from dataVencimento)
         if (differenceInDays(agora, maisAntigaVencida.dataVencimento) >= 3) {
             return { action: 'SUSPEND' };
         }
-
-        // Within grace period: Wait, don't generate new charges
         return { action: 'NONE' };
     }
 
     return { action: 'NONE' };
 }
 
-/**
- * SRP: Decide if it's time to create a new charge for the next cycle
- */
 function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobranca: any, agora: Date): BillingDecision {
     const diasParaFimPeriodo = differenceInDays(ultimaCobranca.periodoFim, agora);
 
-    // Renew 5 days before the PREVIOUS period ends
     if (diasParaFimPeriodo <= 5) {
-        const periodoInicio = ultimaCobranca.periodoFim;
-        const periodoFim = calcularProximoVencimento(periodoInicio, assinatura.frequencia, assinatura.dataInicio);
-        const valor = calcularValorPeriodo(assinatura.valor, assinatura.frequencia);
+        const chargeData = chargeFactory.createRenewalChargeData({
+            assinaturaId: assinatura.id,
+            valorMensal: assinatura.valor,
+            frequencia: assinatura.frequencia,
+            periodoInicio: ultimaCobranca.periodoFim,
+            dataInicioAssinatura: assinatura.dataInicio,
+            diasVencimento: assinatura.participante.conta?.diasVencimento || [],
+            referenciaVencimento: agora
+        });
 
-        const diasVencimento = assinatura.participante.conta?.diasVencimento || [];
-        const nextDataVencimento = diasVencimento.length > 0
-            ? escolherProximoDiaVencimento(diasVencimento, agora)
-            : calcularDataVencimentoPadrao(agora);
-
-        return {
-            action: 'CREATE_CHARGE',
-            data: {
-                assinaturaId: assinatura.id,
-                valor,
-                periodoInicio,
-                periodoFim,
-                dataVencimento: nextDataVencimento
-            }
-        };
+        return { action: 'CREATE_CHARGE', data: chargeData as any };
     }
 
     return { action: 'NONE' };
 }
 
-// Refactored to accept transaction object
 async function executeBillingTransactionWithTx(
     tx: any,
-    cobrancas: ChargeCreationData[],
+    cobrancas: any[],
     cancelamentos: number[],
     suspensoes: number[],
     assinaturasSource: SubscriptionWithCharges[]
@@ -399,64 +298,38 @@ async function executeBillingTransactionWithTx(
     let canceladas = 0;
     let suspensas = 0;
 
-    // 1. Process Suspensions (Higher priority to stop access)
-    if (suspensoes.length > 0) {
-        for (const id of suspensoes) {
-            await tx.assinatura.update({
-                where: { id },
+    // 1. Process Suspensions
+    for (const id of suspensoes) {
+        const ass = assinaturasSource.find(a => a.id === id);
+        if (!ass) continue;
+
+        await tx.assinatura.update({
+            where: { id },
+            data: { status: "suspensa", motivoSuspensao: "Inadimplência (+3 dias)", dataSuspensao: new Date() }
+        });
+
+        if (ass.participante.userId) {
+            await tx.notificacao.create({
                 data: {
-                    status: "suspensa",
-                    motivoSuspensao: "Inadimplência (Faturas pendentes há mais de 3 dias)",
-                    dataSuspensao: new Date()
+                    contaId: ass.participante.contaId,
+                    usuarioId: ass.participante.userId,
+                    tipo: "assinatura_suspensa",
+                    titulo: "Sua Assinatura foi Suspensa",
+                    descricao: `Sua assinatura foi suspensa por falta de pagamento.`,
+                    entidadeId: id,
                 }
             });
-
-            const ass = assinaturasSource.find(a => a.id === id);
-            if (ass) {
-                // 1. Notificar Usuário (Direct if linked)
-                if (ass.participante.userId) {
-                    await tx.notificacao.create({
-                        data: {
-                            contaId: ass.participante.contaId,
-                            usuarioId: ass.participante.userId,
-                            tipo: "assinatura_suspensa",
-                            titulo: "Sua Assinatura foi Suspensa",
-                            descricao: `Sua assinatura do serviço foi suspensa por falta de pagamento.`,
-                            entidadeId: id,
-                        }
-                    });
-                }
-
-                // 2. Notificar Admins (Broadcast)
-                await tx.notificacao.create({
-                    data: {
-                        contaId: ass.participante.contaId,
-                        usuarioId: null,
-                        tipo: "assinatura_suspensa",
-                        titulo: "Assinatura Suspensa",
-                        descricao: `A assinatura de ${ass.participante.nome} foi suspensa por inadimplência.`,
-                        entidadeId: id,
-                    }
-                });
-            }
-            suspensas++;
         }
+        suspensas++;
     }
 
     // 2. Process Charges
     for (const data of cobrancas) {
-        // Idempotency check: Ensure no charge exists for this subscription starting on this date
         const existingCharge = await tx.cobranca.findFirst({
-            where: {
-                assinaturaId: data.assinaturaId,
-                periodoInicio: data.periodoInicio
-            }
+            where: { assinaturaId: data.assinaturaId, periodoInicio: data.periodoInicio }
         });
 
-        if (existingCharge) {
-            console.warn(`[BILLING] Skipping duplicate charge for subscription ${data.assinaturaId} (Start: ${data.periodoInicio})`);
-            continue;
-        }
+        if (existingCharge) continue;
 
         const assinatura = assinaturasSource.find(a => a.id === data.assinaturaId);
         const shouldAutoPay = assinatura?.cobrancaAutomaticaPaga ?? false;
@@ -466,50 +339,31 @@ async function executeBillingTransactionWithTx(
                 ...data,
                 status: shouldAutoPay ? "pago" : "pendente",
                 dataPagamento: shouldAutoPay ? new Date() : null,
-                dataVencimento: data.dataVencimento
             }
         });
         renovadas++;
     }
 
     // 3. Process Cancellations
-    if (cancelamentos.length > 0) {
-        for (const id of cancelamentos) {
-            await tx.assinatura.update({
-                where: { id },
-                data: { status: "cancelada" }
-            });
+    for (const id of cancelamentos) {
+        const ass = assinaturasSource.find(a => a.id === id);
+        if (!ass) continue;
 
-            const ass = assinaturasSource.find(a => a.id === id);
-            if (ass) {
-                // 1. Notificar Usuário (Direct if linked)
-                if (ass.participante.userId) {
-                    await tx.notificacao.create({
-                        data: {
-                            contaId: ass.participante.contaId,
-                            usuarioId: ass.participante.userId,
-                            tipo: "assinatura_cancelada",
-                            titulo: "Assinatura Encerrada",
-                            descricao: `Seu período pago terminou e o acesso ao serviço foi encerrado.`,
-                            entidadeId: id,
-                        }
-                    });
+        await tx.assinatura.update({ where: { id }, data: { status: "cancelada" } });
+
+        if (ass.participante.userId) {
+            await tx.notificacao.create({
+                data: {
+                    contaId: ass.participante.contaId,
+                    usuarioId: ass.participante.userId,
+                    tipo: "assinatura_cancelada",
+                    titulo: "Assinatura Encerrada",
+                    descricao: `Seu período pago terminou e o acesso foi encerrado.`,
+                    entidadeId: id,
                 }
-
-                // 2. Notificar Admins (Broadcast)
-                await tx.notificacao.create({
-                    data: {
-                        contaId: ass.participante.contaId,
-                        usuarioId: null,
-                        tipo: "assinatura_cancelada",
-                        titulo: "Assinatura Encerrada",
-                        descricao: `O período pago da assinatura de ${ass.participante.nome} terminou e o acesso foi revogado.`,
-                        entidadeId: id,
-                    }
-                });
-            }
-            canceladas++;
+            });
         }
+        canceladas++;
     }
 
     return { renovadas, canceladas, suspensas, totalProcessado: assinaturasSource.length };

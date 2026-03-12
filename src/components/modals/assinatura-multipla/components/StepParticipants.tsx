@@ -1,132 +1,113 @@
 "use client";
 
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Search, Check, Users, X } from "lucide-react";
 import { ParticipanteOption } from "../types";
 import { ParticipantSelectionItem } from "./ParticipantSelectionItem";
+import { useDebounce } from "@/hooks/useDebounce";
+
+import { StreamingOption } from "../types";
 
 interface StepParticipantsProps {
     participantes: ParticipanteOption[];
     selectedIds: Set<number>;
-    quantities: Map<number, number>;
-    onToggle: (id: number) => void;
-    onQuantityChange: (id: number, delta: number) => void;
-    onSelectAll: () => void;
+    selectedStreamings: StreamingOption[];
+    participantStreamings: Map<number, Set<number>>;
+    onToggleStreaming: (participantId: number, streamingId: number) => void;
     searchTerm: string;
     onSearchChange: (val: string) => void;
-    capacityInfo: { isOverloaded: boolean; minSlots: number; showWarning: boolean };
+    capacityInfo: { isOverloaded: boolean; showWarning: boolean };
+    preSelectedId?: string;
 }
 
 export function StepParticipants({
     participantes,
     selectedIds,
-    quantities,
-    onToggle,
-    onQuantityChange,
-    onSelectAll,
+    selectedStreamings,
+    participantStreamings,
+    onToggleStreaming,
     searchTerm,
     onSearchChange,
-    capacityInfo
+    capacityInfo,
+    preSelectedId
 }: StepParticipantsProps) {
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
     const filtered = useMemo(() => {
-        if (!searchTerm) return participantes;
+        if (!debouncedSearchTerm) return participantes;
         return participantes.filter(p =>
-            p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.whatsappNumero.includes(searchTerm)
+            p.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+            p.whatsappNumero.includes(debouncedSearchTerm)
         );
-    }, [participantes, searchTerm]);
+    }, [participantes, debouncedSearchTerm]);
 
-    const isAllFilteredSelected = filtered.length > 0 && filtered.every(p => selectedIds.has(p.id));
+    const totalVagas = useMemo(() => {
+        let sum = 0;
+        participantStreamings.forEach(subs => sum += subs.size);
+        return sum;
+    }, [participantStreamings]);
 
-    const totalVagas = useMemo(() => Array.from(quantities.values()).reduce((acc, qty) => acc + qty, 0), [quantities]);
 
     return (
         <div className="space-y-4 flex flex-col">
             <div>
                 <h3 className="text-lg font-bold text-gray-900 leading-none">Selecione os Participantes</h3>
                 <p className="text-xs text-gray-500 mt-2">
-                    Escolha quem fará parte destas assinaturas. O sistema respeita automaticamente a disponibilidade dos streamings.
+                    Escolha quais serviços cada participante assinará, marcando na lista abaixo.
                 </p>
             </div>
 
-            <div className="flex flex-col flex-1 p-3 gap-3 bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner">
+            <div className={`flex flex-col flex-1 p-3 gap-3 bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner`}>
                 {/* Toolbar */}
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center bg-white/40 p-1 rounded-2xl backdrop-blur-sm border border-white/50 shadow-sm">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400/80" size={14} />
                         <input
                             type="text"
                             placeholder="Buscar por nome ou WhatsApp..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white shadow-sm"
+                            className="w-full pl-9 pr-3 py-2.5 text-xs border border-gray-100/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/30 transition-all bg-white shadow-sm font-medium"
                         />
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1.5 rounded-lg ${selectedIds.size > 0 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
-                            {totalVagas} {totalVagas === 1 ? 'vaga' : 'vagas'} {totalVagas === 1 ? 'selecionada' : 'selecionadas'}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={onSelectAll}
-                            className={`p-1.5 rounded-lg border transition-all ${isAllFilteredSelected ? 'bg-primary border-primary text-white' : 'bg-white border-gray-200 text-gray-400 hover:border-primary hover:text-primary'}`}
-                            title={isAllFilteredSelected ? "Desmarcar Filtrados" : "Selecionar Filtrados"}
-                        >
-                            <Check size={16} />
-                        </button>
-                    </div>
+                    <span className={cn(
+                        "text-[10px] uppercase font-extrabold tracking-wider px-3 py-2 rounded-xl tabular-nums shadow-sm transition-all duration-300",
+                        totalVagas > 0 ? 'bg-primary text-white shadow-primary/20' : 'bg-white text-gray-400 border border-gray-100'
+                    )}>
+                        {totalVagas} {totalVagas === 1 ? 'assinatura' : 'assinaturas'}
+                    </span>
                 </div>
 
                 {/* Capacity Counter/Warning */}
-                {/* Capacity Counter/Warning */}
                 {capacityInfo.showWarning && (() => {
-                    const { isOverloaded, minSlots } = capacityInfo;
-
-                    let config = {
-                        classes: "bg-blue-50 border-blue-200 text-blue-700 shadow-sm",
-                        icon: <Users size={14} />,
-                        title: "Vagas Disponíveis:",
-                        message: `Você ainda pode adicionar até ${minSlots} ${minSlots === 1 ? 'membro' : 'membros'}.`
-                    };
+                    const { isOverloaded } = capacityInfo;
 
                     if (isOverloaded) {
-                        config = {
-                            classes: "bg-red-50 border-red-200 text-red-700",
-                            icon: <X size={14} />,
-                            title: "Limite Excedido:",
-                            message: "A quantidade de membros é maior que as vagas disponíveis em alguns serviços."
-                        };
-                    } else if (minSlots === 0) {
-                        config = {
-                            classes: "bg-amber-50 border-amber-200 text-amber-700",
-                            icon: <Users size={14} />,
-                            title: "Limite Atingido:",
-                            message: "Não há mais vagas disponíveis nos streamings selecionados."
-                        };
-                    }
-
-                    return (
-                        <div className={`text-xs px-3 py-2.5 rounded-xl border flex items-start gap-2 animate-in slide-in-from-top-1 transition-colors duration-300 ${config.classes}`}>
-                            <div className="mt-0.5 shrink-0">{config.icon}</div>
-                            <div className="flex-1 leading-tight">
-                                <span className="font-black uppercase tracking-tighter mr-1.5">{config.title}</span>
-                                <span className="font-medium">{config.message}</span>
+                        return (
+                            <div className="text-[11px] px-4 py-3 rounded-2xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-1 transition-all duration-500 bg-red-50/50 border-red-200 text-red-700 animate-pulse">
+                                <div className="shrink-0 p-1.5 bg-white rounded-lg shadow-sm">
+                                    <X size={14} className="text-red-500" />
+                                </div>
+                                <div className="flex-1 leading-tight">
+                                    <span className="font-extrabold uppercase tracking-tight mr-2">Overbooking:</span>
+                                    <span className="font-bold opacity-80">Reduza a quantidade de vagas para prosseguir.</span>
+                                </div>
                             </div>
-                        </div>
-                    );
+                        );
+                    }
+                    return null;
                 })()}
 
                 {/* List */}
-                <div className="flex-1 space-y-1.5 pr-1">
+                <div className="flex-1 space-y-2 pr-1 overflow-y-auto max-h-[500px]">
                     {filtered.map(p => (
                         <ParticipantSelectionItem
                             key={p.id}
                             p={p}
-                            isSelected={selectedIds.has(p.id)}
-                            qty={quantities.get(p.id) || 1}
-                            onToggle={onToggle}
-                            onQuantityChange={onQuantityChange}
-                            canAddMore={capacityInfo.minSlots > 0}
+                            selectedStreamings={selectedStreamings}
+                            participantStreamings={participantStreamings}
+                            onToggleStreaming={onToggleStreaming}
                         />
                     ))}
 

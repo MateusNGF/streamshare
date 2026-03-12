@@ -1,0 +1,68 @@
+---
+title: Migração e Histórico
+description: Como migrar assinaturas existentes e gerenciar cobranças retroativas no StreamShare.
+---
+
+# Migração e Histórico
+
+Ao trazer participantes que já utilizam seus serviços para o StreamShare, você pode precisar registrar cobranças que ocorreram no passado ou marcar o ciclo atual como já pago (caso tenha recebido por fora).
+
+## Cenários Comuns
+
+### 1. Migração de Ciclo Atual
+Se você acabou de receber o pagamento de um participante via PIX e está cadastrando-o agora no sistema, você não quer que uma nova cobrança fique "Pendente".
+
+**Como fazer:**
+No momento da criação, ative a opção **"Migração — Ciclo Atual Pago"**. 
+- O sistema criará a primeira cobrança já com o status **Pago**.
+- A data de pagamento será registrada como o momento da criação.
+
+### 2. Registro de Histórico (Retroatividade)
+Se você deseja manter o histórico de meses anteriores no sistema para ter relatórios precisos, você pode alterar a **Data de Início** para o passado.
+
+**O que acontece:**
+1. O sistema identifica que a data está no passado.
+2. Ele calcula quantos meses se passaram de lá até hoje.
+3. Exibe uma lista de **Ciclos Retroativos** diretamente no modal antes de você salvar.
+4. Você pode marcar individualmente quais desses ciclos já foram pagos (provavelmente todos, se for apenas para histórico).
+
+> [!TIP]
+> No modal de **Assinatura Individual**, a lista aparece logo abaixo do campo de data assim que você seleciona um dia no passado. No modal de **Assinatura em Lote**, exibimos um aviso de impacto no resumo final.
+
+> [!IMPORTANT]
+> Cobranças retroativas marcadas como **Pagas** não geram notificações para o participante. Cobranças retroativas deixadas como **Pendentes** aparecerão no painel do participante como faturas em aberto.
+
+## Precisão de Datas e Fuso Horário
+
+O StreamShare utiliza processamento de data local para garantir que o dia que você seleciona no calendário seja exatamente o dia registrado no sistema, evitando erros de "um dia de diferença" comuns em sistemas web.
+
+### Dias de Vencimento Fixos
+Se você possui dias de vencimento configurados na sua conta (ex: todo dia 10 e 20):
+1. **Primeiro Ciclo:** O sistema calcula um valor **proporcional (pro-rata)** desde a data de início até o primeiro dia de vencimento disponível.
+2. **Ciclos Seguintes:** Após o primeiro vencimento, as faturas seguem ciclos cheios (mensais, trimestrais, etc.) ancorados no dia de vencimento escolhido, garantindo previsibilidade financeira.
+
+## Opções de Automação
+
+### Fluxo Futuro — Sempre Pago
+Esta opção é ideal para participantes "VIP" ou amigos para quem você não deseja que o sistema controle o financeiro ativamente, ou se você recebe sempre por fora e apenas usa o StreamShare para gestão de vagas.
+
+- Quando ativada, **todas as renovações futuras** (mensais, trimestrais, etc) serão criadas automaticamente como **Pagas**.
+- O sistema não marcará essas faturas como atrasadas.
+
+## Resumo de Consequências por Data
+
+| Data de Início | Impacto no Sistema | Recomendação |
+| :--- | :--- | :--- |
+| **Passado** | Gera faturas retroativas para preencher o histórico. | Marque como pagas na lista se já recebeu. |
+| **Hoje** | Gera a primeira fatura para vencimento imediato ou pro-rata. | Use "Ciclo Atual Pago" se já recebeu o PIX. |
+| **Futuro** | Agenda a primeira cobrança para a data escolhida. | Use para novas vagas que só começarão a cobrar depois. |
+
+---
+
+## Perguntas Frequentes
+
+### Posso alterar a data de início após criar a assinatura?
+Atualmente, a data de início e a geração de retroativos só ocorrem no momento da **criação**. Para ajustar históricos antigos, você precisaria recriar a assinatura ou aguardar atualizações futuras do sistema.
+
+### O participante recebe e-mail das cobranças retroativas?
+Não. O sistema silencia notificações de faturas criadas retroativamente para evitar spam no e-mail do participante sobre meses que já passaram.

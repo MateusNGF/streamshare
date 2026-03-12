@@ -12,16 +12,14 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps) {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
-    const showToast = useCallback((type: ToastType, message: string, duration: number = 5000) => {
+    const showToast = useCallback((type: ToastType, message: string, duration: number = 5000, action?: { label: string, onClick: () => void }) => {
         // Deduplication: Check if a toast with the same message already exists
         setToasts((prev) => {
             const exists = prev.some(t => t.message === message && t.type === type);
             if (exists) return prev;
 
             const id = Math.random().toString(36).substring(2, 9);
-            const newToast: Toast = { id, type, message, duration };
-
-
+            const newToast: Toast = { id, type, message, duration, action };
 
             return [...prev, newToast];
         });

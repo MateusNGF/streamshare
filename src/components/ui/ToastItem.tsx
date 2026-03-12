@@ -81,9 +81,22 @@ export function ToastItem({ toast, onClose }: ToastItemProps) {
         >
             <Icon className={`flex-shrink-0 w-5 h-5 mt-0.5 ${config.iconColor}`} />
 
-            <p className={`flex-1 text-sm font-medium ${config.textColor}`}>
-                {toast.message}
-            </p>
+            <div className="flex-1 space-y-1">
+                <p className={`text-sm font-medium ${config.textColor}`}>
+                    {toast.message}
+                </p>
+                {toast.action && (
+                    <button
+                        onClick={() => {
+                            toast.action?.onClick();
+                            handleClose();
+                        }}
+                        className={`text-xs font-black uppercase tracking-widest underline decoration-2 underline-offset-4 hover:opacity-70 transition-opacity ${config.textColor}`}
+                    >
+                        {toast.action.label}
+                    </button>
+                )}
+            </div>
 
             <button
                 onClick={handleClose}

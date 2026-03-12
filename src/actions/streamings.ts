@@ -715,10 +715,10 @@ export async function deleteStreaming(id: number) {
     }
 }
 
-export async function generateStreamingShareLink(streamingId: number, expiration: string) {
+export async function generateStreamingShareLink(streamingId: number, expiration: string, singleUse: boolean = true) {
     try {
         const { contaId, userId } = await getContext();
-        const data = await StreamingService.generateShareLink(streamingId, expiration, contaId, userId);
+        const data = await StreamingService.generateShareLink(streamingId, expiration, contaId, userId, singleUse);
         return { success: true, data };
     } catch (error: any) {
         console.error("[GENERATE_SHARE_LINK_ERROR]", error);

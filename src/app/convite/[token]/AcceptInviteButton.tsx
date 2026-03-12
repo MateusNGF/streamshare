@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/Spinner";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 
 export function AcceptInviteButton({ token, hasWhatsApp }: { token: string; hasWhatsApp: boolean }) {
     const [whatsapp, setWhatsapp] = useState("");
@@ -39,17 +40,13 @@ export function AcceptInviteButton({ token, hasWhatsApp }: { token: string; hasW
     return (
         <div className="space-y-4">
             {!hasWhatsApp && (
-                <div className="text-left space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Seu WhatsApp (Obrigatório)</label>
-                    <input
-                        type="text"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value)}
-                        placeholder="(00) 00000-0000"
-                        className="w-full h-16 rounded-2xl border-gray-100 bg-white shadow-sm hover:border-primary/20 transition-all px-4 font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                    <p className="text-[10px] text-gray-400 ml-1 italic">Necessário para comunicação direta com o Organizador.</p>
-                </div>
+                <PhoneInput
+                    label="Seu WhatsApp (Obrigatório)"
+                    value={whatsapp}
+                    onChange={setWhatsapp}
+                    placeholder="(00) 00000-0000"
+                    disabled={isPending}
+                />
             )}
 
             <button

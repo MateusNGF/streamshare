@@ -23,8 +23,12 @@ import {
     ChevronUp,
     ShieldCheck,
     XCircle,
-    CalendarDays
+    CalendarDays,
+    Calculator
 } from "lucide-react";
+import { getDaysInMonth, differenceInDays } from "date-fns";
+import { CobrancaCalculationDetails } from "@/components/cobrancas/items/CobrancaCalculationDetails";
+
 
 import QRCode from "react-qr-code";
 import { generateStaticPix } from "@/lib/pix-generator";
@@ -117,6 +121,7 @@ function TechnicalDetails({ cobranca, format, handleCopy, copied }: { cobranca: 
         </div>
     );
 }
+
 
 export function DetalhesCobrancaModal({
     isOpen,
@@ -415,7 +420,10 @@ export function DetalhesCobrancaModal({
                     </div>
                 </div>
 
-                {/* 5. DETALHES TÉCNICOS (Accordion) */}
+                {/* 5. ÁREA DE TRANSPARÊNCIA ALGORÍTMICA (SOLID) */}
+                <CobrancaCalculationDetails cobranca={cobranca} format={format} />
+
+                {/* 6. DETALHES TÉCNICOS (Accordion) */}
                 <TechnicalDetails
                     cobranca={cobranca}
                     format={format}

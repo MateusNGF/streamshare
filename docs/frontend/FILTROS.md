@@ -98,3 +98,20 @@ const [filters, setFilters] = useState({
     - No modo Desktop, o limite é rígido a **1 componente** visível fora do modal.
     - No modo Mobile, o comportamento é idêntico.
 - **Tradução Automática**: Se o valor de um select for `"all"`, o componente `SelectValue` exibirá "Todos" automaticamente, evitando que o usuário veja o termo em inglês.
+
+## Acessibilidade e Carga Cognitiva
+
+Filtros devem seguir as seguintes diretrizes para garantir uma experiência inclusiva e fluida:
+
+1.  **Feedback Sensorial (Leitores de Tela)**:
+    *   Sempre envolva a contagem de resultados em uma região `aria-live="polite"`.
+    *   Ao alterar qualquer filtro, o sistema deve anunciar dinamicamente o número de resultados encontrados (ex: "12 resultados encontrados").
+
+2.  **Linguagem do Modelo Mental (Hick's Law)**:
+    *   Evite jargões técnicos ou matemáticos.
+    *   **Faixa de Preço** em vez de "Intervalo de Valor".
+    *   **Streaming** em vez de "Serviço Externo".
+    *   Labels devem ser objetivos e curtos para reduzir a carga cognitiva.
+
+3.  **Redução de Ruído (Paradox of Choice)**:
+    *   Limite a quantidade de filtros visíveis por padrão. Use o Modal de Filtros para opções avançadas ou de baixa frequência.

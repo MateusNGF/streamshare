@@ -111,6 +111,22 @@ Para evitar cobranças duplicadas (ex: Cron rodando 2x, ou clique duplo no botã
 - **Transparência Financeira (Markup)**: A interface deve sempre exibir o "Custo Base" (Valor Integral / Limite de Vagas) para auxiliar o administrador na definição da margem de lucro.
 - **Previsão de Ciclo**: Sempre que a frequência for diferente de 'mensal', a interface deve exibir explicitamente o valor total que será cobrado no ciclo (ex: Valor Mensal de R$ 27,00 em ciclo Trimestral = Cobrança de R$ 81,00).
 
+## 8. Transparência Algorítmica (Pro-rata)
+
+Para reduzir a ansiedade do usuário e evitar chamados de suporte sobre "valores estranhos", implementamos a transparência algorítmica:
+
+- **Exposição de Fórmula**: A interface de detalhes da cobrança deve exibir o cálculo pro-rata (Valor Mensal / Dias no Mês * Dias Cobertos).
+- **Regra de Tolerância**: Faturas com cobertura entre 28 e 31 dias são tratadas como "Mês Cheio" para evitar centavos residuais em meses quase completos.
+- **Explainability**: O sistema deve explicar textualmente o porquê do valor final, garantindo que o usuário entenda a cobrança proporcional.
+
+## 9. Design Fordoador (Undo Flow)
+
+Ações críticas de faturamento seguem o princípio da reversibilidade (Forgiving Design):
+
+- **Buffer de Confirmação**: Ações como "Confirmar Pagamento" possuem um buffer de **5 segundos** antes de serem efetivadas no servidor.
+- **Feedback Imediato (Optimistic UI)**: O sistema assume o sucesso da ação visualmente, mas oferece um botão de **"Desfazer"** no Toast de notificação.
+- **Cancelamento de Timer**: Se o usuário clicar em "Desfazer", a requisição ao servidor é abortada e o estado anterior é restaurado.
+
 ## 7. Validação de UI e Reatividade
 
 - **Inputs Monetários**: Utilizar o componente `CurrencyInput` para garantir máscaras de moeda consistentes.

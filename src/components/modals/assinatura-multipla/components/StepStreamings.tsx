@@ -5,6 +5,9 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { Search, Check } from "lucide-react";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { StreamingOption } from "../types";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Tooltip } from "@/components/ui/Tooltip";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 interface StepStreamingsProps {
     streamings: StreamingOption[];
@@ -12,6 +15,7 @@ interface StepStreamingsProps {
     onToggle: (id: number) => void;
     searchTerm: string;
     onSearchChange: (val: string) => void;
+    onNext?: () => void;
 }
 
 export function StepStreamings({
@@ -19,14 +23,17 @@ export function StepStreamings({
     selectedIds,
     onToggle,
     searchTerm,
-    onSearchChange
+    onSearchChange,
+    onNext
 }: StepStreamingsProps) {
     const { format } = useCurrency();
 
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
     const filtered = useMemo(() => {
-        if (!searchTerm) return streamings;
-        return streamings.filter(s => s.nome.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [streamings, searchTerm]);
+        if (!debouncedSearchTerm) return streamings;
+        return streamings.filter(s => s.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+    }, [streamings, debouncedSearchTerm]);
 
     return (
         <div className="space-y-4">
@@ -60,13 +67,16 @@ export function StepStreamings({
                     const isSelected = selectedIds.has(streaming.id);
                     const isFull = streaming.ocupados >= streaming.limiteParticipantes;
 
-                    return (
+                    const card = (
                         <button
                             key={streaming.id}
                             type="button"
-                            onClick={() => !isFull && onToggle(streaming.id)}
+                            onClick={() => {
+                                if (isFull) return;
+                                onToggle(streaming.id);
+                            }}
                             disabled={isFull}
-                            className={`relative p-4 rounded-2xl border-2 transition-all text-left group ${isSelected
+                            className={`relative p-4 rounded-2xl border-2 transition-all text-left group w-full h-full flex flex-col items-start justify-between ${isSelected
                                 ? 'border-primary bg-primary/5 shadow-md'
                                 : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                                 } ${isFull ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
@@ -77,24 +87,38 @@ export function StepStreamings({
                                     <Check size={14} className="text-white" />
                                 </div>
                             )}
-                            <StreamingLogo
-                                name={streaming.nome}
-                                color={streaming.cor}
-                                iconeUrl={streaming.iconeUrl}
-                                size="lg"
-                                rounded="2xl"
-                                className="shadow-sm group-hover:scale-110 transition-transform"
-                            />
-                            <h4 className="font-bold text-gray-900 text-sm mb-1 mt-2">{streaming.nome}</h4>
-                            <p className="text-xs text-gray-500">
-                                {streaming.ocupados}/{streaming.limiteParticipantes} vagas
-                                {isFull && " • LOTADO"}
-                            </p>
-                            <p className="text-xs font-bold text-primary mt-1">
+                            <div className="flex-1">
+                                <StreamingLogo
+                                    name={streaming.nome}
+                                    color={streaming.cor}
+                                    iconeUrl={streaming.iconeUrl}
+                                    size="lg"
+                                    rounded="2xl"
+                                    className="shadow-sm group-hover:scale-110 transition-transform mb-3"
+                                />
+                                <h4 className="font-bold text-gray-900 text-sm mb-1">{streaming.nome}</h4>
+                                <p className="text-xs text-gray-500">
+                                    {streaming.ocupados}/{streaming.limiteParticipantes} vagas
+                                    {isFull && " • LOTADO"}
+                                </p>
+                            </div>
+                            <p className="text-xs font-bold text-primary mt-3 shrink-0">
                                 {format(streaming.valorIntegral)}
                             </p>
                         </button>
                     );
+
+                    if (isFull) {
+                        return (
+                            <TooltipPrimitive.Provider key={streaming.id}>
+                                <Tooltip content={`Este grupo já atingiu o limite máximo de ${streaming.limiteParticipantes} vagas.`} position="top">
+                                    {card}
+                                </Tooltip>
+                            </TooltipPrimitive.Provider>
+                        );
+                    }
+
+                    return card;
                 })}
             </div>
         </div>

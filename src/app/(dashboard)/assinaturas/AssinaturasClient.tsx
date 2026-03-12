@@ -1,10 +1,12 @@
 "use client";
 
-import { Plus, Search, Users, Activity, TrendingUp } from "lucide-react";
+import { Plus, Search, Users, Activity, TrendingUp, ChevronDown, Wand2 } from "lucide-react";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useEffect, useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { Button } from "@/components/ui/Button";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPIGrid, KPIGridItem } from "@/components/dashboard/KPIGrid";
 import { FilterConfig } from "@/components/ui/GenericFilter";
@@ -61,18 +63,17 @@ export default function AssinaturasClient({
     plano,
     error
 }: AssinaturasClientProps) {
+    const router = useRouter();
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
     const {
-        isMultipleModalOpen, setIsMultipleModalOpen,
         cancelModalOpen, setCancelModalOpen,
         detailsModalOpen, setDetailsModalOpen,
         selectedAssinatura, setSelectedAssinatura,
-        loading, cancelling,
+        cancelling,
         filters: filterValues,
         handleFilterChange,
         handleClearFilters,
-        handleCreateMultiple,
         handleCancelSubmit,
         streamingsWithOcupados
     } = useAssinaturasActions(streamings);
@@ -146,14 +147,28 @@ export default function AssinaturasClient({
                 title="Assinaturas"
                 description="Gerencie as assinaturas dos participantes e monitore a receita."
                 action={
-                    <Button
-                        onClick={() => setIsMultipleModalOpen(true)}
-                        className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all"
-                    >
-                        <Plus size={20} />
-                        <span className="hidden sm:inline">Nova Assinatura</span>
-                        <span className="sm:hidden">Nova</span>
-                    </Button>
+                    <Dropdown
+                        trigger={
+                            <div className="flex items-center gap-2">
+                                <Plus size={20} />
+                                <span className="hidden sm:inline font-bold">Nova Assinatura</span>
+                                <span className="sm:hidden font-bold">Nova</span>
+                                <ChevronDown size={14} className="opacity-50" />
+                            </div>
+                        }
+                        options={[
+                            {
+                                label: "Individual",
+                                icon: <Plus size={16} />,
+                                onClick: () => router.push("/assinaturas/novo?mode=single")
+                            },
+                            {
+                                label: "Em Lote Wizard",
+                                icon: <Users size={16} />,
+                                onClick: () => router.push("/assinaturas/novo")
+                            }
+                        ]}
+                    />
                 }
             />
 
@@ -266,10 +281,6 @@ export default function AssinaturasClient({
             </div>
 
             <AssinaturasModals
-                isMultipleModalOpen={isMultipleModalOpen}
-                onCloseMultiple={() => setIsMultipleModalOpen(false)}
-                onSaveMultiple={handleCreateMultiple}
-                loading={loading}
                 participantes={participantes}
                 streamingsWithOcupados={streamingsWithOcupados}
                 cancelModalOpen={cancelModalOpen}

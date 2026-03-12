@@ -6,18 +6,23 @@ export interface CreateSubscriptionDTO {
     frequencia: FrequenciaPagamento;
     valor: number;
     dataInicio: string | Date;
-    cobrancaAutomaticaPaga?: boolean;
+    cobrancaAutomaticaPaga?: boolean; // Label: "Cobranças futuras sempre pagas"
+    primeiroCicloJaPago?: boolean; // Label: "Migração — ciclo atual já pago" (Legacy sync)
+    retroactivePaidIndices?: number[]; // @deprecated Use retroactivePaidPeriods
+    retroactivePaidPeriods?: Array<{ streamingId: number; index: number }>;
 }
 
 export interface BulkCreateSubscriptionDTO {
-    participanteIds: number[];
-    assinaturas: Array<{
+    assinaturasDedicadas: Array<{
+        participanteId: number;
         streamingId: number;
         frequencia: FrequenciaPagamento;
         valor: number;
     }>;
     dataInicio: string | Date;
     cobrancaAutomaticaPaga?: boolean;
+    primeiroCicloJaPago?: boolean;
+    retroactivePaidPeriods?: Array<{ streamingId: number; index: number }>;
 }
 
 export interface ChargeCreationData {

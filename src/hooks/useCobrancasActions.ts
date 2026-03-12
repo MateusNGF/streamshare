@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFilterParams } from "@/hooks/useFilterParams";
+import { useCobrancaFilters } from "@/hooks/useCobrancaFilters";
 import { useToast } from "@/hooks/useToast";
 import {
     confirmarPagamento,
@@ -12,24 +12,18 @@ import {
     confirmarLotePagamento,
     enviarWhatsAppEmLote
 } from "@/actions/cobrancas";
-import { sortByStatusPriority } from "@/lib/financeiro-utils";
 
 export function useCobrancasActions(cobrancasIniciais: any[]) {
     const toast = useToast();
     const router = useRouter();
-    // Filters State
-    const { filters, updateFilters } = useFilterParams();
 
-    const filterValues = {
-        searchTerm: filters.search || "",
-        statusFilter: filters.status || "all",
-        streamingFilter: filters.streaming || "all",
-        mesReferencia: filters.mesReferencia || "all",
-        vencimentoRange: filters.vencimento || "",
-        pagamentoRange: filters.pagamento || "",
-        valorRange: filters.valor || "",
-        hasWhatsappFilter: filters.hasWhatsapp || "false"
-    };
+    // Filters & Sorting (SOLID: SRP via hook)
+    const {
+        filters,
+        filteredCobrancas,
+        handleFilterChange,
+        updateFilters
+    } = useCobrancaFilters(cobrancasIniciais);
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -47,60 +41,6 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
     const [activeLote, setActiveLote] = useState<any | null>(null);
     const [batchPixModalOpen, setBatchPixModalOpen] = useState(false);
 
-    const filteredCobrancas = cobrancasIniciais.filter(c => {
-        const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(filterValues.searchTerm.toLowerCase());
-        const matchesStatus = filterValues.statusFilter === "all" || c.status === filterValues.statusFilter;
-        const matchesStreaming = filterValues.streamingFilter === "all" || c.assinatura.streamingId.toString() === filterValues.streamingFilter;
-
-        let matchesMes = true;
-        if (filterValues.mesReferencia !== "all") {
-            const date = new Date(c.dataVencimento);
-            // mesReferencia should be "YYYY-MM"
-            const cobrancaMes = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            matchesMes = cobrancaMes === filterValues.mesReferencia;
-        }
-
-        let matchesVencimento = true;
-        if (filterValues.vencimentoRange) {
-            try {
-                const range = JSON.parse(filterValues.vencimentoRange);
-                const date = new Date(c.dataVencimento);
-                if (range.from && date < new Date(range.from)) matchesVencimento = false;
-                if (range.to && date > new Date(range.to)) matchesVencimento = false;
-            } catch (e) { }
-        }
-
-        let matchesPagamento = true;
-        if (filterValues.pagamentoRange && c.dataPagamento) {
-            try {
-                const range = JSON.parse(filterValues.pagamentoRange);
-                const date = new Date(c.dataPagamento);
-                if (range.from && date < new Date(range.from)) matchesPagamento = false;
-                if (range.to && date > new Date(range.to)) matchesPagamento = false;
-            } catch (e) { }
-        } else if (filterValues.pagamentoRange && !c.dataPagamento) {
-            matchesPagamento = false;
-        }
-
-        let matchesValor = true;
-        if (filterValues.valorRange) {
-            try {
-                const range = JSON.parse(filterValues.valorRange);
-                const valor = Number(c.valor);
-                if (range.min && valor < Number(range.min)) matchesValor = false;
-                if (range.max && valor > Number(range.max)) matchesValor = false;
-            } catch (e) { }
-        }
-
-        let matchesWhatsapp = true;
-        if (filterValues.hasWhatsappFilter === "true") {
-            matchesWhatsapp = !!c.assinatura.participante.whatsappNumero;
-        }
-
-        return matchesSearch && matchesStatus && matchesStreaming && matchesMes && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
-    });
-
-    const sortedCobrancas = sortByStatusPriority(filteredCobrancas);
 
     // Batch Calculations
     const batchTotal = Array.from(selectedIds).reduce((sum, id) => {
@@ -213,24 +153,57 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         setConfirmPaymentModalOpen(true);
     };
 
+    // Undo flow state
+    const [pendingActions, setPendingActions] = useState<Map<number, NodeJS.Timeout>>(new Map());
+
     const executePaymentConfirmation = async (formData?: FormData) => {
         if (!selectedCobrancaId) return;
-        setLoading(true);
-        try {
-            const result = await confirmarPagamento(selectedCobrancaId, formData);
-            if (result.success) {
-                toast.success("Pagamento confirmado com sucesso!");
-                setConfirmPaymentModalOpen(false);
-                router.refresh();
-                setTimeout(() => window.location.reload(), 500);
-            } else if (result.error) {
-                toast.error(result.error);
-            }
-        } catch (error) {
-            toast.error("Erro ao confirmar pagamento");
-        } finally {
-            setLoading(false);
+
+        const id = selectedCobrancaId;
+        setConfirmPaymentModalOpen(false);
+
+        // Se já houver uma ação pendente para este ID, cancela a anterior
+        if (pendingActions.has(id)) {
+            clearTimeout(pendingActions.get(id));
         }
+
+        const timer = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const result = await confirmarPagamento(id, formData);
+                if (result.success) {
+                    toast.success("Pagamento confirmado com sucesso!");
+                    router.refresh();
+                    setTimeout(() => window.location.reload(), 500);
+                } else if (result.error) {
+                    toast.error(result.error);
+                }
+            } catch (error) {
+                toast.error("Erro ao confirmar pagamento");
+            } finally {
+                setLoading(false);
+                setPendingActions(prev => {
+                    const next = new Map(prev);
+                    next.delete(id);
+                    return next;
+                });
+            }
+        }, 5000);
+
+        setPendingActions(prev => new Map(prev).set(id, timer));
+
+        toast.success("Confirmando pagamento...", 5000, {
+            label: "Desfazer",
+            onClick: () => {
+                clearTimeout(timer);
+                setPendingActions(prev => {
+                    const next = new Map(prev);
+                    next.delete(id);
+                    return next;
+                });
+                toast.info("Ação desfeita com sucesso.");
+            }
+        });
     };
 
     const handleCancelarCobranca = (id: number) => {
@@ -276,10 +249,6 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         }
     };
 
-    const handleFilterChange = (key: string, value: string) => {
-        updateFilters({ [key]: value });
-    };
-
     const handleClearFilters = () => {
         router.push('/cobrancas');
     };
@@ -291,7 +260,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
 
     return {
         // States
-        filters: filterValues,
+        filters,
         loading,
         whatsappLoading,
 
@@ -303,7 +272,7 @@ export function useCobrancasActions(cobrancasIniciais: any[]) {
         selectedCobrancaId, setSelectedCobrancaId,
 
         // Calculated
-        filteredCobrancas: sortedCobrancas,
+        filteredCobrancas,
         selectedCobranca: cobrancasIniciais.find(c => c.id === selectedCobrancaId),
 
         // Batch States
