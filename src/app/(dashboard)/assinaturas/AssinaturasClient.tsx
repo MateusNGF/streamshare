@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search, Users, Activity, TrendingUp, ChevronDown, Wand2 } from "lucide-react";
+import { Plus, Search, Users, Activity, TrendingUp, ChevronDown, Wand2, Table as TableIcon, LayoutGrid } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useEffect, useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
@@ -248,7 +248,10 @@ export default function AssinaturasClient({
                     title="Listagem de Assinaturas"
                     className="mb-0"
                     rightElement={
-                        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                        <ViewModeToggle
+                            viewMode={viewMode}
+                            setViewMode={setViewMode}
+                        />
                     }
                 />
                 {!FeatureGuards.isFeatureEnabled(plano, "automatic_billing").enabled && (

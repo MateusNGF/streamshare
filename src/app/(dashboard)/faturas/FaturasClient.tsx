@@ -13,7 +13,7 @@ import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import { useFaturasActions } from "@/hooks/useFaturasActions";
 import { Button } from "@/components/ui/Button";
-import { CreditCard, Loader2, FileText, History, Table as TableIcon, LayoutGrid, BarChart3 } from "lucide-react";
+import { CreditCard, Loader2, FileText, History, Table as TableIcon, BarChart3 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getFaturasAnalytics } from "@/actions/faturas";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -31,10 +31,6 @@ const FaturasTable = dynamic(() => import("@/components/faturas/FaturasTable").t
 
 const LotesTab = dynamic(() => import("@/components/faturas/LotesTab").then(mod => mod.LotesTab), {
     loading: () => <TableSkeleton />
-});
-
-const FaturaCard = dynamic(() => import("@/components/faturas/FaturaCard").then(mod => mod.FaturaCard), {
-    loading: () => <LoadingCard variant="compact" />
 });
 
 const DetalhesCobrancaModal = dynamic(() => import("@/components/modals/DetalhesCobrancaModal").then(mod => mod.DetalhesCobrancaModal));
@@ -172,7 +168,6 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                                         setViewMode={setViewMode}
                                                         options={[
                                                             { id: "table", label: "Tabela", icon: TableIcon },
-                                                            { id: "grid", label: "Cards", icon: LayoutGrid },
                                                             { id: "chart", label: "Análise", icon: BarChart3 },
                                                         ]}
                                                     />
@@ -212,12 +207,6 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                                     </div>
                                                 )}
                                             </div>
-                                        ) : viewMode === "grid" ? (
-                                            <div className="grid grid-cols-1 gap-4">
-                                                {sortedFaturas.map((fatura) => (
-                                                    <FaturaCard key={fatura.id} fatura={fatura} onConfirmPayment={handleViewDetails} onViewDetails={handleViewDetails} />
-                                                ))}
-                                            </div>
                                         ) : (
                                             <FaturasTable
                                                 faturas={sortedFaturas}
@@ -245,7 +234,6 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                                 setViewMode={setViewMode}
                                                 options={[
                                                     { id: "table", label: "Tabela", icon: TableIcon },
-                                                    { id: "grid", label: "Cards", icon: LayoutGrid },
                                                     { id: "chart", label: "Análise", icon: BarChart3 },
                                                 ]}
                                             />

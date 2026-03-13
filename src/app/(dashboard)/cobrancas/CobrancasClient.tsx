@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
 import { useState, useEffect } from "react";
 import { getCobrancasAnalytics } from "@/actions/cobrancas";
-import { Table as TableIcon, LayoutGrid, BarChart3 } from "lucide-react";
+import { Table as TableIcon, BarChart3 } from "lucide-react";
 import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
 import { Button } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
@@ -39,10 +39,6 @@ const KPIFinanceiroCard = dynamic(() => import("@/components/dashboard/KPIFinanc
 
 const CobrancasTable = dynamic(() => import("@/components/cobrancas/CobrancasTable").then(mod => mod.CobrancasTable), {
     loading: () => <TableSkeleton />
-});
-
-const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard").then(mod => mod.CobrancaCard), {
-    loading: () => <LoadingCard variant="compact" />
 });
 
 const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
@@ -332,7 +328,6 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                     setViewMode={setViewMode}
                                                     options={[
                                                         { id: "table", label: "Tabela", icon: TableIcon },
-                                                        { id: "grid", label: "Cards", icon: LayoutGrid },
                                                         { id: "chart", label: "Análise", icon: BarChart3 },
                                                     ]}
                                                 />
@@ -372,26 +367,6 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                             </div>
                                         )}
                                     </div>
-                                ) : viewMode === "grid" ? (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {filteredCobrancas.map((cobranca) => (
-                                            <CobrancaCard
-                                                key={cobranca.id}
-                                                cobranca={cobranca}
-                                                isOverdue={cobranca.status === 'atrasado'}
-                                                formatDate={(date) => new Date(date).toLocaleDateString()}
-                                                formatPeriod={(start, end) => ""}
-                                                onViewDetails={() => {
-                                                    setSelectedCobrancaId(cobranca.id);
-                                                    setDetailsModalOpen(true);
-                                                }}
-                                                onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
-                                                onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
-                                                onCancel={() => handleCancelarCobranca(cobranca.id)}
-                                                onViewQrCode={() => handleViewQrCode(cobranca.id)}
-                                            />
-                                        ))}
-                                    </div>
                                 ) : (
                                     <CobrancasTable
                                         cobrancas={filteredCobrancas}
@@ -428,7 +403,6 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                             setViewMode={setViewMode}
                                             options={[
                                                 { id: "table", label: "Tabela", icon: TableIcon },
-                                                { id: "grid", label: "Cards", icon: LayoutGrid },
                                                 { id: "chart", label: "Análise", icon: BarChart3 },
                                             ]}
                                         />
