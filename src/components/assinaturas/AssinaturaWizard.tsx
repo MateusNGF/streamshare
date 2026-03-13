@@ -74,7 +74,7 @@ export function AssinaturaWizard({ participantes, streamings, initialDiasVencime
     );
 
     const renderFooter = () => (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 p-4 lg:p-6 z-50">
+        <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 p-4 lg:p-6 z-[100]">
             <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-4">
                 {/* Step Indicators */}
                 <div className="flex gap-2.5">

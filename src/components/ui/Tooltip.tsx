@@ -26,7 +26,7 @@ export function Tooltip({
                     side={position}
                     sideOffset={8}
                     className="
-                        z-50 px-3 py-2 bg-gray-950 text-white 
+                        z-[300] px-3 py-2 bg-gray-950 text-white 
                         text-[11px] font-semibold rounded-xl shadow-2xl border border-white/10
                         max-w-[240px] leading-relaxed
                         animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 

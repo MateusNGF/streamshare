@@ -318,7 +318,7 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
             {/* =========================================================
                 DESKTOP LAYOUT (Permanece igual)
             ========================================================= */}
-            <div className="hidden lg:flex w-64 bg-white border-r h-screen flex-col z-[42] shadow-none">
+            <div className="hidden lg:flex w-64 bg-white border-r h-screen flex-col z-[100] shadow-none">
                 <div className="p-6 flex items-center justify-between">
                     <Link href={homeHref} className="flex items-center gap-3 group/logo cursor-pointer">
                         <Image

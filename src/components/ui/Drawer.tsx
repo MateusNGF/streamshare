@@ -40,7 +40,7 @@ export function Drawer({ isOpen, onClose, title, children, footer, side = "right
         : "inset-x-0 bottom-0 h-[90vh] w-full border-t rounded-t-2xl slide-in-from-bottom-full";
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-[200] flex justify-end">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"

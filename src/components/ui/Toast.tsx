@@ -67,7 +67,7 @@ export function Toast({
     return (
         <div
             className={`
-                fixed top-4 right-4 z-50 max-w-md w-full md:w-auto
+                fixed top-4 right-4 z-[400] max-w-md w-full md:w-auto
                 ${styles.bg} ${styles.border} ${styles.text}
                 border rounded-xl px-4 py-3 shadow-lg
                 flex items-center gap-3
