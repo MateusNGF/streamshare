@@ -301,6 +301,7 @@ model Streaming {
   deletedAt               DateTime?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
+  version                 Int       @default(1)
 
   conta       Conta                 @relation(fields: [contaId], references: [id])
   catalogo    StreamingCatalogo     @relation(fields: [streamingCatalogoId], references: [id])

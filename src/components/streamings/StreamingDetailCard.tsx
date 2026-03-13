@@ -1,4 +1,4 @@
-import { Users, Calendar, DollarSign, Edit, Trash2, Globe, Lock, Link, Copy, Check } from "lucide-react";
+import { Users, Calendar, DollarSign, Edit, Trash2, Globe, Lock, Link, Copy, Check, ShieldCheck } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -19,6 +19,7 @@ interface StreamingDetailCardProps {
     frequency: string;
     isPublico?: boolean;
     publicToken?: string;
+    version?: number;
     onEdit: () => void;
     onDelete: () => void;
 }
@@ -35,6 +36,7 @@ export function StreamingDetailCard({
     frequency,
     isPublico,
     publicToken,
+    version,
     onEdit,
     onDelete,
 }: StreamingDetailCardProps) {
@@ -91,9 +93,10 @@ export function StreamingDetailCard({
                             {catalogName && catalogName !== name && (
                                 <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">{catalogName}</div>
                             )}
-                            <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-gray-50 rounded-lg border border-gray-100">
-                                <Calendar size={12} className="text-gray-400" />
-                                <span className="text-[10px] text-gray-500 font-bold uppercase">{frequency}</span>
+                            <div className="flex items-center gap-2 mt-1 px-2 py-0.5 bg-green-50/50 rounded-lg border border-green-100/50 w-fit">
+                                <ShieldCheck size={12} className="text-green-600" />
+                                <span className="text-[10px] text-green-700 font-bold uppercase tracking-tight">Safeguard Ativo</span>
+                                {version && <span className="text-[10px] text-green-600/50 font-medium ml-0.5">v{version}</span>}
                             </div>
                         </div>
                     </div>

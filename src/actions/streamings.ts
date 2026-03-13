@@ -501,82 +501,32 @@ export async function updateStreaming(
     }
 ) {
     try {
-        const { contaId } = await getContext();
-
-        const validatedData = StreamingSchema.parse({
-            ...data,
-            catalogoId: String(data.catalogoId)
-        });
-
-        const currentStreaming = await prisma.streaming.findUnique({
-            where: { id, contaId },
-            include: {
-                _count: {
-                    select: {
-                        assinaturas: {
-                            where: { status: { in: ["ativa", "suspensa", "pendente"] } }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (!currentStreaming) {
-            return { success: false, error: "Streaming não encontrado" };
-        }
-
-        const activeSubscriptionsCount = currentStreaming._count.assinaturas;
-
-        const valueChanged = currentStreaming.valorIntegral.toString() !== data.valorIntegral.toString();
-        const shouldUpdateSubscriptions = valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0;
-
-        if (!shouldUpdateSubscriptions) {
-            const streaming = await prisma.streaming.update({
-                where: { id, contaId },
-                data: {
-                    streamingCatalogoId: data.catalogoId,
-                    apelido: data.apelido.trim(),
-                    valorIntegral: data.valorIntegral,
-                    limiteParticipantes: data.limiteParticipantes,
-                    isPublico: data.isPublico,
-                    autoAprovarSolicitacoes: data.autoAprovarSolicitacoes,
-                },
-                include: {
-                    catalogo: true,
-                    _count: {
-                        select: {
-                            assinaturas: {
-                                where: { status: { in: ["ativa", "suspensa", "pendente"] } }
-                            }
-                        }
-                    }
-                }
-            });
-
-            await criarNotificacao({
-                tipo: "streaming_editado",
-                titulo: `Streaming atualizado`,
-                descricao: `As informações de ${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foram atualizadas.`,
-                entidadeId: streaming.id
-            });
-
-            revalidatePath("/streamings");
-            revalidatePath("/assinaturas");
-            return {
-                success: true,
-                data: {
-                    streaming: {
-                        ...streaming,
-                        valorIntegral: streaming.valorIntegral.toNumber()
-                    },
-                    updatedSubscriptions: 0
-                }
-            };
-        }
-
         const result = await prisma.$transaction(async (tx) => {
+            const { contaId } = await getContext();
+
+            // 1. Fetch current state WITH LOCK inside transaction
+            const currentStreaming = await StreamingService.findWithLock(id, tx);
+            if (!currentStreaming || currentStreaming.contaId !== contaId) {
+                throw new Error("Streaming não encontrado");
+            }
+
+            // 2. Validate using Zod (can be done inside or outside, but safer to have data ready)
+            StreamingSchema.parse({
+                ...data,
+                catalogoId: String(data.catalogoId)
+            });
+
+            // 3. Determine changes
+            const activeSubscriptionsCount = currentStreaming._count.assinaturas;
+            const valueChanged = currentStreaming.valorIntegral.toString() !== data.valorIntegral.toString();
+            const shouldUpdateSubscriptions = valueChanged && data.updateExistingSubscriptions && activeSubscriptionsCount > 0;
+
+            // 4. Increment version (Optimistic Locking)
+            await StreamingService.incrementVersion(id, currentStreaming.version, tx);
+
+            // 5. Update Streaming
             const streaming = await tx.streaming.update({
-                where: { id, contaId },
+                where: { id },
                 data: {
                     streamingCatalogoId: data.catalogoId,
                     apelido: data.apelido.trim(),
@@ -597,38 +547,58 @@ export async function updateStreaming(
                 }
             });
 
-            const updated = await tx.assinatura.updateMany({
-                where: {
+            let updatedCount = 0;
+
+            // 6. Conditional Subscription Updates
+            if (shouldUpdateSubscriptions) {
+                const updated = await tx.assinatura.updateMany({
+                    where: {
+                        streamingId: id,
+                        streaming: { contaId },
+                        status: { in: ["ativa", "suspensa", "pendente"] }
+                    },
+                    data: {
+                        valor: data.valorIntegral
+                    }
+                });
+
+                // Update pending charges correctly handling frequency
+                await billingService.ajustarPrecosPendentes(tx, {
                     streamingId: id,
-                    streaming: { contaId },
-                    status: { in: ["ativa", "suspensa", "pendente"] }
-                },
-                data: {
-                    valor: data.valorIntegral
-                }
-            });
+                    novoValorMensal: data.valorIntegral,
+                    contaId
+                });
 
-            // Update pending charges as well correctly handling frequency
-            const updatedCobrancasCount = await billingService.ajustarPrecosPendentes(tx, {
-                streamingId: id,
-                novoValorMensal: data.valorIntegral,
-                contaId
-            });
+                updatedCount = updated.count;
+            }
 
-            return { streaming, updatedCount: updated.count };
-        });
+            // 7. Atomic Notification
+            if (shouldUpdateSubscriptions) {
+                // Broadcast for price update path
+                await criarNotificacao({
+                    tipo: "streaming_editado",
+                    titulo: `Streaming atualizado`,
+                    descricao: `As informações do streaming foram atualizadas${updatedCount > 0 ? ` e ${updatedCount} assinatura(s) ajustada(s)` : ''}.`,
+                    entidadeId: id,
+                    usuarioId: null // Admin Broadcast
+                }, tx);
+            } else {
+                // Regular update notification
+                await criarNotificacao({
+                    tipo: "streaming_editado",
+                    titulo: `Streaming atualizado`,
+                    descricao: `As informações de ${streaming.catalogo.nome}${streaming.apelido ? ` (${streaming.apelido})` : ''} foram atualizadas.`,
+                    entidadeId: streaming.id
+                }, tx);
+            }
 
-        // Broadcast to Admins
-        await criarNotificacao({
-            tipo: "streaming_editado",
-            titulo: `Streaming atualizado`,
-            descricao: `As informações do streaming foram atualizadas${result.updatedCount > 0 ? ` e ${result.updatedCount} assinatura(s) ajustada(s)` : ''}.`,
-            entidadeId: id,
-            usuarioId: null // Admin Broadcast
+            return { streaming, updatedCount };
         });
 
         revalidatePath("/streamings");
         revalidatePath("/assinaturas");
+        revalidatePath("/cobrancas");
+
         return {
             success: true,
             data: {
@@ -677,9 +647,11 @@ export async function deleteStreaming(id: number) {
                 throw new Error("Streaming não encontrado");
             }
 
-            // Soft delete the streaming
+            // Soft delete the streaming with version check (SOLID)
+            await StreamingService.incrementVersion(id, streaming.version, tx);
+
             await tx.streaming.update({
-                where: { id, contaId },
+                where: { id },
                 data: {
                     isAtivo: false,
                     deletedAt: new Date()
