@@ -86,6 +86,17 @@ export default function AssinaturasClient({
             className: "flex-1 min-w-[200px]"
         },
         {
+            key: "participante",
+            type: "select",
+            label: "Participante",
+            emptyLabel: "Todos",
+            className: "w-full md:w-[200px]",
+            options: participantes.map(p => ({
+                label: p.nome,
+                value: p.id.toString()
+            }))
+        },
+        {
             key: "status",
             type: "select",
             label: "Status",
@@ -100,6 +111,7 @@ export default function AssinaturasClient({
             key: "streaming",
             type: "select",
             label: "Streaming",
+            emptyLabel: "Todos",
             className: "w-full md:w-[200px]",
             options: streamings.map(s => ({
                 label: s.apelido || s.catalogo.nome,
@@ -139,7 +151,7 @@ export default function AssinaturasClient({
             label: "Apenas com WhatsApp",
             className: "md:w-auto"
         }
-    ], [streamings]);
+    ], [participantes, streamings]);
 
     return (
         <PageContainer>

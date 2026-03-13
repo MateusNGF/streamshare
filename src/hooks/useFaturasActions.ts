@@ -5,22 +5,34 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { criarLotePagamento } from "@/actions/cobrancas";
 import { ViewMode } from "@/components/ui/ViewModeToggle";
+import { useBaseFilter } from "@/hooks/useBaseFilter";
 
-export function useFaturasActions(faturas: any[], lotes: any[]) {
+export function useFaturasActions(faturasIniciais: any[], lotes: any[]) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const toast = useToast();
 
+    const {
+        filters,
+        handleFilterChange,
+        handleClearFilters
+    } = useBaseFilter('/faturas');
+
+    const filterValues = useMemo(() => ({
+        statusFilter: filters.status || "all",
+        participanteFilter: filters.participante || "all"
+    }), [filters]);
+
     // Derived State
-    const faturasPendentesForTab = useMemo(() => faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado')), [faturas]);
+    const faturasPendentesForTab = useMemo(() => faturasIniciais.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado')), [faturasIniciais]);
     const lotesPendentes = useMemo(() => lotes.filter(l => l.status === 'pendente' || l.status === 'atrasado' || l.status === 'aguardando_aprovacao'), [lotes]);
 
-    const faturasPendentes = useMemo(() => faturas.filter(f => !f.lotePagamentoId && (f.status === 'pendente' || f.status === 'atrasado')), [faturas]);
-    const faturasAguardando = useMemo(() => faturas.filter(f => f.status === 'aguardando_aprovacao'), [faturas]);
+    const faturasPendentes = useMemo(() => faturasIniciais.filter(f => !f.lotePagamentoId && (f.status === "pendente" || f.status === "atrasado")), [faturasIniciais]);
+    const faturasAguardando = useMemo(() => faturasIniciais.filter(f => f.status === 'aguardando_aprovacao'), [faturasIniciais]);
 
     // UI State
     const [viewMode, setViewMode] = useState<ViewMode>("table");
-    const [activeTabId, setActiveTabId] = useState(() => (faturasPendentesForTab.length === 0 && lotesPendentes.length > 0) ? "lotes" : "faturas");
+    const [activeTabId, setActiveTabId] = useState(() => (filters.tab === "lotes" || (faturasPendentesForTab.length === 0 && lotesPendentes.length > 0)) ? "lotes" : "faturas");
 
     // Selection State
     const [selectedFatura, setSelectedFatura] = useState<any>(null);
@@ -32,8 +44,8 @@ export function useFaturasActions(faturas: any[], lotes: any[]) {
 
     // Initial Load derived from URL
     useEffect(() => {
-        const tab = searchParams.get("tab");
-        const loteId = searchParams.get("loteId");
+        const tab = filters.tab;
+        const loteId = filters.loteId;
 
         if (tab === "lotes") {
             setActiveTabId("lotes");
@@ -70,7 +82,7 @@ export function useFaturasActions(faturas: any[], lotes: any[]) {
     };
 
     const handleViewDetails = (id: number) => {
-        const fatura = faturas.find(f => f.id === id);
+        const fatura = faturasIniciais.find(f => f.id === id);
         if (fatura) {
             setSelectedFatura(fatura);
             setIsDetailsModalOpen(true);
@@ -111,5 +123,8 @@ export function useFaturasActions(faturas: any[], lotes: any[]) {
         // Actions
         handleCreateLote,
         handleViewDetails,
+        filters: filterValues,
+        handleFilterChange,
+        handleClearFilters,
     };
 }

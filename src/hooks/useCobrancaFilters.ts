@@ -1,30 +1,38 @@
 "use client";
 
-import { useFilterParams } from "@/hooks/useFilterParams";
+import { useBaseFilter } from "@/hooks/useBaseFilter";
 import { sortByStatusPriority } from "@/lib/financeiro-utils";
+import { useMemo } from "react";
 
 /**
  * Hook especializado para o gerenciamento de filtros de cobranças.
  * SOLID: SRP (Single Responsibility Principle) - Separa a lógica de filtragem da lógica de ações.
  */
 export function useCobrancaFilters(cobrancasIniciais: any[]) {
-    const { filters, updateFilters } = useFilterParams();
+    const {
+        filters,
+        handleFilterChange,
+        handleClearFilters,
+        updateFilters
+    } = useBaseFilter('/cobrancas');
 
-    const filterValues = {
+    const filterValues = useMemo(() => ({
         searchTerm: filters.search || "",
         statusFilter: filters.status || "all",
         streamingFilter: filters.streaming || "all",
+        participanteFilter: filters.participante || "all",
         mesReferencia: filters.mesReferencia || "all",
         vencimentoRange: filters.vencimento || "",
         pagamentoRange: filters.pagamento || "",
         valorRange: filters.valor || "",
         hasWhatsappFilter: filters.hasWhatsapp || "false"
-    };
+    }), [filters]);
 
     const filteredCobrancas = cobrancasIniciais.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(filterValues.searchTerm.toLowerCase());
         const matchesStatus = filterValues.statusFilter === "all" || c.status === filterValues.statusFilter;
         const matchesStreaming = filterValues.streamingFilter === "all" || c.assinatura.streamingId.toString() === filterValues.streamingFilter;
+        const matchesParticipante = filterValues.participanteFilter === "all" || c.assinatura.participanteId.toString() === filterValues.participanteFilter;
 
         let matchesMes = true;
         if (filterValues.mesReferencia !== "all") {
@@ -70,19 +78,16 @@ export function useCobrancaFilters(cobrancasIniciais: any[]) {
             matchesWhatsapp = !!c.assinatura.participante.whatsappNumero;
         }
 
-        return matchesSearch && matchesStatus && matchesStreaming && matchesMes && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
+        return matchesSearch && matchesStatus && matchesStreaming && matchesParticipante && matchesMes && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
     });
 
     const sortedCobrancas = sortByStatusPriority(filteredCobrancas);
-
-    const handleFilterChange = (key: string, value: string) => {
-        updateFilters({ [key]: value });
-    };
 
     return {
         filters: filterValues,
         filteredCobrancas: sortedCobrancas,
         handleFilterChange,
+        handleClearFilters,
         updateFilters
     };
 }

@@ -2,23 +2,19 @@
 
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { FilterService } from "@/services/filter.service";
 import { StatusCobranca } from "@prisma/client";
 import { billingService } from "@/services/billing-service";
 
-export async function getFaturasUsuario(filters?: { status?: StatusCobranca }) {
+export async function getFaturasUsuario(filters?: { status?: StatusCobranca; participanteId?: string }) {
     try {
         const user = await getCurrentUser();
         if (!user) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
 
+        const where = FilterService.buildFaturaUserWhere(user.userId, filters);
+
         const cobrancas = await prisma.cobranca.findMany({
-            where: {
-                assinatura: {
-                    participante: {
-                        userId: user.userId
-                    }
-                },
-                ...(filters?.status ? { status: filters.status } : {})
-            },
+            where,
             select: {
                 id: true,
                 status: true,

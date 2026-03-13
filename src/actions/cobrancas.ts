@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { FilterService } from "@/services/filter.service";
 
 import { StatusCobranca, StatusLote, Prisma, NivelAcesso } from "@prisma/client";
 import {
@@ -31,45 +32,7 @@ export async function getCobrancas(filters?: {
 }) {
     try {
         const { contaId } = await getContext();
-
-        const where: any = {
-            assinatura: {
-                participante: { contaId }
-            }
-        };
-
-        if (filters?.status) {
-            where.status = filters.status;
-        }
-
-        if (filters?.participanteId) {
-            where.assinatura = {
-                ...where.assinatura,
-                participanteId: filters.participanteId
-            };
-        }
-
-        if (filters?.mes && filters?.ano) {
-            const startDate = new Date(filters.ano, filters.mes - 1, 1);
-            const endDate = new Date(filters.ano, filters.mes, 0, 23, 59, 59);
-            where.periodoFim = { gte: startDate, lte: endDate };
-        }
-
-        if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
-            where.valor = {};
-            if (filters.valorMin !== undefined) where.valor.gte = filters.valorMin;
-            if (filters.valorMax !== undefined) where.valor.lte = filters.valorMax;
-        }
-
-        if (filters?.hasWhatsapp !== undefined) {
-            where.assinatura = {
-                ...where.assinatura,
-                participante: {
-                    ...where.assinatura?.participante,
-                    whatsappNumero: filters.hasWhatsapp ? { not: null } : null
-                }
-            };
-        }
+        const where = FilterService.buildCobrancaWhere(contaId, filters);
 
         const cobrancas = await prisma.cobranca.findMany({
             where,

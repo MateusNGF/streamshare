@@ -59,11 +59,12 @@ interface CobrancasClientProps {
     lotes: any[];
     whatsappConfigurado: boolean;
     streamings: any[];
+    participantes: any[];
     plano: PlanoConta;
     error?: string;
 }
 
-export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfigurado, streamings, plano, error }: CobrancasClientProps) {
+export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfigurado, streamings, participantes, plano, error }: CobrancasClientProps) {
     const router = useRouter();
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
@@ -176,8 +177,19 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                         {
                             key: "search",
                             type: "text",
-                            placeholder: "Buscar participante...",
+                            placeholder: "Buscar...",
                             className: "flex-1 min-w-[200px]"
+                        },
+                        {
+                            key: "participante",
+                            type: "select",
+                            label: "Participante",
+                            emptyLabel: "Todos",
+                            className: "w-full md:w-[200px]",
+                            options: participantes.map(p => ({
+                                label: p.nome,
+                                value: p.id.toString()
+                            }))
                         },
                         {
                             key: "status",
@@ -244,6 +256,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                     ]}
                     values={{
                         search: filters.searchTerm,
+                        participante: filters.participanteFilter,
                         status: filters.statusFilter,
                         streaming: filters.streamingFilter,
                         mesReferencia: filters.mesReferencia,

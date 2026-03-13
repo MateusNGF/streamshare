@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Wallet } from "lucide-react";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
+import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import { useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import dynamic from "next/dynamic";
@@ -40,10 +42,11 @@ interface FaturasClientProps {
     faturas: any[];
     resumo: any;
     lotes: any[];
+    participantes: any[];
     error?: string;
 }
 
-export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientProps) {
+export function FaturasClient({ faturas, resumo, lotes, participantes, error }: FaturasClientProps) {
     const {
         faturasPendentes,
         faturasAguardando,
@@ -60,7 +63,36 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
         isCreatingLote,
         handleCreateLote,
         handleViewDetails,
+        filters,
+        handleFilterChange,
+        handleClearFilters,
     } = useFaturasActions(faturas, lotes);
+
+    const filterConfig: FilterConfig[] = useMemo(() => [
+        {
+            key: "participante",
+            type: "select",
+            label: "Perfil",
+            emptyLabel: "Todos os Perfis",
+            className: "w-full md:w-[200px]",
+            options: participantes.map(p => ({
+                label: p.nome,
+                value: p.id.toString()
+            }))
+        },
+        {
+            key: "status",
+            type: "select",
+            label: "Status",
+            className: "w-full md:w-[150px]",
+            options: [
+                { label: "Pendentes", value: "pendente" },
+                { label: "Aguardando", value: "aguardando_aprovacao" },
+                { label: "Em Atraso", value: "atrasado" },
+                { label: "Pagos", value: "pago" }
+            ]
+        }
+    ], [participantes]);
 
     useActionError(error);
 
@@ -77,6 +109,18 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
 
                 {/* Financial Summary */}
                 <FinancialSummaryBanner faturas={faturas} />
+
+                <div className="mb-6">
+                    <GenericFilter
+                        filters={filterConfig}
+                        values={{
+                            status: filters.statusFilter,
+                            participante: filters.participanteFilter,
+                        }}
+                        onChange={handleFilterChange}
+                        onClear={handleClearFilters}
+                    />
+                </div>
 
                 <Tabs
                     value={activeTabId}

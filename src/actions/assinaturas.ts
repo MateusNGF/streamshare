@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { FilterService } from "@/services/filter.service";
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura, Prisma } from "@prisma/client";
 import { billingService } from "@/services/billing-service";
@@ -66,6 +67,7 @@ export async function getAssinaturasKPIs() {
 export async function getAssinaturas(filters?: {
     status?: string;
     streamingId?: string;
+    participanteId?: string;
     searchTerm?: string;
     dataInicioRange?: string; // JSON string with from/to
     dataVencimentoRange?: string; // JSON string with from/to
@@ -75,73 +77,7 @@ export async function getAssinaturas(filters?: {
 }) {
     try {
         const { contaId } = await getContext();
-
-        const whereClause: any = {
-            participante: { contaId },
-        };
-
-        if (filters?.status && filters.status !== "all") {
-            whereClause.status = filters.status;
-        } else {
-            whereClause.status = { not: StatusAssinatura.cancelada };
-        }
-
-        if (filters?.streamingId && filters.streamingId !== "all") {
-            whereClause.streamingId = parseInt(filters.streamingId);
-        }
-
-        if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
-            whereClause.participante = {
-                ...whereClause.participante,
-                nome: {
-                    contains: filters.searchTerm,
-                    mode: 'insensitive'
-                }
-            };
-        }
-
-        if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
-            whereClause.valor = {};
-            if (filters.valorMin !== undefined) whereClause.valor.gte = filters.valorMin;
-            if (filters.valorMax !== undefined) whereClause.valor.lte = filters.valorMax;
-        }
-
-        if (filters?.hasWhatsapp !== undefined) {
-            whereClause.participante = {
-                ...whereClause.participante,
-                whatsappNumero: filters.hasWhatsapp ? { not: null } : null
-            };
-        }
-
-        if (filters?.dataInicioRange) {
-            try {
-                const range = JSON.parse(filters.dataInicioRange);
-                if (range.from || range.to) {
-                    whereClause.dataInicio = {};
-                    if (range.from) whereClause.dataInicio.gte = new Date(range.from);
-                    if (range.to) whereClause.dataInicio.lte = new Date(range.to);
-                }
-            } catch (e) {
-                console.error("Error parsing dataInicioRange", e);
-            }
-        }
-
-        if (filters?.dataVencimentoRange) {
-            try {
-                const range = JSON.parse(filters.dataVencimentoRange);
-                if (range.from || range.to) {
-                    whereClause.cobrancas = {
-                        some: {
-                            dataVencimento: {}
-                        }
-                    };
-                    if (range.from) whereClause.cobrancas.some.dataVencimento.gte = new Date(range.from);
-                    if (range.to) whereClause.cobrancas.some.dataVencimento.lte = new Date(range.to);
-                }
-            } catch (e) {
-                console.error("Error parsing dataVencimentoRange", e);
-            }
-        }
+        const whereClause = FilterService.buildAssinaturaWhere(contaId, filters);
 
         const data = await prisma.assinatura.findMany({
             where: whereClause,
