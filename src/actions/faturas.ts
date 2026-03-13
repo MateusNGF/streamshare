@@ -1,5 +1,7 @@
 "use server";
 
+import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { FilterService } from "@/services/filter.service";
@@ -119,5 +121,56 @@ export async function getResumoFaturas() {
     } catch (error: any) {
         console.error("[GET_RESUMO_FATURAS_ERROR]", error);
         return { success: false, error: "Erro ao buscar resumo das faturas" };
+    }
+}
+
+/**
+ * Retorna dados agregados para a visão de analytics de faturas do participante.
+ */
+export async function getFaturasAnalytics(period: string = "6m") {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return { success: false, error: "Não autenticado", code: "UNAUTHORIZED" };
+
+        const agora = new Date();
+        const numMonths = period === "12m" ? 12 : 6;
+        const startDate = subMonths(startOfMonth(agora), numMonths - 1);
+
+        const history = await prisma.cobranca.findMany({
+            where: {
+                assinatura: { participante: { userId: user.userId } },
+                dataVencimento: { gte: startDate, lte: endOfMonth(agora) },
+                deletedAt: null
+            },
+            select: {
+                status: true,
+                valor: true,
+                dataVencimento: true
+            }
+        });
+
+        const monthsData: any[] = [];
+        for (let i = numMonths - 1; i >= 0; i--) {
+            const date = subMonths(agora, i);
+            const monthName = format(date, "MMM", { locale: ptBR });
+            const monthKey = format(date, "yyyy-MM");
+
+            const monthCobrancas = history.filter(c => format(c.dataVencimento, "yyyy-MM") === monthKey);
+
+            monthsData.push({
+                month: monthName,
+                key: monthKey,
+                previsto: monthCobrancas.reduce((acc, curr) => acc + curr.valor.toNumber(), 0),
+                realizado: monthCobrancas.filter(c => c.status === 'pago').reduce((acc, curr) => acc + curr.valor.toNumber(), 0),
+            });
+        }
+
+        return {
+            success: true,
+            data: monthsData
+        };
+    } catch (error: any) {
+        console.error("[GET_FATURAS_ANALYTICS_ERROR]", error);
+        return { success: false, error: "Erro ao carregar dados analíticos de faturas" };
     }
 }

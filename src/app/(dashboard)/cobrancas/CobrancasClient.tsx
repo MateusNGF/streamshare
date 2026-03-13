@@ -13,7 +13,9 @@ import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCobrancasAnalytics } from "@/actions/cobrancas";
+import { Table as TableIcon, LayoutGrid, BarChart3 } from "lucide-react";
 import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
 import { Button } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
@@ -45,7 +47,14 @@ const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard")
 
 const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
 const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
-// BatchPreviewDrawer removed in favor of confirmation modal
+
+const CobrancasStatusDonut = dynamic(() => import("@/components/financeiro/charts/CobrancasStatusDonut").then(mod => mod.CobrancasStatusDonut), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const CobrancasHistoryStackedBar = dynamic(() => import("@/components/financeiro/charts/CobrancasHistoryStackedBar").then(mod => mod.CobrancasHistoryStackedBar), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
 
 
 interface CobrancasClientProps {
@@ -95,6 +104,18 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
 
     const [activeTabId, setActiveTabId] = useState("cobrancas");
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+    useEffect(() => {
+        if (viewMode === "chart" && !analyticsData) {
+            setLoadingAnalytics(true);
+            getCobrancasAnalytics().then(res => {
+                if (res.success) setAnalyticsData(res.data);
+                setLoadingAnalytics(false);
+            });
+        }
+    }, [viewMode, analyticsData]);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
@@ -306,7 +327,15 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                 <span className="hidden sm:inline">Gerar Faturas do Mês</span>
                                             </Button>
                                             <div className="flex-1 w-full sm:w-auto flex justify-center">
-                                                <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                                                <ViewModeToggle
+                                                    viewMode={viewMode}
+                                                    setViewMode={setViewMode}
+                                                    options={[
+                                                        { id: "table", label: "Tabela", icon: TableIcon },
+                                                        { id: "grid", label: "Cards", icon: LayoutGrid },
+                                                        { id: "chart", label: "Análise", icon: BarChart3 },
+                                                    ]}
+                                                />
                                             </div>
                                         </div>
                                     }
@@ -320,7 +349,30 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                     />
                                 )}
 
-                                {viewMode === "grid" ? (
+                                {viewMode === "chart" ? (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        {loadingAnalytics ? (
+                                            <>
+                                                <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                                <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                            </>
+                                        ) : analyticsData ? (
+                                            <>
+                                                <CobrancasStatusDonut
+                                                    data={analyticsData.donutData}
+                                                    totalExpected={analyticsData.totalExpected}
+                                                />
+                                                <CobrancasHistoryStackedBar
+                                                    data={analyticsData.historyData}
+                                                />
+                                            </>
+                                        ) : (
+                                            <div className="col-span-2 py-20 text-center">
+                                                <p className="text-gray-500">Não foi possível carregar os dados analíticos.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : viewMode === "grid" ? (
                                     <div className="grid grid-cols-1 gap-4">
                                         {filteredCobrancas.map((cobranca) => (
                                             <CobrancaCard
@@ -374,6 +426,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                         <ViewModeToggle
                                             viewMode={viewMode}
                                             setViewMode={setViewMode}
+                                            options={[
+                                                { id: "table", label: "Tabela", icon: TableIcon },
+                                                { id: "grid", label: "Cards", icon: LayoutGrid },
+                                                { id: "chart", label: "Análise", icon: BarChart3 },
+                                            ]}
                                         />
                                     }
                                 />

@@ -13,7 +13,10 @@ import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import { useFaturasActions } from "@/hooks/useFaturasActions";
 import { Button } from "@/components/ui/Button";
-import { CreditCard, Loader2, FileText, History } from "lucide-react";
+import { CreditCard, Loader2, FileText, History, Table as TableIcon, LayoutGrid, BarChart3 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getFaturasAnalytics } from "@/actions/faturas";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -37,6 +40,14 @@ const FaturaCard = dynamic(() => import("@/components/faturas/FaturaCard").then(
 const DetalhesCobrancaModal = dynamic(() => import("@/components/modals/DetalhesCobrancaModal").then(mod => mod.DetalhesCobrancaModal));
 
 const FinancialSummaryBanner = dynamic(() => import("@/components/faturas/FinancialSummaryBanner").then(mod => mod.FinancialSummaryBanner));
+
+const FaturasPredictedVsRealized = dynamic(() => import("@/components/financeiro/charts/FaturasPredictedVsRealized").then(mod => mod.FaturasPredictedVsRealized), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const FaturasRevenueHistory = dynamic(() => import("@/components/financeiro/charts/FaturasRevenueHistory").then(mod => mod.FaturasRevenueHistory), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
 
 interface FaturasClientProps {
     faturas: any[];
@@ -96,6 +107,19 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
 
     useActionError(error);
 
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+    useEffect(() => {
+        if (viewMode === "chart" && !analyticsData) {
+            setLoadingAnalytics(true);
+            getFaturasAnalytics().then(res => {
+                if (res.success) setAnalyticsData(res.data);
+                setLoadingAnalytics(false);
+            });
+        }
+    }, [viewMode, analyticsData]);
+
     const sortedFaturas = sortByStatusPriority(faturas);
 
     return (
@@ -146,6 +170,11 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                                     <ViewModeToggle
                                                         viewMode={viewMode}
                                                         setViewMode={setViewMode}
+                                                        options={[
+                                                            { id: "table", label: "Tabela", icon: TableIcon },
+                                                            { id: "grid", label: "Cards", icon: LayoutGrid },
+                                                            { id: "chart", label: "Análise", icon: BarChart3 },
+                                                        ]}
                                                     />
                                                 </div>
                                             </div>
@@ -161,7 +190,29 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                             />
                                         </div>
                                     ) : (
-                                        viewMode === "grid" ? (
+                                        viewMode === "chart" ? (
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                                {loadingAnalytics ? (
+                                                    <>
+                                                        <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                                        <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                                    </>
+                                                ) : analyticsData ? (
+                                                    <>
+                                                        <FaturasPredictedVsRealized
+                                                            data={analyticsData}
+                                                        />
+                                                        <FaturasRevenueHistory
+                                                            data={analyticsData}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <div className="col-span-2 py-20 text-center text-gray-400">
+                                                        Não foi possível carregar os gráficos.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : viewMode === "grid" ? (
                                             <div className="grid grid-cols-1 gap-4">
                                                 {sortedFaturas.map((fatura) => (
                                                     <FaturaCard key={fatura.id} fatura={fatura} onConfirmPayment={handleViewDetails} onViewDetails={handleViewDetails} />
@@ -192,6 +243,11 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                             <ViewModeToggle
                                                 viewMode={viewMode}
                                                 setViewMode={setViewMode}
+                                                options={[
+                                                    { id: "table", label: "Tabela", icon: TableIcon },
+                                                    { id: "grid", label: "Cards", icon: LayoutGrid },
+                                                    { id: "chart", label: "Análise", icon: BarChart3 },
+                                                ]}
                                             />
                                         }
                                     />

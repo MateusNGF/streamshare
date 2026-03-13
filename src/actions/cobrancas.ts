@@ -1,5 +1,8 @@
 "use server";
 
+import { startOfMonth, endOfMonth, subMonths, format, startOfToday, isSameMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { FilterService } from "@/services/filter.service";
@@ -1149,5 +1152,99 @@ export async function analisarFaturasMensaisAction(referenciaMes?: string) {
     } catch (error: any) {
         console.error("[ANALISAR_FATURAS_MENSAIS_ERROR]", error);
         return { success: false, error: error.message || "Erro ao analisar faturas mensais" };
+    }
+}
+
+/**
+ * Retorna dados agregados para a visão de analytics de cobranças do organizador.
+ */
+export async function getCobrancasAnalytics(period: string = "6m") {
+    try {
+        const { contaId } = await getContext();
+        const agora = new Date();
+        const numMonths = period === "12m" ? 12 : 6;
+        const startDate = subMonths(startOfMonth(agora), numMonths - 1);
+
+        // 1. Gráfico de Rosca - Ciclo Atual
+        const startCurrent = startOfMonth(agora);
+        const endCurrent = endOfMonth(agora);
+
+        const currentMonthStats = await prisma.cobranca.groupBy({
+            by: ["status"],
+            where: {
+                assinatura: { streaming: { contaId } },
+                dataVencimento: { gte: startCurrent, lte: endCurrent }
+            },
+            _count: { _all: true },
+            _sum: { valor: true }
+        });
+
+        const statusColors: Record<string, string> = {
+            pago: '#10b981', // Verde Suave
+            aguardando_aprovacao: '#3b82f6', // Azul
+            pendente: '#f5b11d', // Amarelo/Dourado
+            atrasado: '#ef4444', // Vermelho Vibrante
+            cancelado: '#9ca3af' // Cinza
+        };
+
+        const statusLabels: Record<string, string> = {
+            pago: 'Pagas',
+            aguardando_aprovacao: 'Validando',
+            pendente: 'Pendentes',
+            atrasado: 'Atrasadas',
+            cancelado: 'Canceladas'
+        };
+
+        const donutData = currentMonthStats.map(stat => ({
+            name: statusLabels[stat.status] || stat.status,
+            value: stat._count._all,
+            amount: stat._sum.valor?.toNumber() || 0,
+            color: statusColors[stat.status] || '#cbd5e1'
+        }));
+
+        const totalExpected = donutData.reduce((acc, curr) => acc + curr.amount, 0);
+
+        // 2. Gráfico de Barras Empilhadas - Histórico de Inadimplência
+        const history = await prisma.cobranca.findMany({
+            where: {
+                assinatura: { streaming: { contaId } },
+                dataVencimento: { gte: startDate, lte: endOfMonth(agora) },
+                deletedAt: null
+            },
+            select: {
+                status: true,
+                valor: true,
+                dataVencimento: true
+            }
+        });
+
+        const monthsData: any[] = [];
+        for (let i = numMonths - 1; i >= 0; i--) {
+            const date = subMonths(agora, i);
+            const monthName = format(date, "MMM", { locale: ptBR });
+            const monthKey = format(date, "yyyy-MM");
+
+            const monthCobrancas = history.filter(c => format(c.dataVencimento, "yyyy-MM") === monthKey);
+
+            monthsData.push({
+                month: monthName,
+                key: monthKey,
+                Pagas: monthCobrancas.filter(c => c.status === 'pago').length,
+                Pendentes: monthCobrancas.filter(c => c.status === 'pendente' || c.status === 'aguardando_aprovacao').length,
+                Atrasadas: monthCobrancas.filter(c => c.status === 'atrasado').length,
+            });
+        }
+
+        return {
+            success: true,
+            data: {
+                donutData,
+                totalExpected,
+                historyData: monthsData
+            }
+        };
+    } catch (error: any) {
+        console.error("[GET_COBRANCAS_ANALYTICS_ERROR]", error);
+        return { success: false, error: "Erro ao carregar dados analíticos de cobranças" };
     }
 }
