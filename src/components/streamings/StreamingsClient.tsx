@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useStreamingStore } from "@/stores";
@@ -30,6 +30,7 @@ const StreamingTable = dynamic(() => import("./StreamingTable").then(mod => mod.
 
 const StreamingModal = dynamic(() => import("@/components/modals/StreamingModal").then(mod => mod.StreamingModal));
 const DeleteModal = dynamic(() => import("@/components/modals/DeleteModal").then(mod => mod.DeleteModal));
+const AddMemberModal = dynamic(() => import("@/components/modals/AddMemberModal").then(mod => mod.AddMemberModal));
 
 import { SectionHeader } from "../layout/SectionHeader";
 
@@ -44,6 +45,7 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
     useActionError(serverError);
     const [mounted, setMounted] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const { filters } = useFilterParams();
 
     const {
@@ -119,13 +121,22 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
                 title="Meu Catálogo"
                 description="Os serviços que você disponibiliza e suas vagas"
                 action={
-                    <button
-                        onClick={() => modals.add.setOpen(true)}
-                        className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5"
-                    >
-                        <Plus size={20} />
-                        Novo Serviço
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsAddMemberOpen(true)}
+                            className="hidden sm:flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-2xl font-bold border border-gray-100 shadow-sm transition-all hover:-translate-y-0.5"
+                        >
+                            <UserPlus size={20} className="text-primary" />
+                            Convidar
+                        </button>
+                        <button
+                            onClick={() => modals.add.setOpen(true)}
+                            className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/25 transition-all hover:-translate-y-0.5"
+                        >
+                            <Plus size={20} />
+                            Novo Serviço
+                        </button>
+                    </div>
                 }
             />
 
@@ -205,6 +216,17 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
                     />
                 </>
             )}
+
+            <AddMemberModal
+                isOpen={isAddMemberOpen}
+                onClose={() => setIsAddMemberOpen(false)}
+                streamings={streamings.map(s => ({
+                    id: s.id,
+                    apelido: s.apelido,
+                    catalogo: { nome: s.catalogo.nome },
+                    vagasRestantes: Math.max(0, (s.limiteParticipantes || 0) - (s._count?.assinaturas || 0))
+                }))}
+            />
         </PageContainer>
     );
 }
