@@ -132,7 +132,10 @@ export async function getStreamings() {
         const { contaId } = await getContext();
 
         const streamings = await prisma.streaming.findMany({
-            where: { contaId },
+            where: {
+                contaId,
+                deletedAt: null
+            },
             include: {
                 catalogo: true,
                 _count: {

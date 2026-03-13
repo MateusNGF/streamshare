@@ -57,9 +57,12 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
     const { modals, selectedStreaming, actions } = useStreamingActions();
 
     useEffect(() => {
-        fetchStreamings();
+        // Force refresh on mount to avoid stale persisted state bugs
+        // Passing contaId from first item of initialData if available
+        const currentContaId = initialData?.[0]?.contaId;
+        fetchStreamings(true, currentContaId);
         setMounted(true);
-    }, [fetchStreamings]);
+    }, [fetchStreamings, initialData]);
 
     useEffect(() => {
         if (error) {
@@ -79,18 +82,18 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
 
         // Catalogo filter
         if (filters.catalogoId && filters.catalogoId !== "all") {
-            if (streaming.streamingCatalogoId !== Number(filters.catalogoId)) return false;
+            if (String(streaming.streamingCatalogoId) !== String(filters.catalogoId)) return false;
         }
 
         // Only Full
         if (filters.onlyFull === "true") {
             const occupied = streaming._count?.assinaturas || 0;
-            if (occupied < streaming.limiteParticipantes) return false;
+            if (occupied < (streaming.limiteParticipantes || 0)) return false;
         }
 
         // Visibilidade
         if (filters.visibilidade && filters.visibilidade !== "all") {
-            const isPublico = streaming.isPublico;
+            const isPublico = !!streaming.isPublico;
             if (filters.visibilidade === "publico" && !isPublico) return false;
             if (filters.visibilidade === "privado" && isPublico) return false;
         }
@@ -99,7 +102,7 @@ export function StreamingsClient({ initialData, plano, serverError }: Streamings
         if (filters.valor) {
             try {
                 const range = JSON.parse(filters.valor);
-                const val = Number(streaming.valorIntegral);
+                const val = Number(streaming.valorIntegral || 0);
                 if (range.min && val < range.min) return false;
                 if (range.max && val > range.max) return false;
             } catch (e) { }

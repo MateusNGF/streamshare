@@ -97,6 +97,7 @@ export function Sidebar({ isSystemAdmin = false, userPlan = "free" as PlanoConta
         setLoading(true);
         try {
             await fetch("/api/auth/logout", { method: "POST" });
+            localStorage.clear();
             router.push("/login");
             router.refresh();
         } catch (error) {

@@ -21,9 +21,10 @@ interface StreamingStore {
     error: string | null;
     lastFetched: number | null;
     filters: StreamingFilters;
+    contaId: number | null;
 
     // Actions
-    fetchStreamings: (force?: boolean) => Promise<void>;
+    fetchStreamings: (force?: boolean, currentContaId?: number) => Promise<void>;
     createStreaming: (data: {
         catalogoId: number;
         apelido: string;
@@ -66,6 +67,7 @@ const initialState = {
     filters: {
         searchTerm: "",
     },
+    contaId: null,
 };
 
 export const useStreamingStore = create<StreamingStore>()(
@@ -75,11 +77,19 @@ export const useStreamingStore = create<StreamingStore>()(
                 ...initialState,
 
                 // Fetch streamings from server
-                fetchStreamings: async (force = false) => {
+                fetchStreamings: async (force = false, currentContaId) => {
                     const state = get();
 
+                    // If account changed, force clear and fetch
+                    const accountChanged = currentContaId !== undefined && state.contaId !== null && state.contaId !== currentContaId;
+
+                    if (accountChanged) {
+                        set({ streamings: [], lastFetched: null, contaId: currentContaId });
+                        force = true;
+                    }
+
                     // Skip if data is fresh and not forced
-                    if (!force && !isStale(state.lastFetched)) {
+                    if (!force && state.streamings.length > 0 && !isStale(state.lastFetched)) {
                         return;
                     }
 
@@ -92,6 +102,7 @@ export const useStreamingStore = create<StreamingStore>()(
                                 streamings: result.data as StreamingWithRelations[],
                                 loading: false,
                                 lastFetched: Date.now(),
+                                contaId: currentContaId || state.contaId,
                             });
                         } else {
                             set({
@@ -313,6 +324,7 @@ export const useStreamingStore = create<StreamingStore>()(
                     streamings: state.streamings,
                     filters: state.filters,
                     lastFetched: state.lastFetched,
+                    contaId: state.contaId,
                 }),
             }
         ),
