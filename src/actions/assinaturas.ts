@@ -201,7 +201,7 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
                 throw new Error(`Você não tem permissão para usar o streaming ${streaming.catalogo.nome}`);
             }
 
-            await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId);
+            await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId, tx);
 
             const contaInfo = await tx.conta.findUnique({
                 where: { id: contaId },

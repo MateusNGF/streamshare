@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma, PrismaTransactionClient } from "@/lib/db";
 import { BulkCreateSubscriptionDTO } from "@/types/subscription.types";
 import { determinarStatusInicial, parseLocalDate, gerarCiclosRetroativos } from "@/lib/financeiro-utils";
 import { chargeFactory, ChargeData } from "./charge-factory";
@@ -7,7 +7,7 @@ import { StatusAssinatura, Prisma } from "@prisma/client";
 import { StreamingService } from "./streaming.service";
 
 export class SubscriptionBulkService {
-    static async validateCapacity(tx: Prisma.TransactionClient, demandMap: Map<number, number>, contaId: number) {
+    static async validateCapacity(tx: PrismaTransactionClient, demandMap: Map<number, number>, contaId: number) {
         const streamingIds = Array.from(demandMap.keys());
         const streamingsData = await Promise.all(
             streamingIds.map(id => StreamingService.findWithLock(id, tx))
@@ -29,7 +29,7 @@ export class SubscriptionBulkService {
         return streamingsData.filter((s): s is NonNullable<typeof s> => s !== null);
     }
 
-    static async processBulkCreation(tx: any, data: BulkCreateSubscriptionDTO, context: { contaId: number, userId: number }) {
+    static async processBulkCreation(tx: PrismaTransactionClient, data: BulkCreateSubscriptionDTO, context: { contaId: number, userId: number }) {
         const { contaId } = context;
         const dataInicio = parseLocalDate(data.dataInicio);
         const hojeMidnight = startOfDay(new Date());

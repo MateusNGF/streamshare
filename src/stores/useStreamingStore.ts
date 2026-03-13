@@ -30,6 +30,7 @@ interface StreamingStore {
         valorIntegral: number;
         limiteParticipantes: number;
         isPublico?: boolean;
+        autoAprovarSolicitacoes?: boolean;
     }) => Promise<StreamingWithRelations>;
     updateStreaming: (
         id: number,
@@ -39,6 +40,7 @@ interface StreamingStore {
             valorIntegral: number;
             limiteParticipantes: number;
             isPublico?: boolean;
+            autoAprovarSolicitacoes?: boolean;
             updateExistingSubscriptions?: boolean;
         }
     ) => Promise<{ streaming: StreamingWithRelations; updatedSubscriptions: number }>;
@@ -153,6 +155,7 @@ export const useStreamingStore = create<StreamingStore>()(
                                     valorIntegral: data.valorIntegral,
                                     limiteParticipantes: data.limiteParticipantes,
                                     isPublico: data.isPublico ?? s.isPublico,
+                                    autoAprovarSolicitacoes: data.autoAprovarSolicitacoes ?? s.autoAprovarSolicitacoes,
                                     // Preserve catalogo relation during optimistic update
                                     catalogo: s.catalogo,
                                 }
@@ -163,7 +166,12 @@ export const useStreamingStore = create<StreamingStore>()(
                     }));
 
                     try {
-                        const result = await updateStreamingAction(id, data);
+                        const s = originalStreamings.find((s) => s.id === id);
+                        const result = await updateStreamingAction(id, {
+                            ...data,
+                            isPublico: data.isPublico ?? s?.isPublico ?? false,
+                            autoAprovarSolicitacoes: data.autoAprovarSolicitacoes ?? s?.autoAprovarSolicitacoes ?? false,
+                        });
 
                         if (result.success && result.data) {
                             // Update with server response

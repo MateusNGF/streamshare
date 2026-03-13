@@ -491,18 +491,19 @@ export async function createStreaming(data: {
 export async function updateStreaming(
     id: number,
     data: {
-        catalogoId: number;
         apelido: string;
         valorIntegral: number;
         limiteParticipantes: number;
-        isPublico?: boolean;
-        autoAprovarSolicitacoes?: boolean;
+        catalogoId: number;
+        isPublico: boolean;
+        autoAprovarSolicitacoes: boolean;
         updateExistingSubscriptions?: boolean;
     }
 ) {
     try {
+        const { contaId } = await getContext();
+
         const result = await prisma.$transaction(async (tx) => {
-            const { contaId } = await getContext();
 
             // 1. Fetch current state WITH LOCK inside transaction
             const currentStreaming = await StreamingService.findWithLock(id, tx);

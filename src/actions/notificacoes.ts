@@ -71,7 +71,7 @@ export async function criarNotificacao(data: {
     usuarioId?: number | null; // NULL = Admins, ID = Specific User
     metadata?: Record<string, any>;
     contaId?: number;
-}, tx: Prisma.TransactionClient = prisma) {
+}, tx: any = prisma) {
     try {
         const { contaId, userId } = await getContext();
 

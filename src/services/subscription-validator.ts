@@ -1,5 +1,5 @@
 import { StatusAssinatura } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { prisma, PrismaTransactionClient } from "@/lib/db";
 import { addMonths, subYears, isBefore, isAfter, isValid } from "date-fns";
 
 export const subscriptionValidator = {
@@ -19,8 +19,8 @@ export const subscriptionValidator = {
         }
     },
 
-    validateStreamingAccess: async (streamingId: number, contaId: number) => {
-        const streaming = await prisma.streaming.findUnique({
+    validateStreamingAccess: async (streamingId: number, contaId: number, tx: PrismaTransactionClient = prisma) => {
+        const streaming = await tx.streaming.findUnique({
             where: { id: streamingId },
             include: {
                 catalogo: true,
@@ -54,8 +54,8 @@ export const subscriptionValidator = {
         }
     },
 
-    validateDuplicateSubscription: async (participanteId: number, streamingId: number) => {
-        const existing = await prisma.assinatura.findFirst({
+    validateDuplicateSubscription: async (participanteId: number, streamingId: number, tx: PrismaTransactionClient = prisma) => {
+        const existing = await tx.assinatura.findFirst({
             where: {
                 participanteId: participanteId,
                 streamingId: streamingId,

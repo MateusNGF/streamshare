@@ -729,7 +729,7 @@ export async function confirmarLotePagamento(loteId: number, data?: FormData | s
             select: { contaId: true, nivelAcesso: true },
         });
 
-        const result = await LotePagamentoService.confirmarLote(loteId, comprovanteUrl!, {
+        const result = await LotePagamentoService.confirmarLote(prisma, loteId, comprovanteUrl!, {
             userId: user.userId,
             contaId: userAccount?.contaId,
             isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
@@ -1024,7 +1024,7 @@ export async function aprovarLoteAction(loteId: number) {
             select: { contaId: true, nivelAcesso: true },
         });
 
-        const result = await LotePagamentoService.aprovarLote(loteId, {
+        const result = await LotePagamentoService.aprovarLote(prisma, loteId, {
             userId: user.userId,
             contaId: userAccount?.contaId,
             isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
@@ -1054,11 +1054,11 @@ export async function rejeitarLoteAction(loteId: number, motivo?: string) {
             select: { contaId: true, nivelAcesso: true },
         });
 
-        const result = await LotePagamentoService.rejeitarLote(loteId, {
+        const result = await LotePagamentoService.rejeitarLote(prisma, loteId, motivo || "", {
             userId: user.userId,
             contaId: userAccount?.contaId,
             isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
-        }, motivo);
+        });
 
         revalidatePath("/cobrancas");
         revalidatePath("/faturas");
@@ -1114,11 +1114,11 @@ export async function cancelarLotePagamento(loteId: number, motivo?: string) {
             select: { contaId: true, nivelAcesso: true },
         });
 
-        await LotePagamentoService.cancelarLote(loteId, {
+        await LotePagamentoService.cancelarLote(prisma, loteId, motivo || "", {
             userId: user.userId,
             contaId: userAccount?.contaId,
             isAdmin: userAccount ? (userAccount.nivelAcesso === "admin" || userAccount.nivelAcesso === "owner") : false
-        }, motivo);
+        });
 
         revalidatePath("/cobrancas");
         revalidatePath("/faturas");

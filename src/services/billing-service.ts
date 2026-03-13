@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma, PrismaTransactionClient } from "@/lib/db";
 import { calcularProximoVencimento, calcularValorPeriodo } from "@/lib/financeiro-utils";
 import { BillingDecision, SubscriptionWithCharges } from "@/types/subscription.types";
 import { isBefore, differenceInDays } from "date-fns";
@@ -115,7 +115,7 @@ export const billingService = {
     /**
      * Updates the value of all pending charges when a subscription price changes.
      */
-    ajustarPrecosPendentes: async (tx: any, params: {
+    ajustarPrecosPendentes: async (tx: PrismaTransactionClient, params: {
         streamingId?: number,
         assinaturaId?: number,
         novoValorMensal: number,
@@ -150,7 +150,7 @@ export const billingService = {
     /**
      * Evaluates and performs subscription activation or reactivation after a payment is confirmed.
      */
-    avaliarAtivacaoAposPagamento: async (tx: any, params: {
+    avaliarAtivacaoAposPagamento: async (tx: PrismaTransactionClient, params: {
         assinatura: any,
         cobranca: any,
         contaId: number,
@@ -186,21 +186,6 @@ export const billingService = {
         return false;
     },
 
-    /**
-     * @deprecated Use chargeFactory.createInitialChargeData
-     */
-    gerarCobrancaInicial: async (tx: any, params: any) => {
-        const data = chargeFactory.createInitialChargeData(params);
-        return await tx.cobranca.create({ data: data as any });
-    },
-
-    /**
-     * @deprecated Use chargeFactory.createRetroactiveChargesData
-     */
-    gerarCobrancasRetroativas: async (tx: any, params: any) => {
-        const charges = chargeFactory.createRetroactiveChargesData(params);
-        return await tx.cobranca.createMany({ data: charges as any });
-    },
 
     /**
      * Cancela os Lotes de Pagamento que expiraram.
@@ -287,13 +272,13 @@ function checkRenewalOpportunity(assinatura: SubscriptionWithCharges, ultimaCobr
     return { action: 'NONE' };
 }
 
-async function executeBillingTransactionWithTx(
-    tx: any,
+const executeBillingTransactionWithTx = async (
+    tx: PrismaTransactionClient,
     cobrancas: any[],
     cancelamentos: number[],
     suspensoes: number[],
     assinaturasSource: SubscriptionWithCharges[]
-) {
+) => {
     let renovadas = 0;
     let canceladas = 0;
     let suspensas = 0;
@@ -367,4 +352,4 @@ async function executeBillingTransactionWithTx(
     }
 
     return { renovadas, canceladas, suspensas, totalProcessado: assinaturasSource.length };
-}
+};

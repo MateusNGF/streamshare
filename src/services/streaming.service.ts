@@ -1,5 +1,5 @@
 
-import { prisma } from "@/lib/db";
+import { prisma, PrismaTransactionClient } from "@/lib/db";
 import { Prisma, StatusAssinatura } from "@prisma/client";
 import { generateShareToken, verifyShareToken } from "@/lib/share-token";
 
@@ -8,7 +8,7 @@ export class StreamingService {
      * Get the count of occupied spots for a streaming service.
      * Includes active, suspended, and pending subscriptions.
      */
-    static async getOccupiedSpots(streamingId: number, tx: Prisma.TransactionClient = prisma): Promise<number> {
+    static async getOccupiedSpots(streamingId: number, tx: PrismaTransactionClient = prisma): Promise<number> {
         return tx.assinatura.count({
             where: {
                 streamingId,
@@ -20,7 +20,7 @@ export class StreamingService {
     /**
      * Get the number of remaining spots for a streaming service.
      */
-    static async getRemainingSpots(streamingId: number, tx: Prisma.TransactionClient = prisma): Promise<number> {
+    static async getRemainingSpots(streamingId: number, tx: PrismaTransactionClient = prisma): Promise<number> {
         const streaming = await tx.streaming.findUnique({
             where: { id: streamingId },
             select: { limiteParticipantes: true }
@@ -36,7 +36,7 @@ export class StreamingService {
      * ACID: Ensures the streaming has enough spots for the requested quantity.
      * Throws an error with a user-friendly message if not.
      */
-    static async ensureCapacity(streamingId: number, quantity: number = 1, tx: Prisma.TransactionClient = prisma) {
+    static async ensureCapacity(streamingId: number, quantity: number = 1, tx: PrismaTransactionClient = prisma) {
         const remaining = await this.getRemainingSpots(streamingId, tx);
 
         if (remaining < quantity) {
@@ -50,7 +50,7 @@ export class StreamingService {
     /**
      * SOLID: Centralized Optimistic Locking helper to fetch a streaming with its version and occupancy.
      */
-    static async findWithLock(streamingId: number, tx: Prisma.TransactionClient = prisma) {
+    static async findWithLock(streamingId: number, tx: PrismaTransactionClient = prisma) {
         return tx.streaming.findUnique({
             where: { id: streamingId },
             select: {
@@ -74,7 +74,7 @@ export class StreamingService {
     /**
      * SOLID: Centralized Optimistic Locking helper to increment a streaming version.
      */
-    static async incrementVersion(streamingId: number, currentVersion: number, tx: Prisma.TransactionClient = prisma) {
+    static async incrementVersion(streamingId: number, currentVersion: number, tx: PrismaTransactionClient = prisma) {
         const result = await tx.streaming.updateMany({
             where: { id: streamingId, version: currentVersion },
             data: { version: { increment: 1 } }
@@ -89,7 +89,7 @@ export class StreamingService {
      * SOLID: Combined capacity validation and optimistic locking for a single streaming.
      * The streaming object MUST be fetched first using findWithLock.
      */
-    static async validateAndLockCapacity(streaming: any, quantity: number = 1, tx: Prisma.TransactionClient = prisma) {
+    static async validateAndLockCapacity(streaming: any, quantity: number = 1, tx: PrismaTransactionClient = prisma) {
         const currentOccupied = streaming._count.assinaturas;
         if (currentOccupied + quantity > streaming.limiteParticipantes) {
             throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes.`);

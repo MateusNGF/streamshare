@@ -309,6 +309,7 @@ model Streaming {
   grupos      GrupoStreaming[]
   assinaturas Assinatura[]
   convites    Convite[]
+  historico   StreamingHistory[]
 
   @@map("streaming")
 }
@@ -388,10 +389,11 @@ model Assinatura {
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 
-  participante Participante @relation(fields: [participanteId], references: [id])
-  streaming    Streaming    @relation(fields: [streamingId], references: [id])
-  canceladoPor Usuario?     @relation("CanceladoPor", fields: [canceladoPorId], references: [id])
+  participante Participante        @relation(fields: [participanteId], references: [id])
+  streaming    Streaming           @relation(fields: [streamingId], references: [id])
+  canceladoPor Usuario?            @relation("CanceladoPor", fields: [canceladoPorId], references: [id])
   cobrancas    Cobranca[]
+  historico    AssinaturaHistory[]
 
   @@map("assinatura")
 }
@@ -437,9 +439,10 @@ model LotePagamento {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  conta        Conta?       @relation(fields: [contaId], references: [id])
-  participante Participante @relation(fields: [participanteId], references: [id])
-  cobrancas    Cobranca[]   @relation("CobrancaLote")
+  conta        Conta?        @relation(fields: [contaId], references: [id])
+  participante Participante  @relation(fields: [participanteId], references: [id])
+  cobrancas    Cobranca[]    @relation("CobrancaLote")
+  historico    LoteHistory[]
 
   @@unique([participanteId, referenciaMes, contaId])
   @@map("lote_pagamento")
@@ -564,4 +567,63 @@ model Notificacao {
   @@index([contaId, createdAt])
   @@index([usuarioId, createdAt])
   @@map("notificacao")
+}
+
+model AssinaturaHistory {
+  id                 Int                  @id @default(autoincrement())
+  assinaturaId       Int
+  statusAnterior     StatusAssinatura?
+  statusNovo         StatusAssinatura
+  valorAnterior      Decimal?
+  valorNovo          Decimal
+  frequenciaAnterior FrequenciaPagamento?
+  frequenciaNovo     FrequenciaPagamento
+  motivo             String?
+  origem             String               @default("USER") // USER, SYSTEM, WEBHOOK
+  alteradoPor        Int? // User ID who made the change
+
+  // SCD Type 2
+  validoDe  DateTime  @default(now())
+  validoAte DateTime? // Null = current state
+
+  assinatura Assinatura @relation(fields: [assinaturaId], references: [id])
+
+  @@index([assinaturaId, validoDe, validoAte])
+  @@map("assinatura_history")
+}
+
+model StreamingHistory {
+  id            Int      @id @default(autoincrement())
+  streamingId   Int
+  valorAnterior Decimal?
+  valorNovo     Decimal
+  origem        String   @default("USER")
+
+  // SCD Type 2
+  validoDe  DateTime  @default(now())
+  validoAte DateTime?
+
+  streaming Streaming @relation(fields: [streamingId], references: [id])
+
+  @@index([streamingId, validoDe, validoAte])
+  @@map("streaming_history")
+}
+
+model LoteHistory {
+  id              Int         @id @default(autoincrement())
+  lotePagamentoId Int
+  statusAnterior  StatusLote?
+  statusNovo      StatusLote
+  motivo          String?
+  origem          String      @default("USER")
+  alteradoBy      Int?
+
+  // SCD Type 2
+  validoDe  DateTime  @default(now())
+  validoAte DateTime?
+
+  lote LotePagamento @relation(fields: [lotePagamentoId], references: [id])
+
+  @@index([lotePagamentoId, validoDe, validoAte])
+  @@map("lote_history")
 }

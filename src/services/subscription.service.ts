@@ -1,3 +1,4 @@
+import { prisma, PrismaTransactionClient } from "@/lib/db";
 import { Prisma, FrequenciaPagamento } from "@prisma/client";
 import {
     calcularTotalCiclo,
@@ -17,7 +18,7 @@ export class SubscriptionService {
      * @param dtInicio - Start date of the subscription (default: now)
      */
     static async createFromStreaming(
-        tx: Prisma.TransactionClient,
+        tx: PrismaTransactionClient = prisma,
         participanteId: number,
         streamingId: number,
         frequencia: FrequenciaPagamento = "mensal",
