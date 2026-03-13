@@ -138,20 +138,7 @@ export const FaturaTableRow = memo(function FaturaTableRow({
                 isDisabled && "opacity-40 grayscale pointer-events-none"
             )}
         >
-            {!isAdmin && handleSelect && (
-                <TableCell className="px-4 text-center">
-                    {isSelectable ? (
-                        <Checkbox
-                            checked={selectedIds.includes(fatura.id)}
-                            onCheckedChange={() => handleSelect()}
-                        />
-                    ) : (
-                        <div className="flex justify-center" title="Fatura bloqueada em um lote">
-                            <Lock size={14} className="text-gray-300" />
-                        </div>
-                    )}
-                </TableCell>
-            )}
+
 
             <TableCell>
                 <div className="flex items-center gap-3">

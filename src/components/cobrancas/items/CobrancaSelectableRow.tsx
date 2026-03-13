@@ -54,25 +54,7 @@ export const CobrancaSelectableRow = memo(function CobrancaSelectableRow({
         >
             <TableCell className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                    {/* Checkbox Container with fixed width for alignment */}
-                    <div className="flex items-center justify-center w-4 h-4">
-                        {isSelectable ? (
-                            <motion.div
-                                whileTap={{ scale: 0.8 }}
-                                whileHover={{ scale: 1.1 }}
-                                className="flex items-center justify-center"
-                            >
-                                <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={onToggle}
-                                />
-                            </motion.div>
-                        ) : isInLote ? (
-                            <div className="flex justify-center w-full h-full" title={`Lote #${cobranca.lotePagamentoId}`}>
-                                <Lock size={14} className="text-primary/60" />
-                            </div>
-                        ) : null}
-                    </div>
+
 
                     {/* Content Container */}
                     <div className="flex items-center gap-3 ml-1">

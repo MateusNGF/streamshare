@@ -48,18 +48,7 @@ export const CobrancaRow = memo(function CobrancaRow({
             {!isCompact && (
                 <TableCell>
                     <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                        {isSelectable ? (
-                            <Checkbox
-                                checked={isSelected || false}
-                                onCheckedChange={() => onToggleSelect?.(cobranca.id)}
-                            />
-                        ) : isInLote ? (
-                            <div className="flex justify-center w-5 h-5" title={`Lote #${cobranca.lotePagamentoId}`}>
-                                <Lock size={14} className="text-primary/60" />
-                            </div>
-                        ) : (
-                            <div className="w-5 h-5" />
-                        )}
+
                         <div className="flex items-center gap-3">
                             <StreamingLogo
                                 name={cobranca.assinatura.streaming.catalogo.nome}

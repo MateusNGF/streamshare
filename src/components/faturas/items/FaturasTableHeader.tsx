@@ -22,15 +22,7 @@ export function FaturasTableHeader({
     return (
         <TableHeader className="bg-gray-50/50">
             <TableRow className="hover:bg-transparent border-b border-gray-100">
-                {!isAdmin && onSelectChange && (
-                    <TableHead className="w-[40px] px-4 text-center">
-                        <Checkbox
-                            checked={isAllSelected ? true : isSomeSelected ? "indeterminate" : false}
-                            onCheckedChange={handleSelectAll}
-                            className="bg-white"
-                        />
-                    </TableHead>
-                )}
+
                 <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[140px]">
                     <div className="flex items-center gap-2">
                         <Hash size={12} className="text-gray-400" />
