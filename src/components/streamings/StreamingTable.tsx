@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, MoreHorizontal, Pencil, Trash2, Users, ExternalLink, Globe } from "lucide-react";
+import { Search, MoreHorizontal, Pencil, Trash2, Users, ExternalLink, Globe, ShieldCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
@@ -9,6 +9,7 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { formatarMoeda } from "@/lib/financeiro-utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface StreamingTableProps {
     streamings: any[];
@@ -112,9 +113,16 @@ export function StreamingTable({ streamings, isLoading, searchTerm, onEdit, onDe
                                                     className="shadow-sm group-hover:scale-110 transition-transform duration-300"
                                                 />
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-900 group-hover:text-primary transition-colors">
-                                                        {s.apelido || s.catalogo.nome}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
+                                                            {s.apelido || s.catalogo.nome}
+                                                        </span>
+                                                        <Tooltip content={`Concorrência Protegida (Versão ${s.version || 1})`}>
+                                                            <div className="p-0.5 bg-green-50 rounded-md text-green-600 border border-green-100">
+                                                                <ShieldCheck size={10} />
+                                                            </div>
+                                                        </Tooltip>
+                                                    </div>
                                                     {s.apelido && (
                                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
                                                             {s.catalogo.nome}

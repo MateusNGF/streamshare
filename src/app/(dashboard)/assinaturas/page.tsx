@@ -8,6 +8,7 @@ interface AssinaturasPageProps {
     searchParams: {
         status?: string;
         streaming?: string;
+        participante?: string;
         search?: string;
         criacao?: string;
         vencimento?: string;
@@ -39,6 +40,7 @@ export default async function AssinaturasPage({ searchParams }: AssinaturasPageP
         getAssinaturas({
             status: searchParams.status,
             streamingId: searchParams.streaming,
+            participanteId: searchParams.participante,
             searchTerm: searchParams.search,
             dataInicioRange: searchParams.criacao,
             dataVencimentoRange: searchParams.vencimento,

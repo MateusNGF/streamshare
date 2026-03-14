@@ -1,9 +1,10 @@
 import { getKPIsFinanceiros, getCobrancas, getLotesGestor } from "@/actions/cobrancas";
 import { getStreamings } from "@/actions/streamings";
+import { getParticipantes } from "@/actions/participantes";
 import { CobrancasClient } from "./CobrancasClient";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { PlanoConta } from "@prisma/client";
+import { PlanoConta, StatusCobranca } from "@prisma/client";
 
 import { Metadata } from "next";
 
@@ -12,19 +13,45 @@ export const metadata: Metadata = {
     description: "Acompanhe e gerencie as cobranças dos participantes do seu grupo.",
 };
 
-export default async function CobrancasPage() {
+interface CobrancasPageProps {
+    searchParams: {
+        status?: StatusCobranca;
+        participante?: string;
+        mes?: string;
+        search?: string;
+        vencimento?: string;
+        pagamento?: string;
+        valor?: string;
+        hasWhatsapp?: string;
+    };
+}
+
+export default async function CobrancasPage({ searchParams }: CobrancasPageProps) {
+    const valorParam = searchParams.valor ? JSON.parse(searchParams.valor) : undefined;
+    const mesParam = searchParams.mes ? searchParams.mes.split('-') : [undefined, undefined];
+    const hasWhatsapp = searchParams.hasWhatsapp === "true" ? true : searchParams.hasWhatsapp === "false" ? false : undefined;
+
     const results = await Promise.all([
         getKPIsFinanceiros(),
-        getCobrancas(),
+        getCobrancas({
+            status: searchParams.status,
+            participanteId: searchParams.participante ? parseInt(searchParams.participante) : undefined,
+            mes: mesParam[1] ? parseInt(mesParam[1]) : undefined,
+            ano: mesParam[0] ? parseInt(mesParam[0]) : undefined,
+            valorMin: valorParam?.min ? Number(valorParam.min) : undefined,
+            valorMax: valorParam?.max ? Number(valorParam.max) : undefined,
+            hasWhatsapp: hasWhatsapp
+        }),
         getLotesGestor(),
         checkWhatsAppConfig(),
         getStreamings(),
-        getAccountData()
+        getAccountData(),
+        getParticipantes()
     ]);
 
-    const [kpisRes, cobrancasRes, lotesRes, whatsappConfig, streamingsRes, accountData] = results;
+    const [kpisRes, cobrancasRes, lotesRes, whatsappConfig, streamingsRes, accountData, participantesRes] = results;
 
-    const hasError = !kpisRes.success || !cobrancasRes.success || !streamingsRes.success;
+    const hasError = !kpisRes.success || !cobrancasRes.success || !streamingsRes.success || !participantesRes.success;
     const errorMsg = hasError ? "Algumas informações de cobranças não puderam ser carregadas." : undefined;
 
     return (
@@ -34,6 +61,7 @@ export default async function CobrancasPage() {
             lotes={lotesRes.data || []}
             whatsappConfigurado={whatsappConfig}
             streamings={streamingsRes.data || []}
+            participantes={participantesRes.data || []}
             plano={accountData.plano as PlanoConta}
             error={errorMsg}
         />

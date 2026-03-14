@@ -13,7 +13,9 @@ import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { getCobrancasAnalytics } from "@/actions/cobrancas";
+import { Table as TableIcon, BarChart3 } from "lucide-react";
 import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
 import { Button } from "@/components/ui/Button";
 import dynamic from "next/dynamic";
@@ -22,6 +24,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { formatMesReferencia } from "@/lib/dateUtils";
+import { getCobrancasFilterConfig } from "@/components/cobrancas/filters/CobrancasFilterConfig";
+import { ChartContainerSkeleton, BarChartSkeleton, StackedBarChartSkeleton } from "@/components/financeiro/charts/ChartSkeletons";
 
 const LotesTab = dynamic(() => import("@/components/faturas/LotesTab").then(mod => mod.LotesTab), {
     loading: () => <TableSkeleton />
@@ -39,13 +43,28 @@ const CobrancasTable = dynamic(() => import("@/components/cobrancas/CobrancasTab
     loading: () => <TableSkeleton />
 });
 
-const CobrancaCard = dynamic(() => import("@/components/cobrancas/CobrancaCard").then(mod => mod.CobrancaCard), {
-    loading: () => <LoadingCard variant="compact" />
-});
-
 const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasModals").then(mod => mod.CobrancasModals));
 const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
-// BatchPreviewDrawer removed in favor of confirmation modal
+
+const CobrancasStatusDonut = dynamic(() => import("@/components/financeiro/charts/CobrancasStatusDonut").then(mod => mod.CobrancasStatusDonut), {
+    ssr: false,
+    loading: () => <ChartContainerSkeleton title="Status do Ciclo" />
+});
+
+const CobrancasHistoryStackedBar = dynamic(() => import("@/components/financeiro/charts/CobrancasHistoryStackedBar").then(mod => mod.CobrancasHistoryStackedBar), {
+    ssr: false,
+    loading: () => <StackedBarChartSkeleton title="Histórico de Inadimplência" />
+});
+
+const CobrancasByServiceBar = dynamic(() => import("@/components/financeiro/charts/CobrancasByServiceBar").then(mod => mod.CobrancasByServiceBar), {
+    ssr: false,
+    loading: () => <BarChartSkeleton title="Inadimplência por Serviço" />
+});
+
+const ParticipantHistoryLine = dynamic(() => import("@/components/financeiro/charts/ParticipantHistoryLine").then(mod => mod.ParticipantHistoryLine), {
+    ssr: false,
+    loading: () => <ChartContainerSkeleton title="Histórico do Participante" />
+});
 
 
 interface CobrancasClientProps {
@@ -59,11 +78,12 @@ interface CobrancasClientProps {
     lotes: any[];
     whatsappConfigurado: boolean;
     streamings: any[];
+    participantes: any[];
     plano: PlanoConta;
     error?: string;
 }
 
-export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfigurado, streamings, plano, error }: CobrancasClientProps) {
+export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfigurado, streamings, participantes, plano, error }: CobrancasClientProps) {
     const router = useRouter();
     useActionError(error);
     const [viewMode, setViewMode] = useState<ViewMode>("table");
@@ -94,20 +114,78 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
 
     const [activeTabId, setActiveTabId] = useState("cobrancas");
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+    // Otimização Senior: Handler memoizado para evitar re-renders em cascata nos gráficos
+    const handleSliceClick = useCallback((status: string) => {
+        handleFilterChange("status", status);
+        setViewMode("table");
+        // UX: Scroll suave para a tabela após filtrar pelo gráfico
+        setTimeout(() => {
+            const tableElement = document.getElementById('cobrancas-list-section');
+            if (tableElement) {
+                tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                window.scrollTo({ top: 400, behavior: 'smooth' });
+            }
+        }, 150);
+    }, [handleFilterChange]);
+
+    // Analytics Contextual com Proteção contra Race Conditions
+    useEffect(() => {
+        if (viewMode !== "chart") return;
+
+        let isMounted = true;
+        setLoadingAnalytics(true);
+
+        const fetchAnalytics = async () => {
+            const res = await getCobrancasAnalytics("6m", {
+                searchTerm: filters.searchTerm,
+                status: filters.statusFilter,
+                participante: filters.participanteFilter,
+                streaming: filters.streamingFilter,
+                mesReferencia: filters.mesReferencia
+            });
+
+            if (isMounted) {
+                if (res.success) {
+                    setAnalyticsData(res.data);
+                }
+                setLoadingAnalytics(false);
+            }
+        };
+
+        fetchAnalytics();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [viewMode, filters.searchTerm, filters.statusFilter, filters.participanteFilter, filters.streamingFilter, filters.mesReferencia]);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
 
-    const pendingApprovalsCount = cobrancasIniciais.filter(c => c.status === 'aguardando_aprovacao').length;
+    const pendingApprovalsCount = useMemo(() =>
+        cobrancasIniciais.filter(c => c.status === 'aguardando_aprovacao').length,
+        [cobrancasIniciais]);
 
-    const monthOptions = Array.from({ length: 6 }).map((_, i) => {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        return {
-            label: d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
-            value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        };
-    });
+    const monthOptions = useMemo(() => {
+        return Array.from({ length: 6 }).map((_, i) => {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            return {
+                label: d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+                value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            };
+        });
+    }, []);
+
+    const filterConfig = useMemo(() => getCobrancasFilterConfig({
+        participantes,
+        streamings,
+        monthOptions
+    }), [participantes, streamings, monthOptions]);
 
     return (
         <PageContainer>
@@ -172,78 +250,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
 
             <div className="py-6">
                 <GenericFilter
-                    filters={[
-                        {
-                            key: "search",
-                            type: "text",
-                            placeholder: "Buscar participante...",
-                            className: "flex-1 min-w-[200px]"
-                        },
-                        {
-                            key: "status",
-                            type: "select",
-                            label: "Status",
-                            className: "w-full md:w-[150px]",
-                            options: [
-                                { label: "Pendente", value: "pendente" },
-                                { label: "Aguardando", value: "aguardando_aprovacao" },
-                                { label: "Pago", value: "pago" },
-                                { label: "Atrasado", value: "atrasado" }
-                            ]
-                        },
-                        {
-                            key: "mesReferencia",
-                            type: "select",
-                            label: "Mês de Referência",
-                            className: "w-full md:w-[200px]",
-                            options: monthOptions
-                        },
-                        {
-                            key: "streaming",
-                            type: "select",
-                            label: "Streaming",
-                            className: "w-full md:w-[200px]",
-                            options: streamings.map(s => ({
-                                label: s.apelido || s.catalogo.nome,
-                                value: s.id.toString(),
-                                iconNode: (
-                                    <StreamingLogo
-                                        name={s.apelido || s.catalogo.nome}
-                                        iconeUrl={s.catalogo.iconeUrl}
-                                        color={s.catalogo.corPrimaria || "#ccc"}
-                                        size="xs"
-                                        rounded="md"
-                                    />
-                                )
-                            }))
-                        },
-                        {
-                            key: "vencimento",
-                            type: "dateRange",
-                            label: "Data de Vencimento",
-                            placeholder: "Filtrar vencimento"
-                        },
-                        {
-                            key: "pagamento",
-                            type: "dateRange",
-                            label: "Data de Pagamento",
-                            placeholder: "Filtrar pagamento"
-                        },
-                        {
-                            key: "valor",
-                            type: "numberRange",
-                            label: "Faixa de Preço",
-                            placeholder: "Ex: 10 a 50"
-                        },
-                        {
-                            key: "hasWhatsapp",
-                            type: "switch",
-                            label: "Apenas com WhatsApp",
-                            className: "md:w-auto"
-                        }
-                    ]}
+                    filters={filterConfig}
                     values={{
                         search: filters.searchTerm,
+                        participante: filters.participanteFilter,
                         status: filters.statusFilter,
                         streaming: filters.streamingFilter,
                         mesReferencia: filters.mesReferencia,
@@ -293,7 +303,14 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                 <span className="hidden sm:inline">Gerar Faturas do Mês</span>
                                             </Button>
                                             <div className="flex-1 w-full sm:w-auto flex justify-center">
-                                                <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+                                                <ViewModeToggle
+                                                    viewMode={viewMode}
+                                                    setViewMode={setViewMode}
+                                                    options={[
+                                                        { id: "table", label: "Tabela", icon: TableIcon },
+                                                        { id: "chart", label: "Análise", icon: BarChart3 },
+                                                    ]}
+                                                />
                                             </div>
                                         </div>
                                     }
@@ -307,43 +324,80 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                     />
                                 )}
 
-                                {viewMode === "grid" ? (
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {filteredCobrancas.map((cobranca) => (
-                                            <CobrancaCard
-                                                key={cobranca.id}
-                                                cobranca={cobranca}
-                                                isOverdue={cobranca.status === 'atrasado'}
-                                                formatDate={(date) => new Date(date).toLocaleDateString()}
-                                                formatPeriod={(start, end) => ""}
-                                                onViewDetails={() => {
-                                                    setSelectedCobrancaId(cobranca.id);
-                                                    setDetailsModalOpen(true);
-                                                }}
-                                                onConfirmPayment={() => handleConfirmarPagamento(cobranca.id)}
-                                                onSendWhatsApp={() => handleEnviarWhatsApp(cobranca.id)}
-                                                onCancel={() => handleCancelarCobranca(cobranca.id)}
-                                                onViewQrCode={() => handleViewQrCode(cobranca.id)}
-                                            />
-                                        ))}
+                                {viewMode === "chart" ? (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                        {loadingAnalytics ? (
+                                            <>
+                                                {analyticsData?.isParticipantFiltered ? (
+                                                    <ChartContainerSkeleton title="Histórico do Participante" />
+                                                ) : (
+                                                    <BarChartSkeleton title="Inadimplência por Serviço" />
+                                                )}
+                                                <ChartContainerSkeleton title="Status do Ciclo" />
+                                                {!analyticsData?.isParticipantFiltered && (
+                                                    <div className="lg:col-span-2">
+                                                        <StackedBarChartSkeleton title="Histórico de Inadimplência" />
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : analyticsData ? (
+                                            <>
+                                                {analyticsData.isParticipantFiltered ? (
+                                                    <>
+                                                        <ParticipantHistoryLine
+                                                            data={analyticsData.historyData}
+                                                        />
+                                                        <CobrancasStatusDonut
+                                                            data={analyticsData.donutData}
+                                                            totalExpected={analyticsData.totalExpected}
+                                                            monthLabel={analyticsData.monthLabel}
+                                                            onSliceClick={handleSliceClick}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CobrancasByServiceBar
+                                                            data={analyticsData.serviceRanking}
+                                                        />
+                                                        <CobrancasStatusDonut
+                                                            data={analyticsData.donutData}
+                                                            totalExpected={analyticsData.totalExpected}
+                                                            monthLabel={analyticsData.monthLabel}
+                                                            onSliceClick={handleSliceClick}
+                                                        />
+                                                        <div className="lg:col-span-2">
+                                                            <CobrancasHistoryStackedBar
+                                                                data={analyticsData.historyData}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="col-span-2 py-20 text-center">
+                                                <p className="text-gray-500">Não foi possível carregar os dados analíticos.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
-                                    <CobrancasTable
-                                        cobrancas={filteredCobrancas}
-                                        onViewDetails={(id) => {
-                                            setSelectedCobrancaId(id);
-                                            setDetailsModalOpen(true);
-                                        }}
-                                        onConfirmPayment={handleConfirmarPagamento}
-                                        onSendWhatsApp={handleEnviarWhatsApp}
-                                        onCancelPayment={handleCancelarCobranca}
-                                        searchTerm={filters.searchTerm}
-                                        statusFilter={filters.statusFilter}
-                                        onViewQrCode={handleViewQrCode}
-                                        selectedIds={selectedIds}
-                                        onToggleSelect={toggleSelection}
-                                        onSelectAll={selectAll}
-                                    />
+                                    <div id="cobrancas-list-section">
+                                        <CobrancasTable
+                                            cobrancas={filteredCobrancas}
+                                            onViewDetails={(id) => {
+                                                setSelectedCobrancaId(id);
+                                                setDetailsModalOpen(true);
+                                            }}
+                                            onConfirmPayment={handleConfirmarPagamento}
+                                            onSendWhatsApp={handleEnviarWhatsApp}
+                                            onCancelPayment={handleCancelarCobranca}
+                                            searchTerm={filters.searchTerm}
+                                            statusFilter={filters.statusFilter}
+                                            onViewQrCode={handleViewQrCode}
+                                            selectedIds={selectedIds}
+                                            onToggleSelect={toggleSelection}
+                                            onSelectAll={selectAll}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )
@@ -361,6 +415,10 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                         <ViewModeToggle
                                             viewMode={viewMode}
                                             setViewMode={setViewMode}
+                                            options={[
+                                                { id: "table", label: "Tabela", icon: TableIcon },
+                                                { id: "chart", label: "Análise", icon: BarChart3 },
+                                            ]}
                                         />
                                     }
                                 />

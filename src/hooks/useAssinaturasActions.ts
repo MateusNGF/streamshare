@@ -4,12 +4,16 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { createBulkAssinaturas, cancelarAssinatura } from "@/actions/assinaturas";
-import { useFilterParams } from "@/hooks/useFilterParams";
+import { useBaseFilter } from "@/hooks/useBaseFilter";
 
 export function useAssinaturasActions(streamings: any[]) {
     const router = useRouter();
     const toast = useToast();
-    const { filters, updateFilters } = useFilterParams();
+    const {
+        filters,
+        handleFilterChange,
+        handleClearFilters
+    } = useBaseFilter('/assinaturas');
 
     // States
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -17,23 +21,16 @@ export function useAssinaturasActions(streamings: any[]) {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [cancelling, setCancelling] = useState(false);
 
-    const filterValues = {
+    const filterValues = useMemo(() => ({
         searchTerm: filters.search || "",
         statusFilter: filters.status || "all",
         streamingFilter: filters.streaming || "all",
+        participanteFilter: filters.participante || "all",
         criacaoRange: filters.criacao || "",
         vencimentoRange: filters.vencimento || "",
         valorRange: filters.valor || "",
         hasWhatsappFilter: filters.hasWhatsapp || "false"
-    };
-
-    const handleFilterChange = (key: string, value: string) => {
-        updateFilters({ [key]: value });
-    };
-
-    const handleClearFilters = () => {
-        router.push('/assinaturas');
-    };
+    }), [filters]);
 
     const handleCancelSubmit = async (reason: string) => {
         if (!selectedAssinatura) return;

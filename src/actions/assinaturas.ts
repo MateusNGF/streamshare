@@ -1,9 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { FilterService } from "@/services/filter.service";
 import { revalidatePath } from "next/cache";
 import { FrequenciaPagamento, StatusAssinatura, Prisma } from "@prisma/client";
 import { billingService } from "@/services/billing-service";
+import { StreamingService } from "@/services/streaming.service";
 import type { CurrencyCode } from "@/types/currency.types";
 import { getContext } from "@/lib/action-context";
 import { BulkCreateSubscriptionDTO, CreateSubscriptionDTO } from "@/types/subscription.types";
@@ -65,6 +67,7 @@ export async function getAssinaturasKPIs() {
 export async function getAssinaturas(filters?: {
     status?: string;
     streamingId?: string;
+    participanteId?: string;
     searchTerm?: string;
     dataInicioRange?: string; // JSON string with from/to
     dataVencimentoRange?: string; // JSON string with from/to
@@ -74,73 +77,7 @@ export async function getAssinaturas(filters?: {
 }) {
     try {
         const { contaId } = await getContext();
-
-        const whereClause: any = {
-            participante: { contaId },
-        };
-
-        if (filters?.status && filters.status !== "all") {
-            whereClause.status = filters.status;
-        } else {
-            whereClause.status = { not: StatusAssinatura.cancelada };
-        }
-
-        if (filters?.streamingId && filters.streamingId !== "all") {
-            whereClause.streamingId = parseInt(filters.streamingId);
-        }
-
-        if (filters?.searchTerm && filters.searchTerm.trim() !== "") {
-            whereClause.participante = {
-                ...whereClause.participante,
-                nome: {
-                    contains: filters.searchTerm,
-                    mode: 'insensitive'
-                }
-            };
-        }
-
-        if (filters?.valorMin !== undefined || filters?.valorMax !== undefined) {
-            whereClause.valor = {};
-            if (filters.valorMin !== undefined) whereClause.valor.gte = filters.valorMin;
-            if (filters.valorMax !== undefined) whereClause.valor.lte = filters.valorMax;
-        }
-
-        if (filters?.hasWhatsapp !== undefined) {
-            whereClause.participante = {
-                ...whereClause.participante,
-                whatsappNumero: filters.hasWhatsapp ? { not: null } : null
-            };
-        }
-
-        if (filters?.dataInicioRange) {
-            try {
-                const range = JSON.parse(filters.dataInicioRange);
-                if (range.from || range.to) {
-                    whereClause.dataInicio = {};
-                    if (range.from) whereClause.dataInicio.gte = new Date(range.from);
-                    if (range.to) whereClause.dataInicio.lte = new Date(range.to);
-                }
-            } catch (e) {
-                console.error("Error parsing dataInicioRange", e);
-            }
-        }
-
-        if (filters?.dataVencimentoRange) {
-            try {
-                const range = JSON.parse(filters.dataVencimentoRange);
-                if (range.from || range.to) {
-                    whereClause.cobrancas = {
-                        some: {
-                            dataVencimento: {}
-                        }
-                    };
-                    if (range.from) whereClause.cobrancas.some.dataVencimento.gte = new Date(range.from);
-                    if (range.to) whereClause.cobrancas.some.dataVencimento.lte = new Date(range.to);
-                }
-            } catch (e) {
-                console.error("Error parsing dataVencimentoRange", e);
-            }
-        }
+        const whereClause = FilterService.buildAssinaturaWhere(contaId, filters);
 
         const data = await prisma.assinatura.findMany({
             where: whereClause,
@@ -189,8 +126,17 @@ export async function createAssinatura(data: CreateSubscriptionDTO) {
         // 2. Transaction (Atomicity)
         const result = await prisma.$transaction(async (tx) => {
             // Business Checks
-            const streaming = await subscriptionValidator.validateStreamingAccess(data.streamingId, contaId);
-            subscriptionValidator.validateSlotAvailability(streaming);
+            // 1. Fetch and Lock data
+            const streaming = await StreamingService.findWithLock(data.streamingId, tx);
+            if (!streaming) throw new Error("Streaming não encontrado.");
+
+            // 2. Validate and increment version
+            await StreamingService.validateAndLockCapacity(streaming, 1, tx);
+
+            if (streaming.contaId !== contaId) {
+                throw new Error(`Você não tem permissão para usar o streaming ${streaming.catalogo.nome}`);
+            }
+
             await subscriptionValidator.validateDuplicateSubscription(data.participanteId, data.streamingId);
 
             const contaInfo = await tx.conta.findUnique({
@@ -385,6 +331,13 @@ export async function cancelarAssinatura(assinaturaId: number, motivo?: string) 
         }
 
         const updated = await prisma.$transaction(async (tx) => {
+            // Optimistic Locking: Increment version signal change (centralized)
+            // Even if we don't know the current version, updateMany by id is safe to signal a change
+            await tx.streaming.updateMany({
+                where: { id: assinatura.streamingId },
+                data: { version: { increment: 1 } }
+            });
+
             const res = await tx.assinatura.update({
                 where: { id: assinaturaId },
                 data: {

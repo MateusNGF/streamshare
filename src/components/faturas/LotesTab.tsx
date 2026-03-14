@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { cancelarLotePagamento } from "@/actions/cobrancas";
 import { useToast } from "@/hooks/useToast";
-import { LoteCard } from "./LoteCard";
 import { ViewMode } from "@/components/ui/ViewModeToggle";
 
 interface LotesTabProps {
@@ -51,26 +50,12 @@ export function LotesTab({ lotes, viewMode = "table", isAdmin = false }: LotesTa
 
     return (
         <div className="space-y-6">
-            {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {lotes.map(lote => (
-                        <LoteCard
-                            key={lote.id}
-                            lote={lote}
-                            onViewDetails={handleViewLote}
-                            onCancelLote={handleCancelLote}
-                            isAdmin={isAdmin}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <LotesTable
-                    lotes={lotes}
-                    onViewDetails={handleViewLote}
-                    onCancelLote={handleCancelLote}
-                    isAdmin={isAdmin}
-                />
-            )}
+            <LotesTable
+                lotes={lotes}
+                onViewDetails={handleViewLote}
+                onCancelLote={handleCancelLote}
+                isAdmin={isAdmin}
+            />
 
             {selectedLote && (
                 <ModalPagamentoLote

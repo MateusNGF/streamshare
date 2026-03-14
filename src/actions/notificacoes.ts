@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { TipoNotificacao } from "@prisma/client";
+import { Prisma, TipoNotificacao } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { getContext } from "@/lib/action-context";
@@ -71,11 +71,11 @@ export async function criarNotificacao(data: {
     usuarioId?: number | null; // NULL = Admins, ID = Specific User
     metadata?: Record<string, any>;
     contaId?: number;
-}) {
+}, tx: Prisma.TransactionClient = prisma) {
     try {
         const { contaId, userId } = await getContext();
 
-        const notificacao = await prisma.notificacao.create({
+        const notificacao = await tx.notificacao.create({
             data: {
                 contaId: data.contaId || contaId,
                 usuarioId: data.usuarioId !== undefined ? data.usuarioId : userId,

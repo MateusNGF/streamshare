@@ -48,6 +48,57 @@ export class StreamingService {
     }
 
     /**
+     * SOLID: Centralized Optimistic Locking helper to fetch a streaming with its version and occupancy.
+     */
+    static async findWithLock(streamingId: number, tx: Prisma.TransactionClient = prisma) {
+        return tx.streaming.findUnique({
+            where: { id: streamingId },
+            select: {
+                id: true,
+                version: true,
+                limiteParticipantes: true,
+                valorIntegral: true,
+                contaId: true,
+                catalogo: { select: { nome: true } },
+                _count: {
+                    select: {
+                        assinaturas: {
+                            where: { status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa, StatusAssinatura.pendente] } }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * SOLID: Centralized Optimistic Locking helper to increment a streaming version.
+     */
+    static async incrementVersion(streamingId: number, currentVersion: number, tx: Prisma.TransactionClient = prisma) {
+        const result = await tx.streaming.updateMany({
+            where: { id: streamingId, version: currentVersion },
+            data: { version: { increment: 1 } }
+        });
+
+        if (result.count === 0) {
+            throw new Error("As informações do streaming foram alteradas por outro usuário. Por favor, tente novamente.");
+        }
+    }
+
+    /**
+     * SOLID: Combined capacity validation and optimistic locking for a single streaming.
+     * The streaming object MUST be fetched first using findWithLock.
+     */
+    static async validateAndLockCapacity(streaming: any, quantity: number = 1, tx: Prisma.TransactionClient = prisma) {
+        const currentOccupied = streaming._count.assinaturas;
+        if (currentOccupied + quantity > streaming.limiteParticipantes) {
+            throw new Error(`${streaming.catalogo.nome}: Vagas insuficientes.`);
+        }
+
+        await this.incrementVersion(streaming.id, streaming.version, tx);
+    }
+
+    /**
      * Generate a new share token for a streaming service and save it as a public invite.
      * ACID: Uses a transaction to ensure spots are checked and invite is created atomically.
      */

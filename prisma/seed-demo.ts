@@ -18,7 +18,7 @@ import {
 } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import bcrypt from "bcryptjs";
-import { addDays, subDays, startOfMonth, subMonths, format } from "date-fns";
+import { addDays, subDays, startOfMonth, subMonths, format, setDate } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -143,6 +143,18 @@ class DemoSeedRunner {
 
         const { conta, usuario } = await this.createIdentity(email, "Ricardo Organizador", PlanoConta.pro, "ricardo.pix@streamshare.com.br");
 
+        // Criar o próprio Organizador como Participante (para ele ter faturas próprias)
+        const participanteSelf = await this.prisma.participante.create({
+            data: {
+                contaId: conta.id,
+                userId: usuario.id,
+                nome: "Ricardo (Organizador)",
+                whatsappNumero: "5511999998888",
+                whatsappVerificado: true,
+                status: StatusParticipante.ativo
+            }
+        });
+
         // Grupos Temáticos
         const grupoAmigos = await this.createGrupo(conta.id, "Amigos da Faculdade", "Rachando streamings com a galera da antiga", "amigos-facul");
         const grupoTrabalho = await this.createGrupo(conta.id, "Squad Stream", "Streamings corporativos e de estudo", "squad-dev");
@@ -152,6 +164,11 @@ class DemoSeedRunner {
         const spotify = await this.createStreaming(conta.id, "Spotify", "Spotify Family", 34.90, 6, false);
         const youtube = await this.createStreaming(conta.id, "YouTube Premium", "YouTube Premium", 41.90, 5, true);
         const disney = await this.createStreaming(conta.id, "Disney+", "Combo Disney/Star", 52.90, 4, true);
+
+        // Assinaturas para o próprio Organizador
+        await this.simularAssinatura(participanteSelf, netflix, 13.90, 0, conta.id);
+        await this.simularAssinatura(participanteSelf, disney, 13.20, 0, conta.id);
+        await this.simularAssinatura(participanteSelf, youtube, 8.40, 0, conta.id);
 
         // Linkar Grupos e Streamings
         await this.prisma.grupoStreaming.createMany({
@@ -170,7 +187,9 @@ class DemoSeedRunner {
             "Felipe Rocha", "Gabriel Costa", "Helena Vieira", "Igor Gomes", "Julia Matos",
             "Kevin Duarte", "Larissa Paiva", "Marcos Vinicius", "Nathalia Cruz", "Otavio Neto",
             "Paula Souza", "Queiroz Filho", "Rafaela Mendes", "Samuel Leite", "Tiago Araujo",
-            "Ursula Klein", "Victor Hugo", "Wagner Moura", "Xavier Junior", "Yara Amaral", "Zeca Pagodinho"
+            "Ursula Klein", "Victor Hugo", "Wagner Moura", "Xavier Junior", "Yara Amaral", "Zeca Pagodinho",
+            "Arthur Morgan", "Beatrix Kiddo", "Cassian Andor", "Din Djarin", "Ellen Ripley",
+            "Frodo Baggins", "Geralt Rivia", "Homer Simpson", "Indiana Jones", "John Wick"
         ];
 
         for (let i = 0; i < nomesP.length; i++) {
@@ -186,9 +205,10 @@ class DemoSeedRunner {
             });
 
             // Distribuir assinaturas para criar volume
-            if (i % 2 === 0) await this.simularAssinatura(participante, netflix, 13.90, i);
-            if (i % 3 === 0) await this.simularAssinatura(participante, spotify, 5.80, i);
-            if (i % 5 === 0) await this.simularAssinatura(participante, youtube, 8.40, i);
+            if (i % 2 === 0) await this.simularAssinatura(participante, netflix, 13.90, i, conta.id);
+            if (i % 3 === 0) await this.simularAssinatura(participante, spotify, 5.80, i, conta.id);
+            if (i % 5 === 0) await this.simularAssinatura(participante, youtube, 8.40, i, conta.id);
+            if (i % 4 === 0) await this.simularAssinatura(participante, disney, 13.20, i, conta.id);
         }
 
         // Notificações para encher o painel
@@ -276,7 +296,7 @@ class DemoSeedRunner {
             data: { contaId: conta.id, nome: "João Amigo", whatsappNumero: "5511977776666", status: StatusParticipante.ativo }
         });
 
-        await this.simularAssinatura(p1, xbox, 24.95, 0);
+        await this.simularAssinatura(p1, xbox, 24.95, 0, conta.id);
         Logger.success("Conta BÁSICA criada.");
     }
 
@@ -295,7 +315,7 @@ class DemoSeedRunner {
             const p = await this.prisma.participante.create({
                 data: { contaId: conta.id, nome: `Colaborador ${i + 1}`, status: StatusParticipante.ativo }
             });
-            await this.simularAssinatura(p, canva, 12.00, i);
+            await this.simularAssinatura(p, canva, 12.00, i, conta.id);
         }
         Logger.success("Conta BUSINESS criada.");
     }
@@ -370,8 +390,8 @@ class DemoSeedRunner {
         });
     }
 
-    private async simularAssinatura(p: Participante, s: Streaming, valor: number, seedIndex: number) {
-        const status = seedIndex % 10 === 0 ? StatusAssinatura.suspensa : StatusAssinatura.ativa;
+    private async simularAssinatura(p: Participante, s: Streaming, valor: number, seedIndex: number, contaId: number) {
+        const statusAss = seedIndex % 15 === 0 ? StatusAssinatura.suspensa : StatusAssinatura.ativa;
 
         const assinatura = await this.prisma.assinatura.create({
             data: {
@@ -379,53 +399,82 @@ class DemoSeedRunner {
                 streamingId: s.id,
                 frequencia: FrequenciaPagamento.mensal,
                 valor: new Decimal(valor),
-                dataInicio: subMonths(this.now, 3),
-                status
+                dataInicio: subMonths(this.now, 20),
+                status: statusAss
             }
         });
 
-        // 1. Cobrança Antiga (Paga)
-        await this.prisma.cobranca.create({
-            data: {
-                assinaturaId: assinatura.id,
-                valor: new Decimal(valor),
-                periodoInicio: subMonths(this.now, 2),
-                periodoFim: subMonths(this.now, 1),
-                dataVencimento: subMonths(this.now, 2),
-                status: StatusCobranca.pago,
-                dataPagamento: subMonths(this.now, 2)
+        // Gerar histórico de 18 meses
+        const mesesParaGerar = 18;
+        for (let m = 0; m < mesesParaGerar; m++) {
+            const periodoInicio = startOfMonth(subMonths(this.now, m));
+            const periodoFim = addDays(periodoInicio, 30);
+            const dataVencimento = setDate(periodoInicio, 10);
+
+            // Definir Status com base na antiguidade
+            let statusCob: StatusCobranca = StatusCobranca.pago;
+            let dataPagamento: Date | null = subDays(periodoInicio, -2);
+
+            if (m === 0) { // Mês atual: Diversificar para o dashboard
+                const r = Math.random();
+                if (r < 0.2) { statusCob = StatusCobranca.pendente; dataPagamento = null; }
+                else if (r < 0.4) { statusCob = StatusCobranca.aguardando_aprovacao; dataPagamento = null; }
+                else if (r < 0.5) { statusCob = StatusCobranca.atrasado; dataPagamento = null; }
+            } else if (m === 1) { // Mês passado
+                if (Math.random() < 0.1) { statusCob = StatusCobranca.atrasado; dataPagamento = null; }
             }
-        });
 
-        // 2. Cobrança do Mês Atual (Variada)
-        let statusCob: StatusCobranca = StatusCobranca.pendente;
-        if (seedIndex % 4 === 0) statusCob = StatusCobranca.atrasado;
-        if (seedIndex % 7 === 0) statusCob = StatusCobranca.aguardando_aprovacao;
-
-        const cobAtual = await this.prisma.cobranca.create({
-            data: {
-                assinaturaId: assinatura.id,
-                valor: new Decimal(valor),
-                periodoInicio: startOfMonth(this.now),
-                periodoFim: addDays(startOfMonth(this.now), 30),
-                dataVencimento: statusCob === StatusCobranca.atrasado ? subDays(this.now, 5) : addDays(this.now, 5),
-                status: statusCob,
-                comprovanteUrl: statusCob === StatusCobranca.aguardando_aprovacao ? "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400" : null
-            }
-        });
-
-        // Criar Lote para alguns
-        if (statusCob !== StatusCobranca.pendente && seedIndex % 2 === 0) {
-            let statusLote: StatusLote = statusCob === StatusCobranca.aguardando_aprovacao ? StatusLote.aguardando_aprovacao : StatusLote.pendente;
-            const lote = await this.prisma.lotePagamento.create({
+            const cob = await this.prisma.cobranca.create({
                 data: {
-                    participanteId: p.id,
-                    valorTotal: new Decimal(valor),
-                    status: statusLote,
-                    comprovanteUrl: statusCob === StatusCobranca.aguardando_aprovacao ? "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400" : null
+                    assinaturaId: assinatura.id,
+                    valor: new Decimal(valor),
+                    periodoInicio,
+                    periodoFim,
+                    dataVencimento,
+                    status: statusCob,
+                    dataPagamento,
+                    comprovanteUrl: (statusCob === StatusCobranca.pago || statusCob === StatusCobranca.aguardando_aprovacao)
+                        ? "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400"
+                        : null
                 }
             });
-            await this.prisma.cobranca.update({ where: { id: cobAtual.id }, data: { lotePagamentoId: lote.id } });
+
+            // Agrupar em Lotes (Faturas) para os últimos 4 meses
+            if (m <= 4) {
+                const refMes = format(periodoInicio, "MM/yyyy");
+                let lote = await this.prisma.lotePagamento.findFirst({
+                    where: { participanteId: p.id, referenciaMes: refMes, contaId }
+                });
+
+                if (!lote) {
+                    lote = await this.prisma.lotePagamento.create({
+                        data: {
+                            participanteId: p.id,
+                            contaId,
+                            referenciaMes: refMes,
+                            valorTotal: new Decimal(0),
+                            status: statusCob === StatusCobranca.pago ? StatusLote.pago :
+                                (statusCob === StatusCobranca.aguardando_aprovacao ? StatusLote.aguardando_aprovacao : StatusLote.pendente),
+                            comprovanteUrl: cob.comprovanteUrl
+                        }
+                    });
+                }
+
+                await this.prisma.cobranca.update({
+                    where: { id: cob.id },
+                    data: { lotePagamentoId: lote.id }
+                });
+
+                // Atualizar total do lote
+                const totalLote = await this.prisma.cobranca.aggregate({
+                    where: { lotePagamentoId: lote.id },
+                    _sum: { valor: true }
+                });
+                await this.prisma.lotePagamento.update({
+                    where: { id: lote.id },
+                    data: { valorTotal: totalLote._sum.valor || new Decimal(0) }
+                });
+            }
         }
     }
 

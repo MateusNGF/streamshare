@@ -1,6 +1,6 @@
 'use client';
 
-import { MoreVertical, UserPlus, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { MoreVertical, UserPlus, ExternalLink } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -30,7 +30,6 @@ export function StreamingCard({ id, name, slots, value, color, initial, iconeUrl
         },
         {
             label: "Copiar Link de Convite",
-            icon: <LinkIcon size={16} />,
             onClick: () => onAction?.('share', id)
         },
         { type: "separator" as const },

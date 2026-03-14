@@ -4,30 +4,20 @@ import { determinarStatusInicial, parseLocalDate, gerarCiclosRetroativos } from 
 import { chargeFactory, ChargeData } from "./charge-factory";
 import { isBefore, startOfDay } from "date-fns";
 import { StatusAssinatura, Prisma } from "@prisma/client";
+import { StreamingService } from "./streaming.service";
 
 export class SubscriptionBulkService {
     static async validateCapacity(tx: Prisma.TransactionClient, demandMap: Map<number, number>, contaId: number) {
         const streamingIds = Array.from(demandMap.keys());
-        const streamingsData = await tx.streaming.findMany({
-            where: {
-                id: { in: streamingIds },
-                contaId
-            },
-            include: {
-                catalogo: true,
-                _count: {
-                    select: {
-                        assinaturas: {
-                            where: { status: { in: [StatusAssinatura.ativa, StatusAssinatura.suspensa, StatusAssinatura.pendente] } }
-                        }
-                    }
-                }
-            }
-        });
+        const streamingsData = await Promise.all(
+            streamingIds.map(id => StreamingService.findWithLock(id, tx))
+        );
 
         for (const sId of streamingIds) {
-            const streaming = streamingsData.find(s => s.id === sId);
-            if (!streaming) throw new Error(`Streaming ID ${sId} não encontrado ou sem permissão.`);
+            const streaming = streamingsData.find(s => s?.id === sId);
+            if (!streaming || streaming.contaId !== contaId) {
+                throw new Error(`Streaming ID ${sId} não encontrado ou sem permissão.`);
+            }
 
             const currentCount = streaming._count.assinaturas;
             const neededParticipants = demandMap.get(sId) || 0;
@@ -36,7 +26,7 @@ export class SubscriptionBulkService {
             }
         }
 
-        return streamingsData;
+        return streamingsData.filter((s): s is NonNullable<typeof s> => s !== null);
     }
 
     static async processBulkCreation(tx: any, data: BulkCreateSubscriptionDTO, context: { contaId: number, userId: number }) {
@@ -130,6 +120,11 @@ export class SubscriptionBulkService {
             }
 
             results.push({ streamingId: ass.streamingId, assinaturaId: assinatura.id, participanteId: ass.participanteId });
+        }
+
+        // --- OPTIMISTIC LOCKING: Atomic Update of Streaming Versions (SOLID) ---
+        for (const streaming of streamingsData) {
+            await StreamingService.incrementVersion(streaming.id, streaming.version, tx);
         }
 
         return { results, cobrancasParaCriar, streamingsData };

@@ -4,6 +4,7 @@ import {
     calcularProximoVencimento,
     calcularDataVencimentoPadrao
 } from "@/lib/financeiro-utils";
+import { StreamingService } from "./streaming.service";
 
 export class SubscriptionService {
     /**
@@ -22,32 +23,14 @@ export class SubscriptionService {
         frequencia: FrequenciaPagamento = "mensal",
         dtInicio: Date = new Date()
     ) {
-        // 1. Lock the streaming row to prevent race conditions (Consistency & Isolation)
-        // This prevents multiple transactions from over-occupying the limited spots
-        await tx.$executeRaw`SELECT id FROM "streaming" WHERE id = ${streamingId} FOR UPDATE`;
-
-        // 2. Fetch Streaming to get value and limits
-        const streaming = await tx.streaming.findUnique({
-            where: { id: streamingId },
-            include: {
-                _count: {
-                    select: {
-                        assinaturas: {
-                            where: { status: { in: ["ativa", "suspensa", "pendente"] } }
-                        }
-                    }
-                }
-            }
-        });
-
+        // 1. Fetch data explicitly (SOLID: Data fetching outside of validation)
+        const streaming = await StreamingService.findWithLock(streamingId, tx);
         if (!streaming) throw new Error("Streaming não encontrado.");
 
-        // 2. Validate Limits (Double check inside transaction)
-        if (streaming._count.assinaturas >= streaming.limiteParticipantes) {
-            throw new Error(`Limite de vagas excedido. O streaming possui ${streaming._count.assinaturas}/${streaming.limiteParticipantes} assinantes.`);
-        }
+        // 2. Validate and Lock Capacity
+        await StreamingService.validateAndLockCapacity(streaming, 1, tx);
 
-        // 3. Calculate Values
+        // 2. Calculate Values
         const valorPorPessoa = streaming.valorIntegral.toNumber() / streaming.limiteParticipantes;
 
         // 4. Create Subscription

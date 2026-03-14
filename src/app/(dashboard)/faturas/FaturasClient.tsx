@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Wallet } from "lucide-react";
 import { ViewModeToggle, ViewMode } from "@/components/ui/ViewModeToggle";
+import { GenericFilter, FilterConfig } from "@/components/ui/GenericFilter";
+import { useMemo } from "react";
 import { useActionError } from "@/hooks/useActionError";
 import { SectionHeader } from "@/components/layout/SectionHeader";
 import dynamic from "next/dynamic";
@@ -11,7 +13,10 @@ import { TableSkeleton } from "@/components/ui/TableSkeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import { useFaturasActions } from "@/hooks/useFaturasActions";
 import { Button } from "@/components/ui/Button";
-import { CreditCard, Loader2, FileText, History } from "lucide-react";
+import { CreditCard, Loader2, FileText, History, Table as TableIcon, BarChart3 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getFaturasAnalytics } from "@/actions/faturas";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,22 +33,43 @@ const LotesTab = dynamic(() => import("@/components/faturas/LotesTab").then(mod 
     loading: () => <TableSkeleton />
 });
 
-const FaturaCard = dynamic(() => import("@/components/faturas/FaturaCard").then(mod => mod.FaturaCard), {
-    loading: () => <LoadingCard variant="compact" />
-});
-
 const DetalhesCobrancaModal = dynamic(() => import("@/components/modals/DetalhesCobrancaModal").then(mod => mod.DetalhesCobrancaModal));
 
 const FinancialSummaryBanner = dynamic(() => import("@/components/faturas/FinancialSummaryBanner").then(mod => mod.FinancialSummaryBanner));
+
+const FaturaCompositionDonut = dynamic(() => import("@/components/financeiro/charts/FaturaCompositionDonut").then(mod => mod.FaturaCompositionDonut), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const SavingsAccumulatedChart = dynamic(() => import("@/components/financeiro/charts/SavingsAccumulatedChart").then(mod => mod.SavingsAccumulatedChart), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const ServicePaymentHistoryBar = dynamic(() => import("@/components/financeiro/charts/ServicePaymentHistoryBar").then(mod => mod.ServicePaymentHistoryBar), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const PaymentVelocityChart = dynamic(() => import("@/components/financeiro/charts/PaymentVelocityChart").then(mod => mod.PaymentVelocityChart), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
 
 interface FaturasClientProps {
     faturas: any[];
     resumo: any;
     lotes: any[];
+    streamings: { id: number; nome: string; iconeUrl?: string | null; corPrimaria?: string | null }[];
+    organizers: { id: number; nome: string }[];
     error?: string;
 }
 
-export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientProps) {
+export function FaturasClient({
+    faturas = [],
+    resumo = {},
+    lotes = [],
+    streamings = [],
+    organizers = [],
+    error
+}: FaturasClientProps) {
     const {
         faturasPendentes,
         faturasAguardando,
@@ -60,9 +86,96 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
         isCreatingLote,
         handleCreateLote,
         handleViewDetails,
+        filters,
+        handleFilterChange,
+        handleClearFilters,
     } = useFaturasActions(faturas, lotes);
 
+    const filterConfig: FilterConfig[] = useMemo(() => [
+        {
+            key: "search",
+            type: "text",
+            placeholder: "Pesquisar faturas...",
+            className: "flex-1 min-w-[200px]"
+        },
+        {
+            key: "organizador",
+            type: "select",
+            label: "Organizador",
+            emptyLabel: "Todos os Organizadores",
+            className: "w-full md:w-[200px]",
+            options: organizers.map(o => ({
+                label: o.nome,
+                value: o.id.toString()
+            }))
+        },
+        {
+            key: "streaming",
+            type: "select",
+            label: "Serviço",
+            emptyLabel: "Todos os Serviços",
+            className: "w-full md:w-[200px]",
+            options: streamings.map(s => ({
+                label: s.nome,
+                value: s.id.toString(),
+                iconNode: (
+                    <StreamingLogo
+                        name={s.nome}
+                        iconeUrl={s.iconeUrl || ""}
+                        color={s.corPrimaria || "#ccc"}
+                        size="xs"
+                        rounded="md"
+                    />
+                )
+            }))
+        },
+        {
+            key: "status",
+            type: "select",
+            label: "Status",
+            className: "w-full md:w-[150px]",
+            options: [
+                { label: "Pendentes", value: "pendente" },
+                { label: "Aguardando", value: "aguardando_aprovacao" },
+                { label: "Em Atraso", value: "atrasado" },
+                { label: "Pagos", value: "pago" }
+            ]
+        },
+        {
+            key: "vencimento",
+            type: "dateRange",
+            label: "Vencimento",
+            placeholder: "Filtrar por data"
+        },
+        {
+            key: "valor",
+            type: "numberRange",
+            label: "Intervalo de Valor",
+            placeholder: "Valor entre..."
+        }
+    ], [streamings, organizers]);
+
     useActionError(error);
+
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+    useEffect(() => {
+        if (viewMode === "chart") {
+            setLoadingAnalytics(true);
+            getFaturasAnalytics("6m", {
+                status: filters.statusFilter,
+                streaming: filters.streamingFilter,
+                q: filters.searchFilter,
+                organizador: filters.organizadorFilter,
+                vencimento: filters.vencimentoRange,
+                valor: filters.valorRange
+            }).then(res => {
+                if (res.success) setAnalyticsData(res.data);
+                setLoadingAnalytics(false);
+            });
+        }
+    }, [viewMode, filters.statusFilter, filters.streamingFilter, filters.searchFilter, filters.organizadorFilter, filters.vencimentoRange, filters.valorRange]);
 
     const sortedFaturas = sortByStatusPriority(faturas);
 
@@ -77,6 +190,22 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
 
                 {/* Financial Summary */}
                 <FinancialSummaryBanner faturas={faturas} />
+
+                <div className="mb-6">
+                    <GenericFilter
+                        filters={filterConfig}
+                        values={{
+                            status: filters.statusFilter,
+                            streaming: filters.streamingFilter,
+                            search: filters.searchFilter,
+                            organizador: filters.organizadorFilter,
+                            vencimento: filters.vencimentoRange,
+                            valor: filters.valorRange
+                        }}
+                        onChange={handleFilterChange}
+                        onClear={handleClearFilters}
+                    />
+                </div>
 
                 <Tabs
                     value={activeTabId}
@@ -102,6 +231,10 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                                     <ViewModeToggle
                                                         viewMode={viewMode}
                                                         setViewMode={setViewMode}
+                                                        options={[
+                                                            { id: "table", label: "Tabela", icon: TableIcon },
+                                                            { id: "chart", label: "Análise", icon: BarChart3 },
+                                                        ]}
                                                     />
                                                 </div>
                                             </div>
@@ -117,11 +250,46 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                             />
                                         </div>
                                     ) : (
-                                        viewMode === "grid" ? (
-                                            <div className="grid grid-cols-1 gap-4">
-                                                {sortedFaturas.map((fatura) => (
-                                                    <FaturaCard key={fatura.id} fatura={fatura} onConfirmPayment={handleViewDetails} onViewDetails={handleViewDetails} />
-                                                ))}
+                                        viewMode === "chart" ? (
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                                {loadingAnalytics ? (
+                                                    <>
+                                                        <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                                        <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                                    </>
+                                                ) : analyticsData ? (
+                                                    <>
+                                                        {analyticsData.isStreamingFiltered ? (
+                                                            <>
+                                                                <ServicePaymentHistoryBar
+                                                                    data={analyticsData.historyData}
+                                                                />
+                                                                <PaymentVelocityChart
+                                                                    data={analyticsData.velocityData}
+                                                                />
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <FaturaCompositionDonut
+                                                                    data={analyticsData.compositionData}
+                                                                    totalCurrentMonth={analyticsData.totalCurrentMonth}
+                                                                />
+                                                                <SavingsAccumulatedChart
+                                                                    data={analyticsData.historyData}
+                                                                />
+                                                                <div className="lg:col-span-2">
+                                                                    <PaymentVelocityChart
+                                                                        data={analyticsData.velocityData}
+                                                                    />
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="col-span-2 py-20 text-center text-gray-400">
+                                                        Não foi possível carregar os gráficos.
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <FaturasTable
@@ -144,12 +312,6 @@ export function FaturasClient({ faturas, resumo, lotes, error }: FaturasClientPr
                                     <SectionHeader
                                         title="Meus Pagamentos Consolidados"
                                         className="mb-0"
-                                        rightElement={
-                                            <ViewModeToggle
-                                                viewMode={viewMode}
-                                                setViewMode={setViewMode}
-                                            />
-                                        }
                                     />
                                     <LotesTab lotes={lotes} viewMode={viewMode} />
                                 </div>
