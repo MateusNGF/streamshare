@@ -1286,6 +1286,7 @@ export async function getCobrancasAnalytics(period: string = "6m", filters: any 
 
         const donutData = currentMonthStats.map(stat => ({
             name: statusLabels[stat.status] || stat.status,
+            statusKey: stat.status,
             value: stat._count._all,
             amount: stat._sum.valor?.toNumber() || 0,
             color: statusColors[stat.status] || '#cbd5e1'

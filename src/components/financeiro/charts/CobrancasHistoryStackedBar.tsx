@@ -10,7 +10,7 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, BarChart3 } from 'lucide-react';
 import { Tooltip as UITooltip } from '@/components/ui/Tooltip';
 
 interface CobrancasHistoryStackedBarProps {
@@ -40,8 +40,12 @@ export function CobrancasHistoryStackedBar({ data }: CobrancasHistoryStackedBarP
             </div>
 
             {!hasData ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                    <p className="text-sm text-gray-400 font-medium">Sem dados históricos suficientes.</p>
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-700">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4 animate-pulse">
+                        <BarChart3 size={32} />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-1">Sem histórico</h4>
+                    <p className="text-sm text-gray-400 font-medium max-w-[200px]">Sem dados históricos suficientes para gerar tendências.</p>
                 </div>
             ) : (
                 <div className="flex-1 w-full -ml-4">

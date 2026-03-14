@@ -37,11 +37,12 @@ export function CobrancasByServiceBar({ data }: CobrancasByServiceBarProps) {
             </div>
 
             {!hasData ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                    <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-3">
-                        <TrendingDown size={24} />
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-4 animate-in fade-in duration-700">
+                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mb-4 shadow-inner">
+                        <TrendingDown size={32} />
                     </div>
-                    <p className="text-sm text-gray-400 font-medium">Parabéns! Nenhuma pendência significativa encontrada.</p>
+                    <h4 className="font-bold text-gray-900 mb-1">Tudo sob controle</h4>
+                    <p className="text-sm text-gray-400 font-medium max-w-[200px]">Parabéns! Nenhuma pendência significativa encontrada no período.</p>
                 </div>
             ) : (
                 <div className="flex-1 min-h-[250px]">

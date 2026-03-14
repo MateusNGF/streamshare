@@ -25,6 +25,7 @@ import { LoadingCard } from "@/components/ui/LoadingCard";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { formatMesReferencia } from "@/lib/dateUtils";
 import { getCobrancasFilterConfig } from "@/components/cobrancas/filters/CobrancasFilterConfig";
+import { ChartContainerSkeleton, BarChartSkeleton, StackedBarChartSkeleton } from "@/components/financeiro/charts/ChartSkeletons";
 
 const LotesTab = dynamic(() => import("@/components/faturas/LotesTab").then(mod => mod.LotesTab), {
     loading: () => <TableSkeleton />
@@ -293,8 +294,17 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                         {loadingAnalytics ? (
                                             <>
-                                                <Skeleton className="w-full h-[400px] rounded-[32px]" />
-                                                <Skeleton className="w-full h-[400px] rounded-[32px]" />
+                                                {analyticsData?.isParticipantFiltered ? (
+                                                    <ChartContainerSkeleton title="Histórico do Participante" />
+                                                ) : (
+                                                    <BarChartSkeleton title="Inadimplência por Serviço" />
+                                                )}
+                                                <ChartContainerSkeleton title="Status do Ciclo" />
+                                                {!analyticsData?.isParticipantFiltered && (
+                                                    <div className="lg:col-span-2">
+                                                        <StackedBarChartSkeleton title="Histórico de Inadimplência" />
+                                                    </div>
+                                                )}
                                             </>
                                         ) : analyticsData ? (
                                             <>
@@ -307,6 +317,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                             data={analyticsData.donutData}
                                                             totalExpected={analyticsData.totalExpected}
                                                             monthLabel={analyticsData.monthLabel}
+                                                            onSliceClick={(status) => {
+                                                                handleFilterChange("status", status);
+                                                                setViewMode("table");
+                                                                setTimeout(() => window.scrollTo({ top: 400, behavior: 'smooth' }), 100);
+                                                            }}
                                                         />
                                                     </>
                                                 ) : (
@@ -318,6 +333,11 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                             data={analyticsData.donutData}
                                                             totalExpected={analyticsData.totalExpected}
                                                             monthLabel={analyticsData.monthLabel}
+                                                            onSliceClick={(status) => {
+                                                                handleFilterChange("status", status);
+                                                                setViewMode("table");
+                                                                setTimeout(() => window.scrollTo({ top: 400, behavior: 'smooth' }), 100);
+                                                            }}
                                                         />
                                                         <div className="lg:col-span-2">
                                                             <CobrancasHistoryStackedBar

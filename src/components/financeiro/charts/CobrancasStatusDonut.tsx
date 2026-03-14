@@ -1,9 +1,10 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, PieChart as PieChartIcon } from 'lucide-react';
 import { Tooltip as UITooltip } from '@/components/ui/Tooltip';
 import { useCurrency } from '@/hooks/useCurrency';
+import { cn } from '@/lib/utils';
 
 interface CobrancasStatusDonutProps {
     data: {
@@ -11,17 +12,19 @@ interface CobrancasStatusDonutProps {
         value: number;
         amount: number;
         color: string;
+        statusKey?: string; // Chave original para filtro
     }[];
     totalExpected: number;
     monthLabel?: string;
+    onSliceClick?: (status: string) => void;
 }
 
-export function CobrancasStatusDonut({ data, totalExpected, monthLabel }: CobrancasStatusDonutProps) {
+export function CobrancasStatusDonut({ data, totalExpected, monthLabel, onSliceClick }: CobrancasStatusDonutProps) {
     const { format } = useCurrency();
     const totalCount = data.reduce((sum, item) => sum + item.value, 0);
     const hasData = totalCount > 0;
 
-    const paidItem = data.find(d => d.name === 'Pagas');
+    const paidItem = data.find(d => d.name === 'Pagas' || d.statusKey === 'pago');
     const healthPercentage = paidItem && totalCount > 0 ? Math.round((paidItem.value / totalCount) * 100) : 0;
 
     return (
@@ -46,7 +49,11 @@ export function CobrancasStatusDonut({ data, totalExpected, monthLabel }: Cobran
 
             {!hasData ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                    <p className="text-sm text-gray-400 font-medium">Nenhuma cobrança gerada neste ciclo.</p>
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4 animate-pulse">
+                        <PieChartIcon size={32} />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-1">Sem dados no período</h4>
+                    <p className="text-sm text-gray-400 font-medium max-w-[200px]">Nenhuma cobrança gerada ou encontrada para os filtros atuais.</p>
                 </div>
             ) : (
                 <>
@@ -71,12 +78,21 @@ export function CobrancasStatusDonut({ data, totalExpected, monthLabel }: Cobran
                                     stroke="none"
                                     animationBegin={0}
                                     animationDuration={1500}
+                                    className="outline-none"
                                 >
                                     {data.map((entry, index) => (
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={entry.color}
-                                            className="hover:opacity-80 transition-opacity cursor-pointer outline-none"
+                                            className={cn(
+                                                "hover:opacity-80 transition-opacity cursor-pointer outline-none focus:outline-none",
+                                                onSliceClick && "cursor-pointer"
+                                            )}
+                                            onClick={() => {
+                                                if (onSliceClick && entry.statusKey) {
+                                                    onSliceClick(entry.statusKey);
+                                                }
+                                            }}
                                         />
                                     ))}
                                 </Pie>
@@ -92,6 +108,11 @@ export function CobrancasStatusDonut({ data, totalExpected, monthLabel }: Cobran
                                                     </div>
                                                     <div className="text-lg">{item.value} cobranças</div>
                                                     <div className="text-gray-400">{format(item.amount)}</div>
+                                                    {onSliceClick && (
+                                                        <div className="mt-2 pt-2 border-t border-white/10 text-primary-400">
+                                                            Clique para filtrar faturas
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         }
@@ -104,13 +125,20 @@ export function CobrancasStatusDonut({ data, totalExpected, monthLabel }: Cobran
 
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-gray-50 pt-6">
                         {data.slice(0, 4).map((item, index) => (
-                            <div key={index} className="flex flex-col items-center">
-                                <span className="text-sm font-black text-gray-900">{item.value}</span>
+                            <button
+                                key={index}
+                                className={cn(
+                                    "flex flex-col items-center group transition-transform hover:scale-105",
+                                    !onSliceClick && "pointer-events-none"
+                                )}
+                                onClick={() => item.statusKey && onSliceClick?.(item.statusKey)}
+                            >
+                                <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-colors">{item.value}</span>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{item.name}</span>
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter group-hover:text-gray-600 transition-colors">{item.name}</span>
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 </>
