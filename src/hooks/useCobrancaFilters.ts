@@ -3,6 +3,7 @@
 import { useBaseFilter } from "@/hooks/useBaseFilter";
 import { sortByStatusPriority } from "@/lib/financeiro-utils";
 import { useMemo } from "react";
+import { isWithinDateRange, isWithinNumberRange, matchesMonthReference } from "@/lib/filter-utils";
 
 /**
  * Hook especializado para o gerenciamento de filtros de cobranças.
@@ -28,64 +29,37 @@ export function useCobrancaFilters(cobrancasIniciais: any[]) {
         hasWhatsappFilter: filters.hasWhatsapp || "false"
     }), [filters]);
 
-    const filteredCobrancas = cobrancasIniciais.filter(c => {
-        const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(filterValues.searchTerm.toLowerCase());
-        const matchesStatus = filterValues.statusFilter === "all" || c.status === filterValues.statusFilter;
-        const matchesStreaming = filterValues.streamingFilter === "all" || (c.assinatura?.streamingId?.toString() ?? "") === filterValues.streamingFilter;
-        const matchesParticipante = filterValues.participanteFilter === "all" || (c.assinatura?.participanteId?.toString() ?? "") === filterValues.participanteFilter;
+    const filteredCobrancas = useMemo(() => {
+        const result = cobrancasIniciais.filter(c => {
+            // Texto/Busca
+            const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(filterValues.searchTerm.toLowerCase());
+            if (!matchesSearch) return false;
 
-        let matchesMes = true;
-        if (filterValues.mesReferencia !== "all") {
-            const date = new Date(c.dataVencimento);
-            const cobrancaMes = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            matchesMes = cobrancaMes === filterValues.mesReferencia;
-        }
+            // Seletores Simples
+            if (filterValues.statusFilter !== "all" && c.status !== filterValues.statusFilter) return false;
+            if (filterValues.streamingFilter !== "all" && (c.assinatura?.streamingId?.toString() ?? "") !== filterValues.streamingFilter) return false;
+            if (filterValues.participanteFilter !== "all" && (c.assinatura?.participanteId?.toString() ?? "") !== filterValues.participanteFilter) return false;
 
-        let matchesVencimento = true;
-        if (filterValues.vencimentoRange) {
-            try {
-                const range = JSON.parse(filterValues.vencimentoRange);
-                const date = new Date(c.dataVencimento);
-                if (range.from && date < new Date(range.from)) matchesVencimento = false;
-                if (range.to && date > new Date(range.to)) matchesVencimento = false;
-            } catch (e) { }
-        }
+            // Mês de Referência
+            if (!matchesMonthReference(c.dataVencimento, filterValues.mesReferencia)) return false;
 
-        let matchesPagamento = true;
-        if (filterValues.pagamentoRange && c.dataPagamento) {
-            try {
-                const range = JSON.parse(filterValues.pagamentoRange);
-                const date = new Date(c.dataPagamento);
-                if (range.from && date < new Date(range.from)) matchesPagamento = false;
-                if (range.to && date > new Date(range.to)) matchesPagamento = false;
-            } catch (e) { }
-        } else if (filterValues.pagamentoRange && !c.dataPagamento) {
-            matchesPagamento = false;
-        }
+            // Intervalos (Delegados para utilitários)
+            if (!isWithinDateRange(c.dataVencimento, filterValues.vencimentoRange)) return false;
+            if (!isWithinDateRange(c.dataPagamento, filterValues.pagamentoRange)) return false;
+            if (!isWithinNumberRange(c.valor, filterValues.valorRange)) return false;
 
-        let matchesValor = true;
-        if (filterValues.valorRange) {
-            try {
-                const range = JSON.parse(filterValues.valorRange);
-                const valor = Number(c.valor);
-                if (range.min && valor < Number(range.min)) matchesValor = false;
-                if (range.max && valor > Number(range.max)) matchesValor = false;
-            } catch (e) { }
-        }
+            // Flag WhatsApp
+            if (filterValues.hasWhatsappFilter === "true" && !c.assinatura.participante.whatsappNumero) return false;
 
-        let matchesWhatsapp = true;
-        if (filterValues.hasWhatsappFilter === "true") {
-            matchesWhatsapp = !!c.assinatura.participante.whatsappNumero;
-        }
+            return true;
+        });
 
-        return matchesSearch && matchesStatus && matchesStreaming && matchesParticipante && matchesMes && matchesVencimento && matchesPagamento && matchesValor && matchesWhatsapp;
-    });
-
-    const sortedCobrancas = sortByStatusPriority(filteredCobrancas);
+        return sortByStatusPriority(result);
+    }, [cobrancasIniciais, filterValues]);
 
     return {
         filters: filterValues,
-        filteredCobrancas: sortedCobrancas,
+        filteredCobrancas,
         handleFilterChange,
         handleClearFilters,
         updateFilters

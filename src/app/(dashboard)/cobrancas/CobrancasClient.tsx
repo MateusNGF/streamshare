@@ -13,7 +13,7 @@ import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getCobrancasAnalytics } from "@/actions/cobrancas";
 import { Table as TableIcon, BarChart3 } from "lucide-react";
 import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { LoadingCard } from "@/components/ui/LoadingCard";
 import { Tabs, TabItem } from "@/components/ui/Tabs";
 import { formatMesReferencia } from "@/lib/dateUtils";
+import { getCobrancasFilterConfig } from "@/components/cobrancas/filters/CobrancasFilterConfig";
 
 const LotesTab = dynamic(() => import("@/components/faturas/LotesTab").then(mod => mod.LotesTab), {
     loading: () => <TableSkeleton />
@@ -130,16 +131,26 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
 
-    const pendingApprovalsCount = cobrancasIniciais.filter(c => c.status === 'aguardando_aprovacao').length;
+    const pendingApprovalsCount = useMemo(() =>
+        cobrancasIniciais.filter(c => c.status === 'aguardando_aprovacao').length,
+        [cobrancasIniciais]);
 
-    const monthOptions = Array.from({ length: 6 }).map((_, i) => {
-        const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        return {
-            label: d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
-            value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        };
-    });
+    const monthOptions = useMemo(() => {
+        return Array.from({ length: 6 }).map((_, i) => {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            return {
+                label: d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+                value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            };
+        });
+    }, []);
+
+    const filterConfig = useMemo(() => getCobrancasFilterConfig({
+        participantes,
+        streamings,
+        monthOptions
+    }), [participantes, streamings, monthOptions]);
 
     return (
         <PageContainer>
@@ -204,87 +215,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
 
             <div className="py-6">
                 <GenericFilter
-                    filters={[
-                        {
-                            key: "search",
-                            type: "text",
-                            placeholder: "Buscar...",
-                            className: "flex-1 min-w-[200px]"
-                        },
-                        {
-                            key: "participante",
-                            type: "select",
-                            label: "Participante",
-                            emptyLabel: "Todos",
-                            className: "w-full md:w-[200px]",
-                            options: participantes.map(p => ({
-                                label: p.nome,
-                                value: p.id.toString()
-                            }))
-                        },
-                        {
-                            key: "status",
-                            type: "select",
-                            label: "Status",
-                            className: "w-full md:w-[150px]",
-                            options: [
-                                { label: "Pendente", value: "pendente" },
-                                { label: "Aguardando", value: "aguardando_aprovacao" },
-                                { label: "Pago", value: "pago" },
-                                { label: "Atrasado", value: "atrasado" }
-                            ]
-                        },
-                        {
-                            key: "mesReferencia",
-                            type: "select",
-                            label: "Período",
-                            className: "w-full md:w-[200px]",
-                            options: monthOptions
-                        },
-                        {
-                            key: "streaming",
-                            type: "select",
-                            label: "Streaming",
-                            className: "w-full md:w-[200px]",
-                            options: streamings.map(s => ({
-                                label: s.apelido || s.catalogo.nome,
-                                value: s.id.toString(),
-                                iconNode: (
-                                    <StreamingLogo
-                                        name={s.apelido || s.catalogo.nome}
-                                        iconeUrl={s.catalogo.iconeUrl}
-                                        color={s.catalogo.corPrimaria || "#ccc"}
-                                        size="xs"
-                                        rounded="md"
-                                    />
-                                )
-                            }))
-                        },
-                        {
-                            key: "vencimento",
-                            type: "dateRange",
-                            label: "Vencimento",
-                            placeholder: "Filtrar por data"
-                        },
-                        {
-                            key: "pagamento",
-                            type: "dateRange",
-                            label: "Data de Pagamento",
-                            placeholder: "Filtrar pagamento"
-                        },
-                        {
-                            key: "valor",
-                            type: "numberRange",
-                            label: "Intervalo de Valor",
-                            placeholder: "Valor entre..."
-                        },
-                        {
-                            key: "hasWhatsapp",
-                            type: "switch",
-                            label: "Apenas com WhatsApp",
-                            className: "md:w-auto"
-                        }
-                    ]}
+                    filters={filterConfig}
                     values={{
                         search: filters.searchTerm,
                         participante: filters.participanteFilter,
