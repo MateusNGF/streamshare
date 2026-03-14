@@ -3,7 +3,7 @@
 import { startOfMonth, endOfMonth, subMonths, format, startOfToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { FilterService } from "@/services/filter.service";
 
@@ -259,6 +259,7 @@ export async function confirmarPagamento(
         });
 
         revalidatePath("/cobrancas");
+        revalidateTag("cobrancas");
         return { success: true, data: updated };
     } catch (error: any) {
         console.error("[CONFIRMAR_PAGAMENTO_ERROR]", error);
@@ -324,6 +325,7 @@ export async function rejeitarCobrancaAction(cobrancaId: number, motivo?: string
 
         revalidatePath("/cobrancas");
         revalidatePath("/faturas");
+        revalidateTag("cobrancas");
         return { success: true, data: txResult };
     } catch (error: any) {
         console.error("[REJEITAR_COBRANCA_ERROR]", error);
@@ -405,6 +407,7 @@ export async function cancelarCobranca(cobrancaId: number) {
         });
 
         revalidatePath("/cobrancas");
+        revalidateTag("cobrancas");
         return { success: true, data: updated };
     } catch (error: any) {
         console.error("[CANCELAR_COBRANCA_ERROR]", error);
@@ -1156,198 +1159,188 @@ export async function analisarFaturasMensaisAction(referenciaMes?: string) {
     }
 }
 
+import { unstable_cache } from "next/cache";
+
 /**
  * Retorna dados agregados para a visão de analytics de cobranças do organizador.
+ * Otimizado com Caching e Queries enxutas para alta performance.
  */
-export async function getCobrancasAnalytics(period: string = "6m", filters: any = {}) {
-    try {
-        const { contaId } = await getContext();
-        const agora = new Date();
-        const numMonths = period === "12m" ? 12 : 6;
-        const startDate = subMonths(startOfMonth(agora), numMonths - 1);
+export const getCobrancasAnalytics = unstable_cache(
+    async (period: string = "6m", filters: any = {}) => {
+        try {
+            const { contaId } = await getContext();
+            const agora = new Date();
+            const numMonths = period === "12m" ? 12 : 6;
+            const startDate = subMonths(startOfMonth(agora), numMonths - 1);
 
-        const isParticipantFiltered = !!(filters.participante && filters.participante !== "all");
-        const isStreamingFiltered = !!(filters.streaming && filters.streaming !== "all");
+            const isParticipantFiltered = !!(filters.participante && filters.participante !== "all");
 
-        // 1. Gráfico de Rosca - Ciclo Atual
-        let startCurrent = startOfMonth(agora);
-        let endCurrent = endOfMonth(agora);
-        let monthLabel = format(agora, "MMMM 'de' yyyy", { locale: ptBR });
+            // 1. Configuração de Período Atual
+            let startCurrent = startOfMonth(agora);
+            let endCurrent = endOfMonth(agora);
+            let monthLabel = format(agora, "MMMM 'de' yyyy", { locale: ptBR });
 
-        if (filters.mesReferencia && filters.mesReferencia !== "all") {
-            const [year, month] = filters.mesReferencia.split('-').map(Number);
-            const refDate = new Date(year, month - 1, 1);
-            startCurrent = startOfMonth(refDate);
-            endCurrent = endOfMonth(refDate);
-            monthLabel = format(refDate, "MMMM 'de' yyyy", { locale: ptBR });
-        }
-
-        const whereBase: any = {
-            deletedAt: null,
-            assinatura: {
-                participante: { contaId }
+            if (filters.mesReferencia && filters.mesReferencia !== "all") {
+                const [year, month] = filters.mesReferencia.split('-').map(Number);
+                const refDate = new Date(year, month - 1, 1);
+                startCurrent = startOfMonth(refDate);
+                endCurrent = endOfMonth(refDate);
+                monthLabel = format(refDate, "MMMM 'de' yyyy", { locale: ptBR });
             }
-        };
 
-        if (filters.participante && filters.participante !== "all" && !isNaN(Number(filters.participante))) {
-            whereBase.assinatura.participanteId = Number(filters.participante);
-        }
-
-        if (filters.streaming && filters.streaming !== "all" && !isNaN(Number(filters.streaming))) {
-            whereBase.assinatura.streamingId = Number(filters.streaming);
-        }
-
-        if (filters.status && filters.status !== "all") {
-            whereBase.status = filters.status;
-        }
-
-        if (filters.searchTerm && filters.searchTerm.trim() !== "") {
-            whereBase.assinatura.participante = {
-                ...whereBase.assinatura.participante,
-                nome: { contains: filters.searchTerm, mode: 'insensitive' }
+            const whereBase: any = {
+                deletedAt: null,
+                assinatura: {
+                    participante: { contaId }
+                }
             };
-        }
 
-        // --- 1. Ranking por Serviço (Opção C) ---
-        // Só mostramos se não estiver filtrado por participante (pois aí o foco é a pessoa)
-        let serviceRanking: any[] = [];
-        if (!isParticipantFiltered) {
-            const statsByService = await prisma.cobranca.groupBy({
+            // Aplicação de filtros lean
+            if (filters.participante && filters.participante !== "all" && !isNaN(Number(filters.participante))) {
+                whereBase.assinatura.participanteId = Number(filters.participante);
+            }
+            if (filters.streaming && filters.streaming !== "all" && !isNaN(Number(filters.streaming))) {
+                whereBase.assinatura.streamingId = Number(filters.streaming);
+            }
+            if (filters.status && filters.status !== "all") {
+                whereBase.status = filters.status;
+            }
+            if (filters.searchTerm && filters.searchTerm.trim() !== "") {
+                whereBase.assinatura.participante = {
+                    ...whereBase.assinatura.participante,
+                    nome: { contains: filters.searchTerm, mode: 'insensitive' }
+                };
+            }
+
+            // --- A. Agregação de Status (Donut) ---
+            const currentMonthStats = await prisma.cobranca.groupBy({
                 by: ["status"],
                 where: {
                     ...whereBase,
-                    dataVencimento: { gte: startCurrent, lte: endCurrent },
-                    status: { in: ['atrasado', 'pendente', 'aguardando_aprovacao'] } // Foco na inadimplência
+                    dataVencimento: { gte: startCurrent, lte: endCurrent }
                 },
-                _sum: { valor: true },
                 _count: { _all: true },
-                // @ts-ignore - Prisma nested groupBy is tricky, but let's try to get streaming names
+                _sum: { valor: true }
             });
 
-            // Como o prisma groupBy não suporta relações nadas, vamos buscar as cobranças e agrupar manualmente para precisão
-            const rawCobrancas = await prisma.cobranca.findMany({
-                where: {
-                    ...whereBase,
-                    dataVencimento: { gte: startCurrent, lte: endCurrent },
-                    status: { in: ['atrasado', 'pendente', 'aguardando_aprovacao'] }
-                },
-                select: {
-                    valor: true,
-                    status: true,
-                    assinatura: {
-                        select: {
-                            streaming: {
-                                select: {
-                                    apelido: true,
-                                    catalogo: { select: { nome: true, corPrimaria: true } }
+            const statusColors: Record<string, string> = {
+                pago: '#10b981',
+                aguardando_aprovacao: '#3b82f6',
+                pendente: '#f5b11d',
+                atrasado: '#ef4444',
+                cancelado: '#9ca3af'
+            };
+
+            const statusLabels: Record<string, string> = {
+                pago: 'Pagas',
+                aguardando_aprovacao: 'Validando',
+                pendente: 'Pendentes',
+                atrasado: 'Atrasadas',
+                cancelado: 'Canceladas'
+            };
+
+            const donutData = currentMonthStats.map(stat => ({
+                name: statusLabels[stat.status] || stat.status,
+                statusKey: stat.status,
+                value: stat._count._all,
+                amount: stat._sum.valor?.toNumber() || 0,
+                color: statusColors[stat.status] || '#cbd5e1'
+            }));
+
+            const totalExpected = donutData.reduce((acc, curr) => acc + curr.amount, 0);
+
+            // --- B. Ranking por Serviço (Se não filtrado por participante) ---
+            let serviceRanking: any[] = [];
+            if (!isParticipantFiltered) {
+                const rawCobrancas = await prisma.cobranca.findMany({
+                    where: {
+                        ...whereBase,
+                        dataVencimento: { gte: startCurrent, lte: endCurrent },
+                        status: { in: ['atrasado', 'pendente', 'aguardando_aprovacao'] }
+                    },
+                    select: {
+                        valor: true,
+                        assinatura: {
+                            select: {
+                                streaming: {
+                                    select: {
+                                        apelido: true,
+                                        catalogo: { select: { nome: true, corPrimaria: true } }
+                                    }
                                 }
                             }
                         }
                     }
+                });
+
+                const grouped = rawCobrancas.reduce((acc: any, curr) => {
+                    const name = curr.assinatura.streaming.apelido || curr.assinatura.streaming.catalogo.nome;
+                    if (!acc[name]) acc[name] = { name, total: 0, count: 0, color: curr.assinatura.streaming.catalogo.corPrimaria };
+                    acc[name].total += Number(curr.valor);
+                    acc[name].count += 1;
+                    return acc;
+                }, {});
+
+                serviceRanking = Object.values(grouped).sort((a: any, b: any) => b.total - a.total).slice(0, 5);
+            }
+
+            // --- C. Histórico (Stacked Bar or Line) ---
+            // Otimização: Buscamos apenas campos necessários para diminuir tráfego entre DB e Node
+            const history = await prisma.cobranca.findMany({
+                where: {
+                    ...whereBase,
+                    dataVencimento: { gte: startDate, lte: endOfMonth(agora) }
+                },
+                select: {
+                    status: true,
+                    valor: isParticipantFiltered, // Só traz valor se for gráfico de linha individual
+                    dataVencimento: true
                 }
             });
 
-            const grouped = rawCobrancas.reduce((acc: any, curr) => {
-                const name = curr.assinatura.streaming.apelido || curr.assinatura.streaming.catalogo.nome;
-                if (!acc[name]) acc[name] = { name, total: 0, count: 0, color: curr.assinatura.streaming.catalogo.corPrimaria };
-                acc[name].total += Number(curr.valor);
-                acc[name].count += 1;
-                return acc;
-            }, {});
+            const monthsData: any[] = [];
+            for (let i = numMonths - 1; i >= 0; i--) {
+                const date = subMonths(agora, i);
+                const monthName = format(date, "MMM", { locale: ptBR });
+                const monthKey = format(date, "yyyy-MM");
 
-            serviceRanking = Object.values(grouped).sort((a: any, b: any) => b.total - a.total).slice(0, 5);
+                const monthCobrancas = history.filter(c => format(c.dataVencimento, "yyyy-MM") === monthKey);
+
+                if (isParticipantFiltered) {
+                    monthsData.push({
+                        month: monthName,
+                        key: monthKey,
+                        status: monthCobrancas.length > 0 ? monthCobrancas[0].status : 'n/a',
+                        valor: monthCobrancas.reduce((acc, curr) => acc + Number(curr.valor), 0),
+                        delay: 0
+                    });
+                } else {
+                    monthsData.push({
+                        month: monthName,
+                        key: monthKey,
+                        Pagas: monthCobrancas.filter(c => c.status === 'pago').length,
+                        Pendentes: monthCobrancas.filter(c => c.status === 'pendente' || c.status === 'aguardando_aprovacao').length,
+                        Atrasadas: monthCobrancas.filter(c => c.status === 'atrasado').length,
+                    });
+                }
+            }
+
+            return {
+                success: true,
+                data: {
+                    donutData,
+                    totalExpected,
+                    monthLabel,
+                    serviceRanking,
+                    isParticipantFiltered,
+                    historyData: monthsData
+                }
+            };
+        } catch (error: any) {
+            console.error("[GET_COBRANCAS_ANALYTICS_ERROR]", error);
+            return { success: false, error: "Erro ao carregar dados analíticos de cobranças" };
         }
-
-        const currentMonthStats = await prisma.cobranca.groupBy({
-            by: ["status"],
-            where: {
-                ...whereBase,
-                dataVencimento: { gte: startCurrent, lte: endCurrent }
-            },
-            _count: { _all: true },
-            _sum: { valor: true }
-        });
-
-        const statusColors: Record<string, string> = {
-            pago: '#10b981', // Verde Suave
-            aguardando_aprovacao: '#3b82f6', // Azul
-            pendente: '#f5b11d', // Amarelo/Dourado
-            atrasado: '#ef4444', // Vermelho Vibrante
-            cancelado: '#9ca3af' // Cinza
-        };
-
-        const statusLabels: Record<string, string> = {
-            pago: 'Pagas',
-            aguardando_aprovacao: 'Validando',
-            pendente: 'Pendentes',
-            atrasado: 'Atrasadas',
-            cancelado: 'Canceladas'
-        };
-
-        const donutData = currentMonthStats.map(stat => ({
-            name: statusLabels[stat.status] || stat.status,
-            statusKey: stat.status,
-            value: stat._count._all,
-            amount: stat._sum.valor?.toNumber() || 0,
-            color: statusColors[stat.status] || '#cbd5e1'
-        }));
-
-        const totalExpected = donutData.reduce((acc, curr) => acc + curr.amount, 0);
-
-        // 2. Gráfico de Barras Empilhadas - Histórico de Inadimplência
-        const history = await prisma.cobranca.findMany({
-            where: {
-                ...whereBase,
-                dataVencimento: { gte: startDate, lte: endOfMonth(agora) }
-            },
-            select: {
-                status: true,
-                valor: true,
-                dataVencimento: true
-            }
-        });
-
-        const monthsData: any[] = [];
-        for (let i = numMonths - 1; i >= 0; i--) {
-            const date = subMonths(agora, i);
-            const monthName = format(date, "MMM", { locale: ptBR });
-            const monthKey = format(date, "yyyy-MM");
-
-            const monthCobrancas = history.filter(c => format(c.dataVencimento, "yyyy-MM") === monthKey);
-
-            if (isParticipantFiltered) {
-                // Para participante único, mostramos o comportamento temporal (Opção A)
-                monthsData.push({
-                    month: monthName,
-                    key: monthKey,
-                    status: monthCobrancas.length > 0 ? monthCobrancas[0].status : 'n/a',
-                    valor: monthCobrancas.reduce((acc, curr) => acc + Number(curr.valor), 0),
-                    delay: 0 // Poderia calcular dias de atraso aqui se tivéssemos a data de pagamento
-                });
-            } else {
-                monthsData.push({
-                    month: monthName,
-                    key: monthKey,
-                    Pagas: monthCobrancas.filter(c => c.status === 'pago').length,
-                    Pendentes: monthCobrancas.filter(c => c.status === 'pendente' || c.status === 'aguardando_aprovacao').length,
-                    Atrasadas: monthCobrancas.filter(c => c.status === 'atrasado').length,
-                });
-            }
-        }
-
-        return {
-            success: true,
-            data: {
-                donutData,
-                totalExpected,
-                monthLabel,
-                serviceRanking,
-                isParticipantFiltered,
-                historyData: monthsData
-            }
-        };
-    } catch (error: any) {
-        console.error("[GET_COBRANCAS_ANALYTICS_ERROR]", error);
-        return { success: false, error: "Erro ao carregar dados analíticos de cobranças" };
-    }
-}
+    },
+    ['cobrancas-analytics'],
+    { revalidate: 300, tags: ['analytics', 'cobrancas'] }
+);

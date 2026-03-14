@@ -13,7 +13,7 @@ import { UpgradeBanner } from "@/components/ui/UpgradeBanner";
 import { StreamingLogo } from "@/components/ui/StreamingLogo";
 import { useRouter } from "next/navigation";
 import { useActionError } from "@/hooks/useActionError";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { getCobrancasAnalytics } from "@/actions/cobrancas";
 import { Table as TableIcon, BarChart3 } from "lucide-react";
 import { ConsolidarFaturasModal } from "@/components/modals/ConsolidarFaturasModal";
@@ -47,19 +47,23 @@ const CobrancasModals = dynamic(() => import("@/components/cobrancas/CobrancasMo
 const BatchActionBar = dynamic(() => import("@/components/cobrancas/BatchActionBar").then(mod => mod.BatchActionBar), { ssr: false });
 
 const CobrancasStatusDonut = dynamic(() => import("@/components/financeiro/charts/CobrancasStatusDonut").then(mod => mod.CobrancasStatusDonut), {
-    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+    ssr: false,
+    loading: () => <ChartContainerSkeleton title="Status do Ciclo" />
 });
 
 const CobrancasHistoryStackedBar = dynamic(() => import("@/components/financeiro/charts/CobrancasHistoryStackedBar").then(mod => mod.CobrancasHistoryStackedBar), {
-    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+    ssr: false,
+    loading: () => <StackedBarChartSkeleton title="Histórico de Inadimplência" />
 });
 
 const CobrancasByServiceBar = dynamic(() => import("@/components/financeiro/charts/CobrancasByServiceBar").then(mod => mod.CobrancasByServiceBar), {
-    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+    ssr: false,
+    loading: () => <BarChartSkeleton title="Inadimplência por Serviço" />
 });
 
 const ParticipantHistoryLine = dynamic(() => import("@/components/financeiro/charts/ParticipantHistoryLine").then(mod => mod.ParticipantHistoryLine), {
-    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+    ssr: false,
+    loading: () => <ChartContainerSkeleton title="Histórico do Participante" />
 });
 
 
@@ -113,20 +117,50 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
     const [analyticsData, setAnalyticsData] = useState<any>(null);
     const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
+    // Otimização Senior: Handler memoizado para evitar re-renders em cascata nos gráficos
+    const handleSliceClick = useCallback((status: string) => {
+        handleFilterChange("status", status);
+        setViewMode("table");
+        // UX: Scroll suave para a tabela após filtrar pelo gráfico
+        setTimeout(() => {
+            const tableElement = document.getElementById('cobrancas-list-section');
+            if (tableElement) {
+                tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                window.scrollTo({ top: 400, behavior: 'smooth' });
+            }
+        }, 150);
+    }, [handleFilterChange]);
+
+    // Analytics Contextual com Proteção contra Race Conditions
     useEffect(() => {
-        if (viewMode === "chart") {
-            setLoadingAnalytics(true);
-            getCobrancasAnalytics("6m", {
+        if (viewMode !== "chart") return;
+
+        let isMounted = true;
+        setLoadingAnalytics(true);
+
+        const fetchAnalytics = async () => {
+            const res = await getCobrancasAnalytics("6m", {
                 searchTerm: filters.searchTerm,
                 status: filters.statusFilter,
                 participante: filters.participanteFilter,
                 streaming: filters.streamingFilter,
                 mesReferencia: filters.mesReferencia
-            }).then(res => {
-                if (res.success) setAnalyticsData(res.data);
-                setLoadingAnalytics(false);
             });
-        }
+
+            if (isMounted) {
+                if (res.success) {
+                    setAnalyticsData(res.data);
+                }
+                setLoadingAnalytics(false);
+            }
+        };
+
+        fetchAnalytics();
+
+        return () => {
+            isMounted = false;
+        };
     }, [viewMode, filters.searchTerm, filters.statusFilter, filters.participanteFilter, filters.streamingFilter, filters.mesReferencia]);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
@@ -317,11 +351,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                             data={analyticsData.donutData}
                                                             totalExpected={analyticsData.totalExpected}
                                                             monthLabel={analyticsData.monthLabel}
-                                                            onSliceClick={(status) => {
-                                                                handleFilterChange("status", status);
-                                                                setViewMode("table");
-                                                                setTimeout(() => window.scrollTo({ top: 400, behavior: 'smooth' }), 100);
-                                                            }}
+                                                            onSliceClick={handleSliceClick}
                                                         />
                                                     </>
                                                 ) : (
@@ -333,11 +363,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                                             data={analyticsData.donutData}
                                                             totalExpected={analyticsData.totalExpected}
                                                             monthLabel={analyticsData.monthLabel}
-                                                            onSliceClick={(status) => {
-                                                                handleFilterChange("status", status);
-                                                                setViewMode("table");
-                                                                setTimeout(() => window.scrollTo({ top: 400, behavior: 'smooth' }), 100);
-                                                            }}
+                                                            onSliceClick={handleSliceClick}
                                                         />
                                                         <div className="lg:col-span-2">
                                                             <CobrancasHistoryStackedBar
@@ -354,22 +380,24 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                         )}
                                     </div>
                                 ) : (
-                                    <CobrancasTable
-                                        cobrancas={filteredCobrancas}
-                                        onViewDetails={(id) => {
-                                            setSelectedCobrancaId(id);
-                                            setDetailsModalOpen(true);
-                                        }}
-                                        onConfirmPayment={handleConfirmarPagamento}
-                                        onSendWhatsApp={handleEnviarWhatsApp}
-                                        onCancelPayment={handleCancelarCobranca}
-                                        searchTerm={filters.searchTerm}
-                                        statusFilter={filters.statusFilter}
-                                        onViewQrCode={handleViewQrCode}
-                                        selectedIds={selectedIds}
-                                        onToggleSelect={toggleSelection}
-                                        onSelectAll={selectAll}
-                                    />
+                                    <div id="cobrancas-list-section">
+                                        <CobrancasTable
+                                            cobrancas={filteredCobrancas}
+                                            onViewDetails={(id) => {
+                                                setSelectedCobrancaId(id);
+                                                setDetailsModalOpen(true);
+                                            }}
+                                            onConfirmPayment={handleConfirmarPagamento}
+                                            onSendWhatsApp={handleEnviarWhatsApp}
+                                            onCancelPayment={handleCancelarCobranca}
+                                            searchTerm={filters.searchTerm}
+                                            statusFilter={filters.statusFilter}
+                                            onViewQrCode={handleViewQrCode}
+                                            selectedIds={selectedIds}
+                                            onToggleSelect={toggleSelection}
+                                            onSelectAll={selectAll}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )

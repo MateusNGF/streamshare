@@ -421,6 +421,9 @@ model Cobranca {
   lotePagamento   LotePagamento? @relation("CobrancaLote", fields: [lotePagamentoId], references: [id])
 
   @@unique([assinaturaId, periodoInicio])
+  @@index([status, dataVencimento])
+  @@index([assinaturaId])
+  @@index([lotePagamentoId])
   @@map("cobranca")
 }
 
