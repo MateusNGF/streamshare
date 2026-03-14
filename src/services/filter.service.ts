@@ -96,14 +96,14 @@ export class FilterService {
             }
         };
 
-        if (filters?.status) {
+        if (filters?.status && filters.status !== "all" as any) {
             where.status = filters.status;
         }
 
-        if (filters?.participanteId) {
+        if (filters?.participanteId && filters.participanteId !== "all" as any) {
             where.assinatura = {
                 ...where.assinatura,
-                participanteId: filters.participanteId
+                participanteId: Number(filters.participanteId)
             };
         }
 
@@ -137,17 +137,84 @@ export class FilterService {
      */
     static buildFaturaUserWhere(userId: number, filters?: {
         status?: StatusCobranca;
-        participanteId?: string
+        participanteId?: string;
+        q?: string;
+        streaming?: string;
+        organizador?: string;
+        vencimento?: string;
+        valor?: string;
     }) {
-        return {
+        const where: any = {
             assinatura: {
                 participante: {
-                    userId,
-                    ...(filters?.participanteId && filters.participanteId !== "all" ? { id: parseInt(filters.participanteId) } : {})
+                    userId
                 }
-            },
-            ...(filters?.status ? { status: filters.status } : {})
+            }
         };
+
+        if (filters?.status && filters.status !== "all" as any) {
+            where.status = filters.status;
+        }
+
+        if (filters?.q && filters.q.trim() !== "") {
+            const search = filters.q.trim();
+            where.OR = [
+                {
+                    assinatura: {
+                        streaming: {
+                            OR: [
+                                { apelido: { contains: search, mode: 'insensitive' } },
+                                { catalogo: { nome: { contains: search, mode: 'insensitive' } } }
+                            ]
+                        }
+                    }
+                },
+                {
+                    assinatura: {
+                        participante: {
+                            conta: {
+                                nome: { contains: search, mode: 'insensitive' }
+                            }
+                        }
+                    }
+                }
+            ];
+        }
+
+        if (filters?.streaming && filters.streaming !== "all") {
+            where.assinatura.streamingId = parseInt(filters.streaming);
+        }
+
+        if (filters?.organizador && filters.organizador !== "all") {
+            where.assinatura.participante = {
+                ...where.assinatura.participante,
+                contaId: parseInt(filters.organizador)
+            };
+        }
+
+        if (filters?.vencimento) {
+            try {
+                const range = JSON.parse(filters.vencimento);
+                if (range.from || range.to) {
+                    where.dataVencimento = {};
+                    if (range.from) where.dataVencimento.gte = new Date(range.from);
+                    if (range.to) where.dataVencimento.lte = new Date(range.to);
+                }
+            } catch (e) { }
+        }
+
+        if (filters?.valor) {
+            try {
+                const range = JSON.parse(filters.valor);
+                if (range.min !== undefined || range.max !== undefined) {
+                    where.valor = {};
+                    if (range.min !== undefined) where.valor.gte = Number(range.min);
+                    if (range.max !== undefined) where.valor.lte = Number(range.max);
+                }
+            } catch (e) { }
+        }
+
+        return where;
     }
 
     /**

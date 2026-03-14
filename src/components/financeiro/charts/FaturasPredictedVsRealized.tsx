@@ -30,19 +30,19 @@ export function FaturasPredictedVsRealized({ data }: FaturasPredictedVsRealizedP
         <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col relative overflow-hidden h-[400px]">
             <div className="mb-8 relative z-10">
                 <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-900">Previsto vs Realizado</h3>
-                    <UITooltip content="Compara o valor total das faturas geradas (Previsto) com o que foi efetivamente pago (Realizado) mês a mês.">
+                    <h3 className="font-bold text-gray-900">O que planejei vs O que paguei</h3>
+                    <UITooltip content="Compare o valor total das faturas geradas com o que você já quitou de fato.">
                         <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
                             <HelpCircle size={16} />
                         </button>
                     </UITooltip>
                 </div>
-                <p className="text-xs text-gray-500">Fluxo de caixa mensal</p>
+                <p className="text-xs text-gray-500">Acompanhamento do meu compromisso mensal</p>
             </div>
 
             {!hasData ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                    <p className="text-sm text-gray-400 font-medium">Sem faturas registradas.</p>
+                    <p className="text-sm text-gray-400 font-medium">Você ainda não tem faturas para analisar.</p>
                 </div>
             ) : (
                 <div className="flex-1 w-full -ml-4">
@@ -108,8 +108,8 @@ export function FaturasPredictedVsRealized({ data }: FaturasPredictedVsRealizedP
                                 iconType="circle"
                                 wrapperStyle={{ top: -30, right: 0, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                             />
-                            <Bar name="Previsto" dataKey="previsto" fill="#9ca3af" radius={[4, 4, 0, 0]} barSize={20} />
-                            <Bar name="Realizado" dataKey="realizado" fill="#6d28d9" radius={[4, 4, 0, 0]} barSize={20} />
+                            <Bar name="Planejado" dataKey="previsto" fill="#9ca3af" radius={[4, 4, 0, 0]} barSize={20} />
+                            <Bar name="Pago" dataKey="realizado" fill="#6d28d9" radius={[4, 4, 0, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

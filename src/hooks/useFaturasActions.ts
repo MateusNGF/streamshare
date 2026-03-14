@@ -20,7 +20,11 @@ export function useFaturasActions(faturasIniciais: any[], lotes: any[]) {
 
     const filterValues = useMemo(() => ({
         statusFilter: filters.status || "all",
-        participanteFilter: filters.participante || "all"
+        streamingFilter: filters.streaming || "all",
+        searchFilter: filters.search || "",
+        organizadorFilter: filters.organizador || "all",
+        vencimentoRange: filters.vencimento || "",
+        valorRange: filters.valor || ""
     }), [filters]);
 
     // Derived State

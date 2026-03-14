@@ -7,7 +7,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { Trash, Clock, Search, History, QrCode, AlertCircle, User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle } from "lucide-react";
+import { Trash, Clock, Search, History, QrCode, AlertCircle, User, TrendingUp, Calendar, DollarSign, Eye, Check, MessageCircle, Hash } from "lucide-react";
 import React, { useState, useMemo, Fragment } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -157,15 +157,22 @@ export function CobrancasTable({
                 <Table>
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-b border-gray-100">
-                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[160px]">
+                            <TableHead className="text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[200px]">
                                 <div className="flex items-center gap-2">
+                                    <Hash size={12} className="text-gray-400" />
+                                    Serviço
+                                </div>
+                            </TableHead>
+
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[160px]">
+                                <div className="flex items-center justify-center gap-2">
                                     <User size={12} className="text-gray-400" />
                                     Participante
                                 </div>
                             </TableHead>
 
                             {isCompact && (
-                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[120px]">
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[160px]">
                                     <div className="flex items-center justify-center gap-2">
                                         <History size={12} className="text-gray-400" />
                                         Período
@@ -174,7 +181,7 @@ export function CobrancasTable({
                             )}
 
                             {!isCompact && (
-                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[140px]">
                                     <div className="flex items-center justify-center gap-2">
                                         <TrendingUp size={12} className="text-gray-400" />
                                         Emissão
@@ -182,37 +189,37 @@ export function CobrancasTable({
                                 </TableHead>
                             )}
 
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[110px]">
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[140px]">
                                 <div className="flex items-center justify-center gap-2">
                                     <Calendar size={12} className="text-gray-400" />
                                     Vencimento
                                 </div>
                             </TableHead>
 
-                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                Status
-                            </TableHead>
-
-                            {!isCompact && (
-                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
-                                    Pagamento
-                                </TableHead>
-                            )}
-
-                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[100px]">
+                            <TableHead className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider px-4 min-w-[120px]">
                                 <div className="flex items-center justify-end gap-2">
                                     <DollarSign size={12} className="text-gray-400" />
                                     Valor
                                 </div>
                             </TableHead>
 
+                            <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[120px]">
+                                Status
+                            </TableHead>
+
                             {!isCompact && (
-                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[120px]">
+                                    Pagamento
+                                </TableHead>
+                            )}
+
+                            {!isCompact && (
+                                <TableHead className="text-center text-[10px] font-black text-gray-500 uppercase tracking-wider min-w-[140px]">
                                     Transação
                                 </TableHead>
                             )}
 
-                            <TableHead className="w-[50px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
+                            <TableHead className="w-[60px] text-center text-[10px] font-black text-gray-500 uppercase tracking-wider">#</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

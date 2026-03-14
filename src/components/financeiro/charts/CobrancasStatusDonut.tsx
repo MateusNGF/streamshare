@@ -13,9 +13,10 @@ interface CobrancasStatusDonutProps {
         color: string;
     }[];
     totalExpected: number;
+    monthLabel?: string;
 }
 
-export function CobrancasStatusDonut({ data, totalExpected }: CobrancasStatusDonutProps) {
+export function CobrancasStatusDonut({ data, totalExpected, monthLabel }: CobrancasStatusDonutProps) {
     const { format } = useCurrency();
     const totalCount = data.reduce((sum, item) => sum + item.value, 0);
     const hasData = totalCount > 0;
@@ -29,14 +30,16 @@ export function CobrancasStatusDonut({ data, totalExpected }: CobrancasStatusDon
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-gray-900">Status do Ciclo Atual</h3>
-                            <UITooltip content="Proporção de cobranças por status no mês atual. O centro exibe o valor total previsto para o período.">
+                            <h3 className="font-bold text-gray-900">Status do Ciclo</h3>
+                            <UITooltip content="Proporção de cobranças por status no período selecionado. O centro exibe o valor total previsto.">
                                 <button className="text-gray-400 hover:text-primary transition-colors focus:outline-none">
                                     <HelpCircle size={16} />
                                 </button>
                             </UITooltip>
                         </div>
-                        <p className="text-xs text-gray-500">Distribuição volumétrica por status</p>
+                        <p className="text-xs text-gray-500 font-medium">
+                            Análise de <span className="text-primary font-bold">{monthLabel ? monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1) : "Janeiro de 2024"}</span>
+                        </p>
                     </div>
                 </div>
             </div>

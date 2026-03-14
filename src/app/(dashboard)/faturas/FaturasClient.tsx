@@ -37,11 +37,19 @@ const DetalhesCobrancaModal = dynamic(() => import("@/components/modals/Detalhes
 
 const FinancialSummaryBanner = dynamic(() => import("@/components/faturas/FinancialSummaryBanner").then(mod => mod.FinancialSummaryBanner));
 
-const FaturasPredictedVsRealized = dynamic(() => import("@/components/financeiro/charts/FaturasPredictedVsRealized").then(mod => mod.FaturasPredictedVsRealized), {
+const FaturaCompositionDonut = dynamic(() => import("@/components/financeiro/charts/FaturaCompositionDonut").then(mod => mod.FaturaCompositionDonut), {
     loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
 });
 
-const FaturasRevenueHistory = dynamic(() => import("@/components/financeiro/charts/FaturasRevenueHistory").then(mod => mod.FaturasRevenueHistory), {
+const SavingsAccumulatedChart = dynamic(() => import("@/components/financeiro/charts/SavingsAccumulatedChart").then(mod => mod.SavingsAccumulatedChart), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const ServicePaymentHistoryBar = dynamic(() => import("@/components/financeiro/charts/ServicePaymentHistoryBar").then(mod => mod.ServicePaymentHistoryBar), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const PaymentVelocityChart = dynamic(() => import("@/components/financeiro/charts/PaymentVelocityChart").then(mod => mod.PaymentVelocityChart), {
     loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
 });
 
@@ -49,11 +57,19 @@ interface FaturasClientProps {
     faturas: any[];
     resumo: any;
     lotes: any[];
-    participantes: any[];
+    streamings: { id: number; nome: string; iconeUrl?: string | null; corPrimaria?: string | null }[];
+    organizers: { id: number; nome: string }[];
     error?: string;
 }
 
-export function FaturasClient({ faturas, resumo, lotes, participantes, error }: FaturasClientProps) {
+export function FaturasClient({
+    faturas = [],
+    resumo = {},
+    lotes = [],
+    streamings = [],
+    organizers = [],
+    error
+}: FaturasClientProps) {
     const {
         faturasPendentes,
         faturasAguardando,
@@ -77,14 +93,40 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
 
     const filterConfig: FilterConfig[] = useMemo(() => [
         {
-            key: "participante",
+            key: "search",
+            type: "text",
+            placeholder: "Pesquisar faturas...",
+            className: "flex-1 min-w-[200px]"
+        },
+        {
+            key: "organizador",
             type: "select",
-            label: "Perfil",
-            emptyLabel: "Todos os Perfis",
+            label: "Organizador",
+            emptyLabel: "Todos os Organizadores",
             className: "w-full md:w-[200px]",
-            options: participantes.map(p => ({
-                label: p.nome,
-                value: p.id.toString()
+            options: organizers.map(o => ({
+                label: o.nome,
+                value: o.id.toString()
+            }))
+        },
+        {
+            key: "streaming",
+            type: "select",
+            label: "Serviço",
+            emptyLabel: "Todos os Serviços",
+            className: "w-full md:w-[200px]",
+            options: streamings.map(s => ({
+                label: s.nome,
+                value: s.id.toString(),
+                iconNode: (
+                    <StreamingLogo
+                        name={s.nome}
+                        iconeUrl={s.iconeUrl || ""}
+                        color={s.corPrimaria || "#ccc"}
+                        size="xs"
+                        rounded="md"
+                    />
+                )
             }))
         },
         {
@@ -98,8 +140,20 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                 { label: "Em Atraso", value: "atrasado" },
                 { label: "Pagos", value: "pago" }
             ]
+        },
+        {
+            key: "vencimento",
+            type: "dateRange",
+            label: "Vencimento",
+            placeholder: "Filtrar por data"
+        },
+        {
+            key: "valor",
+            type: "numberRange",
+            label: "Intervalo de Valor",
+            placeholder: "Valor entre..."
         }
-    ], [participantes]);
+    ], [streamings, organizers]);
 
     useActionError(error);
 
@@ -107,14 +161,21 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
     const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
     useEffect(() => {
-        if (viewMode === "chart" && !analyticsData) {
+        if (viewMode === "chart") {
             setLoadingAnalytics(true);
-            getFaturasAnalytics().then(res => {
+            getFaturasAnalytics("6m", {
+                status: filters.statusFilter,
+                streaming: filters.streamingFilter,
+                q: filters.searchFilter,
+                organizador: filters.organizadorFilter,
+                vencimento: filters.vencimentoRange,
+                valor: filters.valorRange
+            }).then(res => {
                 if (res.success) setAnalyticsData(res.data);
                 setLoadingAnalytics(false);
             });
         }
-    }, [viewMode, analyticsData]);
+    }, [viewMode, filters.statusFilter, filters.streamingFilter, filters.searchFilter, filters.organizadorFilter, filters.vencimentoRange, filters.valorRange]);
 
     const sortedFaturas = sortByStatusPriority(faturas);
 
@@ -135,7 +196,11 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                         filters={filterConfig}
                         values={{
                             status: filters.statusFilter,
-                            participante: filters.participanteFilter,
+                            streaming: filters.streamingFilter,
+                            search: filters.searchFilter,
+                            organizador: filters.organizadorFilter,
+                            vencimento: filters.vencimentoRange,
+                            valor: filters.valorRange
                         }}
                         onChange={handleFilterChange}
                         onClear={handleClearFilters}
@@ -194,12 +259,31 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                                     </>
                                                 ) : analyticsData ? (
                                                     <>
-                                                        <FaturasPredictedVsRealized
-                                                            data={analyticsData}
-                                                        />
-                                                        <FaturasRevenueHistory
-                                                            data={analyticsData}
-                                                        />
+                                                        {analyticsData.isStreamingFiltered ? (
+                                                            <>
+                                                                <ServicePaymentHistoryBar
+                                                                    data={analyticsData.historyData}
+                                                                />
+                                                                <PaymentVelocityChart
+                                                                    data={analyticsData.velocityData}
+                                                                />
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <FaturaCompositionDonut
+                                                                    data={analyticsData.compositionData}
+                                                                    totalCurrentMonth={analyticsData.totalCurrentMonth}
+                                                                />
+                                                                <SavingsAccumulatedChart
+                                                                    data={analyticsData.historyData}
+                                                                />
+                                                                <div className="lg:col-span-2">
+                                                                    <PaymentVelocityChart
+                                                                        data={analyticsData.velocityData}
+                                                                    />
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <div className="col-span-2 py-20 text-center text-gray-400">
@@ -228,16 +312,6 @@ export function FaturasClient({ faturas, resumo, lotes, participantes, error }: 
                                     <SectionHeader
                                         title="Meus Pagamentos Consolidados"
                                         className="mb-0"
-                                        rightElement={
-                                            <ViewModeToggle
-                                                viewMode={viewMode}
-                                                setViewMode={setViewMode}
-                                                options={[
-                                                    { id: "table", label: "Tabela", icon: TableIcon },
-                                                    { id: "chart", label: "Análise", icon: BarChart3 },
-                                                ]}
-                                            />
-                                        }
                                     />
                                     <LotesTab lotes={lotes} viewMode={viewMode} />
                                 </div>

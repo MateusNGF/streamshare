@@ -131,11 +131,10 @@ export const FaturaTableRow = memo(function FaturaTableRow({
                 ease: [0.4, 0, 0.2, 1]
             }}
             className={cn(
-                isCancelled && "opacity-60",
                 isAwaiting && !isAdmin && "bg-amber-50/30",
                 "group transition-colors duration-200",
                 isSelectable && selectedIds.includes(fatura.id) ? "bg-primary/[0.04] border-l-primary shadow-sm" : "hover:bg-gray-50/50",
-                isDisabled && "opacity-40 grayscale pointer-events-none"
+                isDisabled && "pointer-events-none"
             )}
         >
 
@@ -160,6 +159,14 @@ export const FaturaTableRow = memo(function FaturaTableRow({
                 </div>
             </TableCell>
 
+            <TableCell className="text-center">
+                <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold text-gray-700">
+                        {fatura.assinatura.participante.conta.nome}
+                    </span>
+                </div>
+            </TableCell>
+
             <TableCell className="px-4 py-3 text-center">
                 <BillingPeriodCell inicio={fatura.periodoInicio} fim={fatura.periodoFim} />
             </TableCell>
@@ -168,25 +175,14 @@ export const FaturaTableRow = memo(function FaturaTableRow({
                 <BillingDueDateCell data={fatura.dataVencimento} status={fatura.status} />
             </TableCell>
 
-            <TableCell className="text-center">
-                <StatusBadge status={fatura.status} className="scale-75" />
-            </TableCell>
-
-            <TableCell className="text-center">
-                <div className="flex flex-col items-center">
-                    <span className="text-xs font-bold text-gray-700">
-                        {fatura.assinatura.participante.conta.nome}
-                    </span>
-                    <span className="text-[9px] font-black uppercase text-gray-400">
-                        Titular
-                    </span>
-                </div>
-            </TableCell>
-
             <TableCell className="px-4 py-3">
                 <BillingValueCell
                     valor={fatura.valor}
                 />
+            </TableCell>
+
+            <TableCell className="text-center">
+                <StatusBadge status={fatura.status} className="scale-75" />
             </TableCell>
 
             <TableCell className="text-center">

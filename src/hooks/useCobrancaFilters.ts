@@ -31,8 +31,8 @@ export function useCobrancaFilters(cobrancasIniciais: any[]) {
     const filteredCobrancas = cobrancasIniciais.filter(c => {
         const matchesSearch = c.assinatura.participante.nome.toLowerCase().includes(filterValues.searchTerm.toLowerCase());
         const matchesStatus = filterValues.statusFilter === "all" || c.status === filterValues.statusFilter;
-        const matchesStreaming = filterValues.streamingFilter === "all" || c.assinatura.streamingId.toString() === filterValues.streamingFilter;
-        const matchesParticipante = filterValues.participanteFilter === "all" || c.assinatura.participanteId.toString() === filterValues.participanteFilter;
+        const matchesStreaming = filterValues.streamingFilter === "all" || (c.assinatura?.streamingId?.toString() ?? "") === filterValues.streamingFilter;
+        const matchesParticipante = filterValues.participanteFilter === "all" || (c.assinatura?.participanteId?.toString() ?? "") === filterValues.participanteFilter;
 
         let matchesMes = true;
         if (filterValues.mesReferencia !== "all") {

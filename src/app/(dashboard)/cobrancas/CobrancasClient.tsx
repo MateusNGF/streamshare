@@ -52,6 +52,14 @@ const CobrancasHistoryStackedBar = dynamic(() => import("@/components/financeiro
     loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
 });
 
+const CobrancasByServiceBar = dynamic(() => import("@/components/financeiro/charts/CobrancasByServiceBar").then(mod => mod.CobrancasByServiceBar), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
+const ParticipantHistoryLine = dynamic(() => import("@/components/financeiro/charts/ParticipantHistoryLine").then(mod => mod.ParticipantHistoryLine), {
+    loading: () => <Skeleton className="w-full h-[400px] rounded-[32px]" />
+});
+
 
 interface CobrancasClientProps {
     kpis: {
@@ -104,14 +112,20 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
     const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
     useEffect(() => {
-        if (viewMode === "chart" && !analyticsData) {
+        if (viewMode === "chart") {
             setLoadingAnalytics(true);
-            getCobrancasAnalytics().then(res => {
+            getCobrancasAnalytics("6m", {
+                searchTerm: filters.searchTerm,
+                status: filters.statusFilter,
+                participante: filters.participanteFilter,
+                streaming: filters.streamingFilter,
+                mesReferencia: filters.mesReferencia
+            }).then(res => {
                 if (res.success) setAnalyticsData(res.data);
                 setLoadingAnalytics(false);
             });
         }
-    }, [viewMode, analyticsData]);
+    }, [viewMode, filters.searchTerm, filters.statusFilter, filters.participanteFilter, filters.streamingFilter, filters.mesReferencia]);
 
     const whatsappCheck = FeatureGuards.isFeatureEnabled(plano, "whatsapp_integration");
     const automaticBillingCheck = FeatureGuards.isFeatureEnabled(plano, "automatic_billing");
@@ -223,7 +237,7 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                         {
                             key: "mesReferencia",
                             type: "select",
-                            label: "Mês de Referência",
+                            label: "Período",
                             className: "w-full md:w-[200px]",
                             options: monthOptions
                         },
@@ -249,8 +263,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                         {
                             key: "vencimento",
                             type: "dateRange",
-                            label: "Data de Vencimento",
-                            placeholder: "Filtrar vencimento"
+                            label: "Vencimento",
+                            placeholder: "Filtrar por data"
                         },
                         {
                             key: "pagamento",
@@ -261,8 +275,8 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                         {
                             key: "valor",
                             type: "numberRange",
-                            label: "Faixa de Preço",
-                            placeholder: "Ex: 10 a 50"
+                            label: "Intervalo de Valor",
+                            placeholder: "Valor entre..."
                         },
                         {
                             key: "hasWhatsapp",
@@ -353,13 +367,34 @@ export function CobrancasClient({ kpis, cobrancasIniciais, lotes, whatsappConfig
                                             </>
                                         ) : analyticsData ? (
                                             <>
-                                                <CobrancasStatusDonut
-                                                    data={analyticsData.donutData}
-                                                    totalExpected={analyticsData.totalExpected}
-                                                />
-                                                <CobrancasHistoryStackedBar
-                                                    data={analyticsData.historyData}
-                                                />
+                                                {analyticsData.isParticipantFiltered ? (
+                                                    <>
+                                                        <ParticipantHistoryLine
+                                                            data={analyticsData.historyData}
+                                                        />
+                                                        <CobrancasStatusDonut
+                                                            data={analyticsData.donutData}
+                                                            totalExpected={analyticsData.totalExpected}
+                                                            monthLabel={analyticsData.monthLabel}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CobrancasByServiceBar
+                                                            data={analyticsData.serviceRanking}
+                                                        />
+                                                        <CobrancasStatusDonut
+                                                            data={analyticsData.donutData}
+                                                            totalExpected={analyticsData.totalExpected}
+                                                            monthLabel={analyticsData.monthLabel}
+                                                        />
+                                                        <div className="lg:col-span-2">
+                                                            <CobrancasHistoryStackedBar
+                                                                data={analyticsData.historyData}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
                                             </>
                                         ) : (
                                             <div className="col-span-2 py-20 text-center">
